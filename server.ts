@@ -12,7 +12,8 @@ dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const dataDir = process.env.VERCEL ? path.join("/tmp", "downtown-perks-backend") : path.join(__dirname, "data");
+const isServerless = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME || process.env.LAMBDA_TASK_ROOT);
+const dataDir = isServerless ? path.join("/tmp", "downtown-perks-backend") : path.join(__dirname, "data");
 const dbPath = path.join(dataDir, "downtown-perks-db.json");
 const PORT = Number(process.env.PORT || 3000);
 
@@ -861,7 +862,7 @@ export async function createApp() {
     res.json([...db.entities.PerkLocation].sort((a, b) => Number(b.redemption_count || 0) - Number(a.redemption_count || 0)).slice(0, 5));
   });
 
-  if (process.env.NODE_ENV !== "production") {
+  if (process.env.NODE_ENV !== "production" && !isServerless) {
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: "spa",
@@ -878,7 +879,7 @@ export async function createApp() {
   return app;
 }
 
-if (!process.env.VERCEL) {
+if (!isServerless) {
   createApp()
     .then((app) => {
       app.listen(PORT, "0.0.0.0", () => {
