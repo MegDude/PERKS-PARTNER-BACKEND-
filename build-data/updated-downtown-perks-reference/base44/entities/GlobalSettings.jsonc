@@ -1,0 +1,29 @@
+{
+  "name": "GlobalSettings",
+  "type": "object",
+  "properties": {
+    "business_name": {
+      "type": "string",
+      "description": "Business name displayed in app"
+    },
+    "business_name_ar": {
+      "type": "string",
+      "description": "Business name in Arabic"
+    },
+    "business_logo": {
+      "type": "string",
+      "description": "URL to business logo"
+    },
+    "partner_report_spreadsheet_id": {
+      "type": "string",
+      "description": "Google Sheets spreadsheet ID for monthly partner redemption reports"
+    },
+    "partner_report_spreadsheet_url": {
+      "type": "string",
+      "description": "Google Sheets URL for monthly partner redemption reports"
+    }
+  },
+  "required": [
+    "business_name"
+  ]
+}

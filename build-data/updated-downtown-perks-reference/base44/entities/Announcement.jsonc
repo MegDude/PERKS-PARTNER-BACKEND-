@@ -1,0 +1,77 @@
+{
+  "name": "Announcement",
+  "type": "object",
+  "properties": {
+    "building_id": {
+      "type": "string",
+      "description": "Reference to Building"
+    },
+    "title": {
+      "type": "string",
+      "description": "Announcement title"
+    },
+    "message": {
+      "type": "string",
+      "description": "Announcement message content"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "urgent",
+        "maintenance",
+        "community_news",
+        "event",
+        "reminder"
+      ],
+      "description": "Type of announcement"
+    },
+    "priority": {
+      "type": "string",
+      "enum": [
+        "low",
+        "medium",
+        "high",
+        "urgent"
+      ],
+      "default": "medium",
+      "description": "Priority level"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "scheduled",
+        "published",
+        "archived"
+      ],
+      "default": "draft",
+      "description": "Announcement status"
+    },
+    "published_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When announcement was published"
+    },
+    "scheduled_for": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When to publish (for scheduled announcements)"
+    },
+    "notification_sent": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether push notification was sent"
+    },
+    "read_count": {
+      "type": "number",
+      "default": 0,
+      "description": "Number of residents who viewed"
+    }
+  },
+  "required": [
+    "building_id",
+    "title",
+    "message",
+    "type"
+  ]
+}

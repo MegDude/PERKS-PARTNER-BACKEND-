@@ -1,0 +1,36 @@
+{
+  "name": "PerkRedemption",
+  "type": "object",
+  "properties": {
+    "perk_id": {
+      "type": "string",
+      "description": "Reference to PerkLocation"
+    },
+    "perk_name": {
+      "type": "string",
+      "description": "Name of the redeemed perk"
+    },
+    "perk_category": {
+      "type": "string",
+      "description": "Category of the perk"
+    },
+    "user_email": {
+      "type": "string",
+      "description": "Email of user who redeemed"
+    },
+    "user_name": {
+      "type": "string",
+      "description": "Full name of user"
+    },
+    "redeemed_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timestamp of redemption"
+    }
+  },
+  "required": [
+    "perk_id",
+    "perk_name",
+    "user_email"
+  ]
+}

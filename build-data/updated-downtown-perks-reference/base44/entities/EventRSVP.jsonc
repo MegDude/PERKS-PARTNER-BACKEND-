@@ -1,0 +1,29 @@
+{
+  "name": "EventRSVP",
+  "type": "object",
+  "properties": {
+    "event_id": {
+      "type": "string",
+      "description": "Event identifier"
+    },
+    "event_name": {
+      "type": "string",
+      "description": "Event name"
+    },
+    "event_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Event date"
+    },
+    "registered_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Registration timestamp"
+    }
+  },
+  "required": [
+    "event_id",
+    "event_name",
+    "event_date"
+  ]
+}

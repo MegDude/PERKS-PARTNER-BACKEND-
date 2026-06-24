@@ -1,0 +1,70 @@
+@import "./styles/tokens.css";
+@import "tailwindcss";
+
+.dp-admin-shell,
+.dp-admin-shell * {
+  min-width: 0;
+}
+
+.dp-admin-shell :where(h1, h2, h3, h4, p, span, a, button, label, th, td, li, input, textarea, select) {
+  overflow-wrap: anywhere;
+  word-break: normal;
+  letter-spacing: 0 !important;
+}
+
+.dp-admin-shell :where(table) {
+  table-layout: fixed;
+  width: 100%;
+}
+
+.dp-admin-shell :where(h1) {
+  font-size: clamp(1.5rem, 2vw, 2rem);
+  line-height: 1.15;
+  font-weight: 600;
+}
+
+.dp-admin-shell :where(h2) {
+  font-size: clamp(1.125rem, 1.6vw, 1.375rem);
+  line-height: 1.2;
+  font-weight: 600;
+}
+
+.dp-admin-shell :where(h3) {
+  font-size: clamp(1rem, 1.25vw, 1.125rem);
+  line-height: 1.25;
+  font-weight: 600;
+}
+
+.dp-admin-shell :where(.font-bold, .font-extrabold, .font-black) {
+  font-weight: 600;
+}
+
+.dp-admin-shell :where(button) {
+  min-height: 34px;
+  max-width: 100%;
+  white-space: nowrap;
+  font-size: 10px;
+  line-height: 1;
+  overflow: visible;
+  text-overflow: clip;
+}
+
+.dp-admin-shell :where(button:not(.w-full):not([class*="w-full"]), a:not(.w-full):not([class*="w-full"])) {
+  min-width: max-content;
+  flex-shrink: 0;
+}
+
+.dp-admin-shell :where(.overflow-x-auto) {
+  -webkit-overflow-scrolling: touch;
+}
+
+.dp-admin-shell :where(button svg, a svg) {
+  flex-shrink: 0;
+}
+
+.dp-admin-shell :where(button:not(.h-10):not(.h-12)) {
+  padding-top: 0.55rem;
+  padding-bottom: 0.55rem;
+  padding-left: 0.9rem;
+  padding-right: 0.9rem;
+}

@@ -1,0 +1,120 @@
+{
+  "name": "Building",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Building name"
+    },
+    "address": {
+      "type": "string",
+      "description": "Full street address"
+    },
+    "district": {
+      "type": "string",
+      "enum": [
+        "rainey",
+        "seaholm",
+        "market_district",
+        "warehouse",
+        "red_river",
+        "west_end",
+        "cbd"
+      ],
+      "description": "Downtown district/neighborhood"
+    },
+    "tier": {
+      "type": "number",
+      "enum": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "description": "Building tier classification"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "condo",
+        "apartment",
+        "mixed_use",
+        "hotel_residential",
+        "loft"
+      ],
+      "description": "Building type"
+    },
+    "lat": {
+      "type": "number",
+      "description": "Latitude coordinate"
+    },
+    "lng": {
+      "type": "number",
+      "description": "Longitude coordinate"
+    },
+    "units": {
+      "type": "number",
+      "description": "Total number of residential units"
+    },
+    "yearBuilt": {
+      "type": "number",
+      "description": "Year building was completed"
+    },
+    "priceTier": {
+      "type": "string",
+      "enum": [
+        "luxury",
+        "premium",
+        "mid"
+      ],
+      "description": "Price tier classification"
+    },
+    "walkScore": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100,
+      "description": "Walk score (0-100)"
+    },
+    "perkDensity": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "Perks density score (0-1 scale)"
+    },
+    "activityScore": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "Activity/engagement score (0-1 scale)"
+    },
+    "nearbyVenues": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "IDs/names of nearby venues"
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Classification tags (iconic, historic, walkable, etc.)"
+    }
+  },
+  "required": [
+    "name",
+    "address",
+    "district",
+    "tier",
+    "type",
+    "lat",
+    "lng",
+    "units",
+    "priceTier",
+    "walkScore",
+    "perkDensity",
+    "activityScore"
+  ]
+}

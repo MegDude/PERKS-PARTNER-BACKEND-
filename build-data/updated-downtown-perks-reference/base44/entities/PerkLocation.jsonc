@@ -1,0 +1,97 @@
+{
+  "name": "PerkLocation",
+  "type": "object",
+  "properties": {
+    "partner_id": {
+      "type": "string",
+      "description": "Reference to Partner"
+    },
+    "name": {
+      "type": "string",
+      "description": "Venue name"
+    },
+    "category": {
+      "type": "string",
+      "description": "Category (Bar/Nightlife, Coffee, Restaurant, etc.)"
+    },
+    "category_key": {
+      "type": "string",
+      "description": "Category key slug"
+    },
+    "address": {
+      "type": "string",
+      "description": "Street address"
+    },
+    "district": {
+      "type": "string",
+      "description": "Downtown district"
+    },
+    "lat": {
+      "type": "number",
+      "description": "Latitude"
+    },
+    "lng": {
+      "type": "number",
+      "description": "Longitude"
+    },
+    "perk": {
+      "type": "string",
+      "description": "Resident perk/benefit description"
+    },
+    "perk_type": {
+      "type": "string",
+      "description": "Type of perk (drink, dining, coffee, etc.)"
+    },
+    "hours": {
+      "type": "string",
+      "description": "Operating hours"
+    },
+    "website": {
+      "type": "string",
+      "description": "Website URL"
+    },
+    "contact_phone": {
+      "type": "string",
+      "description": "Contact phone"
+    },
+    "specials": {
+      "type": "string",
+      "description": "Current specials"
+    },
+    "deals_offers": {
+      "type": "string",
+      "description": "Deals and offers"
+    },
+    "events_available": {
+      "type": "string",
+      "description": "Event info"
+    },
+    "is_featured": {
+      "type": "boolean",
+      "default": false,
+      "description": "Featured venue"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true,
+      "description": "Active in perks program"
+    },
+    "relevance_score": {
+      "type": "number",
+      "description": "Relevance/popularity score"
+    },
+    "map_link": {
+      "type": "string",
+      "description": "OpenStreetMap link"
+    },
+    "source": {
+      "type": "string",
+      "description": "Data source"
+    }
+  },
+  "required": [
+    "name",
+    "category",
+    "partner_id"
+  ]
+}

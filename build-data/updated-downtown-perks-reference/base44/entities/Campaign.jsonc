@@ -1,0 +1,80 @@
+{
+  "name": "Campaign",
+  "type": "object",
+  "properties": {
+    "building_id": {
+      "type": "string",
+      "description": "Reference to Building"
+    },
+    "name": {
+      "type": "string",
+      "description": "Campaign name"
+    },
+    "segment_target": {
+      "type": "string",
+      "description": "Target segment (Power User, Occasional, Inactive)"
+    },
+    "message": {
+      "type": "string",
+      "description": "Campaign message/email body"
+    },
+    "subject": {
+      "type": "string",
+      "description": "Email subject line"
+    },
+    "recipients_count": {
+      "type": "number",
+      "description": "Number of recipients sent to"
+    },
+    "sent_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timestamp when campaign was sent"
+    },
+    "opens": {
+      "type": "number",
+      "default": 0,
+      "description": "Number of email opens"
+    },
+    "clicks": {
+      "type": "number",
+      "default": 0,
+      "description": "Number of link clicks"
+    },
+    "conversions": {
+      "type": "number",
+      "default": 0,
+      "description": "Number of redemptions/conversions resulting from campaign"
+    },
+    "open_rate": {
+      "type": "number",
+      "description": "Percentage of emails opened (0-100)"
+    },
+    "click_rate": {
+      "type": "number",
+      "description": "Percentage of opened emails with clicks (0-100)"
+    },
+    "conversion_rate": {
+      "type": "number",
+      "description": "Percentage of recipients who converted (0-100)"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "scheduled",
+        "sent",
+        "active",
+        "completed"
+      ],
+      "default": "draft",
+      "description": "Campaign status"
+    }
+  },
+  "required": [
+    "building_id",
+    "name",
+    "message",
+    "recipients_count"
+  ]
+}

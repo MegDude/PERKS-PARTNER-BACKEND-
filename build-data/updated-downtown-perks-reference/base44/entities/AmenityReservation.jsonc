@@ -1,0 +1,47 @@
+{
+  "name": "AmenityReservation",
+  "type": "object",
+  "properties": {
+    "amenity_id": {
+      "type": "string",
+      "description": "Reference to Amenity"
+    },
+    "tenant_id": {
+      "type": "string",
+      "description": "Reference to Tenant"
+    },
+    "reservation_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date of reservation"
+    },
+    "start_time": {
+      "type": "string",
+      "description": "Slot start time (HH:MM)"
+    },
+    "end_time": {
+      "type": "string",
+      "description": "Slot end time (HH:MM)"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "confirmed",
+        "cancelled"
+      ],
+      "default": "confirmed",
+      "description": "Reservation status"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Additional notes"
+    }
+  },
+  "required": [
+    "amenity_id",
+    "tenant_id",
+    "reservation_date",
+    "start_time",
+    "end_time"
+  ]
+}

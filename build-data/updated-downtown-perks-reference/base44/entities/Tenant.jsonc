@@ -1,0 +1,98 @@
+{
+  "name": "Tenant",
+  "type": "object",
+  "properties": {
+    "flat_id": {
+      "type": "string",
+      "description": "Reference to Flat/Unit entity"
+    },
+    "name": {
+      "type": "string",
+      "description": "Full name of the resident"
+    },
+    "email": {
+      "type": "string",
+      "description": "Resident email address"
+    },
+    "mobile_number": {
+      "type": "string",
+      "description": "Mobile number with country code"
+    },
+    "preferred_language": {
+      "type": "string",
+      "enum": [
+        "en",
+        "ar"
+      ],
+      "default": "en",
+      "description": "Preferred language for communication"
+    },
+    "move_in_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Move-in date"
+    },
+    "lease_end_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Lease end date"
+    },
+    "yearly_rent": {
+      "type": "number",
+      "description": "Total yearly rent"
+    },
+    "rent_interval_months": {
+      "type": "number",
+      "description": "Payment interval in months",
+      "minimum": 1,
+      "maximum": 12,
+      "default": 6
+    },
+    "rent_per_interval": {
+      "type": "number",
+      "description": "Rent per payment interval"
+    },
+    "next_payment_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Next payment due date"
+    },
+    "last_payment_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date of last payment"
+    },
+    "payment_status": {
+      "type": "string",
+      "enum": [
+        "paid",
+        "unpaid"
+      ],
+      "default": "unpaid",
+      "description": "Current payment status"
+    },
+    "perks_enrolled": {
+      "type": "boolean",
+      "default": true,
+      "description": "Enrolled in Downtown Perks program"
+    },
+    "perks_tier": {
+      "type": "string",
+      "enum": [
+        "standard",
+        "premium",
+        "vip"
+      ],
+      "default": "standard",
+      "description": "Downtown Perks membership tier"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Additional notes"
+    }
+  },
+  "required": [
+    "flat_id",
+    "name"
+  ]
+}

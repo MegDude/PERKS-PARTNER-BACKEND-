@@ -1,0 +1,48 @@
+{
+  "name": "Partner",
+  "type": "object",
+  "properties": {
+    "business_name": {
+      "type": "string",
+      "description": "Partner business name"
+    },
+    "contact_email": {
+      "type": "string",
+      "description": "Partner contact email"
+    },
+    "contact_phone": {
+      "type": "string",
+      "description": "Partner contact phone"
+    },
+    "contact_person": {
+      "type": "string",
+      "description": "Primary contact person name"
+    },
+    "address": {
+      "type": "string",
+      "description": "Business address"
+    },
+    "category": {
+      "type": "string",
+      "description": "Business category"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true,
+      "description": "Partner status"
+    },
+    "joined_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date partner joined program"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Internal notes"
+    }
+  },
+  "required": [
+    "business_name",
+    "contact_email"
+  ]
+}

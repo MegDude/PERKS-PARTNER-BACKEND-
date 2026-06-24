@@ -1,0 +1,58 @@
+{
+  "name": "Survey",
+  "type": "object",
+  "properties": {
+    "building_id": {
+      "type": "string",
+      "description": "Reference to Building"
+    },
+    "title": {
+      "type": "string",
+      "description": "Survey title"
+    },
+    "description": {
+      "type": "string",
+      "description": "Survey description"
+    },
+    "questions": {
+      "type": "array",
+      "description": "Survey questions (JSON array)",
+      "items": {
+        "type": "object"
+      }
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "active",
+        "closed"
+      ],
+      "default": "draft",
+      "description": "Survey status"
+    },
+    "responses_count": {
+      "type": "number",
+      "default": 0,
+      "description": "Total responses received"
+    },
+    "target_residents": {
+      "type": "number",
+      "description": "Number of residents survey was sent to"
+    },
+    "starts_at": {
+      "type": "string",
+      "format": "date",
+      "description": "Survey start date"
+    },
+    "ends_at": {
+      "type": "string",
+      "format": "date",
+      "description": "Survey end date"
+    }
+  },
+  "required": [
+    "building_id",
+    "title"
+  ]
+}

@@ -1,0 +1,51 @@
+{
+  "name": "PartnerMessage",
+  "type": "object",
+  "properties": {
+    "partner_id": {
+      "type": "string",
+      "description": "Reference to Partner"
+    },
+    "partner_name": {
+      "type": "string",
+      "description": "Partner business name"
+    },
+    "resident_email": {
+      "type": "string",
+      "description": "Resident email"
+    },
+    "resident_name": {
+      "type": "string",
+      "description": "Resident name"
+    },
+    "message": {
+      "type": "string",
+      "description": "Message content"
+    },
+    "subject": {
+      "type": "string",
+      "description": "Message subject"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "unread",
+        "read",
+        "replied"
+      ],
+      "default": "unread",
+      "description": "Message status"
+    },
+    "sent_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timestamp of message"
+    }
+  },
+  "required": [
+    "partner_id",
+    "resident_email",
+    "message",
+    "subject"
+  ]
+}

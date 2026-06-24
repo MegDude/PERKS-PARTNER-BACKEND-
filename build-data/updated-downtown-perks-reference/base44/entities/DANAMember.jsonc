@@ -1,0 +1,58 @@
+{
+  "name": "DANAMember",
+  "type": "object",
+  "properties": {
+    "residence_name": {
+      "type": "string",
+      "description": "Building/Residence name"
+    },
+    "lease_buy": {
+      "type": "string",
+      "enum": [
+        "Buy",
+        "Lease",
+        "Other"
+      ],
+      "description": "Lease or Buy"
+    },
+    "num_units": {
+      "type": "number",
+      "description": "Number of units"
+    },
+    "title": {
+      "type": "string",
+      "description": "Manager title/position"
+    },
+    "first_name": {
+      "type": "string",
+      "description": "First name"
+    },
+    "last_name": {
+      "type": "string",
+      "description": "Last name"
+    },
+    "email": {
+      "type": "string",
+      "description": "Email address"
+    },
+    "phone": {
+      "type": "string",
+      "description": "Phone number"
+    },
+    "address": {
+      "type": "string",
+      "description": "Address"
+    },
+    "dana_hoa_member": {
+      "type": "boolean",
+      "description": "DANA HOA member status"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Additional notes"
+    }
+  },
+  "required": [
+    "residence_name"
+  ]
+}

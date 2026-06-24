@@ -1,0 +1,47 @@
+{
+  "name": "Amenity",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Amenity name (gym, rooftop, conference room)"
+    },
+    "building_id": {
+      "type": "string",
+      "description": "Reference to building"
+    },
+    "description": {
+      "type": "string",
+      "description": "Amenity description"
+    },
+    "capacity": {
+      "type": "number",
+      "description": "Maximum capacity"
+    },
+    "hours_start": {
+      "type": "string",
+      "description": "Opening time (HH:MM)"
+    },
+    "hours_end": {
+      "type": "string",
+      "description": "Closing time (HH:MM)"
+    },
+    "slot_duration": {
+      "type": "number",
+      "description": "Duration of each slot in minutes"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether amenity is available for booking"
+    }
+  },
+  "required": [
+    "name",
+    "building_id",
+    "capacity",
+    "hours_start",
+    "hours_end",
+    "slot_duration"
+  ]
+}

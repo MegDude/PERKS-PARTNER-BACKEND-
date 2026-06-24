@@ -1,0 +1,17 @@
+:root {
+  --dp-navy: #0A1422;
+  --dp-navy-soft: #1B2638;
+  --dp-gold: #C5A028;
+  --dp-pearl: #F8FAFC;
+  --dp-white: #FFFFFF;
+  --dp-muted: #6E7785;
+  --dp-line: rgba(10,20,34,.08);
+  --dp-shadow: 0 18px 50px rgba(10,20,34,.12);
+
+  --radius-sm: 12px;
+  --radius-md: 16px;
+
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+}

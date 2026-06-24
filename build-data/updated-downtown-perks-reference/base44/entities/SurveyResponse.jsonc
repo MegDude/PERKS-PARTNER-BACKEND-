@@ -1,0 +1,124 @@
+{
+  "name": "SurveyResponse",
+  "type": "object",
+  "properties": {
+    "survey_id": {
+      "type": "string",
+      "description": "Reference to Survey"
+    },
+    "survey_name": {
+      "type": "string",
+      "description": "Survey title (denormalized for reporting)"
+    },
+    "resident_id": {
+      "type": "string",
+      "description": "Reference to Tenant/Resident"
+    },
+    "resident_name": {
+      "type": "string",
+      "description": "Resident full name (denormalized)"
+    },
+    "resident_email": {
+      "type": "string",
+      "description": "Resident email (denormalized)"
+    },
+    "building_id": {
+      "type": "string",
+      "description": "Reference to Building"
+    },
+    "building_name": {
+      "type": "string",
+      "description": "Building name (denormalized)"
+    },
+    "unit_id": {
+      "type": "string",
+      "description": "Reference to Flat/Unit (optional)"
+    },
+    "partner_id": {
+      "type": "string",
+      "description": "Reference to Partner (optional, for redemption-linked surveys)"
+    },
+    "partner_name": {
+      "type": "string",
+      "description": "Partner business name (denormalized)"
+    },
+    "perk_id": {
+      "type": "string",
+      "description": "Reference to PerkLocation (optional)"
+    },
+    "perk_name": {
+      "type": "string",
+      "description": "Perk name (denormalized)"
+    },
+    "redemption_id": {
+      "type": "string",
+      "description": "Reference to PerkRedemption (optional)"
+    },
+    "map_entity_id": {
+      "type": "string",
+      "description": "Map entity identifier (optional)"
+    },
+    "district": {
+      "type": "string",
+      "description": "Downtown district"
+    },
+    "category": {
+      "type": "string",
+      "description": "Perk/venue category"
+    },
+    "answers": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      },
+      "description": "Survey answers as JSON array of {question, answer}"
+    },
+    "score": {
+      "type": "number",
+      "description": "Numeric rating/score (0-100)"
+    },
+    "sentiment": {
+      "type": "string",
+      "enum": [
+        "positive",
+        "neutral",
+        "negative"
+      ],
+      "description": "Sentiment analysis result"
+    },
+    "completed_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Completion timestamp"
+    },
+    "exported_to_google_sheets": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether response was exported to Google Sheets"
+    },
+    "google_sheet_row_id": {
+      "type": "string",
+      "description": "Row identifier in Google Sheets after export"
+    },
+    "notification_sent": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether management notification was sent"
+    },
+    "source_flow": {
+      "type": "string",
+      "enum": [
+        "resident-survey",
+        "perk-redemption",
+        "event-feedback",
+        "building-feedback"
+      ],
+      "default": "resident-survey",
+      "description": "Source flow that triggered the survey"
+    }
+  },
+  "required": [
+    "survey_id",
+    "source_flow"
+  ]
+}

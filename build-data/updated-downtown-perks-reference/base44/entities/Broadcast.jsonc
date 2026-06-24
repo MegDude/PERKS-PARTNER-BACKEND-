@@ -1,0 +1,52 @@
+{
+  "name": "Broadcast",
+  "type": "object",
+  "properties": {
+    "building_id": {
+      "type": "string",
+      "description": "Reference to Building"
+    },
+    "title": {
+      "type": "string",
+      "description": "Broadcast title"
+    },
+    "message": {
+      "type": "string",
+      "description": "Broadcast message content"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "perks_announcement",
+        "community_update",
+        "event",
+        "reminder"
+      ],
+      "description": "Type of broadcast"
+    },
+    "recipients_count": {
+      "type": "number",
+      "description": "Number of residents who received this"
+    },
+    "delivery_status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "scheduled",
+        "sent"
+      ],
+      "default": "draft",
+      "description": "Delivery status"
+    },
+    "scheduled_for": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Scheduled send time"
+    }
+  },
+  "required": [
+    "building_id",
+    "title",
+    "message"
+  ]
+}

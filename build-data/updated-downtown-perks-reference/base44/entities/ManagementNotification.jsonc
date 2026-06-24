@@ -1,0 +1,104 @@
+{
+  "name": "ManagementNotification",
+  "type": "object",
+  "properties": {
+    "type": {
+      "type": "string",
+      "enum": [
+        "survey-completed",
+        "redemption-survey-completed"
+      ],
+      "default": "survey-completed",
+      "description": "Notification type"
+    },
+    "resident_id": {
+      "type": "string",
+      "description": "Reference to Tenant/Resident"
+    },
+    "resident_name": {
+      "type": "string",
+      "description": "Resident name (denormalized)"
+    },
+    "building_id": {
+      "type": "string",
+      "description": "Reference to Building"
+    },
+    "building_name": {
+      "type": "string",
+      "description": "Building name (denormalized)"
+    },
+    "survey_response_id": {
+      "type": "string",
+      "description": "Reference to SurveyResponse"
+    },
+    "redemption_id": {
+      "type": "string",
+      "description": "Reference to PerkRedemption (optional)"
+    },
+    "partner_id": {
+      "type": "string",
+      "description": "Reference to Partner (optional)"
+    },
+    "partner_name": {
+      "type": "string",
+      "description": "Partner name (denormalized)"
+    },
+    "perk_id": {
+      "type": "string",
+      "description": "Reference to PerkLocation (optional)"
+    },
+    "perk_name": {
+      "type": "string",
+      "description": "Perk name (denormalized)"
+    },
+    "message": {
+      "type": "string",
+      "description": "Notification message content"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "sent",
+        "failed"
+      ],
+      "default": "pending",
+      "description": "Notification delivery status"
+    },
+    "channel": {
+      "type": "string",
+      "enum": [
+        "email",
+        "slack",
+        "in-app"
+      ],
+      "default": "email",
+      "description": "Notification channel"
+    },
+    "recipient_email": {
+      "type": "string",
+      "description": "Management contact email"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When notification was created"
+    },
+    "sent_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When notification was sent"
+    },
+    "error_message": {
+      "type": "string",
+      "description": "Error details if failed"
+    }
+  },
+  "required": [
+    "type",
+    "survey_response_id",
+    "message",
+    "status",
+    "channel"
+  ]
+}

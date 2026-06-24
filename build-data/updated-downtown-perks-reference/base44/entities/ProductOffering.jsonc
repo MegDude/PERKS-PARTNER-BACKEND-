@@ -1,0 +1,86 @@
+{
+  "name": "ProductOffering",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Full Stripe product name"
+    },
+    "display_name": {
+      "type": "string",
+      "description": "Cleaned-up display name"
+    },
+    "family": {
+      "type": "string",
+      "enum": [
+        "Subscription",
+        "Support",
+        "Sponsorship",
+        "Activation",
+        "Analytics",
+        "Surveys",
+        "Broadcast",
+        "Events",
+        "Campaigns",
+        "Placements",
+        "Resident",
+        "Tier"
+      ],
+      "description": "Product family/category"
+    },
+    "kind": {
+      "type": "string",
+      "enum": [
+        "subscription",
+        "addon",
+        "tier"
+      ],
+      "default": "addon",
+      "description": "Product kind"
+    },
+    "partner_type": {
+      "type": "string",
+      "description": "Partner type for tiers (venue, property, hotel, brand, civic)"
+    },
+    "tier_id": {
+      "type": "string",
+      "description": "Tier identifier for tier products"
+    },
+    "amount": {
+      "type": "number",
+      "description": "Price amount in major currency units (e.g. dollars)"
+    },
+    "currency": {
+      "type": "string",
+      "default": "usd",
+      "description": "Currency code"
+    },
+    "interval": {
+      "type": "string",
+      "enum": [
+        "month",
+        "year",
+        "one_time"
+      ],
+      "description": "Billing interval"
+    },
+    "stripe_price_id": {
+      "type": "string",
+      "description": "Stripe Price ID"
+    },
+    "stripe_product_id": {
+      "type": "string",
+      "description": "Stripe Product ID"
+    }
+  },
+  "required": [
+    "name",
+    "display_name",
+    "family",
+    "kind",
+    "amount",
+    "currency",
+    "stripe_price_id",
+    "stripe_product_id"
+  ]
+}

@@ -1,0 +1,60 @@
+{
+  "name": "SurveyExportLog",
+  "type": "object",
+  "properties": {
+    "survey_response_id": {
+      "type": "string",
+      "description": "Reference to SurveyResponse"
+    },
+    "destination": {
+      "type": "string",
+      "enum": [
+        "google-sheets"
+      ],
+      "default": "google-sheets",
+      "description": "Export destination"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "success",
+        "failed"
+      ],
+      "default": "pending",
+      "description": "Export status"
+    },
+    "attempted_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When export was attempted"
+    },
+    "completed_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When export completed (success or failure)"
+    },
+    "error_message": {
+      "type": "string",
+      "description": "Error details if failed"
+    },
+    "sheet_id": {
+      "type": "string",
+      "description": "Google Sheets spreadsheet ID"
+    },
+    "row_number": {
+      "type": "number",
+      "description": "Row number in the sheet after successful export"
+    },
+    "retry_count": {
+      "type": "number",
+      "default": 0,
+      "description": "Number of retry attempts"
+    }
+  },
+  "required": [
+    "survey_response_id",
+    "destination",
+    "status"
+  ]
+}

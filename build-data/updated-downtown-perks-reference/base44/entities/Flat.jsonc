@@ -1,0 +1,72 @@
+{
+  "name": "Flat",
+  "type": "object",
+  "properties": {
+    "building_id": {
+      "type": "string",
+      "description": "Reference to Building entity"
+    },
+    "flat_number": {
+      "type": "string",
+      "description": "Unit number (e.g., 1604, 2013)"
+    },
+    "floor": {
+      "type": "number",
+      "description": "Floor number"
+    },
+    "listing_type": {
+      "type": "string",
+      "enum": [
+        "rental",
+        "for_sale"
+      ],
+      "default": "rental",
+      "description": "Whether this unit is for rent or for sale"
+    },
+    "price": {
+      "type": "number",
+      "description": "Rent per month or sale price"
+    },
+    "beds": {
+      "type": "number",
+      "description": "Number of bedrooms"
+    },
+    "baths": {
+      "type": "number",
+      "description": "Number of bathrooms"
+    },
+    "sqft": {
+      "type": "number",
+      "description": "Square footage"
+    },
+    "mls": {
+      "type": "string",
+      "description": "MLS listing number"
+    },
+    "room_type": {
+      "type": "string",
+      "enum": [
+        "Studio",
+        "1-Bedroom",
+        "2-Bedroom",
+        "3-Bedroom",
+        "4-Bedroom",
+        "Penthouse"
+      ],
+      "description": "Type of unit"
+    },
+    "is_occupied": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether the unit is currently occupied"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Additional notes"
+    }
+  },
+  "required": [
+    "building_id",
+    "flat_number"
+  ]
+}

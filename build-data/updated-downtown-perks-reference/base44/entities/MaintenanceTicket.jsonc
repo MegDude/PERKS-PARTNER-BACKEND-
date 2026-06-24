@@ -1,0 +1,83 @@
+{
+  "name": "MaintenanceTicket",
+  "type": "object",
+  "properties": {
+    "tenant_id": {
+      "type": "string",
+      "description": "Reference to Tenant"
+    },
+    "flat_id": {
+      "type": "string",
+      "description": "Reference to Flat/Unit"
+    },
+    "title": {
+      "type": "string",
+      "description": "Issue title"
+    },
+    "description": {
+      "type": "string",
+      "description": "Detailed issue description"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "plumbing",
+        "electrical",
+        "hvac",
+        "appliance",
+        "structural",
+        "other"
+      ],
+      "description": "Issue category"
+    },
+    "priority": {
+      "type": "string",
+      "enum": [
+        "low",
+        "medium",
+        "high",
+        "urgent"
+      ],
+      "default": "medium",
+      "description": "Issue priority"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "open",
+        "in_progress",
+        "completed",
+        "closed"
+      ],
+      "default": "open",
+      "description": "Ticket status"
+    },
+    "photo_urls": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "URLs of attached photos"
+    },
+    "assigned_to": {
+      "type": "string",
+      "description": "Assigned staff member email"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Internal notes"
+    },
+    "completed_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Completion timestamp"
+    }
+  },
+  "required": [
+    "tenant_id",
+    "flat_id",
+    "title",
+    "description",
+    "category"
+  ]
+}
