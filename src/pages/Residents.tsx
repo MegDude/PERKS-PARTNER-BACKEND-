@@ -67,16 +67,16 @@ export default function Residents() {
   });
 
   return (
-    <div className="min-h-screen bg-[#F5F7FA]">
+    <div className="min-h-screen bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-10 p-6 bg-white shadow-none border border-[#EFEFEF] rounded-none">
-          <h3 className="text-xl font-bold text-[#11182B] mb-2">Resident Directory</h3>
+        <div className="mb-6 p-6 bg-white shadow-[0_18px_50px_rgba(17,24,43,0.05)] border border-[#EFEFEF] rounded-none">
+          <h3 className="text-xl font-bold text-[#11182B] mb-2">Resident CRM</h3>
           <p className="text-slate-500 font-medium text-sm leading-relaxed">
-            Connect with your community. Browse all residents, view their lease information, and track Downtown Perks enrollment. Filter by building or search by name to find residents quickly.
+            Review resident records, unit assignments, membership status, and Downtown Perks access from one building-scoped workspace.
           </p>
         </div>
 
-        <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
+        <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="mb-6">
           <div className="flex items-center gap-3 mb-2">
             <div className="p-3 rounded-none bg-slate-100 border border-[#EFEFEF]">
               <Users className="w-6 h-6 text-[#11182B] " />
@@ -92,7 +92,7 @@ export default function Residents() {
           <div className="relative">
             <Search className="absolute left-3 top-3 w-5 h-5 text-slate-400" />
             <Input
-              placeholder="Search by name, email, or flat number..."
+              placeholder="Search by name, email, or unit number..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10 border-[#EFEFEF] font-medium"
@@ -109,8 +109,8 @@ export default function Residents() {
             <div className="p-4 rounded-none bg-slate-50 border border-slate-100 w-fit mx-auto mb-4">
               <Users className="w-8 h-8 text-[#11182B] " />
             </div>
-            <h3 className="text-lg font-bold text-[#11182B] ">No Residents Found</h3>
-            <p className="text-slate-500 font-medium mt-1">Try adjusting your search or filters</p>
+            <h3 className="text-lg font-bold text-[#11182B] ">No residents match this view</h3>
+            <p className="text-slate-500 font-medium mt-1">Search another name, email, or unit number to continue.</p>
           </Card>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -127,7 +127,7 @@ export default function Residents() {
                       <div>
                         <h3 className="font-bold text-[#11182B] ">{resident.name}</h3>
                         <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">
-                          Flat {resident.flat?.flat_number}
+                          Unit {resident.flat?.flat_number}
                         </p>
                       </div>
                     </div>

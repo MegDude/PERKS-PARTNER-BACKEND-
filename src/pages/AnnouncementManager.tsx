@@ -175,7 +175,7 @@ export default function AnnouncementManager() {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label>Title</Label>
-              <Input required value={formData.title} onChange={(e) => setFormData({...formData, title: e.target.value})} placeholder="e.g. Water Shutoff Notice" />
+              <Input required value={formData.title} onChange={(e) => setFormData({...formData, title: e.target.value})} placeholder="Rooftop hours update" />
             </div>
             <div className="space-y-2">
               <Label>Category</Label>
@@ -197,7 +197,7 @@ export default function AnnouncementManager() {
                 className="w-full px-3 py-2 border rounded-none min-h-[100px]"
                 value={formData.description}
                 onChange={(e) => setFormData({...formData, description: e.target.value})}
-                placeholder="Details of the announcement..."
+                placeholder="Write the resident-facing announcement clearly, including timing, location, and any action residents need to take."
               />
             </div>
             <DialogFooter>

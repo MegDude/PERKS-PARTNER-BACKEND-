@@ -1,15 +1,64 @@
 @import "./styles/tokens.css";
 @import "tailwindcss";
 
+.dp-admin-shell {
+  --dp-admin-max: 1180px;
+  --dp-admin-gutter: clamp(18px, 5vw, 42px);
+  --dp-admin-section-gap: clamp(20px, 5vw, 36px);
+  --dp-admin-card-pad: clamp(18px, 4.8vw, 28px);
+  background: #ffffff;
+  color: #11182b;
+}
+
 .dp-admin-shell,
 .dp-admin-shell * {
+  box-sizing: border-box;
   min-width: 0;
 }
 
-.dp-admin-shell :where(h1, h2, h3, h4, p, span, a, button, label, th, td, li, input, textarea, select) {
-  overflow-wrap: anywhere;
+.dp-admin-shell :where(h1, h2, h3, h4, p, span, a, button, label, th, td, li, input, textarea, select, div) {
+  overflow-wrap: break-word;
   word-break: normal;
+  hyphens: none;
   letter-spacing: 0 !important;
+}
+
+.dp-admin-shell :where(main) {
+  max-width: 100%;
+  overflow-x: hidden;
+  background: #ffffff !important;
+}
+
+.dp-admin-shell :where(main > div:not([class*="fixed"]):not([class*="absolute"]), main > section:not([class*="fixed"]):not([class*="absolute"])) {
+  width: 100%;
+  max-width: calc(var(--dp-admin-max) + (var(--dp-admin-gutter) * 2));
+  margin-inline: auto;
+}
+
+.dp-admin-shell :where(main > [class*="p-6"], main > [class*="p-8"], main > [class*="px-"], main > [class*="py-"]) {
+  padding-inline: var(--dp-admin-gutter) !important;
+}
+
+.dp-admin-shell :where(.max-w-7xl, .max-w-6xl, .max-w-5xl, .max-w-4xl, .max-w-3xl, .max-w-2xl) {
+  width: 100%;
+  max-width: var(--dp-admin-max) !important;
+  margin-inline: auto !important;
+}
+
+.dp-admin-shell :where(.max-w-7xl, .max-w-6xl, .max-w-5xl, .max-w-4xl, .max-w-3xl, .max-w-2xl)[class*="px-"] {
+  padding-inline: 0 !important;
+}
+
+.dp-admin-shell :where(section, article, header, footer, form, nav, aside, .grid, .flex) {
+  max-width: 100%;
+}
+
+.dp-admin-shell :where([class*="bg-[#F5F7FA]"], [class*="bg-[#FAFAFA]"], [class*="bg-bgMain"], [class*="bg-slate-50"], [class*="bg-slate-100"]) {
+  background-color: #ffffff !important;
+}
+
+.dp-admin-shell :where([class*="shadow-xl"], [class*="shadow-2xl"], .shadow-lg) {
+  box-shadow: 0 18px 50px rgba(17, 24, 43, 0.08) !important;
 }
 
 .dp-admin-shell :where(table) {
@@ -18,15 +67,17 @@
 }
 
 .dp-admin-shell :where(h1) {
-  font-size: clamp(1.5rem, 2vw, 2rem);
+  font-size: clamp(1.45rem, 5.4vw, 2rem);
   line-height: 1.15;
   font-weight: 600;
+  max-width: 100%;
 }
 
 .dp-admin-shell :where(h2) {
-  font-size: clamp(1.125rem, 1.6vw, 1.375rem);
+  font-size: clamp(1.1rem, 4.2vw, 1.375rem);
   line-height: 1.2;
   font-weight: 600;
+  max-width: 100%;
 }
 
 .dp-admin-shell :where(h3) {
@@ -39,12 +90,15 @@
   font-weight: 600;
 }
 
+.dp-admin-shell :where(button, a) {
+  max-width: 100%;
+}
+
 .dp-admin-shell :where(button) {
   min-height: 34px;
-  max-width: 100%;
   white-space: nowrap;
   font-size: 10px;
-  line-height: 1;
+  line-height: 1.15;
   overflow: visible;
   text-overflow: clip;
 }
@@ -56,10 +110,24 @@
 
 .dp-admin-shell :where(.overflow-x-auto) {
   -webkit-overflow-scrolling: touch;
+  max-width: 100%;
 }
 
 .dp-admin-shell :where(button svg, a svg) {
   flex-shrink: 0;
+  color: currentColor;
+  opacity: 1;
+  stroke: currentColor;
+  transition: color 160ms ease, opacity 160ms ease;
+}
+
+.dp-admin-shell :where(button:hover svg, a:hover svg, .group:hover svg) {
+  opacity: 1 !important;
+  stroke: currentColor !important;
+}
+
+.dp-admin-shell :where(button:hover, a:hover) {
+  text-decoration: none;
 }
 
 .dp-admin-shell :where(button:not(.h-10):not(.h-12)) {
@@ -67,4 +135,109 @@
   padding-bottom: 0.55rem;
   padding-left: 0.9rem;
   padding-right: 0.9rem;
+}
+
+.dp-admin-shell .dp-admin-select {
+  width: 100%;
+  min-height: 42px;
+  border: 0;
+  border-bottom: 1px solid rgba(11, 31, 51, 0.18);
+  border-radius: 0;
+  background: #ffffff;
+  color: #0b1f33;
+  padding: 0.5rem 0;
+  font-size: 0.875rem;
+  line-height: 1.3;
+  outline: none;
+}
+
+.dp-admin-shell .dp-admin-select:focus {
+  border-bottom-color: #c8a96a;
+}
+
+.dp-admin-shell .dp-admin-input {
+  width: 100%;
+  min-height: 42px;
+  border: 0;
+  border-bottom: 1px solid rgba(11, 31, 51, 0.18);
+  border-radius: 0;
+  background: #ffffff;
+  color: #0b1f33;
+  padding: 0.65rem 0;
+  font-size: 0.875rem;
+  line-height: 1.4;
+  outline: none;
+}
+
+.dp-admin-shell .dp-admin-input:focus {
+  border-bottom-color: #c8a96a;
+}
+
+.dp-admin-shell textarea.dp-admin-input {
+  resize: vertical;
+}
+
+@media (max-width: 430px) {
+  .dp-admin-shell {
+    --dp-admin-gutter: 18px;
+    --dp-admin-section-gap: 20px;
+    --dp-admin-card-pad: 18px;
+  }
+
+  .dp-admin-shell :where(main > div:not([class*="fixed"]):not([class*="absolute"]), main > section:not([class*="fixed"]):not([class*="absolute"])) {
+    padding-inline: var(--dp-admin-gutter) !important;
+  }
+
+  .dp-admin-shell :where(.max-w-7xl, .max-w-6xl, .max-w-5xl, .max-w-4xl, .max-w-3xl, .max-w-2xl) {
+    padding-inline: 0 !important;
+  }
+
+  .dp-admin-shell :where(.p-8, .p-6) {
+    padding: var(--dp-admin-card-pad) !important;
+  }
+
+  .dp-admin-shell :where(.px-8, .px-6, .px-5, .px-4) {
+    padding-left: var(--dp-admin-card-pad) !important;
+    padding-right: var(--dp-admin-card-pad) !important;
+  }
+
+  .dp-admin-shell :where(.py-8, .py-6, .py-5, .py-4) {
+    padding-top: var(--dp-admin-card-pad) !important;
+    padding-bottom: var(--dp-admin-card-pad) !important;
+  }
+
+  .dp-admin-shell :where(main > div, main > section, .space-y-8, .space-y-6) {
+    gap: var(--dp-admin-section-gap) !important;
+  }
+
+  .dp-admin-shell :where(.grid) {
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: var(--dp-admin-section-gap) !important;
+  }
+
+  .dp-admin-shell :where(h1, h2, h3, p) {
+    max-width: 100%;
+  }
+
+  .dp-admin-shell :where(.flex:not(nav):not([class*="overflow-x-auto"]):not([class*="flex-col"])) {
+    flex-wrap: wrap;
+  }
+
+  .dp-admin-shell :where(button) {
+    min-height: 38px;
+    white-space: normal;
+    text-align: center;
+  }
+
+  .dp-admin-shell :where(button:not(.w-full):not([class*="w-full"]), a:not(.w-full):not([class*="w-full"])) {
+    min-width: 0;
+  }
+
+  .dp-admin-shell :where(table) {
+    min-width: 560px;
+  }
+
+  .dp-admin-shell :where(.sticky.top-0) {
+    padding-inline: var(--dp-admin-gutter) !important;
+  }
 }

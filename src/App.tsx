@@ -27,6 +27,7 @@ import Surveys from './pages/Surveys';
 import AnnouncementManager from './pages/AnnouncementManager';
 import BuildingEngagement from './pages/BuildingEngagement';
 import BackendWorkspace from './pages/BackendWorkspace';
+import PlatformCommandCenter from './pages/PlatformCommandCenter';
 
 export default function App() {
   return (
@@ -34,9 +35,21 @@ export default function App() {
       <Route path="/" element={<Home />} />
       <Route path="/map" element={<MapOS />} />
       <Route path="/welcome" element={<WelcomeFlow />} />
+      <Route path="/partner-portal" element={<Navigate to="/admin/partner-portal" replace />} />
+      <Route path="/partner-workspace" element={<Navigate to="/admin" replace />} />
+      <Route path="/partner-workspace/*" element={<Navigate to="/admin" replace />} />
       <Route path="/admin" element={<PartnerDashboardLayout />}>
         <Route index element={<BackendWorkspace />} />
         <Route path="home" element={<Home />} />
+        <Route path="platform" element={<PlatformCommandCenter />} />
+        <Route path="platform/partners" element={<PartnerPortal />} />
+        <Route path="platform/buildings" element={<BuildingsManagement />} />
+        <Route path="platform/events" element={<Events />} />
+        <Route path="platform/perks" element={<DowntownPerks />} />
+        <Route path="platform/campaigns" element={<EngagementHub />} />
+        <Route path="platform/residents" element={<Residents />} />
+        <Route path="platform/reports" element={<Reports />} />
+        <Route path="platform/settings" element={<BackendWorkspace />} />
         <Route path="dashboard" element={<Dashboard />} />
         
         {/* Buildings Context Setup if needed */}

@@ -1,174 +1,266 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Activity,
+  ArrowRight,
   BarChart3,
   Bell,
   Building2,
   CalendarDays,
-  Database,
   FileText,
+  Hotel,
+  Loader2,
   Megaphone,
-  MessageSquare,
   Settings,
+  ShieldCheck,
   ShoppingBag,
   Ticket,
   Users,
 } from 'lucide-react';
+import { base44 } from '@/api/base44Client';
+import { platformArchitecture } from '@/platform/registry';
 
-const modules = [
-  { to: '/admin/properties', label: 'Properties', detail: 'Buildings, access codes, operational inventory', icon: Building2 },
-  { to: '/admin/residents', label: 'Residents', detail: 'Tenant records, units, enrollment, payment status', icon: Users },
-  { to: '/admin/partner-portal', label: 'Partner Portal', detail: 'Partner-owned perks, messages, redemptions', icon: ShoppingBag },
-  { to: '/admin/perks', label: 'Perks Network', detail: 'Venue offers, categories, activation status', icon: Ticket },
-  { to: '/admin/events', label: 'Events', detail: 'Resident programming, RSVPs, attendance', icon: CalendarDays },
-  { to: '/admin/engagement', label: 'Engagement Hub', detail: 'Campaigns, broadcasts, resident targeting', icon: Megaphone },
-  { to: '/admin/surveys', label: 'Surveys', detail: 'Feedback collection and survey response flows', icon: MessageSquare },
-  { to: '/admin/reports', label: 'Reports', detail: 'PDF/report exports and partner summaries', icon: FileText },
-  { to: '/admin/analytics', label: 'Analytics', detail: 'Redemption trends and performance KPIs', icon: BarChart3 },
-];
-
-const platformAutomations = [
-  'Survey response processing',
-  'Redemption verification',
-  'Partner account context',
-  'Partner perk updates',
-  'Partner message handling',
-  'Property performance reports',
-  'Partner monthly reports',
-  'Resident bulk updates',
+const moduleRoutes = [
+  { label: 'Platform Overview', to: '/admin/platform', icon: ShieldCheck },
+  { label: 'Partners', to: '/admin/partner-portal', icon: ShoppingBag },
+  { label: 'Properties', to: '/admin/properties', icon: Building2 },
+  { label: 'Hotels', to: '/admin/platform/partners', icon: Hotel },
+  { label: 'Venues', to: '/admin/platform/partners', icon: Ticket },
+  { label: 'Brands', to: '/admin/platform/partners', icon: ShoppingBag },
+  { label: 'Civic', to: '/admin/platform/partners', icon: ShieldCheck },
+  { label: 'Events', to: '/admin/events', icon: CalendarDays },
+  { label: 'Perks', to: '/admin/perks', icon: Ticket },
+  { label: 'Campaigns', to: '/admin/engagement', icon: Megaphone },
+  { label: 'Reports', to: '/admin/reports', icon: FileText },
+  { label: 'Users', to: '/admin/platform/settings', icon: Users },
+  { label: 'Notifications', to: '/admin/platform/settings', icon: Bell },
+  { label: 'System Health', to: '/admin/platform', icon: Activity },
 ];
 
 export default function BackendWorkspace() {
-  const [health, setHealth] = useState<any>(null);
-  const [overview, setOverview] = useState<any>(null);
+  const [data, setData] = useState<any>({
+    health: null,
+    tenantsStatus: null,
+    partners: [],
+    platformTenants: [],
+    buildings: [],
+    residents: [],
+    perks: [],
+    redemptions: [],
+    events: [],
+    rsvps: [],
+    campaigns: [],
+    reports: [],
+    broadcasts: [],
+    users: [],
+    notifications: [],
+    auditLogs: [],
+  });
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    Promise.all([
-      fetch('/api/health').then((res) => res.json()),
-      fetch('/api/insights/overview').then((res) => res.json()),
-    ])
-      .then(([healthData, overviewData]) => {
-        setHealth(healthData);
-        setOverview(overviewData);
-      })
-      .catch((error) => {
-        console.error('Workspace bootstrap failed:', error);
-      });
+    let mounted = true;
+
+    async function load() {
+      try {
+        const [
+          health,
+          tenantsStatus,
+          partners,
+          platformTenants,
+          buildings,
+          residents,
+          perks,
+          redemptions,
+          events,
+          rsvps,
+          campaigns,
+          reports,
+          broadcasts,
+          users,
+          notifications,
+          auditLogs,
+        ] = await Promise.all([
+          fetch('/api/health').then((res) => res.json()).catch(() => null),
+          fetch('/api/tenant-provisioning/status').then((res) => res.json()).catch(() => null),
+          base44.entities.Partner.list().catch(() => []),
+          base44.entities.PlatformTenant.list().catch(() => []),
+          base44.entities.Building.list().catch(() => []),
+          base44.entities.Tenant.list().catch(() => []),
+          base44.entities.PerkLocation.list().catch(() => []),
+          base44.entities.PerkRedemption.list().catch(() => []),
+          base44.entities.Event.list().catch(() => []),
+          base44.entities.EventRSVP.list().catch(() => []),
+          base44.entities.Campaign.list().catch(() => []),
+          base44.entities.PartnerReport.list().catch(() => []),
+          base44.entities.Broadcast.list().catch(() => []),
+          base44.entities.User.list().catch(() => []),
+          base44.entities.ManagementNotification.list().catch(() => []),
+          base44.entities.TenantAuditLog.list().catch(() => []),
+        ]);
+
+        if (mounted) {
+          setData({ health, tenantsStatus, partners, platformTenants, buildings, residents, perks, redemptions, events, rsvps, campaigns, reports, broadcasts, users, notifications, auditLogs });
+        }
+      } catch (error) {
+        console.error('Platform operations dashboard failed to load:', error);
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    }
+
+    load();
+    return () => {
+      mounted = false;
+    };
   }, []);
 
-  const entityCount = health?.entities ? Object.keys(health.entities).length : 0;
-  const populatedCount = health?.entities ? Object.values(health.entities).filter((count: any) => Number(count) > 0).length : 0;
+  const tenantTypeCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    data.platformTenants.forEach((tenant: any) => {
+      const type = tenant.type || 'partner';
+      counts[type] = (counts[type] || 0) + 1;
+    });
+    return counts;
+  }, [data.platformTenants]);
+
+  const activePerks = data.perks.filter((perk: any) => !perk.deleted_at && (perk.active || perk.is_active || perk.status === 'active')).length;
+  const upcomingEvents = data.events.filter((event: any) => !event.date || new Date(event.date) >= new Date(new Date().toDateString())).length;
+  const runningCampaigns = data.campaigns.filter((campaign: any) => campaign.status === 'active' || campaign.active || !campaign.status).length + data.broadcasts.length;
+  const perkSaves = data.perks.reduce((sum: number, perk: any) => sum + Number(perk.saves || perk.save_count || 0), 0);
+  const qrScans = data.perks.reduce((sum: number, perk: any) => sum + Number(perk.scans || perk.scan_count || 0), 0) + data.redemptions.length;
+
+  const kpis = [
+    { label: 'Total Partners', value: data.partners.length || data.tenantsStatus?.tenants || 0 },
+    { label: 'Active Properties', value: data.buildings.filter((building: any) => building.active !== false).length },
+    { label: 'Active Hotels', value: tenantTypeCounts.hotel || tenantTypeCounts.hotel_group || 0 },
+    { label: 'Active Venues', value: tenantTypeCounts.venue || tenantTypeCounts.venue_group || 0 },
+    { label: 'Active Perks', value: activePerks },
+    { label: 'Upcoming Events', value: upcomingEvents },
+    { label: 'Campaigns Running', value: runningCampaigns },
+    { label: 'Resident Profiles', value: data.residents.length },
+    { label: 'Perk Saves', value: perkSaves },
+    { label: 'Perk Redemptions', value: data.redemptions.length },
+    { label: 'Event RSVPs', value: data.rsvps.length },
+    { label: 'QR Scans', value: qrScans },
+  ];
+
+  const recentActivity = [...data.auditLogs, ...data.notifications]
+    .sort((a: any, b: any) => new Date(b.created_at || b.sent_at || 0).getTime() - new Date(a.created_at || a.sent_at || 0).getTime())
+    .slice(0, 8);
+
+  if (loading) {
+    return (
+      <div className="flex min-h-[500px] items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-[#0B1F33]" />
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] text-[#11182B]">
-      <section className="border-b border-[#11182B]/10 bg-white">
-        <div className="mx-auto max-w-7xl px-5 py-8 sm:px-8 lg:px-10">
-          <div className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr] lg:items-end">
-            <div>
-              <div className="mb-4 inline-flex items-center gap-2 border border-[#11182B]/10 bg-[#F8FAFC] px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-[#6E7785]">
-                <Database className="h-3.5 w-3.5 text-[#C5A028]" />
-                Operations Workspace
-              </div>
-              <h1 className="max-w-3xl text-3xl font-semibold leading-tight tracking-normal text-[#11182B] sm:text-4xl">
-                Partner platform command center
-              </h1>
-              <p className="mt-3 max-w-2xl text-sm font-medium leading-6 text-[#6E7785]">
-                Navigate the full Downtown Perks platform from one place: properties, residents, partners, perks, events, surveys, reporting, and partner operations.
-              </p>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div className="border border-[#11182B]/10 bg-[#11182B] p-4 text-white">
-                <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-white/60">
-                  <Activity className="h-3.5 w-3.5 text-[#C5A028]" />
-                  Platform Status
-                </div>
-                <div className="mt-3 text-2xl font-semibold">{health?.status || '...'}</div>
-              </div>
-              <div className="border border-[#11182B]/10 bg-white p-4">
-                <div className="text-[10px] font-bold uppercase tracking-widest text-[#6E7785]">Data Areas</div>
-                <div className="mt-3 text-2xl font-semibold">{populatedCount}/{entityCount || '...'}</div>
-              </div>
-              <div className="border border-[#11182B]/10 bg-white p-4">
-                <div className="text-[10px] font-bold uppercase tracking-widest text-[#6E7785]">Residents</div>
-                <div className="mt-3 text-2xl font-semibold">{overview?.totalTenants ?? '...'}</div>
-              </div>
-              <div className="border border-[#11182B]/10 bg-white p-4">
-                <div className="text-[10px] font-bold uppercase tracking-widest text-[#6E7785]">Active Perks</div>
-                <div className="mt-3 text-2xl font-semibold">{overview?.activePerks ?? '...'}</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="mx-auto max-w-7xl px-5 py-8 sm:px-8 lg:px-10">
-        <div className="mb-4 flex items-center justify-between gap-4">
+    <div className="mx-auto max-w-[1440px] space-y-6 p-5 text-[#0B1F33] sm:p-8">
+      <section className="rounded-xl border border-[rgba(11,31,51,0.08)] bg-white p-6">
+        <div className="grid gap-6 xl:grid-cols-[1fr_360px] xl:items-end">
           <div>
-            <h2 className="text-lg font-semibold">Platform Modules</h2>
-            <p className="text-sm font-medium text-[#6E7785]">Everything partners and operators need, one click deep.</p>
-          </div>
-          <Link
-            to="/admin/dashboard"
-            className="hidden border border-[#11182B] bg-[#11182B] px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-white transition-colors hover:bg-[#1B2638] sm:inline-flex"
-          >
-            View Stats
-          </Link>
-        </div>
-
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-          {modules.map((module) => {
-            const Icon = module.icon;
-            return (
-              <Link
-                key={module.to}
-                to={module.to}
-                className="group min-h-[138px] border border-[#11182B]/10 bg-white p-5 transition-colors hover:border-[#11182B] hover:bg-[#FAFAFA]"
-              >
-                <div className="mb-5 flex items-center justify-between gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center border border-[#11182B]/10 bg-[#F8FAFC] text-[#11182B]">
-                    <Icon className="h-5 w-5" />
-                  </div>
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-[#C5A028] group-hover:text-[#11182B]">Open</span>
-                </div>
-                <h3 className="text-base font-semibold">{module.label}</h3>
-                <p className="mt-2 text-sm font-medium leading-5 text-[#6E7785]">{module.detail}</p>
-              </Link>
-            );
-          })}
-        </div>
-      </section>
-
-      <section className="mx-auto max-w-7xl px-5 pb-10 sm:px-8 lg:px-10">
-        <div className="grid gap-4 lg:grid-cols-[0.9fr_1.1fr]">
-          <div className="border border-[#11182B]/10 bg-white p-5">
-            <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-[#6E7785]">
-              <Bell className="h-3.5 w-3.5 text-[#C5A028]" />
-              Platform Automations
-            </div>
-            <div className="mt-4 grid gap-2">
-              {platformAutomations.map((name) => (
-                <div key={name} className="flex items-center justify-between border-t border-[#11182B]/10 py-2 text-sm">
-                  <span className="font-semibold text-[#11182B]">{name}</span>
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-[#6E7785]">active</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="border border-[#11182B]/10 bg-[#11182B] p-5 text-white">
-            <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-white/60">
-              <Settings className="h-3.5 w-3.5 text-[#C5A028]" />
-              Platform Coverage
-            </div>
-            <h3 className="mt-4 text-xl font-semibold">Downtown Perks operations are connected across the partner platform.</h3>
-            <p className="mt-3 text-sm font-medium leading-6 text-white/70">
-              Partner profiles, perk redemptions, resident engagement, surveys, reports, events, notifications, and product offerings are available from the same workspace.
+            <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-[#C8A96A]">Platform Owner View</p>
+            <h1 className="mt-2 text-3xl font-semibold tracking-normal">Platform Operations Dashboard</h1>
+            <p className="mt-3 max-w-4xl text-sm leading-6 text-[rgba(11,31,51,0.66)]">
+              Live operations across partners, properties, hotels, venues, brands, civic programs, events, perks, campaigns, residents, reports, notifications, and system health.
             </p>
           </div>
+          <div className="rounded-xl border border-[rgba(11,31,51,0.08)] bg-white p-4">
+            <StatusLine label="Runtime" value={data.health?.status || 'unknown'} />
+            <StatusLine label="Entity tables" value={data.health?.entities ? Object.keys(data.health.entities).length : 0} />
+            <StatusLine label="Tenant workspaces" value={data.tenantsStatus?.workspaces || 0} />
+            <StatusLine label="Audit events" value={data.auditLogs.length} />
+          </div>
         </div>
       </section>
+
+      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-6">
+        {kpis.map((metric) => (
+          <article key={metric.label} className="rounded-xl border border-[rgba(11,31,51,0.08)] bg-white p-4">
+            <p className="text-[11px] font-bold uppercase text-[rgba(11,31,51,0.52)]">{metric.label}</p>
+            <strong className="mt-2 block text-2xl font-semibold">{Number(metric.value || 0).toLocaleString()}</strong>
+          </article>
+        ))}
+      </section>
+
+      <section className="grid gap-6 xl:grid-cols-[1fr_420px]">
+        <article className="rounded-xl border border-[rgba(11,31,51,0.08)] bg-white p-5">
+          <div className="mb-5">
+            <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-[#C8A96A]">Required areas</p>
+            <h2 className="mt-2 text-xl font-semibold">Admin platform modules.</h2>
+            <p className="mt-2 text-sm leading-6 text-[rgba(11,31,51,0.62)]">Each module opens a real route and is backed by entity records, reporting relationships, permissions, or workflow status.</p>
+          </div>
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            {moduleRoutes.map((route) => {
+              const Icon = route.icon;
+              return (
+                <Link key={route.label} to={route.to} className="flex min-h-14 items-center justify-between rounded-xl border border-[rgba(11,31,51,0.08)] bg-white px-4 text-sm font-semibold hover:text-[#C8A96A]">
+                  <span className="flex items-center gap-2"><Icon className="h-4 w-4" /> {route.label}</span>
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              );
+            })}
+          </div>
+        </article>
+
+        <article className="rounded-xl border border-[rgba(11,31,51,0.08)] bg-white p-5">
+          <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-[#C8A96A]">Recent activity</p>
+          <h2 className="mt-2 text-xl font-semibold">Audit and notification feed.</h2>
+          <div className="mt-5 grid gap-3">
+            {recentActivity.length === 0 ? (
+              <p className="text-sm text-[rgba(11,31,51,0.58)]">No recent audit or notification records yet.</p>
+            ) : recentActivity.map((item: any) => (
+              <div key={item.id} className="border-t border-[rgba(11,31,51,0.08)] pt-3">
+                <p className="text-sm font-semibold">{item.action ? String(item.action).replace(/_/g, ' ') : item.message || item.type || 'Platform activity'}</p>
+                <p className="mt-1 text-xs text-[rgba(11,31,51,0.52)]">{item.actor_email || item.recipient_email || 'system'} · {new Date(item.created_at || item.sent_at || Date.now()).toLocaleString()}</p>
+              </div>
+            ))}
+          </div>
+        </article>
+      </section>
+
+      <section className="grid gap-6 xl:grid-cols-[1fr_1fr]">
+        <article className="rounded-xl border border-[rgba(11,31,51,0.08)] bg-white p-5">
+          <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-[#C8A96A]">Permissioned operating model</p>
+          <h2 className="mt-2 text-xl font-semibold">Every visible action should resolve through the operating chain.</h2>
+          <div className="mt-4 grid gap-2">
+            {['UI', 'API', 'Database', 'Permissions', 'Audit Log', 'Reporting'].map((step, index) => (
+              <div key={step} className="flex items-center justify-between border-t border-[rgba(11,31,51,0.08)] py-2 text-sm">
+                <span className="font-semibold">{step}</span>
+                <span className="text-xs font-semibold uppercase text-[rgba(11,31,51,0.48)]">Step {index + 1}</span>
+              </div>
+            ))}
+          </div>
+        </article>
+
+        <article className="rounded-xl border border-[rgba(11,31,51,0.08)] bg-white p-5">
+          <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-[#C8A96A]">Operating loop</p>
+          <h2 className="mt-2 text-xl font-semibold">Discovery to action.</h2>
+          <p className="mt-3 text-sm leading-6 text-[rgba(11,31,51,0.62)]">
+            {platformArchitecture.operatingLoop.join(' -> ')}
+          </p>
+          <div className="mt-5 flex flex-wrap gap-3">
+            <Link to="/admin/platform" className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-[#0B1F33] bg-[#0B1F33] px-4 text-xs font-semibold text-white">
+              Super Admin <Settings className="h-4 w-4" />
+            </Link>
+            <Link to="/admin/perks" className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-[rgba(11,31,51,0.12)] bg-white px-4 text-xs font-semibold text-[#0B1F33]">
+              Perks Module <Ticket className="h-4 w-4" />
+            </Link>
+          </div>
+        </article>
+      </section>
+    </div>
+  );
+}
+
+function StatusLine({ label, value }: any) {
+  return (
+    <div className="flex items-center justify-between gap-4 border-b border-[rgba(11,31,51,0.08)] py-2 first:pt-0 last:border-0 last:pb-0">
+      <span className="text-sm text-[rgba(11,31,51,0.62)]">{label}</span>
+      <strong className="text-sm font-semibold">{String(value)}</strong>
     </div>
   );
 }

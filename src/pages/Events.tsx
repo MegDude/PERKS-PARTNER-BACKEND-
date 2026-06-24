@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { H1, Body } from '@/components/ui/Typography';
 import { Calendar, MapPin, Users, Clock, Sparkles, Zap, Gift, Home as HomeIcon, Loader2 } from 'lucide-react';
 import { getBuildingEvents } from '@/utils/dataLayer';
+import { toast } from 'sonner';
 
 const CATEGORY_COLORS: Record<string, string> = {
   community: 'bg-slate-100 text-[#11182B] ',
@@ -37,8 +38,8 @@ export default function Events() {
     <div className="min-h-screen bg-[#F5F7FA] p-6">
       <div className="max-w-6xl mx-auto">
         <div className="mb-12">
-          <H1 className="text-4xl font-bold text-[#11182B] mb-2">Community Events</H1>
-          <Body className="text-lg text-slate-500 font-medium">Stay connected with your neighbors and community.</Body>
+          <H1 className="text-4xl font-bold text-[#11182B] mb-2">Events OS</H1>
+          <Body className="text-lg text-slate-500 font-medium">Publish building events, track RSVP demand, and turn attendance into resident engagement signals.</Body>
         </div>
 
         {isLoading ? (
@@ -115,7 +116,7 @@ export default function Events() {
                           setShareModal(event);
                         }}
                       >
-                        Share Event
+                        Share with residents
                       </Button>
                     </div>
                   </CardContent>
@@ -149,7 +150,15 @@ export default function Events() {
                       <p className="text-sm text-slate-600 font-medium">{shareModal.description}</p>
                     </div>
                     <div className="flex gap-3 pt-4 border-t border-slate-100">
-                      <Button className="flex-1 bg-[#11182B] text-white hover:bg-[#11182B]/90 font-bold" onClick={() => setShareModal(null)}>Start Sharing Now</Button>
+                      <Button
+                        className="flex-1 bg-[#11182B] text-white hover:bg-[#11182B]/90 font-bold"
+                        onClick={() => {
+                          toast.success('Event sharing workflow queued for residents.');
+                          setShareModal(null);
+                        }}
+                      >
+                        Queue resident share
+                      </Button>
                       <Button variant="outline" className="flex-1 font-bold" onClick={() => setShareModal(null)}>Cancel</Button>
                     </div>
                   </CardContent>

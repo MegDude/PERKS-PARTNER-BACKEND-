@@ -109,10 +109,10 @@ export default function Reports() {
     <div className="min-h-screen bg-bgMain">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
-        <div className="mb-10 p-6 bg-gradient-to-r from-gold/10 to-transparent border border-navy/30 rounded-[var(--radius-xl)]">
+        <div className="mb-6 p-6 bg-white border border-[#EFEFEF] shadow-[0_18px_50px_rgba(17,24,43,0.05)] rounded-none">
           <H3 className="text-lg mb-2">Performance Reports</H3>
           <Body className="text-sm leading-relaxed">
-            Generate monthly PDF reports showcasing building performance metrics, perks adoption rates, and engagement trends. Share these insights with stakeholders to demonstrate community value and growth.
+            Generate building and partner-ready reports that connect resident activity, perks adoption, event participation, and engagement trends to clear next actions.
           </Body>
         </div>
 
@@ -128,7 +128,7 @@ export default function Reports() {
                 <FileText className="w-5 h-5 text-[#11182B]" />
                 Generate New Report
               </CardTitle>
-              <CardDescription className="text-textSecondary">Select a building and month to create a performance report</CardDescription>
+              <CardDescription className="text-textSecondary">Select a building and reporting month to create an export-ready performance summary.</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
@@ -182,7 +182,7 @@ export default function Reports() {
 
               {/* Building Preview */}
               {selectedBuilding && (
-                <div className="p-4 bg-navy/5 rounded-none border border-navy/20">
+                <div className="p-4 bg-white rounded-none border border-[#EFEFEF]">
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     {(() => {
                       const building = buildings.find((b: any) => b.id === selectedBuilding);
@@ -271,8 +271,8 @@ export default function Reports() {
         {generatedReports.length === 0 && (
           <div className="text-center py-12">
             <FileText className="w-16 h-16 text-[#11182B]/30 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-[#11182B] mb-2">No Reports Generated</h3>
-            <p className="text-textSecondary">Generate your first report using the form above</p>
+            <h3 className="text-lg font-semibold text-[#11182B] mb-2">No reports generated yet</h3>
+            <p className="text-textSecondary">Choose a building and month to prepare the first stakeholder-ready report.</p>
           </div>
         )}
       </div>

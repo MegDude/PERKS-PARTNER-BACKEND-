@@ -11,14 +11,15 @@ export default function PartnerDashboardLayout() {
   const links = [
     { section: 'Overview' },
     { to: '/admin', icon: <LayoutDashboard className="w-4 h-4" />, label: 'Workspace' },
-    { to: '/admin/home', icon: <LayoutDashboard className="w-4 h-4" />, label: 'Public Experience' },
+    { to: '/admin/home', icon: <LayoutDashboard className="w-4 h-4" />, label: 'Platform Welcome' },
+    { to: '/admin/platform', icon: <ShieldIcon />, label: 'Command Center' },
     { to: '/admin/partner-portal', icon: <Presentation className="w-4 h-4" />, label: 'Partner Portal' },
     { to: '/admin/dashboard', icon: <BarChart3 className="w-4 h-4" />, label: 'Performance Stats' },
     
     { section: 'Network' },
     { to: '/admin/partner', icon: <Building2 className="w-4 h-4" />, label: 'Partner Directory' },
     { to: '/admin/properties', icon: <Building2 className="w-4 h-4" />, label: 'Manage Properties' },
-    { to: '/admin/buildings', icon: <Users className="w-4 h-4" />, label: 'Community Overview' },
+    { to: '/admin/buildings', icon: <Users className="w-4 h-4" />, label: 'Property Operations' },
     { to: '/admin/residents', icon: <Users className="w-4 h-4" />, label: 'Resident Directory' },
     { to: '/admin/segmentation', icon: <ListTodo className="w-4 h-4" />, label: 'Segmentation' },
     
@@ -82,9 +83,17 @@ export default function PartnerDashboardLayout() {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 h-screen overflow-y-auto bg-[#FAFAFA]">
+      <main className="flex-1 h-screen overflow-y-auto bg-white">
         <div className="lg:hidden sticky top-0 z-40 p-4 bg-white border-b border-[#EFEFEF] flex items-center justify-between">
            <div className="flex items-center gap-2 text-[#11182B] ">
+              <Button
+                onClick={() => navigate(-1)}
+                variant="ghost"
+                className="mr-1 h-9 w-9 p-0"
+                aria-label="Go back"
+              >
+                <ArrowLeft className="w-4 h-4" />
+              </Button>
               <div className="w-6 h-6 bg-[#11182B] flex items-center justify-center">
                  <Building2 className="w-3 h-3 text-white" />
               </div>
@@ -164,9 +173,24 @@ export default function PartnerDashboardLayout() {
             </div>
           </div>
         )}
+
+        <div className="sticky top-0 z-30 hidden border-b border-[#EFEFEF] bg-white/96 px-6 py-3 backdrop-blur lg:block">
+          <Button
+            onClick={() => navigate(-1)}
+            variant="ghost"
+            className="h-9 gap-2 px-0 text-[11px] font-semibold text-[#11182B]"
+            aria-label="Go back to previous partner workspace page"
+          >
+            <ArrowLeft className="w-4 h-4" /> Back
+          </Button>
+        </div>
         
         <Outlet />
       </main>
     </div>
   )
+}
+
+function ShieldIcon() {
+  return <Settings className="w-4 h-4" />;
 }

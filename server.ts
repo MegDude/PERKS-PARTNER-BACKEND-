@@ -5,6 +5,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import fs from "fs/promises";
 import { GoogleGenAI, Type } from "@google/genai";
+import { enterpriseComponents, platformArchitecture, platformDomains, serializePlatformDomain } from "./src/platform/registry";
 
 dotenv.config({ path: ".env.local" });
 dotenv.config();
@@ -39,7 +40,37 @@ type EntityName =
   | "SurveyExportLog"
   | "ManagementNotification"
   | "ProductOffering"
-  | "GlobalSettings";
+  | "GlobalSettings"
+  | "BuildingDocument"
+  | "SurveyProviderForm"
+  | "MessagingJourney"
+  | "SmsMessageLog"
+  | "PassportProgram"
+  | "PassportStamp"
+  | "IntegrationEndpoint"
+  | "AutomationRun"
+  | "AiInsight"
+  | "CrmSegment"
+  | "PlatformTenant"
+  | "TenantWorkspace"
+  | "TenantUser"
+  | "TenantRole"
+  | "PartnerProfile"
+  | "PartnerLocation"
+  | "PartnerOffer"
+  | "PartnerEvent"
+  | "PartnerReport"
+  | "PartnerAnalytics"
+  | "PartnerSettings"
+  | "PartnerRegistration"
+  | "PartnerSubscription"
+  | "PartnerInvoice"
+  | "PartnerQrExperience"
+  | "PartnerAiContext"
+  | "PartnerWorkspaceModule"
+  | "TenantNotification"
+  | "TenantAuditLog"
+  | "MapEntityLink";
 
 type EntityRecord = Record<string, any> & { id: string; created_at?: string; updated_at?: string };
 type Database = {
@@ -71,15 +102,280 @@ const entityNames: EntityName[] = [
   "ManagementNotification",
   "ProductOffering",
   "GlobalSettings",
+  "BuildingDocument",
+  "SurveyProviderForm",
+  "MessagingJourney",
+  "SmsMessageLog",
+  "PassportProgram",
+  "PassportStamp",
+  "IntegrationEndpoint",
+  "AutomationRun",
+  "AiInsight",
+  "CrmSegment",
+  "PlatformTenant",
+  "TenantWorkspace",
+  "TenantUser",
+  "TenantRole",
+  "PartnerProfile",
+  "PartnerLocation",
+  "PartnerOffer",
+  "PartnerEvent",
+  "PartnerReport",
+  "PartnerAnalytics",
+  "PartnerSettings",
+  "PartnerRegistration",
+  "PartnerSubscription",
+  "PartnerInvoice",
+  "PartnerQrExperience",
+  "PartnerAiContext",
+  "PartnerWorkspaceModule",
+  "TenantNotification",
+  "TenantAuditLog",
+  "MapEntityLink",
 ];
 
 const now = () => new Date().toISOString();
 const slug = (value: string) => value.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "");
 const makeId = (prefix: string) => `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 
+const tenantTypes = ["property", "hotel", "venue", "brand", "civic", "service", "sponsor", "real_estate"] as const;
+type TenantType = (typeof tenantTypes)[number];
+
+const defaultTenantRoles = [
+  { name: "Owner", permissions: ["workspace:manage", "billing:manage", "users:manage", "reports:view", "analytics:view", "offers:manage", "events:manage", "messages:manage"] },
+  { name: "Admin", permissions: ["workspace:manage", "users:manage", "reports:view", "analytics:view", "offers:manage", "events:manage", "messages:manage"] },
+  { name: "Manager", permissions: ["reports:view", "analytics:view", "offers:manage", "events:manage", "messages:manage"] },
+  { name: "Staff", permissions: ["offers:view", "events:view", "messages:reply", "redemptions:verify"] },
+  { name: "Viewer", permissions: ["reports:view", "analytics:view"] },
+];
+
+const mapVisibleOrganizations = [
+  { map_entity_id: "svc-1", name: "Fine Eyewear", type: "service", category: "Service", perk: "20% Off Comprehensive Exam & Frames", address: "2nd Street District" },
+  { map_entity_id: "civ-1", name: "DANA", type: "civic", category: "Civic", perk: "Annual Meeting RSVP", address: "Downtown Austin Neighborhood Association" },
+  { map_entity_id: "htl-1", name: "Hotel Van Zandt", type: "hotel", category: "Hotel", perk: "Complimentary Valet with Geraldine's Dinner", address: "605 Davis St, Austin, TX" },
+  { map_entity_id: "htl-2", name: "Four Seasons", type: "hotel", category: "Hotel", perk: "15% Off Spa Services", address: "98 San Jacinto Blvd, Austin, TX" },
+  { map_entity_id: "cof-1", name: "Jo's Coffee", type: "venue", category: "Food & Bev", perk: "Free Size Upgrade", address: "242 W 2nd St, Austin, TX" },
+  { map_entity_id: "venue-1", name: "Half Step", type: "venue", category: "Food & Bev", perk: "Free Specialty Cocktail", address: "75 1/2 Rainey St" },
+  { map_entity_id: "brand-1", name: "Rivian", type: "brand", category: "Brand", perk: "Exclusive Test Drive", address: "South Congress" },
+  { map_entity_id: "venue-2", name: "Stay Put", type: "venue", category: "Food & Bev", perk: "Free Appetizer", address: "73 Rainey St" },
+  { map_entity_id: "brand-2", name: "YETI", type: "brand", category: "Brand", perk: "10% Off Flagship Store", address: "South Congress" },
+  { map_entity_id: "brand-3", name: "lululemon", type: "brand", category: "Brand", perk: "Private Studio Class", address: "By the lake" },
+  { map_entity_id: "civic-waterloo-greenway", name: "Waterloo Greenway", type: "civic", category: "Civic", address: "Downtown Austin" },
+  { map_entity_id: "civic-visit-austin", name: "Visit Austin", type: "civic", category: "Civic", address: "Austin, TX" },
+  { map_entity_id: "sponsor-legends", name: "Legends", type: "real_estate", category: "Property Group", address: "Austin, TX" },
+  { map_entity_id: "property-waterline", name: "Waterline", type: "property", category: "Property", address: "Downtown Austin" },
+];
+
 function withTimestamps<T extends Record<string, any>>(record: T, id: string): EntityRecord {
   const timestamp = now();
   return { id, created_at: timestamp, updated_at: timestamp, ...record };
+}
+
+function normalizeTenantType(value: any): TenantType {
+  const raw = String(value || "").toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "");
+  if (raw.includes("hotel") || raw.includes("hospitality")) return "hotel";
+  if (raw.includes("property") || raw.includes("building") || raw.includes("apartment") || raw.includes("condo")) return "property";
+  if (raw.includes("civic") || raw.includes("association") || raw.includes("district")) return "civic";
+  if (raw.includes("brand")) return "brand";
+  if (raw.includes("service") || raw.includes("wellness") || raw.includes("fitness")) return "service";
+  if (raw.includes("sponsor")) return "sponsor";
+  if (raw.includes("real_estate") || raw.includes("developer")) return "real_estate";
+  return "venue";
+}
+
+function tenantIdFromSlug(tenantSlug: string) {
+  return `tenant_${tenantSlug}`;
+}
+
+function ensureRecord(collection: EntityRecord[], id: string, data: Record<string, any>) {
+  const existing = collection.find((item) => item.id === id);
+  if (existing) {
+    Object.assign(existing, { ...data, id, updated_at: now() });
+    return existing;
+  }
+  const created = withTimestamps(data, id);
+  collection.push(created);
+  return created;
+}
+
+function provisionPlatformTenant(entities: Database["entities"], source: Record<string, any>) {
+  const name = source.name || source.business_name || source.title;
+  if (!name) return null;
+
+  const tenantSlug = slug(name).replace(/_/g, "-");
+  const tenantId = tenantIdFromSlug(tenantSlug);
+  const type = normalizeTenantType(source.type || source.category || source.category_key);
+  const workspaceId = `workspace_${tenantSlug}`;
+
+  const tenant = ensureRecord(entities.PlatformTenant, tenantId, {
+    name,
+    slug: tenantSlug,
+    type,
+    status: source.status || "active",
+    source_type: source.source_type || "provisioning",
+    source_id: source.source_id || source.id || source.map_entity_id || null,
+    public_map_entity_id: source.map_entity_id || null,
+  });
+
+  ensureRecord(entities.TenantWorkspace, workspaceId, {
+    tenant_id: tenant.id,
+    slug: tenantSlug,
+    path: `/tenant/${tenantSlug}`,
+    status: "active",
+    modules: ["dashboard", "perks", "events", "messages", "analytics", "reports", "settings"],
+    default_route: `/tenant/${tenantSlug}/dashboard`,
+  });
+
+  defaultTenantRoles.forEach((role) => {
+    ensureRecord(entities.TenantRole, `role_${tenantSlug}_${slug(role.name)}`, {
+      tenant_id: tenant.id,
+      workspace_id: workspaceId,
+      role: role.name,
+      permissions: role.permissions,
+    });
+  });
+
+  ensureRecord(entities.PartnerProfile, `profile_${tenantSlug}`, {
+    tenant_id: tenant.id,
+    workspace_id: workspaceId,
+    partner_id: source.partner_id || (source.source_type === "partner" ? source.source_id : null),
+    display_name: name,
+    type,
+    category: source.category || source.category_key || type,
+    address: source.address || "",
+    status: "active",
+  });
+
+  ensureRecord(entities.PartnerAnalytics, `analytics_${tenantSlug}`, {
+    tenant_id: tenant.id,
+    workspace_id: workspaceId,
+    views: Number(source.views || 0),
+    saves: Number(source.saves || 0),
+    directions: Number(source.directions || 0),
+    redemptions: Number(source.redemptions || source.redemption_count || 0),
+    guests_reached: Number(source.guests_reached || source.reach || 0),
+    revenue_estimate: Number(source.revenue_estimate || 0),
+    status: "tracking_enabled",
+  });
+
+  ensureRecord(entities.PartnerReport, `report_container_${tenantSlug}`, {
+    tenant_id: tenant.id,
+    workspace_id: workspaceId,
+    report_types: ["Monthly Summary", "Traffic", "Conversions", "Partner Report"],
+    status: "enabled",
+  });
+
+  ensureRecord(entities.PartnerSettings, `settings_${tenantSlug}`, {
+    tenant_id: tenant.id,
+    workspace_id: workspaceId,
+    notifications_enabled: true,
+    modules_enabled: ["perks", "events", "surveys", "messaging", "reporting", "analytics"],
+    row_level_tenant_isolation: true,
+  });
+
+  ensureRecord(entities.TenantNotification, `notification_${tenantSlug}_default`, {
+    tenant_id: tenant.id,
+    workspace_id: workspaceId,
+    channel: "workspace",
+    rule: "default_partner_updates",
+    status: "active",
+  });
+
+  ensureRecord(entities.TenantAuditLog, `audit_${tenantSlug}_provisioned`, {
+    tenant_id: tenant.id,
+    workspace_id: workspaceId,
+    actor_id: "system",
+    action: "tenant_workspace_provisioned",
+    resource: source.source_type || "map_entity",
+    timestamp: now(),
+  });
+
+  if (source.map_entity_id || source.id) {
+    ensureRecord(entities.MapEntityLink, `map_link_${source.map_entity_id || source.id}`, {
+      tenant_id: tenant.id,
+      workspace_id: workspaceId,
+      entity_id: source.map_entity_id || source.id,
+      partner_id: source.partner_id || (source.source_type === "partner" ? source.source_id : null),
+      source_type: source.source_type || "map_entity",
+      status: "linked",
+    });
+  }
+
+  if (source.perk) {
+    ensureRecord(entities.PartnerOffer, `offer_${tenantSlug}_${slug(source.perk)}`, {
+      tenant_id: tenant.id,
+      workspace_id: workspaceId,
+      title: source.perk,
+      status: "active",
+      source_type: source.source_type || "map_entity",
+      redemption_rules: source.perkRedemption || "Show Resident Card",
+    });
+  }
+
+  if (type === "hotel" || type === "civic") {
+    ensureRecord(entities.PartnerEvent, `event_container_${tenantSlug}`, {
+      tenant_id: tenant.id,
+      workspace_id: workspaceId,
+      status: "enabled",
+      event_types: type === "hotel" ? ["Live Music", "Lobby Events", "Resident Nights"] : ["Events", "Volunteer Signups", "Community Surveys", "Meetings"],
+    });
+  }
+
+  return tenant;
+}
+
+function provisionAllPlatformTenants(entities: Database["entities"]) {
+  mapVisibleOrganizations.forEach((organization) => provisionPlatformTenant(entities, { ...organization, source_type: "resident_map" }));
+
+  entities.Building.forEach((building) =>
+    provisionPlatformTenant(entities, {
+      name: building.name,
+      type: "property",
+      category: "Property",
+      address: building.address,
+      source_type: "building",
+      source_id: building.id,
+      map_entity_id: building.id === "bldg_shore" ? "prop-1" : building.id,
+    })
+  );
+
+  entities.Partner.forEach((partner) =>
+    provisionPlatformTenant(entities, {
+      name: partner.business_name,
+      type: normalizeTenantType(partner.category),
+      category: partner.category,
+      address: partner.address,
+      source_type: "partner",
+      source_id: partner.id,
+      partner_id: partner.id,
+    })
+  );
+
+  entities.PerkLocation.forEach((perk) => {
+    const tenant = provisionPlatformTenant(entities, {
+      name: perk.name,
+      type: normalizeTenantType(perk.category),
+      category: perk.category,
+      address: perk.address,
+      source_type: "perk_location",
+      source_id: perk.id,
+      partner_id: perk.partner_id,
+      perk: perk.perk || perk.title,
+      redemption_count: perk.redemption_count,
+    });
+    if (tenant) {
+      perk.tenant_id = tenant.id;
+      perk.workspace_id = `workspace_${tenant.slug}`;
+    }
+  });
+
+  entities.Partner.forEach((partner) => {
+    const tenant = entities.PlatformTenant.find((item) => item.source_id === partner.id || item.name === partner.business_name);
+    if (tenant) {
+      partner.tenant_id = tenant.id;
+      partner.workspace_id = `workspace_${tenant.slug}`;
+    }
+  });
 }
 
 function createSeedDatabase(): Database {
@@ -286,6 +582,161 @@ function addOperationalDefaults(entities: Database["entities"]) {
       withTimestamps({ title: "Rooftop Yoga", description: "Start your morning with skyline yoga on the resident roof deck.", category: "wellness", date: "2026-06-25", time: "9:00 AM", location: "The Shore Rooftop", address: "603 Davis St, Austin, TX", lat: 30.2591, lng: -97.7382, building_id: "bldg_shore", capacity: 30, registered_count: 1, image_url: "https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&w=900&q=80", status: "upcoming" }, "event_rooftop_yoga")
     );
   }
+
+  if (entities.SurveyProviderForm.length === 0) {
+    entities.SurveyProviderForm.push(
+      withTimestamps({
+        provider: "Tally",
+        provider_key: "tally",
+        name: "Resident Onboarding",
+        purpose: "Capture building, interests, phone verification readiness, and resident profile preferences.",
+        use_case: "resident_onboarding",
+        status: "recommended",
+        embed_status: "pending_credentials",
+        webhook_status: "pending",
+        destination_tables: ["residents", "survey_responses", "crm_segments"],
+        google_sheets_sync: true,
+        fields: ["building", "interests", "phone", "dining", "fitness", "events", "nightlife"],
+      }, "survey_provider_tally_onboarding"),
+      withTimestamps({
+        provider: "Tally",
+        provider_key: "tally",
+        name: "Perk Redemption Feedback",
+        purpose: "Capture experience rating, return intent, and operational feedback after a redemption.",
+        use_case: "perk_redemption_feedback",
+        status: "recommended",
+        embed_status: "pending_credentials",
+        webhook_status: "pending",
+        destination_tables: ["survey_responses", "perk_redemptions", "partner_reports"],
+        google_sheets_sync: true,
+        fields: ["rating", "would_return", "what_improved", "partner_id", "perk_id"],
+      }, "survey_provider_tally_redemption"),
+      withTimestamps({
+        provider: "Jotform",
+        provider_key: "jotform",
+        name: "Partner Application",
+        purpose: "Operational partner, property, hotel, brand, civic, and grant-style intake.",
+        use_case: "partner_application",
+        status: "available",
+        embed_status: "pending_credentials",
+        webhook_status: "pending",
+        destination_tables: ["partner_leads", "partner_profiles", "tenant_workspaces"],
+        google_sheets_sync: true,
+        fields: ["organization", "partner_type", "location", "contact", "package_interest"],
+      }, "survey_provider_jotform_partner_application"),
+      withTimestamps({
+        provider: "SurveyJS",
+        provider_key: "surveyjs",
+        name: "Resident Intelligence Platform",
+        purpose: "Self-hosted survey engine option for advanced ownership and custom React flows.",
+        use_case: "resident_intelligence",
+        status: "future_phase",
+        embed_status: "not_started",
+        webhook_status: "not_started",
+        destination_tables: ["survey_responses", "event_feedback", "resident_profiles"],
+        google_sheets_sync: false,
+        fields: ["custom_schema"],
+      }, "survey_provider_surveyjs_resident_intelligence")
+    );
+  }
+
+  if (entities.IntegrationEndpoint.length === 0) {
+    entities.IntegrationEndpoint.push(
+      withTimestamps({ name: "Tally Webhooks", provider: "Tally", layer: "Survey Engine", purpose: "Resident surveys, event feedback, and perk redemption forms.", status: "pending_credentials", required_env: ["TALLY_WEBHOOK_SECRET"] }, "integration_tally"),
+      withTimestamps({ name: "Twilio Verify", provider: "Twilio", layer: "Messaging", purpose: "Verified phone onboarding before SMS journeys.", status: "pending_credentials", required_env: ["TWILIO_ACCOUNT_SID", "TWILIO_AUTH_TOKEN", "TWILIO_VERIFY_SERVICE_SID"] }, "integration_twilio_verify"),
+      withTimestamps({ name: "Twilio Messaging", provider: "Twilio", layer: "Messaging", purpose: "Resident reminders, event automation, passport messages, and partner intelligence workflows.", status: "pending_credentials", required_env: ["TWILIO_PHONE_NUMBER", "TWILIO_MESSAGING_SERVICE_SID"] }, "integration_twilio_messaging"),
+      withTimestamps({ name: "Supabase Operational Store", provider: "Supabase", layer: "Database", purpose: "Persist residents, survey responses, event feedback, redemptions, and partner leads.", status: "pending_credentials", required_env: ["SUPABASE_URL", "SUPABASE_ANON_KEY", "SUPABASE_SERVICE_ROLE_KEY"] }, "integration_supabase"),
+      withTimestamps({ name: "n8n Workflow Orchestration", provider: "n8n", layer: "Automation", purpose: "Webhook routing, reminders, report generation, and survey escalation workflows.", status: "pending_credentials", required_env: ["N8N_WEBHOOK_URL", "N8N_API_KEY"] }, "integration_n8n"),
+      withTimestamps({ name: "OpenAI Insights", provider: "OpenAI", layer: "AI Layer", purpose: "Summaries, sentiment, recommendations, SMS concierge, and operator insights.", status: process.env.OPENAI_API_KEY ? "configured" : "pending_credentials", required_env: ["OPENAI_API_KEY"] }, "integration_openai")
+    );
+  }
+
+  if (entities.MessagingJourney.length === 0) {
+    entities.MessagingJourney.push(
+      withTimestamps({
+        name: "Resident Messaging",
+        service: "Twilio Verify + Messaging",
+        purpose: "Perk reminders, event reminders, passport challenges, and new downtown event notifications.",
+        status: "planned",
+        trigger: "resident joins",
+        flow: ["phone captured", "Twilio Verify", "verified profile", "SMS campaigns"],
+        audience: "residents",
+      }, "journey_resident_messaging"),
+      withTimestamps({
+        name: "Event Automation",
+        service: "Twilio Messaging + n8n",
+        purpose: "RSVP reminders, check-in links, post-event surveys, and report creation.",
+        status: "planned",
+        trigger: "event RSVP",
+        flow: ["24h reminder", "2h reminder", "check-in link", "post-event survey", "report"],
+        audience: "event attendees",
+      }, "journey_event_automation"),
+      withTimestamps({
+        name: "Downtown Passport",
+        service: "Twilio Messaging + QR",
+        purpose: "Passport stamps, reward progress, and unlock messaging for multi-location programs.",
+        status: "planned",
+        trigger: "QR stamp added",
+        flow: ["visit location", "scan QR", "stamp added", "progress SMS", "reward unlocked"],
+        audience: "passport participants",
+      }, "journey_downtown_passport"),
+      withTimestamps({
+        name: "Partner Intelligence",
+        service: "Twilio Messaging + Workspace",
+        purpose: "Route resident issues or feedback into workspace follow-up and satisfaction surveys.",
+        status: "planned",
+        trigger: "resident submits issue",
+        flow: ["workspace task", "assigned", "resolved", "feedback survey"],
+        audience: "property managers",
+      }, "journey_partner_intelligence")
+    );
+  }
+
+  if (entities.PassportProgram.length === 0) {
+    entities.PassportProgram.push(
+      withTimestamps({
+        name: "Sugar Wolf / Larry & Guy Passport",
+        status: "planned",
+        partner_group: "Larry & Guy",
+        required_stamps: 4,
+        reward: "Reward unlocked after four verified location visits",
+        channels: ["QR", "Twilio SMS", "Workspace report"],
+        metrics: ["stamps", "completion_rate", "repeat_visits", "reward_unlocks"],
+      }, "passport_sugar_wolf_larry_guy")
+    );
+  }
+
+  if (entities.CrmSegment.length === 0) {
+    entities.CrmSegment.push(
+      withTimestamps({ name: "Dining Interested Residents", source: "Resident Onboarding", criteria: ["interest:dining"], destination: "Twilio campaign", status: "seeded" }, "segment_dining"),
+      withTimestamps({ name: "Event Responders", source: "Event Feedback", criteria: ["rsvp:true", "attended:true"], destination: "event recommendations", status: "seeded" }, "segment_event_responders"),
+      withTimestamps({ name: "Perk Redeemers", source: "Perk Redemption Feedback", criteria: ["redemption_count:>0"], destination: "partner reports", status: "seeded" }, "segment_perk_redeemers")
+    );
+  }
+
+  if (entities.AutomationRun.length === 0) {
+    entities.AutomationRun.push(
+      withTimestamps({ name: "Survey Webhook Intake", provider: "n8n", status: "ready_for_credentials", trigger: "Tally or Jotform webhook", action: "Store response, sync Sheets, create AI summary", last_run: "", target: "survey_responses" }, "automation_survey_webhook"),
+      withTimestamps({ name: "Event Reminder Journey", provider: "Twilio", status: "ready_for_credentials", trigger: "RSVP created", action: "Send 24h and 2h reminders", last_run: "", target: "event_feedback" }, "automation_event_reminder"),
+      withTimestamps({ name: "Passport Stamp Progress", provider: "Twilio", status: "ready_for_credentials", trigger: "QR stamp created", action: "Send progress and reward unlock SMS", last_run: "", target: "passport_stamps" }, "automation_passport_stamp"),
+      withTimestamps({ name: "AI Survey Analysis", provider: "OpenAI", status: process.env.OPENAI_API_KEY ? "active" : "ready_for_credentials", trigger: "survey response completed", action: "Summarize, classify sentiment, recommend action", last_run: "", target: "ai_insights" }, "automation_ai_survey_analysis")
+    );
+  }
+
+  if (entities.AiInsight.length === 0) {
+    entities.AiInsight.push(
+      withTimestamps({
+        source: "Survey + Messaging + CRM architecture",
+        insight_type: "recommendation",
+        title: "Use Tally as the launch survey engine",
+        summary: "Tally is the preferred launch option because it supports fast embedded surveys, webhook routing, Google Sheets support, and lower friction resident feedback flows.",
+        recommended_action: "Configure Tally resident onboarding, perk redemption feedback, and event feedback forms before adding Jotform or SurveyJS.",
+        status: "open",
+      }, "ai_insight_tally_launch")
+    );
+  }
+
+  provisionAllPlatformTenants(entities);
 }
 
 async function ensureDatabase(): Promise<Database> {
@@ -351,6 +802,89 @@ export async function createApp() {
       service: "downtown-perks-backend",
       persistence: dbPath,
       entities: Object.fromEntries(entityNames.map((name) => [name, db.entities[name].length])),
+    });
+  });
+
+  app.get("/api/platform", (req, res) => {
+    res.json({
+      architecture: platformArchitecture,
+      domains: platformDomains.map(serializePlatformDomain),
+      enterpriseComponents,
+    });
+  });
+
+  app.get("/api/tenants", (req, res) => {
+    res.json({
+      tenants: db.entities.PlatformTenant,
+      workspaces: db.entities.TenantWorkspace,
+      roles: db.entities.TenantRole,
+      mapEntityLinks: db.entities.MapEntityLink,
+    });
+  });
+
+  app.get("/api/tenant-provisioning/status", (req, res) => {
+    const requiredNames = ["Jo's Coffee", "Fine Eyewear", "Hotel Van Zandt", "Four Seasons", "DANA", "lululemon", "Legends", "Waterline", "The Shore", "YETI", "Rivian", "Waterloo Greenway", "Visit Austin"];
+    const provisioned = requiredNames.map((name) => {
+      const tenant = db.entities.PlatformTenant.find((item) => item.name === name);
+      const workspace = tenant ? db.entities.TenantWorkspace.find((item) => item.tenant_id === tenant.id) : null;
+      return {
+        name,
+        provisioned: Boolean(tenant && workspace),
+        tenantId: tenant?.id || null,
+        workspacePath: workspace?.path || null,
+      };
+    });
+    res.json({
+      tenants: db.entities.PlatformTenant.length,
+      workspaces: db.entities.TenantWorkspace.length,
+      roles: db.entities.TenantRole.length,
+      analyticsContainers: db.entities.PartnerAnalytics.length,
+      reportContainers: db.entities.PartnerReport.length,
+      notificationChannels: db.entities.TenantNotification.length,
+      auditLogs: db.entities.TenantAuditLog.length,
+      mapEntityLinks: db.entities.MapEntityLink.length,
+      allRequiredProvisioned: provisioned.every((item) => item.provisioned),
+      provisioned,
+    });
+  });
+
+  app.get("/api/tenants/:slug", (req, res) => {
+    const tenant = db.entities.PlatformTenant.find((item) => item.slug === req.params.slug || item.id === req.params.slug);
+    if (!tenant) return res.status(404).json({ error: "Tenant not found" });
+    const workspace = db.entities.TenantWorkspace.find((item) => item.tenant_id === tenant.id);
+    res.json({
+      tenant,
+      workspace,
+      users: db.entities.TenantUser.filter((item) => item.tenant_id === tenant.id),
+      roles: db.entities.TenantRole.filter((item) => item.tenant_id === tenant.id),
+      profile: db.entities.PartnerProfile.find((item) => item.tenant_id === tenant.id),
+      offers: db.entities.PartnerOffer.filter((item) => item.tenant_id === tenant.id),
+      events: db.entities.PartnerEvent.filter((item) => item.tenant_id === tenant.id),
+      reports: db.entities.PartnerReport.filter((item) => item.tenant_id === tenant.id),
+      analytics: db.entities.PartnerAnalytics.find((item) => item.tenant_id === tenant.id),
+      settings: db.entities.PartnerSettings.find((item) => item.tenant_id === tenant.id),
+      notifications: db.entities.TenantNotification.filter((item) => item.tenant_id === tenant.id),
+      auditLogs: db.entities.TenantAuditLog.filter((item) => item.tenant_id === tenant.id),
+      mapLinks: db.entities.MapEntityLink.filter((item) => item.tenant_id === tenant.id),
+    });
+  });
+
+  app.post("/api/tenant-provisioning/sync", async (req, res) => {
+    const before = {
+      tenants: db.entities.PlatformTenant.length,
+      workspaces: db.entities.TenantWorkspace.length,
+      mapLinks: db.entities.MapEntityLink.length,
+    };
+    provisionAllPlatformTenants(db.entities);
+    await saveDatabase(db);
+    res.json({
+      success: true,
+      before,
+      after: {
+        tenants: db.entities.PlatformTenant.length,
+        workspaces: db.entities.TenantWorkspace.length,
+        mapLinks: db.entities.MapEntityLink.length,
+      },
     });
   });
 
@@ -448,6 +982,244 @@ export async function createApp() {
         db = createSeedDatabase();
         await saveDatabase(db);
         return res.json({ data: { success: true, dbPath, entities: Object.fromEntries(entityNames.map((name) => [name, db.entities[name].length])) } });
+      }
+
+      if (functionName === "provisionPartnerWorkspace") {
+        const organization = body.organization || {};
+        const contact = body.contact || {};
+        const location = body.location || {};
+        const checkout = body.checkout || {};
+        const selectedPlan = body.plan || {};
+        const organizationName = String(organization.name || body.organization_name || body.organizationName || "Downtown Perks Partner").trim();
+        const contactEmail = String(contact.email || body.email || "partner@downtownperks.local").trim().toLowerCase();
+        const tenantSlug = slug(organizationName).replace(/_/g, "-");
+        const workspaceModules = [
+          "home",
+          "map",
+          "offers",
+          "events",
+          "campaigns",
+          "qr",
+          "listings",
+          "gallery",
+          "brand",
+          "profile",
+          "audience",
+          "followers",
+          "saved",
+          "reviews",
+          "reports",
+          "performance",
+          "exports",
+          "growth",
+          "team",
+          "permissions",
+          "billing",
+          "integrations",
+          "settings",
+        ];
+
+        let partner = db.entities.Partner.find((item) => String(item.contact_email || "").toLowerCase() === contactEmail || item.business_name === organizationName);
+        if (!partner) {
+          partner = withTimestamps(
+            {
+              business_name: organizationName,
+              contact_person: contact.name || body.primary_contact || "Workspace owner",
+              contact_email: contactEmail,
+              contact_phone: contact.phone || "",
+              address: location.address || organization.address || "",
+              category: organization.type || body.organizationType || "Partner",
+              status: "active",
+              onboarding_stage: "workspace_created",
+            },
+            `partner_${tenantSlug}`
+          );
+          db.entities.Partner.push(partner);
+        } else {
+          Object.assign(partner, {
+            business_name: organizationName,
+            contact_person: contact.name || partner.contact_person,
+            contact_email: contactEmail,
+            contact_phone: contact.phone || partner.contact_phone,
+            address: location.address || organization.address || partner.address,
+            category: organization.type || body.organizationType || partner.category,
+            status: "active",
+            onboarding_stage: "workspace_created",
+            updated_at: now(),
+          });
+        }
+
+        const tenant = provisionPlatformTenant(db.entities, {
+          name: organizationName,
+          type: organization.type || body.organizationType || "venue",
+          category: organization.industry || organization.type || body.organizationType || "Partner",
+          address: location.address || organization.address,
+          source_type: "partner_registration",
+          source_id: partner.id,
+          partner_id: partner.id,
+        });
+
+        if (!tenant) return res.status(400).json({ error: "Unable to provision workspace without an organization name." });
+
+        const workspaceId = `workspace_${tenant.slug}`;
+        const workspace = db.entities.TenantWorkspace.find((item) => item.id === workspaceId || item.tenant_id === tenant.id);
+        if (workspace) {
+          Object.assign(workspace, {
+            name: `${organizationName} Workspace`,
+            path: "/workspace/home",
+            default_route: "/workspace/home",
+            status: "active",
+            workspace_status: "active",
+            lifecycle_stage: "daily_operations",
+            modules: workspaceModules,
+            updated_at: now(),
+          });
+        }
+
+        const registration = ensureRecord(db.entities.PartnerRegistration, `registration_${tenant.slug}`, {
+          tenant_id: tenant.id,
+          workspace_id: workspaceId,
+          partner_id: partner.id,
+          organization,
+          contact,
+          location,
+          plan: selectedPlan,
+          checkout,
+          status: "submitted",
+          lifecycle: ["landing", "partner_type", "registration", "organization_setup", "pricing", "checkout", "verification", "workspace_creation", "partner_dashboard", "daily_operations"],
+          submitted_at: now(),
+        });
+
+        ensureRecord(db.entities.TenantUser, `tenant_user_${tenant.slug}_owner`, {
+          tenant_id: tenant.id,
+          workspace_id: workspaceId,
+          name: contact.name || "Workspace owner",
+          email: contactEmail,
+          role: "Owner",
+          status: "active",
+        });
+
+        ensureRecord(db.entities.PartnerLocation, `location_${tenant.slug}_primary`, {
+          tenant_id: tenant.id,
+          workspace_id: workspaceId,
+          partner_id: partner.id,
+          name: location.name || organizationName,
+          address: location.address || organization.address || "",
+          city: location.city || "Austin",
+          state: location.state || "TX",
+          status: "active",
+          map_presence: "enabled",
+        });
+
+        ensureRecord(db.entities.Campaign, `campaign_${tenant.slug}_starter`, {
+          tenant_id: tenant.id,
+          workspace_id: workspaceId,
+          partner_id: partner.id,
+          title: "Starter campaign draft",
+          description: "A first campaign draft created during workspace provisioning.",
+          status: "draft",
+          type: "launch",
+          created_from: "workspace_provisioning",
+        });
+
+        ensureRecord(db.entities.PartnerSubscription, `subscription_${tenant.slug}`, {
+          tenant_id: tenant.id,
+          workspace_id: workspaceId,
+          partner_id: partner.id,
+          plan: selectedPlan.key || selectedPlan.name || "starter",
+          plan_label: selectedPlan.label || selectedPlan.name || "Starter",
+          cadence: selectedPlan.cadence || "annual",
+          amount: Number(selectedPlan.amount || selectedPlan.price || 0),
+          status: checkout.status || "active",
+          provider: checkout.provider || "local_checkout_ready_for_stripe",
+          renewal_date: checkout.renewal_date || null,
+          billing_email: checkout.billing_email || contactEmail,
+        });
+
+        ensureRecord(db.entities.PartnerInvoice, `invoice_${tenant.slug}_latest`, {
+          tenant_id: tenant.id,
+          workspace_id: workspaceId,
+          partner_id: partner.id,
+          subscription_id: `subscription_${tenant.slug}`,
+          invoice_number: `DP-${tenant.slug.toUpperCase().slice(0, 12)}-${new Date().getFullYear()}`,
+          status: checkout.invoice_status || "paid",
+          subtotal: Number(checkout.subtotal || selectedPlan.amount || selectedPlan.price || 0),
+          tax: Number(checkout.tax || 0),
+          total: Number(checkout.total || selectedPlan.amount || selectedPlan.price || 0),
+          coupon: checkout.coupon || "",
+          paid_at: now(),
+        });
+
+        ensureRecord(db.entities.PartnerQrExperience, `qr_${tenant.slug}_welcome`, {
+          tenant_id: tenant.id,
+          workspace_id: workspaceId,
+          partner_id: partner.id,
+          label: "Welcome QR",
+          destination_url: "/workspace/home",
+          status: "active",
+          scans: 0,
+        });
+
+        ensureRecord(db.entities.PartnerAiContext, `ai_context_${tenant.slug}`, {
+          tenant_id: tenant.id,
+          workspace_id: workspaceId,
+          partner_id: partner.id,
+          assistant_name: "Downtown Assistant",
+          status: "active",
+          context_summary: `${organizationName} can manage offers, events, campaigns, QR, reporting, billing, and team access from the workspace.`,
+          suggested_actions: ["Publish first offer", "Create first event", "Generate QR", "Invite team member"],
+        });
+
+        workspaceModules.forEach((moduleName) => {
+          ensureRecord(db.entities.PartnerWorkspaceModule, `module_${tenant.slug}_${moduleName}`, {
+            tenant_id: tenant.id,
+            workspace_id: workspaceId,
+            partner_id: partner.id,
+            module: moduleName,
+            status: "ready",
+            route: moduleName === "home" ? "/workspace/home" : `/workspace/${moduleName}`,
+          });
+        });
+
+        ensureRecord(db.entities.TenantNotification, `notification_${tenant.slug}_workspace_ready`, {
+          tenant_id: tenant.id,
+          workspace_id: workspaceId,
+          channel: "workspace",
+          rule: "workspace_ready",
+          status: "active",
+          message: `${organizationName} workspace is ready to launch.`,
+        });
+
+        ensureRecord(db.entities.TenantAuditLog, `audit_${tenant.slug}_partner_lifecycle_provisioned`, {
+          tenant_id: tenant.id,
+          workspace_id: workspaceId,
+          actor_id: contactEmail,
+          action: "partner_lifecycle_workspace_provisioned",
+          resource: "partner_workspace",
+          before: null,
+          after: { partner_id: partner.id, registration_id: registration.id, modules: workspaceModules },
+          timestamp: now(),
+        });
+
+        partner.tenant_id = tenant.id;
+        partner.workspace_id = workspaceId;
+        partner.updated_at = now();
+
+        await saveDatabase(db);
+        return res.json({
+          data: {
+            success: true,
+            message: "Workspace provisioned",
+            partner,
+            tenant,
+            workspace: workspace || db.entities.TenantWorkspace.find((item) => item.tenant_id === tenant.id),
+            registration,
+            subscription: db.entities.PartnerSubscription.find((item) => item.id === `subscription_${tenant.slug}`),
+            invoice: db.entities.PartnerInvoice.find((item) => item.id === `invoice_${tenant.slug}_latest`),
+            modules: workspaceModules,
+            redirect: "/workspace/home",
+          },
+        });
       }
 
       if (functionName === "generatePDFReport") {

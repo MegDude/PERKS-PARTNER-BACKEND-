@@ -134,19 +134,19 @@ export default function PropertiesManagement() {
                  <Sparkles className="w-5 h-5 text-[#C5A028]" /> AI Property Ingestion
               </h2>
               <p className="text-sm text-textMuted mb-4">
-                 Paste unstructured text (e.g., from an email, broker listing, or report). The AI will extract the name, address, units, status, amenities, and photos to populate the database.
+                 Paste property notes from an email, broker listing, or asset report. The system will extract the name, address, unit count, status, amenities, and media links for review.
               </p>
               <textarea 
                 value={ingestText}
                 onChange={(e) => setIngestText(e.target.value)}
-                placeholder="E.g. We just acquired 'The Grand' located at 123 Main St. It has 150 units, a pool and gym, and is currently available..."
+                placeholder="The Quincy is at 91 Red River St with 220 units, a resident lounge, pool deck, coworking space, and active leasing."
                 className="w-full h-40 p-3 border border-[var(--border-subtle)] text-sm mb-4 resize-none"
               />
               <div className="flex justify-end gap-3">
                 <Button variant="ghost" onClick={() => setIsIngesting(false)} disabled={ingestMut.isPending}>Cancel</Button>
                 <Button onClick={() => ingestMut.mutate(ingestText)} disabled={!ingestText.trim() || ingestMut.isPending} className="bg-[#11182B] text-white gap-2">
                   {ingestMut.isPending && <Loader2 className="w-4 h-4 animate-spin"/>}
-                  Process Data
+                  Review Property
                 </Button>
               </div>
             </div>
@@ -181,11 +181,11 @@ export default function PropertiesManagement() {
                   </div>
                   <div className="space-y-2 md:col-span-2">
                     <label className="text-xs font-bold uppercase tracking-wider text-textSecondary">Amenities (comma separated)</label>
-                    <input name="amenities" defaultValue={isEditing?.amenities?.join(', ')} placeholder="Gym, Pool, Lounge..." className="w-full p-3 border border-[var(--border-subtle)] text-sm bg-bgMain" />
+                    <input name="amenities" defaultValue={isEditing?.amenities?.join(', ')} placeholder="Rooftop pool, resident lounge, coworking studio" className="w-full p-3 border border-[var(--border-subtle)] text-sm bg-bgMain" />
                   </div>
                   <div className="space-y-2 md:col-span-2">
                     <label className="text-xs font-bold uppercase tracking-wider text-textSecondary">Photos (comma separated URLs)</label>
-                    <input name="photos" defaultValue={isEditing?.photos?.join(', ')} placeholder="https://..." className="w-full p-3 border border-[var(--border-subtle)] text-sm bg-bgMain" />
+                    <input name="photos" defaultValue={isEditing?.photos?.join(', ')} placeholder="Paste approved image URLs for the property profile" className="w-full p-3 border border-[var(--border-subtle)] text-sm bg-bgMain" />
                   </div>
                   <div className="col-span-1 md:col-span-2 flex justify-end gap-3 mt-4">
                     <Button type="button" variant="ghost" onClick={() => { setIsAdding(false); setIsEditing(null); }}>Cancel</Button>

@@ -17,7 +17,7 @@ export default function EngagementHub() {
       style: { borderRadius: '0px', backgroundColor: '#11182B', color: '#fff', border: 'none' }
     });
     setBroadcasts([{
-      id: Date.now(), title: 'Test Broadcast Campaign', date: 'Sent • Just now', type: 'Announcement', engagement: '0% Open Rate', icon: <Megaphone className="w-5 h-5 text-[#11182B] " />, color: 'bg-slate-50 border-[#EFEFEF]'
+      id: Date.now(), title: 'Resident update sent', date: 'Sent • Just now', type: 'Announcement', engagement: 'Awaiting engagement', icon: <Megaphone className="w-5 h-5 text-[#11182B] " />, color: 'bg-white border-[#EFEFEF]'
     }, ...broadcasts]);
     setShowBroadcastModal(false);
   }
@@ -31,7 +31,7 @@ export default function EngagementHub() {
           <h1 className="text-3xl font-bold text-[#11182B] tracking-tight">Engagement Hub</h1>
           <p className="text-slate-500 font-medium mt-1">Communicate with residents, launch events, and manage broadcasts.</p>
         </div>
-        <Button onClick={() => setShowBroadcastModal(true)} className="px-5 py-2.5 bg-[#11182B] text-white rounded-none font-bold text-xs uppercase tracking-widest hover:bg-white hover:text-[#11182B] border border-[#11182B] transition-colors flex items-center gap-2">
+        <Button onClick={() => setShowBroadcastModal(true)} className="px-5 py-2.5 bg-[#11182B] text-white rounded-none font-bold text-xs uppercase hover:bg-white hover:text-[#11182B] border border-[#11182B] transition-colors flex items-center gap-2">
           <Zap className="w-4 h-4" /> New Broadcast
         </Button>
       </div>
@@ -48,7 +48,13 @@ export default function EngagementHub() {
                   className="w-full pl-9 pr-4 py-2 rounded-none border border-[#EFEFEF] text-sm focus:outline-none focus:ring-2 focus:ring-[#11182B]" 
                />
             </div>
-            <Button className="px-4 py-2 bg-white border border-[#EFEFEF] rounded-none text-sm font-bold text-slate-600 flex items-center gap-2 hover:bg-slate-50 transition-colors">
+            <Button
+              className="px-4 py-2 bg-white border border-[#EFEFEF] rounded-none text-sm font-bold text-slate-600 flex items-center gap-2 hover:bg-white hover:text-[#11182B] transition-colors"
+              onClick={() => {
+                setSearchQuery('');
+                toast.info('Showing all broadcast activity.');
+              }}
+            >
                <Filter className="w-4 h-4" /> Filter
             </Button>
          </div>
@@ -85,11 +91,11 @@ export default function EngagementHub() {
             <div className="p-8 space-y-6">
                <div>
                   <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 block">Subject</label>
-                  <input type="text" className="w-full border border-[#EFEFEF] rounded-none px-4 py-2 text-sm font-medium focus:ring-2 focus:ring-[#11182B]" placeholder="e.g. Building Maintenance Notice" />
+                  <input type="text" className="w-full border border-[#EFEFEF] rounded-none px-4 py-2 text-sm font-medium focus:ring-2 focus:ring-[#11182B]" placeholder="Resident rooftop reminder" />
                </div>
                <div>
                   <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 block">Message</label>
-                  <textarea rows={4} className="w-full border border-[#EFEFEF] rounded-none px-4 py-2 text-sm font-medium focus:ring-2 focus:ring-[#11182B]" placeholder="Write your message here..."></textarea>
+                  <textarea rows={4} className="w-full border border-[#EFEFEF] rounded-none px-4 py-2 text-sm font-medium focus:ring-2 focus:ring-[#11182B]" placeholder="Write the resident-facing message exactly as it should be sent."></textarea>
                </div>
                <div className="grid grid-cols-2 gap-4">
                   <div>
@@ -97,7 +103,7 @@ export default function EngagementHub() {
                     <select className="w-full border border-[#EFEFEF] rounded-none px-4 py-2 text-sm font-medium focus:ring-2 focus:ring-[#11182B] bg-white">
                        <option>All Residents</option>
                        <option>Premium Tier</option>
-                       <option>Inactive Users</option>
+                       <option>Inactive Residents</option>
                     </select>
                   </div>
                   <div>
