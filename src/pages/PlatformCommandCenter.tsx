@@ -4,14 +4,14 @@ import { ArrowRight, BarChart3, Building2, CalendarDays, FileText, Megaphone, Me
 import { base44 } from '@/api/base44Client';
 
 const platformRoutes = [
-  { label: 'Partners', to: '/admin/platform/partners', icon: ShieldCheck },
-  { label: 'Buildings', to: '/admin/platform/buildings', icon: Building2 },
-  { label: 'Events', to: '/admin/platform/events', icon: CalendarDays },
-  { label: 'Perks', to: '/admin/platform/perks', icon: Ticket },
-  { label: 'Campaigns', to: '/admin/platform/campaigns', icon: Megaphone },
-  { label: 'Residents', to: '/admin/platform/residents', icon: Users },
-  { label: 'Reports', to: '/admin/platform/reports', icon: FileText },
-  { label: 'Settings', to: '/admin/platform/settings', icon: BarChart3 },
+  { label: 'Partners', to: '/admin/partner', icon: ShieldCheck },
+  { label: 'Buildings', to: '/admin/buildings', icon: Building2 },
+  { label: 'Events', to: '/admin/events', icon: CalendarDays },
+  { label: 'Perks', to: '/admin/perks', icon: Ticket },
+  { label: 'Campaigns', to: '/admin/engagement', icon: Megaphone },
+  { label: 'Residents', to: '/admin/residents', icon: Users },
+  { label: 'Reports', to: '/admin/reports', icon: FileText },
+  { label: 'Settings', to: '/admin/settings', icon: BarChart3 },
 ];
 
 export default function PlatformCommandCenter() {

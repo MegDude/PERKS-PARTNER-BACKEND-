@@ -1,15 +1,23 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
-import { Building2, LayoutDashboard, Users, Megaphone, Ticket, Settings, ArrowLeft, BarChart3, Presentation, ListTodo, Menu, X } from 'lucide-react';
+import { Building2, LayoutDashboard, Users, Megaphone, Ticket, Settings, ArrowLeft, BarChart3, Presentation, ListTodo, Menu, X, Home as HomeIcon } from 'lucide-react';
 
 export default function PartnerDashboardLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const goBack = () => {
+    if (window.history.length > 1) {
+      navigate(-1);
+      return;
+    }
+    navigate('/');
+  };
 
   const links = [
     { section: 'Overview' },
+    { to: '/', icon: <HomeIcon className="w-4 h-4" />, label: 'Home' },
     { to: '/admin', icon: <LayoutDashboard className="w-4 h-4" />, label: 'Workspace' },
     { to: '/admin/home', icon: <LayoutDashboard className="w-4 h-4" />, label: 'Platform Welcome' },
     { to: '/admin/platform', icon: <ShieldIcon />, label: 'Command Center' },
@@ -48,7 +56,7 @@ export default function PartnerDashboardLayout() {
               <div className="w-6 h-6 bg-[#11182B] flex items-center justify-center">
                  <Building2 className="w-3 h-3 text-white" />
               </div>
-              <span className="font-bold tracking-tight text-[#11182B] group-hover:text-[#C5A028] transition-colors uppercase text-sm">Downtown Perks</span>
+              <span className="font-bold tracking-tight text-[#11182B] group-hover:text-[#C5A028] transition-colors uppercase text-[15px]">Downtown Perks</span>
            </Link>
         </div>
         
@@ -56,7 +64,7 @@ export default function PartnerDashboardLayout() {
           {links.map((link: any, idx) => {
             if (link.section) {
               return (
-                <div key={idx} className="mt-6 mb-2 px-3 text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                <div key={idx} className="mt-6 mb-2 px-3 text-[11px] font-bold uppercase tracking-widest text-slate-500">
                   {link.section}
                 </div>
               );
@@ -66,7 +74,7 @@ export default function PartnerDashboardLayout() {
               <Link 
                 key={link.to} 
                 to={link.to}
-                className={`flex items-center gap-3 px-3 py-2.5 font-bold text-xs transition-colors rounded-none ${isActive ? 'text-[#11182B] bg-[#11182B]/5 border-l-2 border-[#C5A028]' : 'text-slate-500 hover:text-[#11182B] hover:bg-slate-50 border-l-2 border-transparent'}`}
+                className={`flex items-center gap-3 px-3 py-3 font-bold text-sm leading-5 transition-colors rounded-none ${isActive ? 'text-[#11182B] bg-[#11182B]/5 border-l-2 border-[#C5A028]' : 'text-slate-600 hover:text-[#11182B] hover:bg-slate-50 border-l-2 border-transparent'}`}
               >
                 {link.icon}
                 {link.label}
@@ -76,8 +84,8 @@ export default function PartnerDashboardLayout() {
         </div>
 
         <div className="p-4 border-t border-[#EFEFEF]">
-          <Button variant="ghost" onClick={() => navigate('/')} className="w-full">
-            <ArrowLeft className="w-4 h-4 mr-2" /> EXIT TO PUBLIC APP
+          <Button variant="ghost" onClick={() => navigate('/')} className="w-full justify-start gap-2 text-[#0B1F33]">
+            <HomeIcon className="w-4 h-4" /> Home
           </Button>
         </div>
       </aside>
@@ -87,7 +95,7 @@ export default function PartnerDashboardLayout() {
         <div className="lg:hidden sticky top-0 z-40 p-4 bg-white border-b border-[#EFEFEF] flex items-center justify-between">
            <div className="flex items-center gap-2 text-[#11182B] ">
               <Button
-                onClick={() => navigate(-1)}
+                onClick={goBack}
                 variant="ghost"
                 className="mr-1 h-9 w-9 p-0"
                 aria-label="Go back"
@@ -99,14 +107,24 @@ export default function PartnerDashboardLayout() {
               </div>
               <span className="font-bold tracking-tight uppercase text-sm">Partner Platform</span>
            </div>
-           <Button
-             onClick={() => setMobileOpen(true)}
-             variant="outline"
-             className="h-10 w-10 p-0"
-             aria-label="Open partner platform navigation"
-           >
-             <Menu className="w-5 h-5" />
-           </Button>
+           <div className="flex items-center gap-2">
+             <Button
+               onClick={() => navigate('/')}
+               variant="ghost"
+               className="h-10 w-10 p-0"
+               aria-label="Go home"
+             >
+               <HomeIcon className="w-5 h-5" />
+             </Button>
+             <Button
+               onClick={() => setMobileOpen(true)}
+               variant="outline"
+               className="h-10 w-10 p-0"
+               aria-label="Open partner platform navigation"
+             >
+               <Menu className="w-5 h-5" />
+             </Button>
+           </div>
         </div>
 
         <Button
@@ -125,7 +143,7 @@ export default function PartnerDashboardLayout() {
               aria-label="Close navigation overlay"
               onClick={() => setMobileOpen(false)}
             />
-            <div className="absolute right-0 top-0 h-full w-[min(92vw,390px)] bg-white shadow-2xl flex flex-col">
+            <div className="absolute right-0 top-0 h-full w-[min(92vw,390px)] border-l border-[#EFEFEF] bg-white shadow-none flex flex-col">
               <div className="p-4 border-b border-[#EFEFEF] flex items-center justify-between">
                 <div>
                   <div className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Partner Platform</div>
@@ -166,8 +184,8 @@ export default function PartnerDashboardLayout() {
               </nav>
 
               <div className="p-4 border-t border-[#EFEFEF]">
-                <Button variant="ghost" onClick={() => navigate('/')} className="w-full">
-                  <ArrowLeft className="w-4 h-4 mr-2" /> EXIT TO PUBLIC APP
+                <Button variant="ghost" onClick={() => { setMobileOpen(false); navigate('/'); }} className="w-full justify-start gap-2 text-[#0B1F33]">
+                  <HomeIcon className="w-4 h-4" /> Home
                 </Button>
               </div>
             </div>
@@ -175,14 +193,25 @@ export default function PartnerDashboardLayout() {
         )}
 
         <div className="sticky top-0 z-30 hidden border-b border-[#EFEFEF] bg-white/96 px-6 py-3 backdrop-blur lg:block">
-          <Button
-            onClick={() => navigate(-1)}
-            variant="ghost"
-            className="h-9 gap-2 px-0 text-[11px] font-semibold text-[#11182B]"
-            aria-label="Go back to previous partner workspace page"
-          >
-            <ArrowLeft className="w-4 h-4" /> Back
-          </Button>
+          <div className="flex items-center gap-4">
+            <Button
+              onClick={goBack}
+              variant="ghost"
+              className="h-9 gap-2 px-0 text-[11px] font-semibold text-[#11182B]"
+              aria-label="Go back to previous platform page"
+            >
+              <ArrowLeft className="w-4 h-4" /> Back
+            </Button>
+            <span className="h-4 w-px bg-[rgba(11,31,51,0.12)]" aria-hidden="true" />
+            <Button
+              onClick={() => navigate('/')}
+              variant="ghost"
+              className="h-9 gap-2 px-0 text-[11px] font-semibold text-[#11182B]"
+              aria-label="Go to platform home"
+            >
+              <HomeIcon className="w-4 h-4" /> Home
+            </Button>
+          </div>
         </div>
         
         <Outlet />

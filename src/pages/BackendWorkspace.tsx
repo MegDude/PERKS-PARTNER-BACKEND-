@@ -22,18 +22,18 @@ import { platformArchitecture } from '@/platform/registry';
 
 const moduleRoutes = [
   { label: 'Platform Overview', to: '/admin/platform', icon: ShieldCheck },
-  { label: 'Partners', to: '/admin/partner-portal', icon: ShoppingBag },
+  { label: 'Partners', to: '/admin/partner', icon: ShoppingBag },
   { label: 'Properties', to: '/admin/properties', icon: Building2 },
-  { label: 'Hotels', to: '/admin/platform/partners', icon: Hotel },
-  { label: 'Venues', to: '/admin/platform/partners', icon: Ticket },
-  { label: 'Brands', to: '/admin/platform/partners', icon: ShoppingBag },
-  { label: 'Civic', to: '/admin/platform/partners', icon: ShieldCheck },
+  { label: 'Hotels', to: '/admin/partner', icon: Hotel },
+  { label: 'Venues', to: '/admin/partner', icon: Ticket },
+  { label: 'Brands', to: '/admin/partner', icon: ShoppingBag },
+  { label: 'Civic', to: '/admin/partner', icon: ShieldCheck },
   { label: 'Events', to: '/admin/events', icon: CalendarDays },
   { label: 'Perks', to: '/admin/perks', icon: Ticket },
   { label: 'Campaigns', to: '/admin/engagement', icon: Megaphone },
   { label: 'Reports', to: '/admin/reports', icon: FileText },
-  { label: 'Users', to: '/admin/platform/settings', icon: Users },
-  { label: 'Notifications', to: '/admin/platform/settings', icon: Bell },
+  { label: 'Users', to: '/admin/settings', icon: Users },
+  { label: 'Notifications', to: '/admin/settings', icon: Bell },
   { label: 'System Health', to: '/admin/platform', icon: Activity },
 ];
 

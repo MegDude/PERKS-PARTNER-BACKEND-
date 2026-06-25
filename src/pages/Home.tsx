@@ -288,7 +288,7 @@ export default function Home() {
   const moduleCards = useMemo(
     () => [
       { name: 'Residents', count: data.residents.length, link: '/admin/residents', description: 'Manage enrollment, cards, access, engagement, and communications.', status: 'Active', automations: 'Enrollment, bulk updates' },
-      { name: 'Properties', count: data.buildings.length, link: '/admin/buildings', description: 'Operate buildings, units, amenities, access, surveys, and reports.', status: 'Active', automations: 'Property reporting' },
+      { name: 'Properties', count: data.buildings.length, link: '/admin/properties', description: 'Operate the property portfolio, workspaces, map links, units, amenities, access, surveys, and reports.', status: 'Active', automations: 'Property reporting' },
       { name: 'Partners', count: data.partners.length || data.tenantStatus?.tenants || 0, link: '/admin/partner-portal', description: 'Provision tenant workspaces, partner accounts, roles, and performance views.', status: 'Active', automations: 'Partner provisioning' },
       { name: 'Perks', count: data.perks.length, link: '/admin/perks', description: 'Manage offers, QR redemption, partner attribution, and performance signals.', status: 'Active', automations: 'Redemption verification' },
       { name: 'Events', count: data.events.length, link: '/admin/events', description: 'Coordinate programming, RSVP tracking, attendance, follow-up, and event reports.', status: 'Active', automations: 'Event follow-up' },

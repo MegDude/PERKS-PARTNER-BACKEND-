@@ -428,8 +428,11 @@ function Line({ label, value, strong = false }: { label: string; value: React.Re
 
 function WorkspaceView({ state, scoped, data }: { state: LifecycleState; scoped: Record<string, any[]>; data: Record<string, any[]> }) {
   const location = useLocation();
+  const [actionStatus, setActionStatus] = useState('');
+  const [assistantResponse, setAssistantResponse] = useState('');
   const moduleSlug = location.pathname.replace('/workspace/', '') || 'home';
   const orgName = state.provision?.tenant?.name || state.organization.name || data.tenants?.[0]?.name || 'Partner Workspace';
+  const tenantId = state.provision?.tenant?.id || data.tenants?.[0]?.id;
   const analytics = scoped.analytics?.[0] || {};
   const snapshot = [
     { label: 'Views', value: analytics.views || 0 },
@@ -451,6 +454,36 @@ function WorkspaceView({ state, scoped, data }: { state: LifecycleState; scoped:
     );
   }
 
+  const runWorkspaceAction = async (actionType: string, title?: string) => {
+    setActionStatus('Working...');
+    try {
+      const response = await base44.functions.invoke('createWorkspaceAction', {
+        tenant_id: tenantId,
+        action_type: actionType,
+        title,
+        actor: 'workspace-user@downtownperks.local',
+      });
+      const record = response.data?.record || response.record;
+      setActionStatus(`${record?.title || record?.label || title || 'Workspace action'} created.`);
+    } catch (error: any) {
+      setActionStatus(error?.message || 'Action failed.');
+    }
+  };
+
+  const askAssistant = async (prompt: string) => {
+    setAssistantResponse('Thinking...');
+    try {
+      const response = await base44.functions.invoke('askWorkspaceAssistant', {
+        tenant_id: tenantId,
+        prompt,
+        actor: 'workspace-user@downtownperks.local',
+      });
+      setAssistantResponse(response.data?.response || response.response || 'Assistant response saved.');
+    } catch (error: any) {
+      setAssistantResponse(error?.message || 'Assistant request failed.');
+    }
+  };
+
   return (
     <Shell eyebrow="Workspace Home" title={orgName} body="Manage campaigns, offers, events, reporting, team access, billing, QR experiences, and performance from one operating center.">
       <WorkspaceNav />
@@ -468,19 +501,29 @@ function WorkspaceView({ state, scoped, data }: { state: LifecycleState; scoped:
         <SectionCard>
           <p className="text-lg font-semibold">Quick actions</p>
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
-            {['Create Offer', 'Create Event', 'New Campaign', 'Invite Team', 'Generate QR', 'Update Profile', 'Launch Broadcast'].map((action) => (
-              <button key={action} className="inline-flex min-h-11 items-center justify-between border border-[rgba(11,31,51,0.08)] bg-white px-4 text-sm font-semibold hover:border-[#C8A96A]">
+            {[
+              ['Create Offer', 'create_offer'],
+              ['Create Event', 'create_event'],
+              ['New Campaign', 'new_campaign'],
+              ['Invite Team', 'invite_team'],
+              ['Generate QR', 'generate_qr'],
+              ['Update Profile', 'update_profile'],
+              ['Launch Broadcast', 'launch_broadcast'],
+            ].map(([action, actionType]) => (
+              <button key={action} onClick={() => runWorkspaceAction(actionType, action)} className="inline-flex min-h-11 items-center justify-between border border-[rgba(11,31,51,0.08)] bg-white px-4 text-sm font-semibold hover:border-[#C8A96A]">
                 {action} <Plus className="h-4 w-4" />
               </button>
             ))}
           </div>
+          {actionStatus && <p className="mt-4 text-sm font-semibold text-[#0B1F33]">{actionStatus}</p>}
         </SectionCard>
         <SectionCard>
           <p className="flex items-center gap-2 text-lg font-semibold"><Sparkles className="h-4 w-4 text-[#C8A96A]" /> Downtown Assistant</p>
           <p className="mt-3 text-sm leading-6 text-[rgba(11,31,51,0.62)]">Good morning. Your workspace has {scoped.offers?.length || 0} offers, {scoped.events?.length || 0} events, and {scoped.campaigns?.length || 0} campaigns ready to manage. Suggested next action: publish a timely offer, generate QR access, and invite a teammate.</p>
           <div className="mt-4 grid gap-2 text-sm">
-            {['What should we promote today?', 'Create an event', 'Generate a report', 'Summarize this month'].map((prompt) => <button key={prompt} className="border-b border-[rgba(11,31,51,0.08)] py-2 text-left hover:text-[#C8A96A]">{prompt}</button>)}
+            {['What should we promote today?', 'Create an event', 'Generate a report', 'Summarize this month'].map((prompt) => <button key={prompt} onClick={() => askAssistant(prompt)} className="border-b border-[rgba(11,31,51,0.08)] py-2 text-left hover:text-[#C8A96A]">{prompt}</button>)}
           </div>
+          {assistantResponse && <p className="mt-4 border-t border-[rgba(11,31,51,0.08)] pt-4 text-sm leading-6 text-[#0B1F33]">{assistantResponse}</p>}
         </SectionCard>
       </div>
       <div className="mt-6 grid gap-6 xl:grid-cols-[1fr_420px]">

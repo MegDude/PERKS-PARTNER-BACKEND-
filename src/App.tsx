@@ -8,7 +8,6 @@ import PropertiesManagement from './pages/PropertiesManagement';
 import EngagementHub from './pages/EngagementHub';
 import DowntownPerks from './pages/DowntownPerks';
 
-import BuildingsWithResidents from './pages/BuildingsWithResidents';
 import DeveloperEngagement from './pages/DeveloperEngagement';
 import About from './pages/About';
 import EventDetail from './pages/EventDetail';
@@ -25,7 +24,6 @@ import WelcomeFlow from './pages/WelcomeFlow';
 import Reports from './pages/Reports';
 import Surveys from './pages/Surveys';
 import AnnouncementManager from './pages/AnnouncementManager';
-import BuildingEngagement from './pages/BuildingEngagement';
 import BackendWorkspace from './pages/BackendWorkspace';
 import PlatformCommandCenter from './pages/PlatformCommandCenter';
 import PartnerLifecycle from './pages/PartnerLifecycle';
@@ -33,7 +31,9 @@ import PartnerLifecycle from './pages/PartnerLifecycle';
 export default function App() {
   return (
     <Routes>
-      <Route path="/" element={<Home />} />
+      <Route path="/" element={<PartnerDashboardLayout />}>
+        <Route index element={<Home />} />
+      </Route>
       <Route path="/map" element={<MapOS />} />
       <Route path="/welcome" element={<WelcomeFlow />} />
       <Route path="/partners" element={<PartnerLifecycle />} />
@@ -48,14 +48,14 @@ export default function App() {
         <Route index element={<BackendWorkspace />} />
         <Route path="home" element={<Home />} />
         <Route path="platform" element={<PlatformCommandCenter />} />
-        <Route path="platform/partners" element={<PartnerPortal />} />
-        <Route path="platform/buildings" element={<BuildingsManagement />} />
-        <Route path="platform/events" element={<Events />} />
-        <Route path="platform/perks" element={<DowntownPerks />} />
-        <Route path="platform/campaigns" element={<EngagementHub />} />
-        <Route path="platform/residents" element={<Residents />} />
-        <Route path="platform/reports" element={<Reports />} />
-        <Route path="platform/settings" element={<BackendWorkspace />} />
+        <Route path="platform/partners" element={<Navigate to="/admin/partner" replace />} />
+        <Route path="platform/buildings" element={<Navigate to="/admin/buildings" replace />} />
+        <Route path="platform/events" element={<Navigate to="/admin/events" replace />} />
+        <Route path="platform/perks" element={<Navigate to="/admin/perks" replace />} />
+        <Route path="platform/campaigns" element={<Navigate to="/admin/engagement" replace />} />
+        <Route path="platform/residents" element={<Navigate to="/admin/residents" replace />} />
+        <Route path="platform/reports" element={<Navigate to="/admin/reports" replace />} />
+        <Route path="platform/settings" element={<Navigate to="/admin/settings" replace />} />
         <Route path="dashboard" element={<Dashboard />} />
         
         {/* Buildings Context Setup if needed */}
@@ -66,7 +66,7 @@ export default function App() {
         {/* Direct Building Dashboard equivalent via BuildingManagement or direct access */}
         <Route path="buildings/:buildingId/*" element={<BuildingsManagement />} />
         
-        <Route path="buildings-with-residents" element={<BuildingsWithResidents />} />
+        <Route path="buildings-with-residents" element={<Navigate to="/admin/buildings/residents" replace />} />
         <Route path="engagement" element={<EngagementHub />} />
         <Route path="perks" element={<DowntownPerks />} />
         <Route path="about" element={<About />} />
@@ -78,6 +78,7 @@ export default function App() {
         <Route path="residents" element={<Residents />} />
         <Route path="segmentation" element={<Segmentation />} />
         <Route path="analytics" element={<PerkAnalytics />} />
+        <Route path="settings" element={<BackendWorkspace />} />
         
         {/* New Pages */}
         <Route path="reports" element={<Reports />} />

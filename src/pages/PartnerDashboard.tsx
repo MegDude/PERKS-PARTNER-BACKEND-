@@ -1,17 +1,14 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { H1, Body } from '@/components/ui/Typography';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/Button';
 import { motion } from 'framer-motion';
-import { Mail, TrendingUp, Users, MessageSquare, Building2, Download } from 'lucide-react';
+import { Mail, TrendingUp, MessageSquare, Building2, Download, Activity, CheckCircle2, Clock3 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
-import UnifiedMapShell from '@/components/map/unified/UnifiedMapShell';
-
 export default function PartnerDashboard() {
-  const [selectedPartner, setSelectedPartner] = useState<any>(null);
   const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7));
 
   const { data: user } = useQuery({
@@ -96,6 +93,66 @@ export default function PartnerDashboard() {
   };
 
   const activePartners = (partners as any[]).filter((p: any) => p.is_active);
+  const partnerById = useMemo(() => {
+    return Object.fromEntries((partners as any[]).map((partner: any) => [partner.id, partner]));
+  }, [partners]);
+
+  const perkById = useMemo(() => {
+    return Object.fromEntries((perks as any[]).map((perk: any) => [perk.id, perk]));
+  }, [perks]);
+
+  const recentPartnerActivity = useMemo(() => {
+    const messageActivity = (messages as any[]).map((message: any) => {
+      const partner = partnerById[message.partner_id];
+      return {
+        id: `message-${message.id}`,
+        partnerName: partner?.business_name || message.partner_name || 'Partner',
+        type: message.status === 'unread' ? 'Unread message' : 'Partner message',
+        related: message.subject || message.message || 'Workspace conversation',
+        timestamp: message.created_date || message.created_at || message.updated_at || 'Recent',
+        status: message.status || 'open',
+        action: 'Open message',
+      };
+    });
+
+    const redemptionActivity = (redemptions as any[]).map((redemption: any) => {
+      const perk = perkById[redemption.perk_id];
+      const partner = partnerById[perk?.partner_id];
+      return {
+        id: `redemption-${redemption.id}`,
+        partnerName: partner?.business_name || redemption.partner_name || 'Partner',
+        type: 'Perk redemption',
+        related: perk?.title || perk?.perk_title || 'Active perk',
+        timestamp: redemption.created_date || redemption.created_at || redemption.redeemed_at || 'Recent',
+        status: redemption.status || 'redeemed',
+        action: 'View redemption',
+      };
+    });
+
+    const perkActivity = (perks as any[]).map((perk: any) => {
+      const partner = partnerById[perk.partner_id];
+      return {
+        id: `perk-${perk.id}`,
+        partnerName: partner?.business_name || perk.partner_name || 'Partner',
+        type: perk.is_active === false ? 'Perk paused' : 'Perk active',
+        related: perk.title || perk.perk_title || perk.name || 'Partner perk',
+        timestamp: perk.updated_at || perk.updated_date || perk.created_at || perk.created_date || 'Recent',
+        status: perk.is_active === false ? 'paused' : 'active',
+        action: 'Review perk',
+      };
+    });
+
+    return [...messageActivity, ...redemptionActivity, ...perkActivity]
+      .sort((a, b) => String(b.timestamp).localeCompare(String(a.timestamp)))
+      .slice(0, 8);
+  }, [messages, partnerById, perkById, perks, redemptions]);
+
+  const formatActivityTime = (value: string) => {
+    if (!value || value === 'Recent') return 'Recent';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return value;
+    return new Intl.DateTimeFormat('en', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }).format(date);
+  };
 
   return (
     <div className="min-h-screen bg-[#F5F7FA] p-6 lg:p-8">
@@ -161,7 +218,6 @@ export default function PartnerDashboard() {
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}
                       className="p-6 border border-[#EFEFEF] rounded-none hover:shadow-none transition-all cursor-pointer bg-white"
-                      onClick={() => setSelectedPartner(partner.id)}
                     >
                       <div className="flex items-start justify-between mb-4">
                         <div>
@@ -200,9 +256,66 @@ export default function PartnerDashboard() {
         </Card>
       </motion.div>
 
-      <div className="mt-8 h-[400px] w-full rounded-none overflow-hidden shadow-none relative border border-[#EFEFEF]">
-         <UnifiedMapShell mode="partner" entities={[]} onEntitySelect={() => {}} selectedEntity={null} />
-      </div>
+      <motion.section
+        initial={{ opacity: 0, y: 18 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.5 }}
+        className="mt-8 rounded-2xl border border-[rgba(11,31,51,0.08)] bg-white p-6"
+      >
+        <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="mb-2 text-[11px] font-semibold uppercase text-[#C8A96A]">Partner operations</p>
+            <h2 className="text-[28px] font-semibold leading-tight text-[#0B1F33]">Recent Partner Activity</h2>
+            <p className="mt-2 max-w-2xl text-[15px] leading-6 text-[rgba(11,31,51,0.62)]">
+              Track the latest partner messages, redemptions, perk updates, and follow-up items without relying on decorative map previews.
+            </p>
+          </div>
+          <Button variant="outline">
+            <Activity className="w-4 h-4" /> View all activity
+          </Button>
+        </div>
+
+        {recentPartnerActivity.length === 0 ? (
+          <div className="border border-dashed border-[rgba(11,31,51,0.14)] bg-white p-6 text-[15px] leading-6 text-[rgba(11,31,51,0.62)]">
+            No partner activity has been recorded yet. Messages, perk redemptions, campaign changes, and workspace updates will appear here once partners start using the platform.
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <div className="min-w-[760px] divide-y divide-[rgba(11,31,51,0.08)]">
+              <div className="grid grid-cols-[1.1fr_.9fr_1.2fr_.7fr_.7fr_.65fr] gap-4 px-1 pb-3 text-[11px] font-semibold uppercase text-[rgba(11,31,51,0.52)]">
+                <span>Partner</span>
+                <span>Activity type</span>
+                <span>Related item</span>
+                <span>Timestamp</span>
+                <span>Status</span>
+                <span>Action</span>
+              </div>
+              {recentPartnerActivity.map((item) => (
+                <div key={item.id} className="grid grid-cols-[1.1fr_.9fr_1.2fr_.7fr_.7fr_.65fr] items-center gap-4 px-1 py-4 text-[14px] text-[#0B1F33]">
+                  <div className="font-semibold">{item.partnerName}</div>
+                  <div className="text-[rgba(11,31,51,0.68)]">{item.type}</div>
+                  <div className="text-[rgba(11,31,51,0.68)]">{item.related}</div>
+                  <div className="flex items-center gap-2 text-[rgba(11,31,51,0.58)]">
+                    <Clock3 className="h-4 w-4 text-[#C8A96A]" />
+                    {formatActivityTime(item.timestamp)}
+                  </div>
+                  <div>
+                    <span className="inline-flex min-h-7 items-center gap-1.5 rounded-full border border-[rgba(11,31,51,0.10)] bg-white px-2.5 text-[12px] font-semibold text-[#0B1F33]">
+                      <CheckCircle2 className="h-3.5 w-3.5 text-[#C8A96A]" />
+                      {item.status}
+                    </span>
+                  </div>
+                  <div>
+                    <Button variant="ghost" className="min-h-10 px-2">
+                      {item.action}
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </motion.section>
     </div>
   );
 }

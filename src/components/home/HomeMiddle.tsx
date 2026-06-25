@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MapPin, Smartphone, Scan } from 'lucide-react';
+import { MapPin, Smartphone, Scan, ArrowRight } from 'lucide-react';
 import { OperationalSurface } from '../ui/OperationalSurface';
 
 export function HomeLiveMap() {
@@ -20,33 +20,43 @@ export function HomeLiveMap() {
              Open the map
           </button>
 
-          {/* Map Preview Abstraction */}
-          <OperationalSurface className="w-full h-[400px] md:h-[600px] bg-[#FFFFFF] overflow-hidden relative cursor-pointer group" onClick={() => navigate('/map?mode=resident&tab=map')}>
-             <div className="absolute inset-0 bg-[#F1F3F7] opacity-50" style={{ backgroundImage: 'linear-gradient(#e5e7eb 1px, transparent 1px), linear-gradient(90deg, #e5e7eb 1px, transparent 1px)', backgroundSize: '20px 20px' }}></div>
-             
-             {/* Map Pins */}
-             <div className="absolute top-[30%] left-[40%] text-[#0B1F33] transform -translate-x-1/2 -translate-y-1/2 flex flex-col items-center gap-1 group-hover:scale-110 transition-transform">
-                <MapPin className="w-8 h-8 fill-white" />
-                <span className="bg-white px-2 py-0.5 text-[11px] font-bold shadow-sm whitespace-nowrap">The Elephant Room</span>
-             </div>
-
-             <div className="absolute top-[60%] left-[20%] text-[#0B1F33] transform -translate-x-1/2 -translate-y-1/2 flex flex-col items-center gap-1 group-hover:scale-110 transition-transform delay-75">
-                <MapPin className="w-8 h-8 fill-white" />
-                <span className="bg-white px-2 py-0.5 text-[11px] font-bold shadow-sm whitespace-nowrap">Buc's</span>
-             </div>
-
-             <div className="absolute top-[45%] right-[25%] text-[#C5A028] transform -translate-x-1/2 -translate-y-1/2 flex flex-col items-center gap-1 group-hover:scale-110 transition-transform delay-150">
-                <MapPin className="w-8 h-8 fill-white" />
-                <span className="bg-white px-2 py-0.5 text-[11px] font-bold shadow-sm whitespace-nowrap">Local Event</span>
-             </div>
-             
-             {/* Map Console abstraction */}
-             <div className="absolute bottom-6 left-1/2 -translate-x-1/2 w-[90%] md:w-[400px] bg-white border border-[rgba(11,31,51,0.08)] rounded-[12px] p-4 shadow-sm flex items-center justify-between">
-                <div className="text-[13px] text-[rgba(11,31,51,0.62)]">Search nearby...</div>
-                <div className="w-8 h-8 bg-[#0B1F33] text-white flex items-center justify-center rounded-sm">
-                   <MapPin className="w-4 h-4" />
-                </div>
-             </div>
+          <OperationalSurface className="grid w-full gap-0 overflow-hidden bg-white text-left md:grid-cols-3">
+             {[
+                {
+                  icon: MapPin,
+                  title: 'Live places',
+                  body: 'Open the real map to browse nearby venues, properties, hotels, civic programs, and services.',
+                },
+                {
+                  icon: Smartphone,
+                  title: 'Resident actions',
+                  body: 'Save places, open directions, view perks, and move from discovery to a real decision.',
+                },
+                {
+                  icon: Scan,
+                  title: 'Tracked engagement',
+                  body: 'Map actions connect back to scans, redemptions, events, partner reporting, and platform activity.',
+                },
+             ].map((item) => {
+                const Icon = item.icon;
+                return (
+                  <button
+                    key={item.title}
+                    type="button"
+                    onClick={() => navigate('/map?mode=resident&tab=map')}
+                    className="group flex min-h-[220px] flex-col justify-between border-b border-[rgba(11,31,51,0.08)] bg-white p-8 text-left transition-colors hover:border-[#C8A96A] md:border-b-0 md:border-r last:border-r-0"
+                  >
+                    <Icon className="h-5 w-5 text-[#C8A96A]" />
+                    <div>
+                      <h3 className="mb-3 text-[24px] font-semibold leading-tight text-[#0B1F33]">{item.title}</h3>
+                      <p className="text-[15px] leading-6 text-[rgba(11,31,51,0.62)]">{item.body}</p>
+                    </div>
+                    <span className="mt-8 inline-flex items-center gap-2 text-[12px] font-semibold text-[#0B1F33]">
+                      Open real map <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                    </span>
+                  </button>
+                );
+             })}
           </OperationalSurface>
        </div>
     </section>

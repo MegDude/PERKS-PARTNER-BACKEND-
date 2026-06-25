@@ -505,7 +505,7 @@ export default function DowntownPerks() {
 function PerkModal({ form, partners, campaigns, events, saving, editing, onClose, onSubmit, updateField }: any) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#0B1F33]/45 p-4" role="dialog" aria-modal="true">
-      <form onSubmit={onSubmit} className="max-h-[92vh] w-full max-w-5xl overflow-y-auto rounded-xl bg-white p-6 shadow-2xl">
+      <form onSubmit={onSubmit} className="max-h-[92vh] w-full max-w-5xl overflow-y-auto rounded-xl border border-[rgba(11,31,51,0.08)] bg-white p-6 shadow-none">
         <div className="flex items-start justify-between gap-4">
           <div>
             <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-[#C8A96A]">{editing ? 'Edit perk' : 'Create perk'}</p>

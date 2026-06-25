@@ -10,11 +10,11 @@ export const Tabs = ({ defaultValue, value, onValueChange, children, className }
   return <div className={className}>{React.Children.map(children, child => React.isValidElement(child) ? React.cloneElement(child as any, { active, handleValueChange }) : child)}</div>;
 };
 
-export const TabsList = ({ children, className }: any) => <div className={`flex flex-wrap gap-3 mb-6 border-b border-[#EFEFEF] pb-px ${className}`}>{children}</div>;
+export const TabsList = ({ children, className }: any) => <div className={`mb-6 flex max-w-full gap-3 overflow-x-auto border-b border-[rgba(11,31,51,0.08)] pb-px ${className}`}>{children}</div>;
 export const TabsTrigger = ({ value, active, handleValueChange, children, className }: any) => (
   <button 
     onClick={() => handleValueChange?.(value)} 
-    className={`flex-none pb-3 text-[10px] font-semibold transition-colors border-b-2 ${active === value ? "border-[#C5A028] text-[#C5A028]" : "border-transparent text-slate-400 hover:text-[#11182B]"} ${className}`}
+    className={`min-h-11 flex-none border-b-2 bg-transparent px-0 pb-3 pt-2 text-[12px] font-semibold leading-none text-[rgba(11,31,51,0.58)] transition-colors hover:text-[#0B1F33] ${active === value ? "border-[#C8A96A] text-[#0B1F33]" : "border-transparent"} ${className}`}
   >
     {children}
   </button>

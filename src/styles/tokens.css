@@ -1,17 +1,39 @@
 :root {
-  --dp-navy: #0A1422;
-  --dp-navy-soft: #1B2638;
-  --dp-gold: #C5A028;
-  --dp-pearl: #F8FAFC;
+  --dp-navy: #0B1F33;
+  --dp-navy-soft: #132238;
+  --dp-gold: #C8A96A;
+  --dp-gold-deep: #B8963E;
+  --dp-pearl: #F7F8FB;
   --dp-white: #FFFFFF;
-  --dp-muted: #6E7785;
-  --dp-line: rgba(10,20,34,.08);
-  --dp-shadow: 0 18px 50px rgba(10,20,34,.12);
+  --dp-muted: rgba(11,31,51,.62);
+  --dp-muted-soft: rgba(11,31,51,.44);
+  --dp-line: rgba(11,31,51,.08);
+  --dp-line-strong: rgba(11,31,51,.14);
+  --dp-shadow: 0 18px 50px rgba(11,31,51,.08);
 
-  --radius-sm: 12px;
+  --dp-admin-max: 1320px;
+  --dp-admin-sidebar: 240px;
+  --dp-admin-gutter: clamp(20px, 4vw, 32px);
+  --dp-admin-section-gap: 32px;
+  --dp-admin-card-pad: 24px;
+  --dp-admin-card-radius: 16px;
+  --dp-admin-control-radius: 8px;
+
+  --radius-sm: 8px;
   --radius-md: 16px;
 
   --space-2: 8px;
   --space-3: 12px;
   --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-12: 48px;
+  --space-16: 64px;
+
+  --type-display: 48px;
+  --type-h1: 36px;
+  --type-h2: 28px;
+  --type-h3: 22px;
+  --type-body: 16px;
+  --type-caption: 14px;
 }

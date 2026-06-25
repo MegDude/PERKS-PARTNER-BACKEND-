@@ -2,12 +2,9 @@
 @import "tailwindcss";
 
 .dp-admin-shell {
-  --dp-admin-max: 1180px;
-  --dp-admin-gutter: clamp(18px, 5vw, 42px);
-  --dp-admin-section-gap: clamp(20px, 5vw, 36px);
-  --dp-admin-card-pad: clamp(18px, 4.8vw, 28px);
-  background: #ffffff;
-  color: #11182b;
+  background: #f7f8fb;
+  color: #0b1f33;
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
 .dp-admin-shell,
@@ -26,7 +23,7 @@
 .dp-admin-shell :where(main) {
   max-width: 100%;
   overflow-x: hidden;
-  background: #ffffff !important;
+  background: #f7f8fb !important;
 }
 
 .dp-admin-shell :where(main > div:not([class*="fixed"]):not([class*="absolute"]), main > section:not([class*="fixed"]):not([class*="absolute"])) {
@@ -53,37 +50,91 @@
   max-width: 100%;
 }
 
-.dp-admin-shell :where([class*="bg-[#F5F7FA]"], [class*="bg-[#FAFAFA]"], [class*="bg-bgMain"], [class*="bg-slate-50"], [class*="bg-slate-100"]) {
+.dp-admin-shell :where([class*="bg-[#F5F7FA]"], [class*="bg-[#F7F8FB]"], [class*="bg-[#FAFAFA]"], [class*="bg-[#F1F3F7]"], [class*="bg-bgMain"], [class*="bg-bgAlt"], [class*="from-slate"], [class*="to-slate"]) {
+  background-color: #f7f8fb !important;
+  background-image: none !important;
+}
+
+.dp-admin-shell :where([class*="bg-slate-50"], [class*="bg-slate-100"]) {
   background-color: #ffffff !important;
+  background-image: none !important;
+}
+
+.dp-admin-shell :where(.rounded-none) {
+  border-radius: var(--dp-admin-control-radius) !important;
+}
+
+.dp-admin-shell :where([class*="rounded-xl"], [class*="rounded-2xl"], [class*="rounded-3xl"]) {
+  border-radius: var(--dp-admin-card-radius) !important;
+}
+
+.dp-admin-shell :where([class*="rounded-lg"], [class*="rounded-md"]) {
+  border-radius: var(--dp-admin-control-radius) !important;
+}
+
+.dp-admin-shell :where(.border, [class*="border-[#EFEFEF]"], [class*="border-slate"], [class*="border-navy"]) {
+  border-color: rgba(11, 31, 51, 0.08) !important;
 }
 
 .dp-admin-shell :where([class*="shadow-xl"], [class*="shadow-2xl"], .shadow-lg) {
-  box-shadow: 0 18px 50px rgba(17, 24, 43, 0.08) !important;
+  box-shadow: var(--dp-shadow) !important;
 }
 
 .dp-admin-shell :where(table) {
   table-layout: fixed;
   width: 100%;
+  border-collapse: collapse;
+}
+
+.dp-admin-shell :where(thead, tr, th, td) {
+  background-color: #ffffff !important;
+}
+
+.dp-admin-shell :where(th) {
+  color: rgba(11, 31, 51, 0.52) !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0 !important;
+  text-transform: uppercase;
+}
+
+.dp-admin-shell :where(td) {
+  color: #0b1f33;
+  line-height: 1.55;
 }
 
 .dp-admin-shell :where(h1) {
-  font-size: clamp(1.45rem, 5.4vw, 2rem);
-  line-height: 1.15;
+  font-size: clamp(2rem, 4vw, var(--type-h1));
+  line-height: 1.12;
   font-weight: 600;
   max-width: 100%;
+  color: #0b1f33;
 }
 
 .dp-admin-shell :where(h2) {
-  font-size: clamp(1.1rem, 4.2vw, 1.375rem);
+  font-size: clamp(1.5rem, 3vw, var(--type-h2));
   line-height: 1.2;
   font-weight: 600;
   max-width: 100%;
+  color: #0b1f33;
 }
 
 .dp-admin-shell :where(h3) {
-  font-size: clamp(1rem, 1.25vw, 1.125rem);
+  font-size: clamp(1.125rem, 2vw, var(--type-h3));
   line-height: 1.25;
   font-weight: 600;
+  color: #0b1f33;
+}
+
+.dp-admin-shell :where(p, li, td, input, select, textarea) {
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.dp-admin-shell :where(label) {
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(11, 31, 51, 0.68);
 }
 
 .dp-admin-shell :where(.font-bold, .font-extrabold, .font-black) {
@@ -95,12 +146,39 @@
 }
 
 .dp-admin-shell :where(button) {
-  min-height: 34px;
+  min-height: 40px;
   white-space: nowrap;
-  font-size: 10px;
+  font-size: 11px;
   line-height: 1.15;
   overflow: visible;
   text-overflow: clip;
+}
+
+.dp-admin-shell :where(button, a[role="button"], a[class*="inline-flex"]) {
+  border-radius: var(--dp-admin-control-radius) !important;
+  box-shadow: none !important;
+  letter-spacing: 0 !important;
+}
+
+.dp-admin-shell :where(button:not([class*="bg-transparent"]), a[role="button"], a[class*="inline-flex"][class*="bg-"]) {
+  background-color: #ffffff !important;
+  color: #0b1f33 !important;
+  border-color: rgba(11, 31, 51, 0.12) !important;
+}
+
+.dp-admin-shell :where(button:hover:not([class*="bg-transparent"]), a[role="button"]:hover, a[class*="inline-flex"][class*="bg-"]:hover) {
+  background-color: #ffffff !important;
+  color: #0b1f33 !important;
+  border-color: #c8a96a !important;
+}
+
+.dp-admin-shell :where(button[class*="text-white"], a[class*="text-white"]) {
+  color: #0b1f33 !important;
+}
+
+.dp-admin-shell :where(button[class*="bg-[#11182B]"], button[class*="bg-navy"], button[class*="bg-[#0B1F33]"], a[class*="bg-[#11182B]"], a[class*="bg-navy"], a[class*="bg-[#0B1F33]"]) {
+  background-color: #ffffff !important;
+  color: #0b1f33 !important;
 }
 
 .dp-admin-shell :where(button:not(.w-full):not([class*="w-full"]), a:not(.w-full):not([class*="w-full"])) {
@@ -118,6 +196,8 @@
   color: currentColor;
   opacity: 1;
   stroke: currentColor;
+  width: 1rem;
+  height: 1rem;
   transition: color 160ms ease, opacity 160ms ease;
 }
 
@@ -131,10 +211,67 @@
 }
 
 .dp-admin-shell :where(button:not(.h-10):not(.h-12)) {
-  padding-top: 0.55rem;
-  padding-bottom: 0.55rem;
+  padding-top: 0.6rem;
+  padding-bottom: 0.6rem;
   padding-left: 0.9rem;
   padding-right: 0.9rem;
+}
+
+.dp-admin-shell :where(input, select, textarea) {
+  max-width: 100%;
+  background-color: #ffffff !important;
+  color: #0b1f33;
+  border-color: rgba(11, 31, 51, 0.16) !important;
+}
+
+.dp-admin-shell :where(input::placeholder, textarea::placeholder) {
+  color: rgba(11, 31, 51, 0.42);
+}
+
+.dp-admin-shell :where(.space-y-10 > :not([hidden]) ~ :not([hidden]), .space-y-8 > :not([hidden]) ~ :not([hidden]), .space-y-6 > :not([hidden]) ~ :not([hidden])) {
+  margin-top: var(--dp-admin-section-gap) !important;
+}
+
+.dp-admin-shell :where(.grid) {
+  gap: var(--space-6);
+}
+
+.dp-admin-shell :where(.bg-white.border, section.bg-white, article.bg-white) {
+  border-color: rgba(11, 31, 51, 0.08) !important;
+}
+
+.dp-admin-shell :where(.dp-admin-kpi-grid) {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--space-4);
+}
+
+.dp-admin-shell :where(.dp-admin-kpi-card) {
+  display: grid;
+  min-height: 132px;
+  gap: var(--space-2);
+  border: 1px solid rgba(11, 31, 51, 0.08);
+  border-radius: var(--dp-admin-card-radius);
+  background: #ffffff;
+  padding: var(--space-6);
+}
+
+.dp-admin-shell :where(.dp-admin-page-header) {
+  display: grid;
+  gap: var(--space-4);
+  padding-block: var(--space-8);
+}
+
+.dp-admin-shell :where(.dp-admin-toolbar) {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  border: 1px solid rgba(11, 31, 51, 0.08);
+  border-radius: var(--dp-admin-card-radius);
+  background: #ffffff;
+  padding: var(--space-6);
 }
 
 .dp-admin-shell .dp-admin-select {
@@ -180,7 +317,7 @@
 @media (max-width: 430px) {
   .dp-admin-shell {
     --dp-admin-gutter: 18px;
-    --dp-admin-section-gap: 20px;
+    --dp-admin-section-gap: 24px;
     --dp-admin-card-pad: 18px;
   }
 
@@ -215,6 +352,10 @@
     gap: var(--dp-admin-section-gap) !important;
   }
 
+  .dp-admin-shell :where([class*="grid-cols-"]) {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
   .dp-admin-shell :where(h1, h2, h3, p) {
     max-width: 100%;
   }
@@ -224,7 +365,7 @@
   }
 
   .dp-admin-shell :where(button) {
-    min-height: 38px;
+    min-height: 44px;
     white-space: normal;
     text-align: center;
   }

@@ -75,9 +75,9 @@ export default function Events() {
                   onClick={() => navigate(`/admin/events/${event.id}`)} 
                   className="hover:shadow-none cursor-pointer transition-shadow overflow-hidden border-[#EFEFEF] bg-white"
                 >
-                  <div className="w-full h-40 bg-slate-100 overflow-hidden">
-                    <div className="w-full h-full bg-gradient-to-br from-[#11182B] to-[#C5A028]/80 flex items-center justify-center">
-                      <Calendar className="w-12 h-12 text-white/50" />
+                  <div className="w-full h-40 bg-white overflow-hidden border-b border-[#EFEFEF]">
+                    <div className="w-full h-full bg-white flex items-center justify-center">
+                      <Calendar className="w-10 h-10 text-[#C8A96A]" />
                     </div>
                   </div>
 

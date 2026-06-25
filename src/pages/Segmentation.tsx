@@ -121,7 +121,7 @@ export default function Segmentation() {
                 {(segmentResidents as any[]).map((resident: any) => (
                   <div key={resident.id} className="flex items-center justify-between p-4 bg-slate-50 border border-slate-100 rounded-none">
                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-none bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center border border-[#EFEFEF]">
+                        <div className="w-10 h-10 rounded-none bg-white flex items-center justify-center border border-[#EFEFEF]">
                           <span className="font-bold text-[#11182B] ">
                             {resident.name?.charAt(0).toUpperCase()}
                           </span>

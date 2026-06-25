@@ -150,23 +150,6 @@ export default function UnifiedMapShell({
           background: #fff !important;
           border: 1px solid rgba(17, 24, 43, 0.1) !important;
         }
-        .dp-pin {
-          width: 40px;
-          height: 50px;
-        }
-        .dp-pin-inner {
-          background: white;
-          border-radius: 12px;
-          box-shadow: var(--dp-shadow);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          width: 100%;
-          height: 100%;
-        }
-        .dp-pin-inner.selected {
-          border: 2px solid var(--dp-navy);
-        }
       `}</style>
     </div>
   );

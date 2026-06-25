@@ -4,6 +4,8 @@ import dotenv from "dotenv";
 import path from "path";
 import { fileURLToPath } from "url";
 import fs from "fs/promises";
+import { execFile } from "child_process";
+import { promisify } from "util";
 import { GoogleGenAI, Type } from "@google/genai";
 import { enterpriseComponents, platformArchitecture, platformDomains, serializePlatformDomain } from "./src/platform/registry";
 
@@ -16,6 +18,7 @@ const isServerless = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTI
 const dataDir = isServerless ? path.join("/tmp", "downtown-perks-backend") : path.join(__dirname, "data");
 const dbPath = path.join(dataDir, "downtown-perks-db.json");
 const PORT = Number(process.env.PORT || 3000);
+const execFileAsync = promisify(execFile);
 
 type EntityName =
   | "Building"
@@ -70,7 +73,11 @@ type EntityName =
   | "PartnerWorkspaceModule"
   | "TenantNotification"
   | "TenantAuditLog"
-  | "MapEntityLink";
+  | "MapEntityLink"
+  | "AnalyticsEvent"
+  | "QrScan"
+  | "ReportRun"
+  | "IntegrationStatus";
 
 type EntityRecord = Record<string, any> & { id: string; created_at?: string; updated_at?: string };
 type Database = {
@@ -132,6 +139,10 @@ const entityNames: EntityName[] = [
   "TenantNotification",
   "TenantAuditLog",
   "MapEntityLink",
+  "AnalyticsEvent",
+  "QrScan",
+  "ReportRun",
+  "IntegrationStatus",
 ];
 
 const now = () => new Date().toISOString();
@@ -166,6 +177,34 @@ const mapVisibleOrganizations = [
   { map_entity_id: "property-waterline", name: "Waterline", type: "property", category: "Property", address: "Downtown Austin" },
 ];
 
+const mapImportSources = {
+  pinDetailsCsv: "/Users/megdude/Downloads/1. 20 JULY BUILD/downtown_perks_pin_details_mapped.csv",
+  legendsCsv: "/Users/megdude/Downloads/1. 20 JULY BUILD/legends_property_extraction.csv",
+  openApiSpec: "/Users/megdude/Downloads/1. 20 JULY BUILD/Downtown Perks-openapi-spec.json",
+  googleMapZip: "/Users/megdude/Downloads/22 MAY /GOOGLE MAP 2.zip",
+  civicDataZip: "/Users/megdude/Downloads/AUSTIN CIVIC DATA.zip",
+  backendPagesZip: "/Users/megdude/Downloads/backend pages.zip",
+  inkindZip: "/Users/megdude/Downloads/inkind.zip",
+  inventoryZip: "/Users/megdude/Downloads/INVENTORY  2.zip",
+  legendsListingsZip: "/Users/megdude/Downloads/LEGENDS LISTINGS.zip",
+  legendsExtractedImagesZip: "/Users/megdude/Downloads/legends_extracted_visible_images.zip",
+  legendsListingsAltZip: "/Users/megdude/Downloads/legends-listings.zip",
+  legendsZip: "/Users/megdude/Downloads/LEGENDS.zip",
+  locationCopyDeckZip: "/Users/megdude/Downloads/LOCATION DATA & COPY DECK.zip",
+  locations2Zip: "/Users/megdude/Downloads/LOCATIONS 2.zip",
+  locationsZip: "/Users/megdude/Downloads/LOCATIONS.zip",
+  partnerBuildZip: "/Users/megdude/Downloads/partner downtown-perks (7) 2.zip",
+  pagesBrandsZip: "/Users/megdude/Downloads/PAGES BRANDS.zip",
+  legendsListings2Zip: "/Users/megdude/Downloads/LEGENDS LISTINGS 2.zip",
+  updatedHarmonyZip: "/Users/megdude/Downloads/BACKEND/updatedharmony-homes-copy-02f82b0c.zip",
+  intelligenceZip: "/Users/megdude/Downloads/BACKEND/WITH IMAGES downtown-perks-intelligence.zip",
+};
+
+const pricingImportSources = {
+  productsCsv: "/Users/megdude/Downloads/PRODUCTS LIST/UPDATED NEW PRICING/products.csv",
+  pricesCsv: "/Users/megdude/Downloads/PRODUCTS LIST/UPDATED NEW PRICING/prices (1).csv",
+};
+
 function withTimestamps<T extends Record<string, any>>(record: T, id: string): EntityRecord {
   const timestamp = now();
   return { id, created_at: timestamp, updated_at: timestamp, ...record };
@@ -181,6 +220,707 @@ function normalizeTenantType(value: any): TenantType {
   if (raw.includes("sponsor")) return "sponsor";
   if (raw.includes("real_estate") || raw.includes("developer")) return "real_estate";
   return "venue";
+}
+
+function parseCsv(content: string) {
+  const rows: string[][] = [];
+  let current = "";
+  let row: string[] = [];
+  let quoted = false;
+
+  for (let index = 0; index < content.length; index += 1) {
+    const char = content[index];
+    const next = content[index + 1];
+
+    if (char === '"' && quoted && next === '"') {
+      current += '"';
+      index += 1;
+      continue;
+    }
+
+    if (char === '"') {
+      quoted = !quoted;
+      continue;
+    }
+
+    if (char === "," && !quoted) {
+      row.push(current);
+      current = "";
+      continue;
+    }
+
+    if ((char === "\n" || char === "\r") && !quoted) {
+      if (char === "\r" && next === "\n") index += 1;
+      row.push(current);
+      if (row.some((cell) => cell.trim() !== "")) rows.push(row);
+      row = [];
+      current = "";
+      continue;
+    }
+
+    current += char;
+  }
+
+  if (current || row.length) {
+    row.push(current);
+    if (row.some((cell) => cell.trim() !== "")) rows.push(row);
+  }
+
+  const [headers = [], ...body] = rows;
+  return body.map((cells) =>
+    Object.fromEntries(headers.map((header, index) => [header.trim(), String(cells[index] || "").trim()]))
+  );
+}
+
+async function readCsvIfExists(filePath: string) {
+  try {
+    const content = await fs.readFile(filePath, "utf8");
+    return parseCsv(content);
+  } catch {
+    return [];
+  }
+}
+
+async function readZipEntryIfExists(zipPath: string, entryName: string) {
+  try {
+    await fs.stat(zipPath);
+    const { stdout } = await execFileAsync("/usr/bin/unzip", ["-p", zipPath, entryName], { maxBuffer: 20 * 1024 * 1024 });
+    return stdout;
+  } catch {
+    return "";
+  }
+}
+
+async function getMapImportSourceStatus() {
+  const entries = await Promise.all(
+    Object.entries(mapImportSources).map(async ([key, filePath]) => {
+      try {
+        const stat = await fs.stat(filePath);
+        return [key, { path: filePath, exists: true, bytes: stat.size }];
+      } catch {
+        return [key, { path: filePath, exists: false, bytes: 0 }];
+      }
+    })
+  );
+  return Object.fromEntries(entries);
+}
+
+function normalizeMapEntityType(row: Record<string, any>) {
+  const raw = [row.partner_type, row.entity_type, row.category, row.type]
+    .filter(Boolean)
+    .map((value) => String(value).toLowerCase())
+    .join(" ");
+  if (raw.includes("hotel") || raw.includes("hospitality")) return "hotel";
+  if (raw.includes("property") || raw.includes("residential") || raw.includes("real estate") || raw.includes("listing")) return "property";
+  if (raw.includes("brand")) return "brand";
+  if (raw.includes("civic") || raw.includes("district") || raw.includes("area")) return "civic";
+  if (raw.includes("fitness") || raw.includes("wellness") || raw.includes("service")) return "service";
+  return "venue";
+}
+
+function splitList(value: any) {
+  return String(value || "")
+    .split(/[;|]/)
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+function toNumberOrNull(value: any) {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function parseLocationDeck(content: string) {
+  const match = content.match(/downtownPerksLocationDeck\s*=\s*(\[[\s\S]*?\])\s*(?:as\s+const)?\s*;/);
+  if (!match) return [];
+  try {
+    return JSON.parse(match[1]);
+  } catch {
+    return [];
+  }
+}
+
+function parseExportedArray(content: string, exportName: string) {
+  const match = content.match(new RegExp(`(?:export\\s+)?const\\s+${exportName}\\s*=\\s*(\\[[\\s\\S]*?\\])\\s*;`));
+  if (!match) return [];
+  try {
+    return JSON.parse(match[1]);
+  } catch {
+    return [];
+  }
+}
+
+function parseAmount(value: any) {
+  const numeric = Number(String(value || "0").replace(/[^0-9.]+/g, ""));
+  return Number.isFinite(numeric) ? numeric : 0;
+}
+
+function normalizeProductName(name: string) {
+  return String(name || "").trim();
+}
+
+function normalizeProductSlug(name: string) {
+  return slug(normalizeProductName(name)).replace(/_/g, "-");
+}
+
+async function importPricingCatalog(entities: Database["entities"]) {
+  const products = await readCsvIfExists(pricingImportSources.productsCsv);
+  const prices = await readCsvIfExists(pricingImportSources.pricesCsv);
+  const pricesByProduct = new Map<string, Record<string, any>[]>();
+  prices.forEach((price) => {
+    const productId = price["Product ID"];
+    if (!pricesByProduct.has(productId)) pricesByProduct.set(productId, []);
+    pricesByProduct.get(productId)?.push(price);
+  });
+
+  let imported = 0;
+  products.forEach((product) => {
+    const productId = product.id;
+    const productName = normalizeProductName(product.Name);
+    if (!productId || !productName) return;
+    const matchingPrices = pricesByProduct.get(productId) || [];
+    const primaryPrice = matchingPrices[0] || {};
+    const amount = parseAmount(primaryPrice.Amount);
+    const interval = primaryPrice.Interval || "one_time";
+    const family = product["family (metadata)"] || productName.split("/")[1] || "Core";
+    const kind = product["kind (metadata)"] || (productName.startsWith("Tier/") ? "tier" : productName.startsWith("AddOn/") ? "addon" : "product");
+    const partnerType = product["partnerType (metadata)"] || productName.split("/")[1] || "";
+    ensureRecord(entities.ProductOffering, `product_${normalizeProductSlug(productId)}`, {
+      product_id: productId,
+      stripe_product_id: productId,
+      stripe_price_id: primaryPrice["Price ID"] || "",
+      name: productName,
+      display_name: productName.replace(/^AddOn\//, "").replace(/^Tier\//, ""),
+      description: product.Description || primaryPrice.Description || "",
+      family,
+      kind,
+      tier_id: product["tierId (metadata)"] || "",
+      partner_type: partnerType,
+      amount,
+      currency: (primaryPrice.Currency || "usd").toLowerCase(),
+      interval,
+      interval_count: primaryPrice["Interval Count"] || "",
+      billing_scheme: primaryPrice["Billing Scheme"] || "",
+      tax_behavior: primaryPrice["Tax Behavior"] || "",
+      prices: matchingPrices.map((price) => ({
+        stripe_price_id: price["Price ID"],
+        amount: parseAmount(price.Amount),
+        currency: (price.Currency || "usd").toLowerCase(),
+        interval: price.Interval || "one_time",
+        interval_count: price["Interval Count"] || "",
+      })),
+      source_type: "stripe_pricing_csv",
+      source_files: pricingImportSources,
+      status: "active",
+    });
+    imported += 1;
+  });
+
+  return { products: products.length, prices: prices.length, imported };
+}
+
+function ensureMapPartnerWorkspace(entities: Database["entities"], source: Record<string, any>) {
+  const name = source.name || source.entity_name || source.property_name;
+  if (!name) return null;
+
+  const mapEntityId = source.map_entity_id || source.pin_id || source.id || `map_${slug(name)}`;
+  const type = normalizeMapEntityType(source);
+  const category = source.category || source.partner_type || type;
+  const partnerSlug = slug(name).replace(/_/g, "-");
+  const partnerId = `partner_${partnerSlug}`;
+  const tenant = provisionPlatformTenant(entities, {
+    name,
+    type,
+    category,
+    address: source.address,
+    status: source.status || "active",
+    source_type: source.source_type || "map_import",
+    source_id: mapEntityId,
+    map_entity_id: mapEntityId,
+    partner_id: partnerId,
+    perk: source.perk || source.offer || undefined,
+  });
+
+  if (!tenant) return null;
+
+  const workspaceId = `workspace_${tenant.slug}`;
+  const partner = ensureRecord(entities.Partner, partnerId, {
+    tenant_id: tenant.id,
+    workspace_id: workspaceId,
+    business_name: name,
+    contact_person: source.contact_person || "Workspace owner",
+    contact_email: source.contact_email || `${tenant.slug}@downtownperks.local`,
+    contact_phone: source.contact_phone || "",
+    address: source.address || "",
+    category,
+    partner_type: type,
+    status: "active",
+    onboarding_stage: "workspace_created",
+    source_type: source.source_type || "map_import",
+    source_id: mapEntityId,
+  });
+
+  ensureRecord(entities.PartnerProfile, `profile_${tenant.slug}`, {
+    tenant_id: tenant.id,
+    workspace_id: workspaceId,
+    partner_id: partner.id,
+    display_name: name,
+    type,
+    category,
+    address: source.address || "",
+    district: source.district || "",
+    status: "active",
+    panel_eyebrow: source.panel_eyebrow || "",
+    panel_title: source.panel_title || name,
+    panel_summary: source.panel_summary || source.description || "",
+    primary_cta: source.primary_cta || "View details",
+    secondary_cta: source.secondary_cta || "Directions",
+    panel_sections: splitList(source.panel_sections),
+    image_status: source.image_status || "",
+    data_quality_notes: source.data_quality_notes || "",
+    source_status: source.source_status || "",
+  });
+
+  const lat = toNumberOrNull(source.latitude || source.lat);
+  const lng = toNumberOrNull(source.longitude || source.lng);
+  ensureRecord(entities.PartnerLocation, `location_${tenant.slug}_${slug(mapEntityId)}`, {
+    tenant_id: tenant.id,
+    workspace_id: workspaceId,
+    partner_id: partner.id,
+    map_entity_id: mapEntityId,
+    name: source.property_name || name,
+    address: source.address || "",
+    district: source.district || "",
+    latitude: lat,
+    longitude: lng,
+    category,
+    partner_type: type,
+    status: "active",
+    map_presence: "enabled",
+    source_type: source.source_type || "map_import",
+  });
+
+  ensureRecord(entities.MapEntityLink, `map_link_${mapEntityId}`, {
+    tenant_id: tenant.id,
+    workspace_id: workspaceId,
+    partner_id: partner.id,
+    entity_id: mapEntityId,
+    entity_type: source.entity_type || type,
+    source_type: source.source_type || "map_import",
+    source_status: source.source_status || "imported",
+    status: "linked",
+  });
+
+  ensureRecord(entities.Campaign, `campaign_${tenant.slug}_map_visibility`, {
+    tenant_id: tenant.id,
+    workspace_id: workspaceId,
+    partner_id: partner.id,
+    title: `${name} map visibility`,
+    description: source.panel_summary || `Map visibility campaign generated from imported Downtown Perks map data for ${name}.`,
+    type: source.entity_type === "district" ? "district_visibility" : "map_visibility",
+    status: source.source_status?.includes("visible") ? "active" : "draft",
+    related_entity_id: mapEntityId,
+    primary_cta: source.primary_cta || "View details",
+    secondary_cta: source.secondary_cta || "Directions",
+    created_from: source.source_type || "map_import",
+  });
+
+  ensureRecord(entities.PartnerAiContext, `ai_context_${tenant.slug}`, {
+    tenant_id: tenant.id,
+    workspace_id: workspaceId,
+    partner_id: partner.id,
+    assistant_name: "Downtown Assistant",
+    status: "active",
+    context_summary: `${name} is connected to the Downtown Perks map as a ${category} partner in ${source.district || "Downtown Austin"}.`,
+    suggested_actions: ["Review map profile", "Confirm campaign visibility", "Add offer or event", "Review imported reporting signals"],
+    source_type: source.source_type || "map_import",
+  });
+
+  ensureRecord(entities.PartnerQrExperience, `qr_${tenant.slug}_map`, {
+    tenant_id: tenant.id,
+    workspace_id: workspaceId,
+    partner_id: partner.id,
+    label: `${name} map QR`,
+    destination_url: `/map?entity=${encodeURIComponent(mapEntityId)}`,
+    status: "active",
+    scans: 0,
+    source_type: source.source_type || "map_import",
+  });
+
+  ensureRecord(entities.TenantAuditLog, `audit_${tenant.slug}_${slug(mapEntityId)}_map_import`, {
+    tenant_id: tenant.id,
+    workspace_id: workspaceId,
+    actor_id: "system",
+    action: "map_entity_imported",
+    resource: "map_entity",
+    before: null,
+    after: { map_entity_id: mapEntityId, name, type, category },
+    timestamp: now(),
+  });
+
+  return { tenant, partner };
+}
+
+async function importDowntownPerksMapData(entities: Database["entities"]) {
+  const sourceStatus = await getMapImportSourceStatus();
+  const pinRows = await readCsvIfExists(mapImportSources.pinDetailsCsv);
+  const legendsRows = await readCsvIfExists(mapImportSources.legendsCsv);
+  const currentMapRows = parseCsv(
+    await readZipEntryIfExists(mapImportSources.locationsZip, "LOCATIONS/downtown_perks_current_map_check_188.csv") ||
+      (await readZipEntryIfExists(mapImportSources.locations2Zip, "LOCATIONS/downtown_perks_current_map_check_188.csv"))
+  );
+  const legendsAuditRows = parseCsv(
+    (await readZipEntryIfExists(mapImportSources.legendsListingsZip, "LEGENDS LISTINGS/map_entity_icon_image_audit.csv")) ||
+      (await readZipEntryIfExists(mapImportSources.legendsListings2Zip, "LEGENDS LISTINGS/map_entity_icon_image_audit.csv"))
+  );
+  const locationDeckRows = parseLocationDeck(await readZipEntryIfExists(mapImportSources.locationCopyDeckZip, "LOCATION DATA & COPY DECK/downtownPerksLocationDeck.ts"));
+  const before = {
+    tenants: entities.PlatformTenant.length,
+    workspaces: entities.TenantWorkspace.length,
+    partners: entities.Partner.length,
+    locations: entities.PartnerLocation.length,
+    campaigns: entities.Campaign.length,
+    mapLinks: entities.MapEntityLink.length,
+  };
+
+  const imported: Array<Record<string, any>> = [];
+  const skipped: Array<Record<string, any>> = [];
+
+  pinRows.forEach((row) => {
+    const name = row.entity_name || row.panel_title || row.visible_label;
+    if (!name) {
+      skipped.push({ source: "pin_details", reason: "missing_name", row });
+      return;
+    }
+    const result = ensureMapPartnerWorkspace(entities, {
+      ...row,
+      name,
+      source_type: "downtown_perks_pin_details",
+      map_entity_id: row.pin_id || `pin_${slug(name)}`,
+      status: "active",
+    });
+    if (result) imported.push({ source: "pin_details", name, tenant_id: result.tenant.id });
+  });
+
+  legendsRows.forEach((row) => {
+    const name = row.brand || row.property_name || "Legends Property";
+    const result = ensureMapPartnerWorkspace(entities, {
+      ...row,
+      name,
+      type: "real_estate",
+      partner_type: "Real Estate",
+      category: row.category || "Residential",
+      source_type: "legends_property_extraction",
+      map_entity_id: `legends_${slug(row.property_name || name)}`,
+      status: "active",
+      panel_summary: `Connect ${row.property_name || name} to neighborhood context, resident discovery, listings, and Downtown Perks reporting.`,
+      primary_cta: row.cta_primary || "Details",
+      secondary_cta: row.cta_secondary || "Save",
+      panel_sections: "Listings; Neighborhood; Perks; Contact",
+    });
+    if (result) {
+      ensureRecord(entities.PartnerLocation, `location_${result.tenant.slug}_${slug(row.property_name || "property")}`, {
+        tenant_id: result.tenant.id,
+        workspace_id: `workspace_${result.tenant.slug}`,
+        partner_id: result.partner.id,
+        map_entity_id: `legends_${slug(row.property_name || name)}`,
+        name: row.property_name || name,
+        address: row.address || "",
+        category: row.category || "Residential",
+        listings: Number(row.listings || 0),
+        price_range: row.price_range || "",
+        status: "active",
+        map_presence: "enabled",
+        source_type: "legends_property_extraction",
+      });
+      imported.push({ source: "legends_property", name: row.property_name || name, tenant_id: result.tenant.id });
+    }
+  });
+
+  currentMapRows.forEach((row) => {
+    const name = row.current_map_name || row.resident_card_title || row.dp_id;
+    if (!name) {
+      skipped.push({ source: "current_map_check", reason: "missing_name", row });
+      return;
+    }
+    const result = ensureMapPartnerWorkspace(entities, {
+      name,
+      entity_type: row.pin_type || row.dp_category,
+      partner_type: row.dp_category,
+      category: row.google_type || row.dp_category,
+      district: row.dp_district,
+      source_type: "current_map_check_188",
+      map_entity_id: row.dp_id || `map_${slug(name)}`,
+      source_status: row.map_status,
+      panel_eyebrow: row.dp_category,
+      panel_title: row.resident_card_title || name,
+      panel_summary: row.resident_short_description || row.why_people_go || "",
+      primary_cta: row.resident_cta || "View details",
+      secondary_cta: "Directions",
+      panel_sections: "Nearby; Perks; Events; Reporting",
+      perk: row.recommended_perk,
+      data_quality_notes: row.qa_notes,
+      status: row.map_status?.toLowerCase().includes("keep") ? "active" : "draft",
+    });
+    if (result) {
+      ensureRecord(entities.PartnerAnalytics, `analytics_${result.tenant.slug}`, {
+        tenant_id: result.tenant.id,
+        workspace_id: `workspace_${result.tenant.slug}`,
+        google_rating: toNumberOrNull(row.google_rating),
+        priority: row.priority || "",
+        views: 0,
+        saves: 0,
+        directions: 0,
+        redemptions: 0,
+        status: "tracking_enabled",
+      });
+      imported.push({ source: "current_map_check", name, tenant_id: result.tenant.id });
+    }
+  });
+
+  legendsAuditRows.forEach((row) => {
+    const name = row.name || row.id;
+    if (!name) {
+      skipped.push({ source: "legends_image_audit", reason: "missing_name", row });
+      return;
+    }
+    const result = ensureMapPartnerWorkspace(entities, {
+      name,
+      entity_type: row.type,
+      partner_type: row.partnerType || "venue",
+      category: row.category,
+      district: row.district,
+      latitude: row.latitude,
+      longitude: row.longitude,
+      address: row.address,
+      source_type: "legends_image_audit",
+      map_entity_id: row.id || `audit_${slug(name)}`,
+      source_status: row.pinStatus,
+      panel_eyebrow: row.category,
+      panel_title: name,
+      panel_summary: row.recommendedPanelCopy || "",
+      primary_cta: "View details",
+      secondary_cta: "Directions",
+      image_status: row.imageStatus,
+      data_quality_notes: row.sourceNotes || row.imageNotes,
+      status: row.pinStatus === "OK" ? "active" : "draft",
+    });
+    if (result) imported.push({ source: "legends_image_audit", name, tenant_id: result.tenant.id });
+  });
+
+  locationDeckRows.forEach((row: any) => {
+    const name = row.name || row.pinLabel || row.id;
+    if (!name) {
+      skipped.push({ source: "location_copy_deck", reason: "missing_name", row });
+      return;
+    }
+    const result = ensureMapPartnerWorkspace(entities, {
+      name,
+      entity_type: row.type,
+      partner_type: row.type,
+      category: row.categoryLabel || row.category,
+      latitude: row.lat,
+      longitude: row.lng,
+      source_type: "location_copy_deck",
+      map_entity_id: row.id || `deck_${slug(name)}`,
+      source_status: row.status,
+      panel_eyebrow: row.panelEyebrow || row.categoryLabel,
+      panel_title: row.panelHeadline || name,
+      panel_summary: row.panelBody || "",
+      primary_cta: row.primaryCta || "View details",
+      secondary_cta: row.secondaryCta || "Save",
+      panel_sections: "Nearby; Perks; Events; Reporting",
+      perk: row.perksCardLine,
+      data_quality_notes: row.importNote,
+      status: row.status || "active",
+    });
+    if (result) imported.push({ source: "location_copy_deck", name, tenant_id: result.tenant.id });
+  });
+
+  const openApiEntities = sourceStatus.openApiSpec.exists
+    ? { source: "Downtown Perks OpenAPI", status: "available_for_contract_validation" }
+    : { source: "Downtown Perks OpenAPI", status: "missing" };
+
+  const googleMapAssets = sourceStatus.googleMapZip.exists
+    ? { source: "GOOGLE MAP 2.zip", status: "available_for_asset_mapping", note: "Zip retained as source reference; CSV rows drive backend entity provisioning." }
+    : { source: "GOOGLE MAP 2.zip", status: "missing" };
+
+  const attachedArchives = Object.entries(sourceStatus)
+    .filter(([key]) => key.endsWith("Zip"))
+    .map(([key, value]) => ({ source: key, ...(value as any) }));
+
+  const after = {
+    tenants: entities.PlatformTenant.length,
+    workspaces: entities.TenantWorkspace.length,
+    partners: entities.Partner.length,
+    locations: entities.PartnerLocation.length,
+    campaigns: entities.Campaign.length,
+    mapLinks: entities.MapEntityLink.length,
+  };
+
+  return {
+    success: true,
+    sources: sourceStatus,
+    imported_count: imported.length,
+    skipped_count: skipped.length,
+    imported,
+    skipped,
+    source_references: [openApiEntities, googleMapAssets, ...attachedArchives],
+    before,
+    after,
+  };
+}
+
+async function importPartnerIntelligenceData(entities: Database["entities"]) {
+  const sourceStatus = await getMapImportSourceStatus();
+  const activationContent = await readZipEntryIfExists(mapImportSources.intelligenceZip, "src/data/partnerActivations.ts");
+  const activations = parseExportedArray(activationContent, "partnerActivations");
+  const imported: Array<Record<string, any>> = [];
+  const skipped: Array<Record<string, any>> = [];
+
+  activations.forEach((activation: any) => {
+    const name = activation.name;
+    if (!name || !activation.lat || !activation.lng) {
+      skipped.push({ source: "partnerActivations", reason: "missing_name_or_coordinates", id: activation.id || "" });
+      return;
+    }
+    const result = ensureMapPartnerWorkspace(entities, {
+      name,
+      entity_type: activation.type || "venue",
+      partner_type: activation.type || "venue",
+      category: activation.popularity || activation.type || "Partner",
+      district: activation.neighborhood || "",
+      latitude: activation.lat,
+      longitude: activation.lng,
+      source_type: "downtown_perks_intelligence_partner_activations",
+      map_entity_id: activation.id || `intelligence_${slug(name)}`,
+      source_status: activation.status || "LIVE",
+      panel_eyebrow: activation.type || "Partner",
+      panel_title: activation.resident?.headline || name,
+      panel_summary: activation.resident?.description || activation.intelligence?.local?.context || "",
+      primary_cta: activation.resident?.primaryAction || "View details",
+      secondary_cta: activation.resident?.secondaryAction || "Save details",
+      panel_sections: "Overview; Perks; Intelligence; Campaigns; Reports",
+      perk: activation.offer,
+      status: String(activation.status || "").toLowerCase() === "live" ? "active" : "draft",
+    });
+    if (!result) {
+      skipped.push({ source: "partnerActivations", reason: "provision_failed", id: activation.id || name });
+      return;
+    }
+
+    const tenantSlug = result.tenant.slug;
+    const tenantId = result.tenant.id;
+    const workspaceId = `workspace_${tenantSlug}`;
+    const partner = result.partner;
+    const intelligence = activation.intelligence || {};
+    const analytics = intelligence.analytics || {};
+    const local = intelligence.local || {};
+
+    ensureRecord(entities.PartnerAnalytics, `analytics_${tenantSlug}`, {
+      tenant_id: tenantId,
+      workspace_id: workspaceId,
+      partner_id: partner.id,
+      views: Number(local.reach || 0),
+      saves: Number(local.impact || 0),
+      directions: Number(local.yield || 0),
+      scans: Number(local.yield || 0),
+      redemptions: Number(local.impact || 0),
+      resident_index: analytics.resident_index || "",
+      resident_index_delta: analytics.resident_index_delta || "",
+      churn_signal: analytics.churn_signal || "",
+      churn_trend: analytics.churn_trend || "",
+      audience: analytics.audience || [],
+      engagement_velocity: analytics.engagement_velocity || [],
+      pulse: local.pulse || "",
+      activity: local.activity || activation.liveActivity || "",
+      context: local.context || "",
+      competitor_overlap: local.competitor_overlap || "",
+      dwell_time: local.dwell_time || "",
+      status: "tracking_enabled",
+      source_type: "downtown_perks_intelligence_partner_activations",
+    });
+
+    if (activation.offer) {
+      ensureRecord(entities.PerkLocation, `perk_${tenantSlug}_activation`, {
+        tenant_id: tenantId,
+        workspace_id: workspaceId,
+        partner_id: partner.id,
+        name,
+        title: activation.offer,
+        description: activation.resident?.description || "",
+        category: activation.type || "Partner",
+        district: activation.neighborhood || "",
+        lat: activation.lat,
+        lng: activation.lng,
+        perk: activation.offer,
+        perk_type: activation.redemptionMethod || "Digital Scan",
+        redemption_type: activation.redemptionMethod || "Digital Scan",
+        eligibility_rules: activation.eligibility || "",
+        timing: activation.timing || "",
+        active: String(activation.status || "").toLowerCase() === "live",
+        is_active: String(activation.status || "").toLowerCase() === "live",
+        status: String(activation.status || "").toLowerCase() === "live" ? "active" : "draft",
+        redemption_count: Number(local.impact || 0),
+        source_type: "downtown_perks_intelligence_partner_activations",
+      });
+    }
+
+    ensureRecord(entities.Campaign, `campaign_${tenantSlug}_intelligence`, {
+      tenant_id: tenantId,
+      workspace_id: workspaceId,
+      partner_id: partner.id,
+      title: `${name} intelligence campaign`,
+      description: intelligence.advice?.strategic || local.context || `Partner intelligence campaign for ${name}.`,
+      type: "partner_intelligence",
+      status: String(activation.status || "").toLowerCase() === "live" ? "active" : "draft",
+      audience: analytics.audience || [],
+      goals: analytics.goals || [],
+      target_bookings: analytics.target_bookings || "",
+      reach_goal: analytics.reach_goal || "",
+      tactical_advice: intelligence.advice?.tactical || "",
+      related_entity_id: activation.id || `intelligence_${slug(name)}`,
+      created_from: "downtown_perks_intelligence_partner_activations",
+    });
+
+    ensureRecord(entities.AiInsight, `ai_insight_${tenantSlug}_partner_intelligence`, {
+      tenant_id: tenantId,
+      workspace_id: workspaceId,
+      partner_id: partner.id,
+      source: "downtown_perks_intelligence_partner_activations",
+      insight_type: "partner_intelligence",
+      title: `${name} partner intelligence`,
+      summary: intelligence.advice?.strategic || local.context || analytics.mission || "",
+      recommended_action: intelligence.advice?.tactical || "Review campaign timing, offer performance, and resident audience overlap.",
+      status: "open",
+      context: activation,
+    });
+
+    imported.push({ id: activation.id || name, name, tenant_id: tenantId, partner_id: partner.id });
+  });
+
+  ensureRecord(entities.AiInsight, "ai_insight_agentic_modules_imported", {
+    source: "downtown_perks_intelligence_zip",
+    insight_type: "agentic_module_inventory",
+    title: "Agentic map and partner intelligence modules imported",
+    summary: "The older intelligence build provided agent prompt bars, suggestion cards, map search overlays, campaign builder overlays, intelligence strips, partner scanners, resident profiles, relationship engine, live signals, and agent recommendation hooks. The current 3014 platform imports their operational data and records the module inventory without copying old UI.",
+    recommended_action: "Keep current 3014 UI, use the imported partner intelligence records to power AI recommendations, campaign suggestions, reporting, and map entity context.",
+    status: "open",
+    source_files: {
+      intelligenceZip: mapImportSources.intelligenceZip,
+      updatedHarmonyZip: mapImportSources.updatedHarmonyZip,
+    },
+  });
+
+  return {
+    success: true,
+    source: mapImportSources.intelligenceZip,
+    source_status: sourceStatus.intelligenceZip,
+    imported_count: imported.length,
+    skipped_count: skipped.length,
+    imported,
+    skipped,
+  };
 }
 
 function tenantIdFromSlug(tenantSlug: string) {
@@ -746,10 +1486,12 @@ async function ensureDatabase(): Promise<Database> {
     const parsed = JSON.parse(raw) as Database;
     for (const entityName of entityNames) parsed.entities[entityName] ||= [];
     addOperationalDefaults(parsed.entities);
+    await importPricingCatalog(parsed.entities);
     await saveDatabase(parsed);
     return parsed;
   } catch {
     const seeded = createSeedDatabase();
+    await importPricingCatalog(seeded.entities);
     await saveDatabase(seeded);
     return seeded;
   }
@@ -764,6 +1506,90 @@ function listEntity(db: Database, entityName: EntityName, filters: Record<string
   return db.entities[entityName].filter((item) =>
     Object.entries(filters).every(([key, value]) => value === undefined || value === null || item[key] === value)
   );
+}
+
+function isPropertyLike(value: any) {
+  const raw = String(value || "").toLowerCase();
+  return /property|real[_\s-]?estate|residential|apartment|condo|building|listing|tower|residence|homes?/.test(raw);
+}
+
+function getAdminPropertyPortfolio(db: Database) {
+  const tenantRecords = db.entities.PlatformTenant
+    .filter((tenant) => {
+      const profile = db.entities.PartnerProfile.find((item) => item.tenant_id === tenant.id);
+      const locations = db.entities.PartnerLocation.filter((item) => item.tenant_id === tenant.id);
+      return (
+        tenant.type === "property" ||
+        tenant.type === "real_estate" ||
+        isPropertyLike(tenant.name) ||
+        isPropertyLike(profile?.category) ||
+        isPropertyLike(profile?.type) ||
+        locations.some((location) => isPropertyLike(location.category) || isPropertyLike(location.partner_type) || isPropertyLike(location.name))
+      );
+    })
+    .map((tenant) => {
+      const workspace = db.entities.TenantWorkspace.find((item) => item.tenant_id === tenant.id);
+      const profile = db.entities.PartnerProfile.find((item) => item.tenant_id === tenant.id);
+      const locations = db.entities.PartnerLocation.filter((item) => item.tenant_id === tenant.id);
+      const primaryLocation = locations[0];
+      const campaigns = db.entities.Campaign.filter((item) => item.tenant_id === tenant.id);
+      const mapLinks = db.entities.MapEntityLink.filter((item) => item.tenant_id === tenant.id);
+      const analytics = db.entities.PartnerAnalytics.find((item) => item.tenant_id === tenant.id);
+      return {
+        id: tenant.id,
+        tenant_id: tenant.id,
+        workspace_id: workspace?.id || `workspace_${tenant.slug}`,
+        workspacePath: workspace?.path || `/tenant/${tenant.slug}`,
+        name: profile?.display_name || tenant.name,
+        address: primaryLocation?.address || profile?.address || "",
+        district: primaryLocation?.district || profile?.district || "",
+        type: tenant.type,
+        category: profile?.category || primaryLocation?.category || tenant.type,
+        totalUnits: Number(primaryLocation?.listings || primaryLocation?.units || 0),
+        tenants: Number(analytics?.guests_reached || 0),
+        listings: Number(primaryLocation?.listings || 0),
+        status: tenant.status || "active",
+        source_type: tenant.source_type || primaryLocation?.source_type || "platform_tenant",
+        map_presence: primaryLocation?.map_presence || (mapLinks.length ? "enabled" : "not linked"),
+        campaigns: campaigns.length,
+        mapLinks: mapLinks.length,
+        locations: locations.length,
+        amenities: profile?.panel_sections || [],
+        photos: [],
+      };
+    });
+
+  const buildingRecords = db.entities.Building.map((building) => ({
+    id: building.id,
+    tenant_id: building.tenant_id || null,
+    workspace_id: building.workspace_id || null,
+    workspacePath: building.workspace_id ? `/tenant/${String(building.workspace_id).replace(/^workspace_/, "")}` : "",
+    name: building.name,
+    address: building.address || "",
+    district: building.district || "",
+    type: "property",
+    category: building.type || "Building",
+    totalUnits: Number(building.totalUnits || building.units || 0),
+    tenants: Number(building.tenants || 0),
+    listings: Number(building.listings || 0),
+    status: building.status || "active",
+    source_type: "building",
+    map_presence: building.tenant_id ? "enabled" : "building record",
+    campaigns: db.entities.Campaign.filter((item) => item.tenant_id === building.tenant_id).length,
+    mapLinks: db.entities.MapEntityLink.filter((item) => item.tenant_id === building.tenant_id || item.entity_id === building.id).length,
+    locations: 1,
+    amenities: building.amenities || [],
+    photos: building.photos || [],
+    accessCode: building.accessCode,
+  }));
+
+  const merged = new Map<string, Record<string, any>>();
+  [...tenantRecords, ...buildingRecords].forEach((record) => {
+    const key = record.tenant_id || `building_${record.id}`;
+    if (!merged.has(key)) merged.set(key, record);
+  });
+
+  return [...merged.values()].sort((a, b) => String(a.name).localeCompare(String(b.name)));
 }
 
 function upsertPropertyCompatibility(record: Record<string, any>) {
@@ -787,6 +1613,160 @@ function upsertPropertyCompatibility(record: Record<string, any>) {
     accessCode: record.accessCode || `AUTO${Math.floor(Math.random() * 9000 + 1000)}`,
     ...record,
   };
+}
+
+function actorFromRequest(req: express.Request) {
+  return String(req.headers["x-user-id"] || req.headers["x-actor-id"] || "user_admin");
+}
+
+function organizationContext(record: Record<string, any> = {}) {
+  return {
+    organization_id: record.organization_id || record.tenant_id || record.partner_id || "org_downtown_perks",
+    workspace_id: record.workspace_id || (record.tenant_id ? `workspace_${String(record.tenant_id).replace(/^tenant_/, "")}` : "workspace_downtown_perks"),
+  };
+}
+
+function writeAuditEvent(db: Database, req: express.Request, input: Record<string, any>) {
+  const context = organizationContext(input.after || input.before || input);
+  const audit = withTimestamps(
+    {
+      actor_id: input.actor_id || actorFromRequest(req),
+      action: input.action,
+      entity_type: input.entity_type || input.resource || "platform_record",
+      entity_id: input.entity_id || input.resource_id || "",
+      resource: input.resource || input.entity_type || "platform_record",
+      before: input.before ?? null,
+      after: input.after ?? null,
+      timestamp: now(),
+      correlation_id: input.correlation_id || makeId("corr"),
+      metadata: input.metadata || {},
+      tenant_id: context.organization_id,
+      organization_id: context.organization_id,
+      workspace_id: context.workspace_id,
+    },
+    makeId("audit")
+  );
+  db.entities.TenantAuditLog.push(audit);
+  return audit;
+}
+
+function writeAnalyticsEvent(db: Database, req: express.Request, input: Record<string, any>) {
+  const context = organizationContext(input);
+  const event = withTimestamps(
+    {
+      event: input.event || input.name || "platform_event",
+      entity_type: input.entity_type || "",
+      entity_id: input.entity_id || "",
+      mode: input.mode || req.query.mode || req.body?.mode || "",
+      source: input.source || "api",
+      actor_id: input.actor_id || actorFromRequest(req),
+      timestamp: now(),
+      metadata: input.metadata || {},
+      tenant_id: context.organization_id,
+      organization_id: context.organization_id,
+      workspace_id: context.workspace_id,
+    },
+    makeId("analytics")
+  );
+  db.entities.AnalyticsEvent.push(event);
+  return event;
+}
+
+function getPartnerName(db: Database, partnerId?: string) {
+  if (!partnerId) return "";
+  return db.entities.Partner.find((partner) => partner.id === partnerId)?.business_name || db.entities.PartnerProfile.find((profile) => profile.partner_id === partnerId)?.display_name || "";
+}
+
+function mapEntityRows(db: Database) {
+  const fromLinks = db.entities.MapEntityLink.map((link) => {
+    const location = db.entities.PartnerLocation.find((item) => item.map_entity_id === link.entity_id || item.partner_id === link.partner_id || item.tenant_id === link.tenant_id);
+    const profile = db.entities.PartnerProfile.find((item) => item.partner_id === link.partner_id || item.tenant_id === link.tenant_id);
+    const tenant = db.entities.PlatformTenant.find((item) => item.id === link.tenant_id);
+    const analytics = db.entities.PartnerAnalytics.find((item) => item.tenant_id === link.tenant_id || item.workspace_id === link.workspace_id);
+    return {
+      id: link.id,
+      map_entity_id: link.entity_id,
+      entity_type: link.entity_type || location?.partner_type || profile?.type || tenant?.type || "partner",
+      entity_id: link.entity_id,
+      title: location?.name || profile?.display_name || tenant?.name || link.entity_id,
+      category: location?.category || profile?.category || tenant?.type || "",
+      district: location?.district || profile?.district || "",
+      lat: location?.latitude ?? location?.lat ?? null,
+      lng: location?.longitude ?? location?.lng ?? null,
+      status: link.status || tenant?.status || "linked",
+      visibility: link.status === "linked" ? "public" : "admin",
+      partner_id: link.partner_id || location?.partner_id || profile?.partner_id || "",
+      property_id: link.property_id || "",
+      building_id: link.building_id || "",
+      campaign_id: db.entities.Campaign.find((campaign) => campaign.related_entity_id === link.entity_id || campaign.tenant_id === link.tenant_id)?.id || "",
+      perk_id: db.entities.PerkLocation.find((perk) => perk.partner_id === link.partner_id || perk.tenant_id === link.tenant_id)?.id || "",
+      event_id: db.entities.Event.find((event) => event.partner_id === link.partner_id || event.tenant_id === link.tenant_id)?.id || "",
+      organization_id: link.tenant_id || "",
+      tenant_id: link.tenant_id || "",
+      workspace_id: link.workspace_id || "",
+      analytics_summary: {
+        views: Number(analytics?.views || 0),
+        saves: Number(analytics?.saves || 0),
+        directions: Number(analytics?.directions || 0),
+        redemptions: Number(analytics?.redemptions || 0),
+      },
+      last_updated: link.updated_at || link.created_at || "",
+    };
+  });
+
+  const fromPerks = db.entities.PerkLocation.map((perk) => ({
+    id: `map_perk_${perk.id}`,
+    map_entity_id: perk.id,
+    entity_type: "perk",
+    entity_id: perk.id,
+    title: perk.name || perk.title || "Perk",
+    category: perk.category || "",
+    district: perk.district || "",
+    lat: perk.lat ?? null,
+    lng: perk.lng ?? null,
+    status: perk.active === false || perk.is_active === false ? "paused" : "active",
+    visibility: perk.active === false || perk.is_active === false ? "admin" : "public",
+    partner_id: perk.partner_id || "",
+    property_id: perk.propertyId || "",
+    building_id: perk.building_id || "",
+    campaign_id: perk.campaign_id || "",
+    perk_id: perk.id,
+    event_id: perk.event_id || "",
+    organization_id: perk.tenant_id || perk.partner_id || "",
+    tenant_id: perk.tenant_id || "",
+    workspace_id: perk.workspace_id || "",
+    analytics_summary: {
+      views: Number(perk.views || 0),
+      saves: Number(perk.saves || 0),
+      directions: Number(perk.directions || 0),
+      redemptions: Number(perk.redemption_count || 0),
+    },
+    last_updated: perk.updated_at || perk.created_at || "",
+  }));
+
+  const merged = new Map<string, Record<string, any>>();
+  [...fromLinks, ...fromPerks].forEach((record) => {
+    const key = record.map_entity_id || record.id;
+    if (!merged.has(key)) merged.set(key, record);
+  });
+  return [...merged.values()];
+}
+
+function findEntityById(collection: EntityRecord[], id: string) {
+  return collection.find((item) => item.id === id);
+}
+
+function csvValue(value: any) {
+  const raw = value === undefined || value === null ? "" : typeof value === "string" ? value : JSON.stringify(value);
+  return `"${String(raw).replace(/"/g, '""')}"`;
+}
+
+function recordsToCsv(records: Record<string, any>[]) {
+  const columns = Array.from(records.reduce<Set<string>>((set, record) => {
+    Object.keys(record).forEach((key) => set.add(key));
+    return set;
+  }, new Set<string>()));
+  return `${columns.join(",")}\n${records.map((record) => columns.map((column) => csvValue(record[column])).join(",")).join("\n")}\n`;
 }
 
 export async function createApp() {
@@ -869,6 +1849,108 @@ export async function createApp() {
     });
   });
 
+  const resolveTenant = (identifier?: string) => {
+    if (!identifier || identifier === "current") return db.entities.PlatformTenant[0] || null;
+    return db.entities.PlatformTenant.find((item) => item.id === identifier || item.slug === identifier || item.name === identifier) || null;
+  };
+
+  const getWorkspaceBundle = (identifier?: string) => {
+    const tenant = resolveTenant(identifier);
+    if (!tenant) return null;
+    const workspace = db.entities.TenantWorkspace.find((item) => item.tenant_id === tenant.id);
+    const partner = db.entities.Partner.find((item) => item.tenant_id === tenant.id || item.workspace_id === workspace?.id);
+    return {
+      tenant,
+      workspace,
+      partner,
+      profile: db.entities.PartnerProfile.find((item) => item.tenant_id === tenant.id),
+      locations: db.entities.PartnerLocation.filter((item) => item.tenant_id === tenant.id),
+      modules: db.entities.PartnerWorkspaceModule.filter((item) => item.tenant_id === tenant.id),
+      offers: db.entities.PartnerOffer.filter((item) => item.tenant_id === tenant.id),
+      events: db.entities.PartnerEvent.filter((item) => item.tenant_id === tenant.id),
+      campaigns: db.entities.Campaign.filter((item) => item.tenant_id === tenant.id),
+      reports: db.entities.PartnerReport.filter((item) => item.tenant_id === tenant.id),
+      analytics: db.entities.PartnerAnalytics.filter((item) => item.tenant_id === tenant.id),
+      users: db.entities.TenantUser.filter((item) => item.tenant_id === tenant.id),
+      roles: db.entities.TenantRole.filter((item) => item.tenant_id === tenant.id),
+      subscriptions: db.entities.PartnerSubscription.filter((item) => item.tenant_id === tenant.id),
+      invoices: db.entities.PartnerInvoice.filter((item) => item.tenant_id === tenant.id),
+      qr: db.entities.PartnerQrExperience.filter((item) => item.tenant_id === tenant.id),
+      aiContext: db.entities.PartnerAiContext.find((item) => item.tenant_id === tenant.id),
+      notifications: db.entities.TenantNotification.filter((item) => item.tenant_id === tenant.id),
+      auditLogs: db.entities.TenantAuditLog.filter((item) => item.tenant_id === tenant.id),
+      mapLinks: db.entities.MapEntityLink.filter((item) => item.tenant_id === tenant.id),
+    };
+  };
+
+  app.get("/api/workspace/:slug", (req, res) => {
+    const bundle = getWorkspaceBundle(req.params.slug);
+    if (!bundle) return res.status(404).json({ error: "Workspace not found" });
+    res.json(bundle);
+  });
+
+  app.post("/api/agent-recommendations", async (req, res) => {
+    const query = String(req.body?.query || "").toLowerCase();
+    const partnerType = String(req.body?.partnerType || req.body?.mode || "partner");
+    const candidates = [
+      ...db.entities.PerkLocation.map((perk) => ({
+        id: perk.id,
+        type: "perk",
+        name: perk.name || perk.title || perk.perk || "Downtown perk",
+        score: Number(perk.redemption_count || 0) + Number(perk.scans || 0) + 70,
+        district: perk.district || perk.address || "Downtown Austin",
+        reason: `${perk.category || "Local"} offer with ${Number(perk.redemption_count || 0)} redemptions.`,
+        action: "redeem",
+        perk: { label: perk.perk || perk.title || "Resident offer", redemptionMethod: perk.redemption_type || "Show resident card" },
+      })),
+      ...db.entities.Event.map((event) => ({
+        id: event.id,
+        type: "event",
+        name: event.title || event.name || "Downtown event",
+        score: Number(event.rsvps || event.attendance || 0) + 60,
+        district: event.district || event.location || "Downtown Austin",
+        reason: `${event.category || "Event"} timing is relevant for nearby audiences.`,
+        action: "rsvp",
+      })),
+      ...db.entities.PartnerOffer.map((offer) => ({
+        id: offer.id,
+        type: "offer",
+        name: offer.title || "Partner offer",
+        score: Number(offer.redemptions || 0) + 65,
+        district: offer.source_type || "Partner workspace",
+        reason: "Workspace offer is ready for activation and reporting.",
+        action: "view",
+        perk: { label: offer.title || "Partner offer", redemptionMethod: offer.redemption_rules || "Workspace managed" },
+      })),
+    ];
+    const filtered = candidates
+      .filter((item) => !query || `${item.name} ${item.type} ${item.district} ${item.reason}`.toLowerCase().includes(query) || query.includes(item.type))
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 6)
+      .map((item, index) => ({
+        ...item,
+        score: Math.min(99, Math.max(72, item.score - index * 3)),
+        distanceLabel: item.district,
+      }));
+
+    const recommendations = filtered.length ? filtered : candidates.sort((a, b) => b.score - a.score).slice(0, 6).map((item, index) => ({ ...item, score: Math.min(99, item.score - index * 3), distanceLabel: item.district }));
+    const insight = withTimestamps(
+      {
+        source: "workspace_agent",
+        insight_type: "recommendation",
+        prompt: req.body?.query || "",
+        partner_type: partnerType,
+        summary: `Returned ${recommendations.length} workspace recommendations from live entity records.`,
+        recommendations,
+        status: "generated",
+      },
+      makeId("ai_insight")
+    );
+    db.entities.AiInsight.push(insight);
+    await saveDatabase(db);
+    res.json({ intent: query || "workspace_recommendations", recommendations, insight_id: insight.id });
+  });
+
   app.post("/api/tenant-provisioning/sync", async (req, res) => {
     const before = {
       tenants: db.entities.PlatformTenant.length,
@@ -886,6 +1968,186 @@ export async function createApp() {
         mapLinks: db.entities.MapEntityLink.length,
       },
     });
+  });
+
+  app.post("/api/map-data/import", async (req, res) => {
+    const result = await importDowntownPerksMapData(db.entities);
+    await saveDatabase(db);
+    res.json(result);
+  });
+
+  app.post("/api/intelligence/import", async (req, res) => {
+    const result = await importPartnerIntelligenceData(db.entities);
+    await saveDatabase(db);
+    res.json(result);
+  });
+
+  app.post("/api/products/import-pricing-catalog", async (req, res) => {
+    const result = await importPricingCatalog(db.entities);
+    writeAuditEvent(db, req, { action: "pricing_catalog_imported", entity_type: "product_offering", entity_id: "pricing_catalog", after: result });
+    await saveDatabase(db);
+    res.json({ success: true, ...result });
+  });
+
+  app.get("/api/products", (req, res) => {
+    res.json(db.entities.ProductOffering.filter((item) => !item.deleted_at));
+  });
+
+  app.get("/api/prices", (req, res) => {
+    res.json(
+      db.entities.ProductOffering.flatMap((product) =>
+        Array.isArray(product.prices) && product.prices.length
+          ? product.prices.map((price: any) => ({ ...price, product_id: product.product_id, product_name: product.name, product_offering_id: product.id }))
+          : [{ product_id: product.product_id, product_name: product.name, product_offering_id: product.id, stripe_price_id: product.stripe_price_id, amount: product.amount, currency: product.currency, interval: product.interval }]
+      )
+    );
+  });
+
+  app.post("/api/partner-leads", async (req, res) => {
+    const body = req.body || {};
+    const organizationName = String(body.organization_name || body.organization?.name || body.business_name || "Partner lead").trim();
+    const contactEmail = String(body.email || body.contact?.email || body.contact_email || "").trim().toLowerCase();
+    if (!organizationName || !contactEmail) return res.status(400).json({ error: "Organization name and email are required." });
+    const lead = ensureRecord(db.entities.PartnerRegistration, `lead_${slug(organizationName)}_${slug(contactEmail)}`, {
+      organization_name: organizationName,
+      contact_email: contactEmail,
+      contact_name: body.name || body.primary_contact || body.contact?.name || "",
+      phone: body.phone || body.contact?.phone || "",
+      partner_type: body.partner_type || body.organization?.type || "",
+      interest: body.interest || "",
+      plan: body.plan || {},
+      products: body.products || [],
+      checkout: body.checkout || {},
+      status: "lead_captured",
+      source_type: body.source_type || "partner_signup",
+      google_sheets_status: process.env.GOOGLE_SHEETS_CLIENT_EMAIL ? "ready_for_export" : "pending_credentials",
+      submitted_at: now(),
+      metadata: body.metadata || {},
+    });
+    writeAuditEvent(db, req, { action: "partner_lead_captured", entity_type: "partner_registration", entity_id: lead.id, after: lead });
+    writeAnalyticsEvent(db, req, { event: "partner_lead_captured", entity_type: "partner_registration", entity_id: lead.id, metadata: { partner_type: lead.partner_type, interest: lead.interest } });
+    await saveDatabase(db);
+    res.status(201).json({ success: true, lead, export_csv_url: "/api/partner-leads/export.csv" });
+  });
+
+  app.get("/api/partner-leads/export.csv", (req, res) => {
+    const rows = db.entities.PartnerRegistration.map((lead) => ({
+      id: lead.id,
+      organization_name: lead.organization_name || lead.organization?.name || "",
+      contact_email: lead.contact_email || lead.contact?.email || "",
+      contact_name: lead.contact_name || lead.contact?.name || "",
+      phone: lead.phone || lead.contact?.phone || "",
+      partner_type: lead.partner_type || lead.organization?.type || "",
+      interest: lead.interest || "",
+      status: lead.status || "",
+      submitted_at: lead.submitted_at || lead.created_at || "",
+      plan: lead.plan?.label || lead.plan?.name || lead.plan || "",
+    }));
+    res.setHeader("Content-Type", "text/csv; charset=utf-8");
+    res.setHeader("Content-Disposition", "attachment; filename=\"downtown-perks-partner-leads.csv\"");
+    res.send(recordsToCsv(rows));
+  });
+
+  app.post("/api/checkout/session", async (req, res) => {
+    const body = req.body || {};
+    const lineItems = Array.isArray(body.line_items) ? body.line_items : [];
+    const selectedPriceIds = lineItems.map((item: any) => item.price || item.stripe_price_id).filter(Boolean);
+    const products = db.entities.ProductOffering.filter((product) => selectedPriceIds.includes(product.stripe_price_id) || selectedPriceIds.some((priceId: string) => product.prices?.some((price: any) => price.stripe_price_id === priceId)));
+    const billingEmail = body.customer_email || body.billing_email || body.email || "";
+    const organizationName = body.organization_name || body.business_name || "Downtown Perks Partner";
+
+    if (!selectedPriceIds.length) return res.status(400).json({ error: "At least one Stripe price ID is required." });
+
+    const tenant = provisionPlatformTenant(db.entities, {
+      name: organizationName,
+      type: body.partner_type || "venue",
+      category: body.partner_type || "Partner",
+      source_type: "checkout_session",
+      source_id: billingEmail || organizationName,
+    });
+    const workspaceId = tenant ? `workspace_${tenant.slug}` : "workspace_downtown-perks-partner";
+    const checkoutRecord = withTimestamps(
+      {
+        tenant_id: tenant?.id || "",
+        workspace_id: workspaceId,
+        billing_email: billingEmail,
+        organization_name: organizationName,
+        selected_price_ids: selectedPriceIds,
+        products: products.map((product) => ({ id: product.id, name: product.name, stripe_product_id: product.stripe_product_id, stripe_price_id: product.stripe_price_id, amount: product.amount, interval: product.interval })),
+        provider: process.env.STRIPE_SECRET_KEY ? "stripe" : "local_checkout_ready_for_stripe",
+        status: process.env.STRIPE_SECRET_KEY ? "creating" : "pending_credentials",
+        success_url: body.success_url || "http://localhost:5173/partners/provision?checkout=success",
+        cancel_url: body.cancel_url || "http://localhost:5173/partners/checkout?checkout=cancelled",
+      },
+      makeId("checkout")
+    );
+
+    if (!process.env.STRIPE_SECRET_KEY) {
+      ensureRecord(db.entities.PartnerInvoice, `invoice_${checkoutRecord.id}`, {
+        tenant_id: checkoutRecord.tenant_id,
+        workspace_id: checkoutRecord.workspace_id,
+        billing_email: billingEmail,
+        status: "pending_payment",
+        provider: "local_checkout_ready_for_stripe",
+        checkout_session_id: checkoutRecord.id,
+        total: products.reduce((sum, product) => sum + Number(product.amount || 0), 0),
+        currency: products[0]?.currency || "usd",
+      });
+      writeAuditEvent(db, req, { action: "checkout_session_created_pending_credentials", entity_type: "checkout", entity_id: checkoutRecord.id, after: checkoutRecord });
+      await saveDatabase(db);
+      return res.status(202).json({
+        success: true,
+        status: "pending_credentials",
+        checkout_session: checkoutRecord,
+        checkout_url: `/partners/checkout?session_id=${checkoutRecord.id}&status=pending_credentials`,
+        message: "Stripe credentials are not configured. Local checkout record created and ready for Stripe activation.",
+      });
+    }
+
+    const params = new URLSearchParams();
+    params.set("mode", products.some((product) => product.interval && product.interval !== "one_time") ? "subscription" : "payment");
+    params.set("success_url", checkoutRecord.success_url);
+    params.set("cancel_url", checkoutRecord.cancel_url);
+    if (billingEmail) params.set("customer_email", billingEmail);
+    selectedPriceIds.forEach((priceId: string, index: number) => {
+      params.set(`line_items[${index}][price]`, priceId);
+      params.set(`line_items[${index}][quantity]`, String(lineItems[index]?.quantity || 1));
+    });
+    params.set("metadata[organization_name]", organizationName);
+    params.set("metadata[tenant_id]", checkoutRecord.tenant_id);
+
+    const stripeResponse = await fetch("https://api.stripe.com/v1/checkout/sessions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${process.env.STRIPE_SECRET_KEY}`,
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: params,
+    });
+    const stripePayload = await stripeResponse.json();
+    if (!stripeResponse.ok) {
+      writeAuditEvent(db, req, { action: "checkout_session_failed", entity_type: "checkout", entity_id: checkoutRecord.id, after: stripePayload });
+      await saveDatabase(db);
+      return res.status(502).json({ error: "Stripe checkout session failed", details: stripePayload });
+    }
+
+    checkoutRecord.status = "created";
+    checkoutRecord.stripe_checkout_session_id = stripePayload.id;
+    checkoutRecord.checkout_url = stripePayload.url;
+    ensureRecord(db.entities.PartnerInvoice, `invoice_${checkoutRecord.id}`, {
+      tenant_id: checkoutRecord.tenant_id,
+      workspace_id: checkoutRecord.workspace_id,
+      billing_email: billingEmail,
+      status: "checkout_created",
+      provider: "stripe",
+      checkout_session_id: stripePayload.id,
+      hosted_invoice_url: stripePayload.url,
+      total: products.reduce((sum, product) => sum + Number(product.amount || 0), 0),
+      currency: products[0]?.currency || "usd",
+    });
+    writeAuditEvent(db, req, { action: "stripe_checkout_session_created", entity_type: "checkout", entity_id: checkoutRecord.id, after: checkoutRecord });
+    await saveDatabase(db);
+    res.status(201).json({ success: true, checkout_session: checkoutRecord, stripe: stripePayload, checkout_url: stripePayload.url });
   });
 
   app.get("/api/auth/me", (req, res) => {
@@ -1222,6 +2484,199 @@ export async function createApp() {
         });
       }
 
+      if (functionName === "importDowntownPerksMapData") {
+        const result = await importDowntownPerksMapData(db.entities);
+        await saveDatabase(db);
+        return res.json({ data: result });
+      }
+
+      if (functionName === "createWorkspaceAction") {
+        const bundle = getWorkspaceBundle(body.tenant_id || body.tenant_slug || body.workspace_slug || "current");
+        if (!bundle?.tenant || !bundle.workspace) return res.status(404).json({ error: "Workspace not found" });
+        const actionType = String(body.action_type || body.type || "task").toLowerCase().replace(/[^a-z0-9]+/g, "_");
+        const actor = body.actor || body.actor_email || "workspace@downtownperks.local";
+        let record: EntityRecord;
+
+        if (actionType === "create_offer" || actionType === "offer") {
+          record = withTimestamps(
+            {
+              tenant_id: bundle.tenant.id,
+              workspace_id: bundle.workspace.id,
+              partner_id: bundle.partner?.id || null,
+              title: body.title || "New workspace offer",
+              description: body.description || "Offer created from the workspace action bar.",
+              status: body.status || "draft",
+              redemption_rules: body.redemption_rules || "Show resident card",
+              source_type: "workspace_action",
+            },
+            makeId("partner_offer")
+          );
+          db.entities.PartnerOffer.push(record);
+        } else if (actionType === "create_event" || actionType === "event") {
+          record = withTimestamps(
+            {
+              tenant_id: bundle.tenant.id,
+              workspace_id: bundle.workspace.id,
+              partner_id: bundle.partner?.id || null,
+              title: body.title || "New workspace event",
+              status: body.status || "draft",
+              event_types: body.event_types || ["Partner event"],
+              source_type: "workspace_action",
+            },
+            makeId("partner_event")
+          );
+          db.entities.PartnerEvent.push(record);
+        } else if (actionType === "new_campaign" || actionType === "launch_broadcast" || actionType === "campaign") {
+          record = withTimestamps(
+            {
+              tenant_id: bundle.tenant.id,
+              workspace_id: bundle.workspace.id,
+              partner_id: bundle.partner?.id || null,
+              title: body.title || (actionType === "launch_broadcast" ? "Workspace broadcast" : "New workspace campaign"),
+              description: body.description || "Campaign created from the workspace action bar.",
+              status: body.status || "draft",
+              type: actionType === "launch_broadcast" ? "broadcast" : "campaign",
+              reach: Number(body.reach || 0),
+            },
+            makeId("campaign")
+          );
+          db.entities.Campaign.push(record);
+        } else if (actionType === "invite_team" || actionType === "team") {
+          record = withTimestamps(
+            {
+              tenant_id: bundle.tenant.id,
+              workspace_id: bundle.workspace.id,
+              name: body.name || "Invited teammate",
+              email: body.email || `invite-${Date.now()}@downtownperks.local`,
+              role: body.role || "Manager",
+              status: "pending",
+            },
+            makeId("tenant_user")
+          );
+          db.entities.TenantUser.push(record);
+        } else if (actionType === "generate_qr" || actionType === "qr") {
+          record = withTimestamps(
+            {
+              tenant_id: bundle.tenant.id,
+              workspace_id: bundle.workspace.id,
+              partner_id: bundle.partner?.id || null,
+              label: body.label || "Workspace QR",
+              destination_url: body.destination_url || "/workspace/home",
+              status: "active",
+              scans: 0,
+            },
+            makeId("qr")
+          );
+          db.entities.PartnerQrExperience.push(record);
+        } else if (actionType === "update_profile" || actionType === "profile") {
+          record = ensureRecord(db.entities.PartnerProfile, `profile_${bundle.tenant.slug}`, {
+            tenant_id: bundle.tenant.id,
+            workspace_id: bundle.workspace.id,
+            partner_id: bundle.partner?.id || null,
+            display_name: body.display_name || bundle.profile?.display_name || bundle.tenant.name,
+            type: body.type || bundle.profile?.type || bundle.tenant.type,
+            category: body.category || bundle.profile?.category || bundle.tenant.type,
+            address: body.address || bundle.profile?.address || "",
+            status: "active",
+          });
+        } else if (actionType === "generate_report" || actionType === "report") {
+          record = withTimestamps(
+            {
+              tenant_id: bundle.tenant.id,
+              workspace_id: bundle.workspace.id,
+              report_types: ["Workspace Summary", "Campaign Performance", "Offer Activity"],
+              status: "ready",
+              generated_at: now(),
+            },
+            makeId("partner_report")
+          );
+          db.entities.PartnerReport.push(record);
+        } else {
+          record = withTimestamps(
+            {
+              tenant_id: bundle.tenant.id,
+              workspace_id: bundle.workspace.id,
+              channel: "workspace",
+              rule: actionType,
+              status: "active",
+              message: body.message || "Workspace action recorded.",
+            },
+            makeId("tenant_notification")
+          );
+          db.entities.TenantNotification.push(record);
+        }
+
+        const audit = withTimestamps(
+          {
+            tenant_id: bundle.tenant.id,
+            workspace_id: bundle.workspace.id,
+            actor_id: actor,
+            action: `workspace_action_${actionType}`,
+            resource: record.id,
+            before: null,
+            after: record,
+            timestamp: now(),
+          },
+          makeId("audit")
+        );
+        db.entities.TenantAuditLog.push(audit);
+        await saveDatabase(db);
+        return res.json({ data: { success: true, action_type: actionType, record, audit, workspace: getWorkspaceBundle(bundle.tenant.id) } });
+      }
+
+      if (functionName === "askWorkspaceAssistant") {
+        const bundle = getWorkspaceBundle(body.tenant_id || body.tenant_slug || body.workspace_slug || "current");
+        if (!bundle?.tenant || !bundle.workspace) return res.status(404).json({ error: "Workspace not found" });
+        const prompt = String(body.prompt || "What should we do next?");
+        const totals = {
+          offers: bundle.offers.length,
+          events: bundle.events.length,
+          campaigns: bundle.campaigns.length,
+          reports: bundle.reports.length,
+          qr: bundle.qr.length,
+          users: bundle.users.length,
+          redemptions: Number(bundle.analytics?.[0]?.redemptions || 0),
+          views: Number(bundle.analytics?.[0]?.views || 0),
+        };
+        const suggestedActions = [
+          totals.offers === 0 ? "Create the first offer so the workspace has something residents can save or redeem." : "Review top offers and refresh the one with the lowest conversion.",
+          totals.events === 0 ? "Create an event or activation tied to the next high-traffic window." : "Promote the next event with QR and resident messaging.",
+          totals.qr === 0 ? "Generate a QR experience for the lobby, venue, event, or campaign." : "Check QR scans and move the strongest placement into a campaign.",
+          totals.users <= 1 ? "Invite one teammate so operations are not tied to a single owner." : "Review permissions and keep reporting access limited to the right roles.",
+        ];
+        const responseText = `For ${bundle.tenant.name}, the workspace currently has ${totals.offers} offers, ${totals.events} events, ${totals.campaigns} campaigns, ${totals.qr} QR experiences, and ${totals.reports} report containers. Recommended next move: ${suggestedActions[0]}`;
+        const insight = withTimestamps(
+          {
+            tenant_id: bundle.tenant.id,
+            workspace_id: bundle.workspace.id,
+            source: "workspace_assistant",
+            insight_type: "assistant_response",
+            prompt,
+            summary: responseText,
+            recommendations: suggestedActions,
+            status: "generated",
+          },
+          makeId("ai_insight")
+        );
+        db.entities.AiInsight.push(insight);
+        db.entities.TenantAuditLog.push(
+          withTimestamps(
+            {
+              tenant_id: bundle.tenant.id,
+              workspace_id: bundle.workspace.id,
+              actor_id: body.actor || "workspace_assistant",
+              action: "workspace_assistant_prompt",
+              resource: insight.id,
+              after: { prompt, response: responseText },
+              timestamp: now(),
+            },
+            makeId("audit")
+          )
+        );
+        await saveDatabase(db);
+        return res.json({ data: { success: true, response: responseText, suggested_actions: suggestedActions, insight } });
+      }
+
       if (functionName === "generatePDFReport") {
         const building = db.entities.Building.find((item) => item.id === body.building_id);
         const payload = {
@@ -1492,6 +2947,10 @@ export async function createApp() {
     res.json({ success: true, queued_at: now(), ...req.body });
   });
 
+  app.get("/api/admin/properties", (req, res) => {
+    res.json(getAdminPropertyPortfolio(db));
+  });
+
   app.get("/api/properties", (req, res) => {
     res.json(db.entities.Building);
   });
@@ -1555,6 +3014,537 @@ export async function createApp() {
     } catch (err: any) {
       res.status(500).json({ error: err.message || "Failed to ingest data." });
     }
+  });
+
+  app.get("/api/map/entities", (req, res) => {
+    res.json(mapEntityRows(db));
+  });
+
+  app.get("/api/map/pins", (req, res) => {
+    res.json(
+      mapEntityRows(db).map((entity) => ({
+        id: entity.map_entity_id || entity.id,
+        entity_id: entity.entity_id,
+        entity_type: entity.entity_type,
+        lat: entity.lat,
+        lng: entity.lng,
+        title: entity.title,
+        category: entity.category,
+        district: entity.district,
+        status: entity.status,
+        visibility: entity.visibility,
+        partner_id: entity.partner_id,
+        analytics_summary: entity.analytics_summary,
+      }))
+    );
+  });
+
+  app.get("/api/map/entities/:id", (req, res) => {
+    const entity = mapEntityRows(db).find((item) => item.id === req.params.id || item.entity_id === req.params.id || item.map_entity_id === req.params.id);
+    if (!entity) return res.status(404).json({ error: "Map entity not found" });
+    const partner = entity.partner_id ? db.entities.Partner.find((item) => item.id === entity.partner_id) : null;
+    const perks = db.entities.PerkLocation.filter((item) => item.id === entity.perk_id || item.partner_id === entity.partner_id || item.tenant_id === entity.tenant_id);
+    const events = db.entities.Event.filter((item) => item.id === entity.event_id || item.partner_id === entity.partner_id || item.tenant_id === entity.tenant_id);
+    const campaigns = db.entities.Campaign.filter((item) => item.id === entity.campaign_id || item.partner_id === entity.partner_id || item.tenant_id === entity.tenant_id);
+    res.json({ ...entity, partner, perks, events, campaigns });
+  });
+
+  app.post("/api/map/events", async (req, res) => {
+    const payload = req.body || {};
+    const analytics = writeAnalyticsEvent(db, req, {
+      event: payload.event || "map_interaction",
+      entity_type: payload.entity_type || "map_entity",
+      entity_id: payload.entity_id || payload.map_entity_id || "",
+      mode: payload.mode,
+      tenant_id: payload.tenant_id || payload.organization_id,
+      workspace_id: payload.workspace_id,
+      metadata: payload,
+    });
+    const audit = writeAuditEvent(db, req, {
+      action: analytics.event,
+      entity_type: analytics.entity_type,
+      entity_id: analytics.entity_id,
+      after: analytics,
+      metadata: { source: "product_map" },
+    });
+    await saveDatabase(db);
+    res.status(201).json({ success: true, analytics, audit });
+  });
+
+  app.get("/api/events", (req, res) => {
+    res.json(db.entities.Event.filter((event) => !event.deleted_at));
+  });
+
+  app.post("/api/events", async (req, res) => {
+    const record = withTimestamps({ status: "draft", registered_count: 0, ...req.body }, makeId("event"));
+    db.entities.Event.push(record);
+    writeAuditEvent(db, req, { action: "event_created", entity_type: "event", entity_id: record.id, after: record });
+    writeAnalyticsEvent(db, req, { event: "record_created", entity_type: "event", entity_id: record.id, ...organizationContext(record) });
+    await saveDatabase(db);
+    res.status(201).json(record);
+  });
+
+  app.patch("/api/events/:id", async (req, res) => {
+    const event = findEntityById(db.entities.Event, req.params.id);
+    if (!event) return res.status(404).json({ error: "Event not found" });
+    const before = { ...event };
+    Object.assign(event, req.body || {}, { updated_at: now() });
+    writeAuditEvent(db, req, { action: "event_updated", entity_type: "event", entity_id: event.id, before, after: event });
+    writeAnalyticsEvent(db, req, { event: "record_updated", entity_type: "event", entity_id: event.id, ...organizationContext(event) });
+    await saveDatabase(db);
+    res.json(event);
+  });
+
+  app.post("/api/events/:id/rsvp", async (req, res) => {
+    const event = findEntityById(db.entities.Event, req.params.id);
+    if (!event) return res.status(404).json({ error: "Event not found" });
+    if (Number(event.capacity || 0) > 0 && Number(event.registered_count || 0) >= Number(event.capacity)) {
+      return res.status(409).json({ error: "Event capacity reached", status: "full" });
+    }
+    const rsvp = withTimestamps(
+      {
+        event_id: event.id,
+        event_name: event.title,
+        event_date: event.date,
+        tenant_id: req.body?.tenant_id || req.body?.resident_id || "",
+        resident_email: req.body?.resident_email || req.body?.email || "",
+        status: "registered",
+        registered_at: now(),
+      },
+      makeId("rsvp")
+    );
+    db.entities.EventRSVP.push(rsvp);
+    event.registered_count = Number(event.registered_count || 0) + 1;
+    event.updated_at = now();
+    writeAnalyticsEvent(db, req, { event: "event_rsvp", entity_type: "event", entity_id: event.id, ...organizationContext(event), metadata: rsvp });
+    writeAuditEvent(db, req, { action: "event_rsvp_created", entity_type: "event", entity_id: event.id, after: rsvp });
+    await saveDatabase(db);
+    res.status(201).json({ success: true, rsvp, event });
+  });
+
+  app.post("/api/events/:id/check-in", async (req, res) => {
+    const event = findEntityById(db.entities.Event, req.params.id);
+    if (!event) return res.status(404).json({ error: "Event not found" });
+    const rsvp = db.entities.EventRSVP.find((item) => item.id === req.body?.rsvp_id || (item.event_id === event.id && item.resident_email === req.body?.resident_email));
+    if (rsvp) Object.assign(rsvp, { status: "checked_in", checked_in_at: now(), updated_at: now() });
+    writeAnalyticsEvent(db, req, { event: "event_check_in", entity_type: "event", entity_id: event.id, ...organizationContext(event), metadata: req.body || {} });
+    writeAuditEvent(db, req, { action: "event_check_in_recorded", entity_type: "event", entity_id: event.id, after: rsvp || req.body });
+    await saveDatabase(db);
+    res.json({ success: true, event, rsvp: rsvp || null });
+  });
+
+  app.post("/api/events/:id/follow-up", async (req, res) => {
+    const event = findEntityById(db.entities.Event, req.params.id);
+    if (!event) return res.status(404).json({ error: "Event not found" });
+    const run = withTimestamps(
+      { name: "Event Follow-Up", status: "queued", trigger: "event_completed", action: "send_follow_up_survey", event_id: event.id, last_run: now(), logs: [{ at: now(), message: "Follow-up survey queued" }] },
+      makeId("automation")
+    );
+    db.entities.AutomationRun.push(run);
+    writeAuditEvent(db, req, { action: "event_follow_up_queued", entity_type: "event", entity_id: event.id, after: run });
+    await saveDatabase(db);
+    res.json({ success: true, automation_run: run });
+  });
+
+  app.get("/api/campaigns", (req, res) => {
+    res.json(db.entities.Campaign.filter((campaign) => !campaign.deleted_at));
+  });
+
+  app.post("/api/campaigns", async (req, res) => {
+    const record = withTimestamps({ status: "draft", opens: 0, clicks: 0, conversions: 0, ...req.body }, makeId("campaign"));
+    db.entities.Campaign.push(record);
+    writeAuditEvent(db, req, { action: "campaign_created", entity_type: "campaign", entity_id: record.id, after: record });
+    writeAnalyticsEvent(db, req, { event: "record_created", entity_type: "campaign", entity_id: record.id, ...organizationContext(record) });
+    await saveDatabase(db);
+    res.status(201).json(record);
+  });
+
+  app.patch("/api/campaigns/:id", async (req, res) => {
+    const campaign = findEntityById(db.entities.Campaign, req.params.id);
+    if (!campaign) return res.status(404).json({ error: "Campaign not found" });
+    const before = { ...campaign };
+    Object.assign(campaign, req.body || {}, { updated_at: now() });
+    writeAuditEvent(db, req, { action: "campaign_updated", entity_type: "campaign", entity_id: campaign.id, before, after: campaign });
+    writeAnalyticsEvent(db, req, { event: "record_updated", entity_type: "campaign", entity_id: campaign.id, ...organizationContext(campaign) });
+    await saveDatabase(db);
+    res.json(campaign);
+  });
+
+  const updateCampaignStatus = async (req: express.Request, res: express.Response, status: string) => {
+    const campaign = findEntityById(db.entities.Campaign, req.params.id);
+    if (!campaign) return res.status(404).json({ error: "Campaign not found" });
+    const before = { ...campaign };
+    Object.assign(campaign, { status, updated_at: now(), published_at: status === "active" ? now() : campaign.published_at });
+    writeAuditEvent(db, req, { action: `campaign_${status}`, entity_type: "campaign", entity_id: campaign.id, before, after: campaign });
+    writeAnalyticsEvent(db, req, { event: `campaign_${status}`, entity_type: "campaign", entity_id: campaign.id, ...organizationContext(campaign) });
+    await saveDatabase(db);
+    return res.json(campaign);
+  };
+
+  app.post("/api/campaigns/:id/publish", (req, res) => updateCampaignStatus(req, res, "active"));
+  app.post("/api/campaigns/:id/pause", (req, res) => updateCampaignStatus(req, res, "paused"));
+  app.post("/api/campaigns/:id/archive", (req, res) => updateCampaignStatus(req, res, "archived"));
+
+  app.get("/api/residents", (req, res) => {
+    res.json(db.entities.Tenant.filter((tenant) => !tenant.deleted_at));
+  });
+
+  app.post("/api/residents", async (req, res) => {
+    const record = withTimestamps({ status: "active", perks_enrolled: false, ...req.body }, makeId("resident"));
+    db.entities.Tenant.push(record);
+    writeAuditEvent(db, req, { action: "resident_created", entity_type: "resident", entity_id: record.id, after: record });
+    await saveDatabase(db);
+    res.status(201).json(record);
+  });
+
+  app.patch("/api/residents/:id", async (req, res) => {
+    const resident = findEntityById(db.entities.Tenant, req.params.id);
+    if (!resident) return res.status(404).json({ error: "Resident not found" });
+    const before = { ...resident };
+    Object.assign(resident, req.body || {}, { updated_at: now() });
+    writeAuditEvent(db, req, { action: "resident_updated", entity_type: "resident", entity_id: resident.id, before, after: resident });
+    await saveDatabase(db);
+    res.json(resident);
+  });
+
+  app.post("/api/residents/:id/segment", async (req, res) => {
+    const resident = findEntityById(db.entities.Tenant, req.params.id);
+    if (!resident) return res.status(404).json({ error: "Resident not found" });
+    const segments = Array.isArray(resident.segments) ? resident.segments : [];
+    const segmentId = req.body?.segment_id || req.body?.segment || "segment_manual";
+    if (!segments.includes(segmentId)) segments.push(segmentId);
+    resident.segments = segments;
+    resident.updated_at = now();
+    writeAuditEvent(db, req, { action: "resident_segment_assigned", entity_type: "resident", entity_id: resident.id, after: { segment_id: segmentId } });
+    await saveDatabase(db);
+    res.json({ success: true, resident });
+  });
+
+  app.get("/api/residents/:id/activity", (req, res) => {
+    const resident = findEntityById(db.entities.Tenant, req.params.id);
+    if (!resident) return res.status(404).json({ error: "Resident not found" });
+    res.json({
+      resident,
+      redemptions: db.entities.PerkRedemption.filter((item) => item.user_email === resident.email || item.tenant_id === resident.id),
+      rsvps: db.entities.EventRSVP.filter((item) => item.tenant_id === resident.id || item.resident_email === resident.email),
+      surveys: db.entities.SurveyResponse.filter((item) => item.resident_id === resident.id || item.resident_email === resident.email),
+      analytics: db.entities.AnalyticsEvent.filter((item) => item.actor_id === resident.id || item.metadata?.resident_id === resident.id),
+    });
+  });
+
+  app.get("/api/partners", (req, res) => {
+    res.json(db.entities.Partner.filter((partner) => !partner.deleted_at));
+  });
+
+  app.post("/api/partners", async (req, res) => {
+    const record = withTimestamps({ status: "active", onboarding_stage: "created", ...req.body }, makeId("partner"));
+    db.entities.Partner.push(record);
+    const tenant = provisionPlatformTenant(db.entities, { ...record, name: record.business_name || record.name, type: record.category, source_type: "partner", source_id: record.id, partner_id: record.id });
+    writeAuditEvent(db, req, { action: "partner_created", entity_type: "partner", entity_id: record.id, after: record });
+    await saveDatabase(db);
+    res.status(201).json({ partner: record, tenant });
+  });
+
+  app.patch("/api/partners/:id", async (req, res) => {
+    const partner = findEntityById(db.entities.Partner, req.params.id);
+    if (!partner) return res.status(404).json({ error: "Partner not found" });
+    const before = { ...partner };
+    Object.assign(partner, req.body || {}, { updated_at: now() });
+    writeAuditEvent(db, req, { action: "partner_updated", entity_type: "partner", entity_id: partner.id, before, after: partner });
+    await saveDatabase(db);
+    res.json(partner);
+  });
+
+  app.post("/api/partners/:id/provision-workspace", async (req, res) => {
+    const partner = findEntityById(db.entities.Partner, req.params.id);
+    if (!partner) return res.status(404).json({ error: "Partner not found" });
+    const tenant = provisionPlatformTenant(db.entities, { ...partner, name: partner.business_name || partner.name, type: partner.category, source_type: "partner", source_id: partner.id, partner_id: partner.id });
+    writeAuditEvent(db, req, { action: "partner_workspace_provisioned", entity_type: "partner", entity_id: partner.id, after: tenant });
+    await saveDatabase(db);
+    res.json({ success: true, tenant, workspace: db.entities.TenantWorkspace.find((item) => item.tenant_id === tenant?.id) || null });
+  });
+
+  app.get("/api/reports", (req, res) => {
+    res.json(db.entities.PartnerReport);
+  });
+
+  app.post("/api/reports/run", async (req, res) => {
+    const payload = {
+      report_type: req.body?.report_type || "platform_summary",
+      requested_by: actorFromRequest(req),
+      status: "completed",
+      generated_at: now(),
+      totals: {
+        partners: db.entities.Partner.length,
+        properties: getAdminPropertyPortfolio(db).length,
+        perks: db.entities.PerkLocation.length,
+        events: db.entities.Event.length,
+        campaigns: db.entities.Campaign.length,
+        redemptions: db.entities.PerkRedemption.length,
+      },
+    };
+    const run = withTimestamps(payload, makeId("report_run"));
+    db.entities.ReportRun.push(run);
+    writeAuditEvent(db, req, { action: "report_generated", entity_type: "report", entity_id: run.id, after: run });
+    await saveDatabase(db);
+    res.status(201).json(run);
+  });
+
+  app.get("/api/reports/:id/export", (req, res) => {
+    const report = findEntityById(db.entities.ReportRun, req.params.id) || findEntityById(db.entities.PartnerReport, req.params.id);
+    if (!report) return res.status(404).json({ error: "Report not found" });
+    res.json({ id: report.id, export_type: "json", generated_at: now(), data: report });
+  });
+
+  app.get("/api/analytics/summary", (req, res) => {
+    const events = db.entities.AnalyticsEvent;
+    res.json({
+      map_views: events.filter((event) => event.event === "pin_viewed" || event.event === "map_interaction").length,
+      pin_views: events.filter((event) => event.event === "pin_viewed").length,
+      drawer_opens: events.filter((event) => event.event === "drawer_opened").length,
+      directions_clicks: events.filter((event) => event.event === "directions_clicked").length,
+      saves: events.filter((event) => event.event === "save_clicked").length,
+      shares: events.filter((event) => event.event === "share_clicked").length,
+      perk_redemptions: db.entities.PerkRedemption.length,
+      event_rsvps: db.entities.EventRSVP.length,
+      qr_scans: db.entities.QrScan.length,
+      ai_interactions: events.filter((event) => String(event.event).startsWith("ai_")).length,
+      campaigns: db.entities.Campaign.length,
+      reports: db.entities.ReportRun.length + db.entities.PartnerReport.length,
+    });
+  });
+
+  app.post("/api/analytics/events", async (req, res) => {
+    const event = writeAnalyticsEvent(db, req, req.body || {});
+    await saveDatabase(db);
+    res.status(201).json(event);
+  });
+
+  app.get("/api/automations", (req, res) => {
+    res.json(db.entities.AutomationRun);
+  });
+
+  app.get("/api/automations/runs", (req, res) => {
+    res.json(db.entities.AutomationRun);
+  });
+
+  app.post("/api/automations/:id/run", async (req, res) => {
+    const existing = findEntityById(db.entities.AutomationRun, req.params.id);
+    const run = withTimestamps(
+      {
+        name: existing?.name || req.params.id,
+        provider: existing?.provider || "local",
+        status: "completed",
+        trigger: existing?.trigger || "manual",
+        action: existing?.action || "manual_run",
+        last_run: now(),
+        success_count: Number(existing?.success_count || 0) + 1,
+        failure_count: Number(existing?.failure_count || 0),
+        logs: [{ at: now(), message: "Manual automation run completed in local operations platform." }],
+      },
+      makeId("automation")
+    );
+    db.entities.AutomationRun.push(run);
+    writeAuditEvent(db, req, { action: "automation_run_completed", entity_type: "automation", entity_id: run.id, after: run });
+    await saveDatabase(db);
+    res.status(201).json(run);
+  });
+
+  app.get("/api/integrations/status", (req, res) => {
+    const defaults = [
+      ["Tally Webhooks", "TALLY_WEBHOOK_SECRET"],
+      ["Twilio Verify", "TWILIO_VERIFY_SERVICE_SID"],
+      ["Twilio Messaging", "TWILIO_MESSAGING_SERVICE_SID"],
+      ["Supabase Operational Store", "SUPABASE_URL"],
+      ["n8n Workflow Orchestration", "N8N_WEBHOOK_URL"],
+      ["OpenAI Insights", "OPENAI_API_KEY"],
+      ["Google Sheets / Reports DB", "GOOGLE_SHEETS_CLIENT_EMAIL"],
+      ["Google Maps", "GOOGLE_MAPS_API_KEY"],
+      ["Stripe", "STRIPE_SECRET_KEY"],
+      ["Storage Provider", "STORAGE_BUCKET"],
+    ];
+    const records = defaults.map(([provider, envKey]) => {
+      const stored = db.entities.IntegrationStatus.find((item) => item.provider === provider) || db.entities.IntegrationEndpoint.find((item) => item.provider === provider || item.name === provider);
+      return {
+        id: stored?.id || `integration_${slug(provider)}`,
+        provider,
+        status: process.env[envKey] ? "configured" : stored?.status || "pending_credentials",
+        required_env_vars: [envKey],
+        last_tested: stored?.last_tested || "",
+        last_success: stored?.last_success || "",
+        logs: stored?.logs || [],
+        responsible_module: stored?.responsible_module || "platform",
+      };
+    });
+    res.json(records);
+  });
+
+  app.post("/api/integrations/:id/test", async (req, res) => {
+    const id = req.params.id;
+    const status = withTimestamps(
+      {
+        provider: req.body?.provider || id,
+        status: req.body?.env_key && process.env[req.body.env_key] ? "configured" : "pending_credentials",
+        last_tested: now(),
+        last_success: req.body?.env_key && process.env[req.body.env_key] ? now() : "",
+        logs: [{ at: now(), message: "Local credential availability checked. External provider call skipped unless credentials are configured." }],
+      },
+      `integration_${slug(id)}`
+    );
+    ensureRecord(db.entities.IntegrationStatus, status.id, status);
+    writeAuditEvent(db, req, { action: "integration_tested", entity_type: "integration", entity_id: status.id, after: status });
+    await saveDatabase(db);
+    res.json(status);
+  });
+
+  app.get("/api/qr/:id", (req, res) => {
+    const qr = findEntityById(db.entities.PartnerQrExperience, req.params.id);
+    if (!qr) return res.status(404).json({ error: "QR code not found" });
+    res.json(qr);
+  });
+
+  app.post("/api/qr/scan", async (req, res) => {
+    const qrId = req.body?.qr_id || req.body?.id;
+    const qr = qrId ? findEntityById(db.entities.PartnerQrExperience, qrId) : null;
+    if (!qr) {
+      const failed = withTimestamps({ qr_id: qrId || "", status: "invalid", scanned_at: now(), source: req.body?.source || "unknown" }, makeId("qr_scan"));
+      db.entities.QrScan.push(failed);
+      await saveDatabase(db);
+      return res.status(404).json({ error: "QR code not found", scan: failed });
+    }
+    const scan = withTimestamps(
+      {
+        qr_id: qr.id,
+        organization_id: qr.tenant_id,
+        tenant_id: qr.tenant_id,
+        workspace_id: qr.workspace_id,
+        entity_id: qr.entity_id || qr.partner_id || "",
+        entity_type: qr.entity_type || "partner_qr",
+        campaign_id: qr.campaign_id || "",
+        status: qr.status === "active" ? "routed" : "inactive",
+        scan_time: now(),
+        scanned_at: now(),
+        device: req.body?.device || "",
+        location: req.body?.location || "",
+        source: req.body?.source || "qr",
+        referrer: req.body?.referrer || "",
+      },
+      makeId("qr_scan")
+    );
+    db.entities.QrScan.push(scan);
+    qr.scans = Number(qr.scans || 0) + 1;
+    qr.updated_at = now();
+    writeAnalyticsEvent(db, req, { event: "qr_scanned", entity_type: scan.entity_type, entity_id: scan.entity_id, ...organizationContext(scan), metadata: scan });
+    writeAuditEvent(db, req, { action: "qr_scan_recorded", entity_type: "qr", entity_id: qr.id, after: scan });
+    await saveDatabase(db);
+    res.status(201).json({ success: true, destination_url: qr.destination_url, scan, qr });
+  });
+
+  app.post("/api/ai/ask-map", async (req, res) => {
+    const visibleEntities = mapEntityRows(db).slice(0, 12);
+    const insight = withTimestamps(
+      {
+        source: "ask_map",
+        insight_type: "answer",
+        title: req.body?.question || "Ask the Map",
+        summary: `Found ${visibleEntities.length} visible Downtown Perks entities for ${req.body?.mode || "resident"} mode.`,
+        recommended_action: visibleEntities[0]?.title ? `Start with ${visibleEntities[0].title}.` : "Open the map and select a nearby entity.",
+        status: "generated",
+        context: { mode: req.body?.mode || "resident", visible_entities: visibleEntities },
+      },
+      makeId("ai")
+    );
+    db.entities.AiInsight.push(insight);
+    writeAnalyticsEvent(db, req, { event: "ai_request_created", entity_type: "ai", entity_id: insight.id, metadata: req.body || {} });
+    await saveDatabase(db);
+    res.json({ answer: insight.summary, recommendations: visibleEntities.slice(0, 5), insight });
+  });
+
+  app.post("/api/ai/recommendations", async (req, res) => {
+    const recommendations = [
+      ...db.entities.PerkLocation.filter((perk) => perk.active !== false && perk.is_active !== false).slice(0, 4),
+      ...db.entities.Event.filter((event) => event.status !== "draft").slice(0, 3),
+    ];
+    writeAnalyticsEvent(db, req, { event: "ai_recommendations_requested", entity_type: "ai", entity_id: "recommendations", metadata: req.body || {} });
+    await saveDatabase(db);
+    res.json({ recommendations });
+  });
+
+  app.post("/api/ai/report-summary", async (req, res) => {
+    const summary = {
+      title: "Platform report summary",
+      summary: `${db.entities.PerkRedemption.length} redemptions, ${db.entities.EventRSVP.length} RSVPs, and ${db.entities.Campaign.length} campaigns are available for the selected scope.`,
+      generated_at: now(),
+    };
+    db.entities.AiInsight.push(withTimestamps({ source: "report_summary", insight_type: "summary", ...summary, status: "generated" }, makeId("ai")));
+    await saveDatabase(db);
+    res.json(summary);
+  });
+
+  app.post("/api/ai/survey-summary", async (req, res) => {
+    const responses = db.entities.SurveyResponse.filter((response) => !req.body?.survey_id || response.survey_id === req.body.survey_id);
+    const summary = {
+      title: "Survey response summary",
+      summary: `${responses.length} survey responses are stored. Sentiment and escalation routing are ready for configured AI credentials.`,
+      generated_at: now(),
+    };
+    db.entities.AiInsight.push(withTimestamps({ source: "survey_summary", insight_type: "summary", ...summary, status: "generated" }, makeId("ai")));
+    await saveDatabase(db);
+    res.json(summary);
+  });
+
+  const updatePerkStatus = async (req: express.Request, res: express.Response, status: string) => {
+    const perk = findEntityById(db.entities.PerkLocation, req.params.id);
+    if (!perk) return res.status(404).json({ error: "Perk not found" });
+    const before = { ...perk };
+    Object.assign(perk, {
+      status,
+      active: status === "active",
+      is_active: status === "active",
+      updated_at: now(),
+    });
+    writeAuditEvent(db, req, { action: `perk_${status}`, entity_type: "perk", entity_id: perk.id, before, after: perk });
+    writeAnalyticsEvent(db, req, { event: `perk_${status}`, entity_type: "perk", entity_id: perk.id, ...organizationContext(perk) });
+    await saveDatabase(db);
+    return res.json(perk);
+  };
+
+  app.post("/api/perks/:id/activate", (req, res) => updatePerkStatus(req, res, "active"));
+  app.post("/api/perks/:id/pause", (req, res) => updatePerkStatus(req, res, "paused"));
+  app.post("/api/perks/:id/archive", (req, res) => updatePerkStatus(req, res, "archived"));
+
+  app.post("/api/perks/:id/redeem", async (req, res) => {
+    const perk = findEntityById(db.entities.PerkLocation, req.params.id);
+    if (!perk) return res.status(404).json({ error: "Perk not found" });
+    if (perk.active === false || perk.is_active === false || perk.status === "paused") return res.status(409).json({ error: "Perk is not currently redeemable", status: "paused" });
+    const residentEmail = req.body?.user_email || req.body?.resident_email || "resident@example.com";
+    const duplicate = db.entities.PerkRedemption.some((item) => item.perk_id === perk.id && item.user_email === residentEmail && Date.now() - new Date(item.redeemed_at || item.timestamp || 0).getTime() < 24 * 60 * 60 * 1000);
+    if (duplicate) return res.status(409).json({ error: "Duplicate redemption blocked by eligibility rule", status: "duplicate" });
+    const redemption = withTimestamps(
+      {
+        perk_id: perk.id,
+        perkId: perk.id,
+        propertyId: req.body?.propertyId || req.body?.property_id || "",
+        partner_id: perk.partner_id || "",
+        tenant_id: perk.tenant_id || "",
+        workspace_id: perk.workspace_id || "",
+        perk_name: perk.name || perk.title || "Perk",
+        perk_category: perk.category || "General",
+        user_email: residentEmail,
+        user_name: req.body?.user_name || req.body?.resident_name || "Resident",
+        timestamp: now(),
+        redeemed_at: now(),
+        is_verified: true,
+      },
+      makeId("red")
+    );
+    db.entities.PerkRedemption.push(redemption);
+    perk.redemption_count = Number(perk.redemption_count || 0) + 1;
+    perk.updated_at = now();
+    writeAnalyticsEvent(db, req, { event: "perk_redeemed", entity_type: "perk", entity_id: perk.id, ...organizationContext(perk), metadata: redemption });
+    writeAuditEvent(db, req, { action: "perk_redeemed", entity_type: "perk", entity_id: perk.id, after: redemption });
+    await saveDatabase(db);
+    res.status(201).json({ success: true, redemption, perk });
   });
 
   app.get("/api/perks", (req, res) => res.json(db.entities.PerkLocation));

@@ -119,7 +119,7 @@ export default function Residents() {
                 <Card className="p-6 hover: transition-all    ">
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-none bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center border border-[#EFEFEF]">
+                      <div className="w-12 h-12 rounded-none bg-white flex items-center justify-center border border-[#EFEFEF]">
                         <span className="font-bold text-[#11182B] text-lg">
                           {resident.name?.charAt(0).toUpperCase()}
                         </span>

@@ -8,28 +8,29 @@ export function Button({
   children, 
   loading = false,
   disabled = false,
+  type = "button",
   ...props 
 }: any) {
   
-  const base = "relative overflow-hidden inline-flex items-center justify-center gap-1.5 whitespace-nowrap font-sans transition-all focus:outline-none focus:ring-2 focus:ring-[#11182B] focus:ring-offset-2 active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none disabled:active:scale-100 [&>svg]:shrink-0";
+  const base = "relative inline-flex min-h-10 items-center justify-center gap-2 whitespace-nowrap font-sans text-[11px] font-semibold leading-none text-[#0B1F33] transition-all focus:outline-none focus:ring-2 focus:ring-[#C8A96A] focus:ring-offset-2 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50 disabled:active:scale-100 [&>svg]:h-4 [&>svg]:w-4 [&>svg]:shrink-0";
 
   const variants: any = {
-    primary: "bg-white text-[#11182B] hover:bg-white border border-[#11182B] px-3 py-1.5 text-[10px] font-semibold rounded-none shadow-none",
-    secondary: "bg-white text-[#11182B] hover:bg-white border border-[rgba(17,24,43,0.14)] hover:border-[#11182B] px-3 py-1.5 text-[10px] font-semibold rounded-none",
-    outline: "bg-white text-[#11182B] hover:bg-white border border-[rgba(17,24,43,0.18)] hover:border-[#11182B] px-3 py-1.5 text-[10px] font-semibold rounded-none",
-    ghost: "bg-transparent text-[#11182B] hover:bg-white border border-transparent hover:text-[#11182B] px-2.5 py-1.5 text-[10px] font-semibold rounded-none",
-    subtle: "bg-transparent text-slate-500 hover:text-[#11182B] hover:bg-white border border-transparent px-2.5 py-1.5 min-h-0 text-[10px] font-semibold rounded-none",
-    destructive: "bg-white text-red-600 hover:bg-white border border-red-200 hover:border-red-300 px-3 py-1.5 text-[10px] font-semibold rounded-none",
-    "map-floating": "bg-white/90 backdrop-blur-md text-[#11182B] border border-[#EFEFEF]/50 shadow-[0_8px_30px_rgba(0,0,0,0.08)] hover:bg-white hover:shadow-[0_12px_40px_rgba(0,0,0,0.12)] px-3 py-1.5 text-[10px] font-semibold rounded-none",
-    "dashboard-action": "bg-white border border-[#EFEFEF] text-[#11182B] text-[10px] font-semibold hover:border-[#11182B] hover:bg-white px-3 py-1.5 rounded-none flex items-center justify-center gap-1.5",
-    "map-action": "bg-white text-[var(--dp-navy)] border border-[var(--dp-navy)] hover:border-[var(--dp-gold)] py-1.5 px-3 text-[10px] font-semibold rounded-none",
-    "resident-action": "bg-white text-[var(--dp-navy)] border border-[var(--dp-navy)] hover:border-[var(--dp-gold)] py-1.5 px-3 text-[10px] font-semibold rounded-none",
+    primary: "bg-white text-[#0B1F33] hover:bg-white border border-[rgba(11,31,51,0.18)] hover:border-[#C8A96A] px-3.5 py-2 rounded-[8px] shadow-none",
+    secondary: "bg-white text-[#0B1F33] hover:bg-white border border-[rgba(11,31,51,0.12)] hover:border-[#C8A96A] px-3.5 py-2 rounded-[8px] shadow-none",
+    outline: "bg-white text-[#0B1F33] hover:bg-white border border-[rgba(11,31,51,0.14)] hover:border-[#C8A96A] px-3.5 py-2 rounded-[8px] shadow-none",
+    ghost: "bg-transparent text-[#0B1F33] hover:bg-white border border-transparent hover:border-[rgba(11,31,51,0.08)] px-3 py-2 rounded-[8px] shadow-none",
+    subtle: "bg-transparent text-[rgba(11,31,51,0.62)] hover:text-[#0B1F33] hover:bg-white border border-transparent px-3 py-2 rounded-[8px] shadow-none",
+    destructive: "bg-white text-red-600 hover:bg-white border border-red-200 hover:border-red-300 px-3.5 py-2 rounded-[8px] shadow-none",
+    "map-floating": "bg-white/95 text-[#0B1F33] border border-[rgba(11,31,51,0.12)] shadow-[0_18px_50px_rgba(11,31,51,0.08)] hover:border-[#C8A96A] px-3.5 py-2 rounded-[8px]",
+    "dashboard-action": "bg-white border border-[rgba(11,31,51,0.12)] text-[#0B1F33] hover:border-[#C8A96A] hover:bg-white px-3.5 py-2 rounded-[8px] shadow-none",
+    "map-action": "bg-white text-[var(--dp-navy)] border border-[rgba(11,31,51,0.14)] hover:border-[var(--dp-gold)] py-2 px-3.5 rounded-[8px] shadow-none",
+    "resident-action": "bg-white text-[var(--dp-navy)] border border-[rgba(11,31,51,0.14)] hover:border-[var(--dp-gold)] py-2 px-3.5 rounded-[8px] shadow-none",
   };
 
-  const finalClassName = cn(base, variants[variant] || variants.primary, className);
+  const finalClassName = cn(base, className, variants[variant] || variants.primary);
 
   return (
-    <button className={finalClassName} disabled={disabled || loading} {...props}>
+    <button type={type} className={finalClassName} disabled={disabled || loading} {...props}>
       {loading ? (
         <>
           <Loader2 className="w-4 h-4 mr-2 animate-spin shrink-0" />

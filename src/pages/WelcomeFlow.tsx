@@ -72,7 +72,7 @@ export default function WelcomeFlow() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-bgMain to-bgAlt flex items-center justify-center p-4">
+    <div className="min-h-screen bg-bgMain flex items-center justify-center p-4">
       <div className="w-full max-w-2xl">
         {/* Progress Indicator */}
         <div className="mb-12">
@@ -113,7 +113,7 @@ export default function WelcomeFlow() {
           {/* Progress Bar */}
           <div className="w-full h-1 bg-bgAlt rounded-none overflow-hidden">
             <motion.div
-              className="h-full bg-gradient-to-r from-gold to-gold/70"
+              className="h-full bg-gold"
               initial={{ width: '0%' }}
               animate={{ width: `${((currentStep + 1) / steps.length) * 100}%` }}
               transition={{ duration: 0.3 }}
