@@ -28,6 +28,7 @@ import AnnouncementManager from './pages/AnnouncementManager';
 import BuildingEngagement from './pages/BuildingEngagement';
 import BackendWorkspace from './pages/BackendWorkspace';
 import PlatformCommandCenter from './pages/PlatformCommandCenter';
+import PartnerLifecycle from './pages/PartnerLifecycle';
 
 export default function App() {
   return (
@@ -35,9 +36,14 @@ export default function App() {
       <Route path="/" element={<Home />} />
       <Route path="/map" element={<MapOS />} />
       <Route path="/welcome" element={<WelcomeFlow />} />
+      <Route path="/partners" element={<PartnerLifecycle />} />
+      <Route path="/partners/*" element={<PartnerLifecycle />} />
+      <Route path="/workspace" element={<Navigate to="/workspace/home" replace />} />
+      <Route path="/workspace/*" element={<PartnerLifecycle />} />
+      <Route path="/partner/workspace" element={<Navigate to="/workspace/home" replace />} />
       <Route path="/partner-portal" element={<Navigate to="/admin/partner-portal" replace />} />
-      <Route path="/partner-workspace" element={<Navigate to="/admin" replace />} />
-      <Route path="/partner-workspace/*" element={<Navigate to="/admin" replace />} />
+      <Route path="/partner-workspace" element={<Navigate to="/workspace/home" replace />} />
+      <Route path="/partner-workspace/*" element={<Navigate to="/workspace/home" replace />} />
       <Route path="/admin" element={<PartnerDashboardLayout />}>
         <Route index element={<BackendWorkspace />} />
         <Route path="home" element={<Home />} />
