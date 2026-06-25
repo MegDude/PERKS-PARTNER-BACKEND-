@@ -17,6 +17,7 @@ const __dirname = path.dirname(__filename);
 const isServerless = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME || process.env.LAMBDA_TASK_ROOT);
 const dataDir = isServerless ? path.join("/tmp", "downtown-perks-backend") : path.join(__dirname, "data");
 const dbPath = path.join(dataDir, "downtown-perks-db.json");
+const bundledDbPath = path.join(__dirname, "data", "downtown-perks-db.json");
 const PORT = Number(process.env.PORT || 3000);
 const execFileAsync = promisify(execFile);
 
@@ -1484,17 +1485,58 @@ async function ensureDatabase(): Promise<Database> {
   try {
     const raw = await fs.readFile(dbPath, "utf8");
     const parsed = JSON.parse(raw) as Database;
+    if (isServerless) {
+      const bundled = await loadBundledDatabase();
+      if (bundled && platformRecordCount(bundled) > platformRecordCount(parsed)) {
+        for (const entityName of entityNames) bundled.entities[entityName] ||= [];
+        addOperationalDefaults(bundled.entities);
+        await saveDatabase(bundled);
+        return bundled;
+      }
+    }
     for (const entityName of entityNames) parsed.entities[entityName] ||= [];
     addOperationalDefaults(parsed.entities);
     await importPricingCatalog(parsed.entities);
     await saveDatabase(parsed);
     return parsed;
   } catch {
+    if (isServerless) {
+      const bundled = await loadBundledDatabase();
+      if (bundled) {
+        for (const entityName of entityNames) bundled.entities[entityName] ||= [];
+        addOperationalDefaults(bundled.entities);
+        await saveDatabase(bundled);
+        return bundled;
+      }
+    }
     const seeded = createSeedDatabase();
     await importPricingCatalog(seeded.entities);
     await saveDatabase(seeded);
     return seeded;
   }
+}
+
+async function loadBundledDatabase(): Promise<Database | null> {
+  try {
+    const raw = await fs.readFile(bundledDbPath, "utf8");
+    return JSON.parse(raw) as Database;
+  } catch {
+    return null;
+  }
+}
+
+function platformRecordCount(db: Database) {
+  return [
+    "Partner",
+    "PlatformTenant",
+    "TenantWorkspace",
+    "PartnerProfile",
+    "PartnerLocation",
+    "PartnerOffer",
+    "Campaign",
+    "MapEntityLink",
+    "ProductOffering",
+  ].reduce((sum, entityName) => sum + (db.entities[entityName as EntityName]?.length || 0), 0);
 }
 
 async function saveDatabase(db: Database) {
