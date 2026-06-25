@@ -7,7 +7,7 @@ import fs from "fs/promises";
 import { execFile } from "child_process";
 import { promisify } from "util";
 import { GoogleGenAI, Type } from "@google/genai";
-import { enterpriseComponents, platformArchitecture, platformDomains, serializePlatformDomain } from "./src/platform/registry.ts";
+import { enterpriseComponents, platformArchitecture, platformDomains, serializePlatformDomain } from "./src/platform/registry.js";
 
 dotenv.config({ path: ".env.local" });
 dotenv.config();
