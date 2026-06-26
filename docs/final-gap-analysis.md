@@ -1,17 +1,51 @@
 # Final Gap Analysis
 
-## Done in 3014
+## Built
 
-- Added explicit source-of-truth API surface for 5173.
-- Added audit and analytics event writing for new operational actions.
-- Added QR scan, analytics event, report run, and integration status collections.
-- Documented route maps, data flow, API contracts, and reconciliation status.
+- Admin route structure.
+- Partner lifecycle and workspace shell.
+- Tenant/workspace provisioning records.
+- Promotion/coupon APIs and DUDE2026 seed.
+- Product/pricing catalog records.
+- Map entity APIs and map data links.
+- Perks CRUD and redemption basics.
+- Event RSVP/check-in/follow-up basics.
+- Campaign publish/pause/archive basics.
+- Survey records/forms/responses.
+- Report containers.
+- AI gateway/module skeleton.
+- Audit and analytics helper patterns.
 
-## Not Yet Complete
+## Outstanding
 
-- 5173 client code still needs to consume 3014 endpoints directly.
-- External providers require credentials and production configuration.
-- Generic entity CRUD still needs richer domain validation/audit in every path.
-- No `npm run test` or `npm run typecheck` script exists beyond `npm run lint`.
-- Full browser/mobile QA remains necessary after restarting with the new server code.
-- 5173 Creative Operating System work belongs in the 5173 product repo, not the 3014 BACKEND repo. The required next step is a separate 5173 architecture pass that keeps the existing UX and introduces shared AI provider registry, queue, asset registry, publishing workflow, and IndexedDB persistence in that app.
+- 5173 product route verification.
+- Dedicated domain services.
+- Server-side RBAC/validation on all mutations.
+- Production database and migrations.
+- Durable workflow engine.
+- Provider integrations and credentials.
+- Stripe paid checkout/webhooks.
+- Global search.
+- Saved/card resident workflows.
+- Scheduled reports and exports.
+- Mobile QA.
+- Test suite.
+
+## Regressed / Risk Areas
+
+- Hard delete routes still exist for some entities.
+- Generic entity mutation can bypass domain rules.
+- Repeated local components create design drift.
+- LocalStorage partner lifecycle state is not production-grade.
+- Analytics event count is sparse.
+- Integration UI can imply readiness before credentials are configured.
+
+## Production Blockers
+
+1. Runtime proof for 3014 and 5173.
+2. Lint/build/test pass on current worktree.
+3. Soft-delete enforcement.
+4. RBAC and validation.
+5. Workflow engine.
+6. Provider credentials and smoke tests.
+7. Domain extraction.

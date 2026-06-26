@@ -27,6 +27,9 @@ import AnnouncementManager from './pages/AnnouncementManager';
 import BackendWorkspace from './pages/BackendWorkspace';
 import PlatformCommandCenter from './pages/PlatformCommandCenter';
 import PartnerLifecycle from './pages/PartnerLifecycle';
+import Promotions from './pages/Promotions';
+import TheShoreWorkspace from './routes/TheShoreWorkspace';
+import PlatformModuleAudit from './pages/PlatformModuleAudit';
 
 export default function App() {
   return (
@@ -44,10 +47,13 @@ export default function App() {
       <Route path="/partner-portal" element={<Navigate to="/admin/partner-portal" replace />} />
       <Route path="/partner-workspace" element={<Navigate to="/workspace/home" replace />} />
       <Route path="/partner-workspace/*" element={<Navigate to="/workspace/home" replace />} />
+      <Route path="/the-shore-workspace" element={<TheShoreWorkspace />} />
+      <Route path="/admin/workspaces/the-shore" element={<TheShoreWorkspace />} />
       <Route path="/admin" element={<PartnerDashboardLayout />}>
         <Route index element={<BackendWorkspace />} />
         <Route path="home" element={<Home />} />
         <Route path="platform" element={<PlatformCommandCenter />} />
+        <Route path="platform/modules" element={<PlatformModuleAudit />} />
         <Route path="platform/partners" element={<Navigate to="/admin/partner" replace />} />
         <Route path="platform/buildings" element={<Navigate to="/admin/buildings" replace />} />
         <Route path="platform/events" element={<Navigate to="/admin/events" replace />} />
@@ -84,6 +90,7 @@ export default function App() {
         <Route path="reports" element={<Reports />} />
         <Route path="surveys" element={<Surveys />} />
         <Route path="announcements" element={<AnnouncementManager />} />
+        <Route path="promotions" element={<Promotions />} />
       </Route>
     </Routes>
   );

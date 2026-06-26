@@ -1,18 +1,25 @@
 # Performance Audit
 
-## Current State
+## Current Risks
 
-- Vite build completes.
-- Local JSON persistence is acceptable for development but not production scale.
-- Large dashboard chunks are possible and should be monitored.
+- One large `server.ts` creates maintenance and startup complexity.
+- Some pages fetch many entities independently.
+- Workspace pages load broad data then filter client-side.
+- No evidence of route splitting or bundle analysis.
+- Leaflet map dependency is present and should be loaded only for map routes.
+- Local JSON persistence may become slow with growth.
 
-## Required Production Work
+## Required Checks
 
-- route-level code splitting audit
-- database-backed pagination
-- virtualized large tables
-- cached dashboard queries
-- image optimization
-- map pin clustering at scale
-- AI request timeouts and caching
-
+| Area | Required Action |
+| --- | --- |
+| Bundles | Run Vite bundle analysis and lazy-load route modules. |
+| Queries | Replace broad entity list calls with scoped domain endpoints. |
+| Caching | Use React Query cache and invalidation consistently. |
+| Images | Add optimized storage/provider and lazy loading. |
+| Fonts | Keep interface typography lean. |
+| Maps | Load Leaflet only on map surfaces. |
+| Search | Add indexed backend search. |
+| Realtime | Add event-driven updates only where needed. |
+| AI | Stream responses and log latency/cost. |
+| Dashboard | Use aggregate endpoints instead of fetching all records. |

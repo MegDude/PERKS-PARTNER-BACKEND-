@@ -6,7 +6,7 @@ This app now runs as a complete local Downtown Perks operations platform:
 - Persistent JSON datastore at `data/downtown-perks-db.json`
 - Base44-compatible entity API for buildings, residents, flats, partners, perks, announcements, surveys, events, campaigns, messages, and reports
 - Compatibility endpoints for `/api/properties`, `/api/perks`, `/api/redemptions`, and `/api/insights/*`
-- Optional Gemini-powered property ingestion when `GEMINI_API_KEY` is configured
+- OpenAI-powered property ingestion through the backend AI provider when `OPENAI_API_KEY` is configured
 
 ## Run Locally
 

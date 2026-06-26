@@ -1,0 +1,226 @@
+.shore-workspace {
+  min-height: 100vh;
+  background: #ffffff;
+  color: #0b1f33;
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.shore-workspace * {
+  box-sizing: border-box;
+}
+
+.shore-editorial {
+  font-family: "Instrument Serif", Georgia, serif;
+  font-weight: 400;
+}
+
+.shore-scrollbar {
+  scrollbar-width: none;
+}
+
+.shore-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.shore-card {
+  border: 0;
+  background: transparent !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+.shore-workspace section {
+  padding-block: clamp(24px, 5vw, 56px);
+  border-top: 0 !important;
+}
+
+.shore-workspace section:first-of-type {
+  border-top: 0 !important;
+}
+
+.shore-workspace img {
+  border-radius: 0 !important;
+}
+
+.shore-workspace-header {
+  border-bottom: 1px solid rgba(11, 31, 51, 0.08);
+}
+
+.shore-header-shell {
+  padding-block: 8px 7px;
+}
+
+.shore-header-top {
+  display: flex;
+  min-height: 24px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.shore-header-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #c8a96a;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.shore-header-title {
+  margin-top: 2px;
+  color: #0b1f33;
+  font-family: "Instrument Serif", Georgia, serif;
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 1;
+}
+
+.shore-header-status {
+  flex: 0 0 auto;
+  color: rgba(11, 31, 51, 0.58);
+  font-size: 11px;
+  font-weight: 700;
+  text-align: right;
+  text-transform: uppercase;
+}
+
+.shore-rail {
+  min-height: 28px;
+  align-items: center;
+  margin-top: 6px;
+}
+
+.shore-rail-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 28px;
+  padding: 0 10px;
+  border-bottom: 1px solid transparent;
+  color: rgba(11, 31, 51, 0.62);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.shore-rail-link:hover,
+.shore-rail-link:focus-visible {
+  border-color: #c8a96a;
+  color: #0b1f33;
+  outline: none;
+}
+
+.shore-hero-panel {
+  padding-block: clamp(6px, 2vw, 18px);
+}
+
+.shore-hero-photo {
+  margin: 0;
+}
+
+.shore-hero-photo img {
+  display: block;
+  height: clamp(190px, 28vw, 300px);
+  width: 100%;
+  object-fit: cover;
+  object-position: 50% 48%;
+  filter: saturate(0.88) contrast(1.02) brightness(0.96);
+}
+
+.shore-hero-photo figcaption {
+  margin-top: 8px;
+  color: rgba(11, 31, 51, 0.54);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.shore-button {
+  min-height: 38px;
+  border-radius: 0 !important;
+  border: 0;
+  border-bottom: 1px solid rgba(11, 31, 51, 0.22);
+  background: transparent;
+  color: #0b1f33;
+  padding: 0 2px;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: border-color 160ms ease, color 160ms ease, background 160ms ease;
+}
+
+.shore-button:hover {
+  border-color: #c8a96a !important;
+  color: #0b1f33;
+}
+
+.shore-button-primary {
+  background: transparent;
+  border-color: #0b1f33 !important;
+  color: #0b1f33;
+}
+
+.shore-button-primary:hover {
+  background: transparent;
+  color: #0b1f33;
+}
+
+.shore-input {
+  min-height: 42px;
+  width: 100%;
+  border: 0;
+  border-bottom: 1px solid rgba(11, 31, 51, 0.16);
+  border-radius: 0;
+  background: transparent;
+  padding: 10px 0;
+  color: #0b1f33;
+  font-size: 13px;
+  outline: none;
+}
+
+.shore-input:focus {
+  border-color: #c8a96a !important;
+}
+
+@media (max-width: 640px) {
+  .shore-header-shell {
+    padding-block: 7px 6px;
+  }
+
+  .shore-header-top {
+    min-height: 22px;
+  }
+
+  .shore-header-title {
+    font-size: 16px;
+  }
+
+  .shore-header-status {
+    display: none;
+  }
+
+  .shore-rail {
+    min-height: 26px;
+    margin-top: 5px;
+  }
+
+  .shore-rail-link {
+    min-height: 24px;
+    padding-inline: 7px;
+    font-size: 10px;
+  }
+
+  .shore-hero-photo img {
+    height: 178px;
+  }
+}

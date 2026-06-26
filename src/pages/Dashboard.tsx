@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/Button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Building2, Users, Target, Activity, Zap, TrendingUp, PieChart, Sparkles, Loader2 } from 'lucide-react';
@@ -6,7 +7,9 @@ import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGri
 import { base44 } from '@/api/base44Client';
 
 export default function Dashboard() {
+  const navigate = useNavigate();
   const [overview, setOverview] = useState({ totalTenants: 0, totalRedemptions: 0, activePerks: 0, propertiesCount: 0 });
+  const [range, setRange] = useState<'Daily' | 'Weekly' | 'Monthly'>('Daily');
   const [chartData, setChartData] = useState([
     { name: 'Mon', value: 45 },
     { name: 'Tue', value: 52 },
@@ -94,12 +97,19 @@ export default function Dashboard() {
           <div className="flex flex-col items-start justify-between gap-4 mb-8 sm:flex-row sm:items-center">
              <div>
                 <h2 className="text-lg font-bold text-[#11182B] ">Engagement Momentum</h2>
-                <p className="text-sm text-slate-500">Total redemptions & saves over time</p>
+                <p className="text-sm text-slate-500">Total redemptions and saves, shown {range.toLowerCase()}.</p>
              </div>
              <div className="flex flex-wrap items-center gap-3 border-b border-[#EFEFEF]">
-                <button className="pb-2 text-[10px] font-bold uppercase tracking-widest text-[#11182B] border-b-2 border-[#11182B]">Daily</button>
-                <button className="pb-2 text-[10px] font-bold uppercase tracking-widest text-slate-400 hover:text-[#11182B]">Weekly</button>
-                <button className="pb-2 text-[10px] font-bold uppercase tracking-widest text-slate-400 hover:text-[#11182B]">Monthly</button>
+                {(['Daily', 'Weekly', 'Monthly'] as const).map((item) => (
+                  <button
+                    key={item}
+                    type="button"
+                    onClick={() => setRange(item)}
+                    className={`pb-2 text-[10px] font-bold uppercase tracking-widest ${range === item ? 'border-b-2 border-[#11182B] text-[#11182B]' : 'text-slate-400 hover:text-[#11182B]'}`}
+                  >
+                    {item}
+                  </button>
+                ))}
              </div>
           </div>
           <div className="h-[300px]">
@@ -127,7 +137,7 @@ export default function Dashboard() {
              You currently have no active campaigns capturing this segment.
            </p>
            
-           <Button className="w-full bg-[#11182B] text-white hover:bg-[#1a243d] py-3 rounded-none font-bold uppercase tracking-widest text-[10px] transition-colors flex items-center justify-center gap-2">
+           <Button onClick={() => navigate('/admin/engagement')} className="w-full bg-[#11182B] text-white hover:bg-[#1a243d] py-3 rounded-none font-bold uppercase tracking-widest text-[10px] transition-colors flex items-center justify-center gap-2">
              <Zap className="w-4 h-4" /> Launch Campaign
            </Button>
         </div>

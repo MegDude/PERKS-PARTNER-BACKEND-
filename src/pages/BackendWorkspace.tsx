@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   Activity,
   ArrowRight,
@@ -7,6 +7,7 @@ import {
   Bell,
   Building2,
   CalendarDays,
+  CreditCard,
   FileText,
   Hotel,
   Loader2,
@@ -32,6 +33,7 @@ const moduleRoutes = [
   { label: 'Perks', to: '/admin/perks', icon: Ticket },
   { label: 'Campaigns', to: '/admin/engagement', icon: Megaphone },
   { label: 'Reports', to: '/admin/reports', icon: FileText },
+  { label: 'Promotions & Billing', to: '/admin/promotions', icon: CreditCard },
   { label: 'Users', to: '/admin/settings', icon: Users },
   { label: 'Notifications', to: '/admin/settings', icon: Bell },
   { label: 'System Health', to: '/admin/platform', icon: Activity },
@@ -131,23 +133,66 @@ export default function BackendWorkspace() {
   const qrScans = data.perks.reduce((sum: number, perk: any) => sum + Number(perk.scans || perk.scan_count || 0), 0) + data.redemptions.length;
 
   const kpis = [
-    { label: 'Total Partners', value: data.partners.length || data.tenantsStatus?.tenants || 0 },
-    { label: 'Active Properties', value: data.buildings.filter((building: any) => building.active !== false).length },
-    { label: 'Active Hotels', value: tenantTypeCounts.hotel || tenantTypeCounts.hotel_group || 0 },
-    { label: 'Active Venues', value: tenantTypeCounts.venue || tenantTypeCounts.venue_group || 0 },
-    { label: 'Active Perks', value: activePerks },
-    { label: 'Upcoming Events', value: upcomingEvents },
-    { label: 'Campaigns Running', value: runningCampaigns },
-    { label: 'Resident Profiles', value: data.residents.length },
-    { label: 'Perk Saves', value: perkSaves },
-    { label: 'Perk Redemptions', value: data.redemptions.length },
-    { label: 'Event RSVPs', value: data.rsvps.length },
-    { label: 'QR Scans', value: qrScans },
+    { label: 'Total Partners', value: data.partners.length || data.tenantsStatus?.tenants || 0, detail: 'Partner profiles ready to open', area: 'Partners', to: '/admin/partner' },
+    { label: 'Active Properties', value: data.buildings.filter((building: any) => building.active !== false).length, detail: 'Property and building records in use', area: 'Properties', to: '/admin/properties' },
+    { label: 'Active Hotels', value: tenantTypeCounts.hotel || tenantTypeCounts.hotel_group || 0, detail: 'Hotel partners available to manage', area: 'Hotels', to: '/admin/partner' },
+    { label: 'Active Venues', value: tenantTypeCounts.venue || tenantTypeCounts.venue_group || 0, detail: 'Venues available for offers and events', area: 'Venues', to: '/admin/partner' },
+    { label: 'Active Perks', value: activePerks, detail: 'Offers currently visible or ready', area: 'Perks', to: '/admin/perks' },
+    { label: 'Upcoming Events', value: upcomingEvents, detail: 'Programming that can be reviewed', area: 'Events', to: '/admin/events' },
+    { label: 'Campaigns Running', value: runningCampaigns, detail: 'Campaigns and broadcasts in motion', area: 'Campaigns', to: '/admin/engagement' },
+    { label: 'Resident Profiles', value: data.residents.length, detail: 'Resident records available for support', area: 'Residents', to: '/admin/residents' },
+    { label: 'Perk Saves', value: perkSaves, detail: 'Resident interest in offers', area: 'Engagement', to: '/admin/perks' },
+    { label: 'Perk Redemptions', value: data.redemptions.length, detail: 'Confirmed offer use', area: 'Redemptions', to: '/admin/perks' },
+    { label: 'Event RSVPs', value: data.rsvps.length, detail: 'Resident event participation', area: 'Events', to: '/admin/events' },
+    { label: 'QR Scans', value: qrScans, detail: 'QR activity across perks and access points', area: 'QR', to: '/admin/perks' },
   ];
 
   const recentActivity = [...data.auditLogs, ...data.notifications]
     .sort((a: any, b: any) => new Date(b.created_at || b.sent_at || 0).getTime() - new Date(a.created_at || a.sent_at || 0).getTime())
     .slice(0, 8);
+
+  const groupedModules = [
+    {
+      title: 'Operate',
+      routes: moduleRoutes.filter((route) => ['Platform Overview', 'Partners', 'Properties', 'Hotels', 'Venues', 'Brands', 'Civic'].includes(route.label)),
+    },
+    {
+      title: 'Activate',
+      routes: moduleRoutes.filter((route) => ['Events', 'Perks', 'Campaigns'].includes(route.label)),
+    },
+    {
+      title: 'Measure',
+      routes: moduleRoutes.filter((route) => ['Reports', 'Promotions & Billing', 'System Health'].includes(route.label)),
+    },
+    {
+      title: 'Support',
+      routes: moduleRoutes.filter((route) => ['Users', 'Notifications'].includes(route.label)),
+    },
+  ];
+
+  const activeDirectory = [
+    ...data.partners.map((partner: any) => ({
+      id: partner.id,
+      name: partner.business_name || partner.name || 'Partner',
+      type: partner.category || partner.partner_type || 'partner',
+      status: partner.status || (partner.is_active ? 'active' : 'review'),
+      href: '/admin/partner',
+    })),
+    ...data.platformTenants.map((tenant: any) => ({
+      id: tenant.id,
+      name: tenant.name,
+      type: tenant.type || 'workspace',
+      status: tenant.status || 'active',
+      href: tenant.workspace_path || '/admin/partner-portal',
+    })),
+    ...data.buildings.map((building: any) => ({
+      id: building.id,
+      name: building.name,
+      type: building.type || 'property',
+      status: building.active === false ? 'inactive' : 'active',
+      href: '/admin/properties',
+    })),
+  ].slice(0, 14);
 
   if (loading) {
     return (
@@ -162,92 +207,118 @@ export default function BackendWorkspace() {
       <section className="rounded-xl border border-[rgba(11,31,51,0.08)] bg-white p-6">
         <div className="grid gap-6 xl:grid-cols-[1fr_360px] xl:items-end">
           <div>
-            <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-[#C8A96A]">Platform Owner View</p>
-            <h1 className="mt-2 text-3xl font-semibold tracking-normal">Platform Operations Dashboard</h1>
+            <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-[#C8A96A]">Partner platform</p>
+            <h1 className="mt-2 text-3xl font-semibold tracking-normal">Downtown Perks Partner Platform</h1>
             <p className="mt-3 max-w-4xl text-sm leading-6 text-[rgba(11,31,51,0.66)]">
-              Live operations across partners, properties, hotels, venues, brands, civic programs, events, perks, campaigns, residents, reports, notifications, and system health.
+              Open partners, properties, hotels, venues, brands, civic programs, events, perks, campaigns, residents, reports, and support tools from one place.
             </p>
           </div>
           <div className="rounded-xl border border-[rgba(11,31,51,0.08)] bg-white p-4">
-            <StatusLine label="Runtime" value={data.health?.status || 'unknown'} />
-            <StatusLine label="Entity tables" value={data.health?.entities ? Object.keys(data.health.entities).length : 0} />
-            <StatusLine label="Tenant workspaces" value={data.tenantsStatus?.workspaces || 0} />
-            <StatusLine label="Audit events" value={data.auditLogs.length} />
+            <StatusLine label="Platform status" value={data.health?.status || 'unknown'} />
+            <StatusLine label="Data areas" value={data.health?.entities ? Object.keys(data.health.entities).length : 0} />
+            <StatusLine label="Partner workspaces" value={data.tenantsStatus?.workspaces || 0} />
+            <StatusLine label="Recent changes" value={data.auditLogs.length} />
           </div>
         </div>
       </section>
 
-      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-6">
-        {kpis.map((metric) => (
-          <article key={metric.label} className="rounded-xl border border-[rgba(11,31,51,0.08)] bg-white p-4">
-            <p className="text-[11px] font-bold uppercase text-[rgba(11,31,51,0.52)]">{metric.label}</p>
-            <strong className="mt-2 block text-2xl font-semibold">{Number(metric.value || 0).toLocaleString()}</strong>
-          </article>
-        ))}
-      </section>
+      <SummaryTable
+        eyebrow="Platform summary"
+        title="What is active right now"
+        description="A compact view of the partners, properties, campaigns, resident activity, and reporting signals available for walkthroughs."
+        rows={kpis}
+      />
 
       <section className="grid gap-6 xl:grid-cols-[1fr_420px]">
         <article className="rounded-xl border border-[rgba(11,31,51,0.08)] bg-white p-5">
           <div className="mb-5">
-            <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-[#C8A96A]">Required areas</p>
-            <h2 className="mt-2 text-xl font-semibold">Admin platform modules.</h2>
-            <p className="mt-2 text-sm leading-6 text-[rgba(11,31,51,0.62)]">Each module opens a real route and is backed by entity records, reporting relationships, permissions, or workflow status.</p>
+            <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-[#C8A96A]">Quick navigation</p>
+            <h2 className="mt-2 text-xl font-semibold">Find the right area fast.</h2>
+            <p className="mt-2 text-sm leading-6 text-[rgba(11,31,51,0.62)]">Use these groups to walk through partners, properties, campaigns, reporting, billing, and support without hunting through the sidebar.</p>
           </div>
-          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-            {moduleRoutes.map((route) => {
-              const Icon = route.icon;
-              return (
-                <Link key={route.label} to={route.to} className="flex min-h-14 items-center justify-between rounded-xl border border-[rgba(11,31,51,0.08)] bg-white px-4 text-sm font-semibold hover:text-[#C8A96A]">
-                  <span className="flex items-center gap-2"><Icon className="h-4 w-4" /> {route.label}</span>
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
-              );
-            })}
+          <div className="grid gap-4 lg:grid-cols-2">
+            {groupedModules.map((group) => (
+              <div key={group.title} className="border border-[rgba(11,31,51,0.08)] p-4">
+                <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-[rgba(11,31,51,0.52)]">{group.title}</p>
+                <div className="mt-3 grid gap-2">
+                  {group.routes.map((route) => {
+                    const Icon = route.icon;
+                    return (
+                      <Link key={route.label} to={route.to} className="flex min-h-11 items-center justify-between border-t border-[rgba(11,31,51,0.08)] py-2 text-sm font-semibold hover:text-[#C8A96A]">
+                        <span className="flex items-center gap-2"><Icon className="h-4 w-4" /> {route.label}</span>
+                        <ArrowRight className="h-4 w-4" />
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
           </div>
         </article>
 
         <article className="rounded-xl border border-[rgba(11,31,51,0.08)] bg-white p-5">
-          <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-[#C8A96A]">Recent activity</p>
-          <h2 className="mt-2 text-xl font-semibold">Audit and notification feed.</h2>
+          <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-[#C8A96A]">Active directory</p>
+          <h2 className="mt-2 text-xl font-semibold">Partners, businesses, and workspaces.</h2>
           <div className="mt-5 grid gap-3">
-            {recentActivity.length === 0 ? (
-              <p className="text-sm text-[rgba(11,31,51,0.58)]">No recent audit or notification records yet.</p>
-            ) : recentActivity.map((item: any) => (
-              <div key={item.id} className="border-t border-[rgba(11,31,51,0.08)] pt-3">
-                <p className="text-sm font-semibold">{item.action ? String(item.action).replace(/_/g, ' ') : item.message || item.type || 'Platform activity'}</p>
-                <p className="mt-1 text-xs text-[rgba(11,31,51,0.52)]">{item.actor_email || item.recipient_email || 'system'} · {new Date(item.created_at || item.sent_at || Date.now()).toLocaleString()}</p>
-              </div>
+            {activeDirectory.length === 0 ? (
+              <p className="text-sm text-[rgba(11,31,51,0.58)]">No active partner or property records yet.</p>
+            ) : activeDirectory.map((item: any) => (
+              <Link key={`${item.id}-${item.name}`} to={item.href} className="grid gap-1 border-t border-[rgba(11,31,51,0.08)] pt-3 text-sm hover:text-[#C8A96A]">
+                <span className="font-semibold">{item.name}</span>
+                <span className="text-xs font-semibold uppercase text-[rgba(11,31,51,0.52)]">{item.type} · {item.status}</span>
+              </Link>
             ))}
           </div>
         </article>
       </section>
 
+      <section className="rounded-xl border border-[rgba(11,31,51,0.08)] bg-white p-5">
+        <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-[#C8A96A]">Recent activity</p>
+        <h2 className="mt-2 text-xl font-semibold">Latest updates and messages.</h2>
+        <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+          {recentActivity.length === 0 ? (
+            <p className="text-sm text-[rgba(11,31,51,0.58)]">No recent updates or messages yet.</p>
+          ) : recentActivity.map((item: any) => (
+            <div key={item.id} className="border-t border-[rgba(11,31,51,0.08)] pt-3">
+              <p className="text-sm font-semibold">{item.action ? String(item.action).replace(/_/g, ' ') : item.message || item.type || 'Platform activity'}</p>
+              <p className="mt-1 text-xs text-[rgba(11,31,51,0.52)]">{item.actor_email || item.recipient_email || 'system'} · {new Date(item.created_at || item.sent_at || Date.now()).toLocaleString()}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
       <section className="grid gap-6 xl:grid-cols-[1fr_1fr]">
         <article className="rounded-xl border border-[rgba(11,31,51,0.08)] bg-white p-5">
-          <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-[#C8A96A]">Permissioned operating model</p>
-          <h2 className="mt-2 text-xl font-semibold">Every visible action should resolve through the operating chain.</h2>
+          <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-[#C8A96A]">Action readiness</p>
+          <h2 className="mt-2 text-xl font-semibold">Know what is ready to use.</h2>
+          <p className="mt-2 text-sm leading-6 text-[rgba(11,31,51,0.62)]">Before you walk someone through a feature, check that the experience can be opened, changed, saved, tracked, and reported.</p>
           <div className="mt-4 grid gap-2">
-            {['UI', 'API', 'Database', 'Permissions', 'Audit Log', 'Reporting'].map((step, index) => (
+            {['Open', 'Edit', 'Save', 'Assign access', 'Track changes', 'Report results'].map((step, index) => (
               <div key={step} className="flex items-center justify-between border-t border-[rgba(11,31,51,0.08)] py-2 text-sm">
                 <span className="font-semibold">{step}</span>
-                <span className="text-xs font-semibold uppercase text-[rgba(11,31,51,0.48)]">Step {index + 1}</span>
+                <span className="text-xs font-semibold uppercase text-[rgba(11,31,51,0.48)]">{index < 3 ? 'Core' : 'Follow-up'}</span>
               </div>
             ))}
           </div>
         </article>
 
         <article className="rounded-xl border border-[rgba(11,31,51,0.08)] bg-white p-5">
-          <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-[#C8A96A]">Operating loop</p>
-          <h2 className="mt-2 text-xl font-semibold">Discovery to action.</h2>
+          <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-[#C8A96A]">How the work flows</p>
+          <h2 className="mt-2 text-xl font-semibold">Help people find, use, and improve what is downtown.</h2>
           <p className="mt-3 text-sm leading-6 text-[rgba(11,31,51,0.62)]">
-            {platformArchitecture.operatingLoop.join(' -> ')}
+            People discover a place or offer, take part, and the results show up in reports so the next campaign can improve.
           </p>
+          <div className="mt-4 flex flex-wrap gap-2">
+            {['Discover', 'Participate', 'Measure', 'Report', 'Improve'].map((item) => (
+              <span key={item} className="border border-[rgba(11,31,51,0.08)] px-3 py-2 text-xs font-semibold text-[#0B1F33]">{item}</span>
+            ))}
+          </div>
           <div className="mt-5 flex flex-wrap gap-3">
             <Link to="/admin/platform" className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-[#0B1F33] bg-[#0B1F33] px-4 text-xs font-semibold text-white">
-              Super Admin <Settings className="h-4 w-4" />
+              Open Command Center <Settings className="h-4 w-4" />
             </Link>
             <Link to="/admin/perks" className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-[rgba(11,31,51,0.12)] bg-white px-4 text-xs font-semibold text-[#0B1F33]">
-              Perks Module <Ticket className="h-4 w-4" />
+              Review Perks <Ticket className="h-4 w-4" />
             </Link>
           </div>
         </article>
@@ -262,5 +333,66 @@ function StatusLine({ label, value }: any) {
       <span className="text-sm text-[rgba(11,31,51,0.62)]">{label}</span>
       <strong className="text-sm font-semibold">{String(value)}</strong>
     </div>
+  );
+}
+
+function SummaryTable({ eyebrow, title, description, rows }: any) {
+  const navigate = useNavigate();
+
+  return (
+    <section className="overflow-hidden rounded-xl border border-[rgba(11,31,51,0.08)] bg-white">
+      <div className="border-b border-[rgba(11,31,51,0.08)] px-5 py-4">
+        <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-[#C8A96A]">{eyebrow}</p>
+        <div className="mt-1 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+          <h2 className="text-xl font-semibold text-[#0B1F33]">{title}</h2>
+          <p className="max-w-2xl text-sm leading-6 text-[rgba(11,31,51,0.62)]">{description}</p>
+        </div>
+      </div>
+      <div className="overflow-x-auto [scrollbar-width:thin]">
+        <table className="w-full min-w-[760px] text-left text-sm">
+          <thead className="border-b border-[rgba(11,31,51,0.08)] text-[11px] font-bold uppercase text-[rgba(11,31,51,0.52)]">
+            <tr>
+              <th className="px-4 py-3">Area</th>
+              <th className="px-4 py-3">Total</th>
+              <th className="px-4 py-3">What it shows</th>
+              <th className="px-4 py-3">Action</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-[rgba(11,31,51,0.08)]">
+            {rows.map((row: any) => (
+              <tr
+                key={row.label}
+                className="group cursor-pointer align-top transition-colors hover:bg-[#F7F8FB]"
+                role="link"
+                tabIndex={0}
+                onClick={() => navigate(row.to)}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    navigate(row.to);
+                  }
+                }}
+              >
+                <td className="px-4 py-3">
+                  <p className="font-semibold text-[#0B1F33] group-hover:text-[#C8A96A]">{row.label}</p>
+                  <p className="mt-1 text-xs font-semibold uppercase text-[rgba(11,31,51,0.46)]">{row.area}</p>
+                </td>
+                <td className="px-4 py-3 text-2xl font-semibold text-[#0B1F33]">{Number(row.value || 0).toLocaleString()}</td>
+                <td className="px-4 py-3 text-[rgba(11,31,51,0.62)]">{row.detail}</td>
+                <td className="px-4 py-3">
+                  <Link
+                    to={row.to}
+                    className="inline-flex min-h-9 items-center gap-2 border border-[rgba(11,31,51,0.12)] bg-white px-3 text-xs font-semibold text-[#0B1F33] hover:border-[#C8A96A] hover:text-[#C8A96A]"
+                    onClick={(event) => event.stopPropagation()}
+                  >
+                    Open <ArrowRight className="h-3.5 w-3.5" />
+                  </Link>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
   );
 }

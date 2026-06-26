@@ -57,6 +57,8 @@ const entityNames = [
   "PartnerQrExperience",
   "PartnerAiContext",
   "PartnerWorkspaceModule",
+  "Promotion",
+  "PromotionRedemption",
   "TenantNotification",
   "TenantAuditLog",
   "MapEntityLink",
@@ -64,6 +66,16 @@ const entityNames = [
   "QrScan",
   "ReportRun",
   "IntegrationStatus",
+  "Interaction",
+  "InteractionStep",
+  "GeneratedImage",
+  "ReferenceImage",
+  "BatchJob",
+  "ImageExport",
+  "PartnerOutreachContact",
+  "PartnerOutreachCampaign",
+  "PartnerOutreachStep",
+  "PartnerOutreachMessage",
 ] as const;
 
 const apiBase = (import.meta as any).env?.VITE_API_BASE_URL || "";

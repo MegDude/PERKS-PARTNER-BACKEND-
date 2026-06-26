@@ -1,13 +1,27 @@
 # Reporting Map
 
-Report sources:
+## Report Records
 
-- partner performance: partners, perks, redemptions, campaigns
-- property engagement: buildings, units, residents, surveys, redemptions
-- campaign report: campaign metrics and analytics events
-- event report: events, RSVPs, check-ins, follow-ups
-- survey report: survey responses and AI summaries
-- platform report: all major operational counts
+- PartnerReport: 358
+- PartnerAnalytics: 358
+- ReportRun: 0
+- SurveyExportLog: 2
+- AnalyticsEvent: 9
 
-Report outputs currently return JSON from local report runs. PDF/CSV/XLSX generation is a future provider task.
+## Reporting Domains
 
+| Domain | Status | Gap |
+| --- | --- | --- |
+| Partner | Partial | Containers exist; generated report runs not active. |
+| Building | Partial | Building data exists; scheduled reporting missing. |
+| Resident | Partial | Resident records exist; engagement report incomplete. |
+| Campaign | Partial | Campaign records exist; delivery attribution incomplete. |
+| Perk | Partial | Redemption data exists; eligibility/source attribution incomplete. |
+| Survey | Partial | Responses/export logs exist; provider workflow incomplete. |
+| Event | Partial | RSVP data exists; follow-up/report generation incomplete. |
+| Billing | Partial | Invoices/subscriptions exist; Stripe reconciliation missing. |
+| Executive | Partial | Platform summary pages exist; scheduled executive report missing. |
+
+## Required Reconciliation
+
+Every domain mutation should update analytics and reportable aggregates. Reports should be generated from operational data, not copied page summaries.

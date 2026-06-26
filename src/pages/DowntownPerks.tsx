@@ -335,7 +335,8 @@ export default function DowntownPerks() {
         </div>
       </section>
 
-      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-7">
+      <section className="dp-summary-matrix">
+        <div className="dp-summary-matrix__grid">
         <Metric label="Total perks" value={metrics.total} />
         <Metric label="Active" value={metrics.active} />
         <Metric label="Views" value={metrics.views} />
@@ -343,6 +344,7 @@ export default function DowntownPerks() {
         <Metric label="Directions" value={metrics.directions} />
         <Metric label="Scans" value={metrics.scans} />
         <Metric label="Redemptions" value={metrics.redemptions} />
+        </div>
       </section>
 
       <section className="rounded-xl border border-[rgba(11,31,51,0.08)] bg-white p-4">
@@ -362,39 +364,36 @@ export default function DowntownPerks() {
         </div>
       </section>
 
-      <section className="rounded-xl border border-[rgba(11,31,51,0.08)] bg-white">
-        <div className="flex items-center justify-between gap-4 border-b border-[rgba(11,31,51,0.08)] px-4 py-3">
-          <div>
-            <p className="text-[11px] font-semibold uppercase text-[rgba(11,31,51,0.52)]">Perk inventory</p>
-            <p className="mt-1 text-xs leading-5 text-[rgba(11,31,51,0.58)]">
-              Scroll sideways to review performance, relationships, and actions.
-            </p>
-          </div>
-          <span className="hidden text-xs font-medium text-[rgba(11,31,51,0.48)] sm:inline">Showing {filteredPerks.length} records</span>
-        </div>
+      <details open className="dp-admin-collapsible bg-white">
+        <summary>
+          <span>
+            Offers, partners, performance, and links
+            <span className="dp-admin-collapsible__meta">Perk inventory. Showing {filteredPerks.length} records.</span>
+          </span>
+        </summary>
 
-        <div className="overflow-x-auto [scrollbar-width:thin]">
-        <table className="w-full min-w-[1320px] table-fixed text-left text-sm">
+        <div className="overflow-x-auto [scrollbar-width:thin]" aria-label="Perk inventory table. Scroll horizontally to view all columns.">
+        <table className="w-full min-w-[1180px] table-fixed border-collapse text-left text-sm lg:min-w-[1340px]">
           <colgroup>
-            <col className="w-[300px]" />
+            <col className="w-[250px] lg:w-[300px]" />
             <col className="w-[180px]" />
             <col className="w-[160px]" />
             <col className="w-[120px]" />
+            <col className="w-[170px]" />
+            <col className="w-[270px]" />
+            <col className="w-[230px]" />
             <col className="w-[150px]" />
-            <col className="w-[240px]" />
-            <col className="w-[210px]" />
-            <col className="w-[160px]" />
           </colgroup>
-          <thead className="border-b border-[rgba(11,31,51,0.08)] bg-white text-[10px] font-bold uppercase text-[rgba(11,31,51,0.52)]">
+          <thead className="border-b border-[rgba(11,31,51,0.08)] bg-[#FBFCFD] text-[10px] font-bold uppercase text-[rgba(11,31,51,0.52)]">
             <tr>
-              <th className="sticky left-0 z-10 bg-white px-4 py-3">Perk</th>
-              <th className="px-4 py-3">Partner</th>
-              <th className="px-4 py-3">Category</th>
-              <th className="px-4 py-3">Status</th>
-              <th className="px-4 py-3">Dates</th>
-              <th className="px-4 py-3">Performance</th>
-              <th className="px-4 py-3">Relationships</th>
-              <th className="px-4 py-3">Actions</th>
+              <th className="bg-[#FBFCFD] px-4 py-3 lg:sticky lg:left-0 lg:z-10 lg:px-5">Perk</th>
+              <th className="border-l border-[rgba(11,31,51,0.06)] px-5 py-3">Partner</th>
+              <th className="border-l border-[rgba(11,31,51,0.06)] px-5 py-3">Category</th>
+              <th className="border-l border-[rgba(11,31,51,0.06)] px-5 py-3">Status</th>
+              <th className="border-l border-[rgba(11,31,51,0.06)] px-5 py-3">Dates</th>
+              <th className="border-l border-[rgba(11,31,51,0.06)] px-5 py-3">Performance</th>
+              <th className="border-l border-[rgba(11,31,51,0.06)] px-5 py-3">Relationships</th>
+              <th className="border-l border-[rgba(11,31,51,0.06)] px-5 py-3">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-[rgba(11,31,51,0.08)]">
@@ -408,50 +407,50 @@ export default function DowntownPerks() {
               const status = perk.status || (perk.active ? 'active' : 'draft');
               const entityLabel = perk.property_id || perk.hotel_id || perk.venue_id || perk.brand_id || '';
               return (
-              <tr key={perk.id} className="align-top transition-colors hover:bg-[#F7F8FB]/55">
-                <td className="sticky left-0 z-10 bg-white px-4 py-4 shadow-[8px_0_18px_rgba(11,31,51,0.035)]">
+              <tr key={perk.id} className="align-top transition-colors hover:bg-[#F7F8FB]/70">
+                <td className="bg-white px-4 py-5 lg:sticky lg:left-0 lg:z-10 lg:px-5 lg:shadow-[8px_0_18px_rgba(11,31,51,0.035)]">
                   <p className="text-[14px] font-semibold leading-5 text-[#0B1F33]">{perk.title || 'Untitled perk'}</p>
-                  <p className="mt-1 max-w-[250px] text-[12px] leading-5 text-[rgba(11,31,51,0.62)]">{perk.description || 'No description added.'}</p>
-                  <p className="mt-2 text-[11px] font-medium text-[rgba(11,31,51,0.48)]">CTA: {perk.cta_label || perk.cta || 'Redeem perk'}</p>
+                  <p className="mt-2 max-w-[210px] text-[12px] leading-5 text-[rgba(11,31,51,0.62)] lg:max-w-[255px]">{perk.description || 'No description added.'}</p>
+                  <p className="mt-3 inline-flex border border-[rgba(11,31,51,0.08)] px-2 py-1 text-[11px] font-semibold text-[rgba(11,31,51,0.58)]">CTA: {perk.cta_label || perk.cta || 'Redeem perk'}</p>
                 </td>
-                <td className="px-4 py-4">
+                <td className="border-l border-[rgba(11,31,51,0.06)] px-5 py-5">
                   <p className="text-[13px] font-semibold leading-5 text-[#0B1F33]">{perk.partnerName}</p>
                 </td>
-                <td className="px-4 py-4">
+                <td className="border-l border-[rgba(11,31,51,0.06)] px-5 py-5">
                   <p className="text-[13px] font-semibold leading-5 text-[#0B1F33]">{perk.category || 'Uncategorized'}</p>
-                  <p className="mt-1 text-[11px] leading-4 text-[rgba(11,31,51,0.48)]">{formatDistrict(perk.district)}</p>
+                  <p className="mt-2 text-[11px] font-semibold uppercase text-[rgba(11,31,51,0.46)]">{formatDistrict(perk.district)}</p>
                 </td>
-                <td className="px-4 py-4">
-                  <span className="inline-flex min-h-7 items-center border border-[rgba(11,31,51,0.08)] bg-white px-2.5 text-[10px] font-semibold uppercase text-[#0B1F33]">
-                    {status}
-                  </span>
+                <td className="border-l border-[rgba(11,31,51,0.06)] px-5 py-5">
+                  <StatusPill status={status} />
                 </td>
-                <td className="px-4 py-4 text-[12px] leading-5 text-[rgba(11,31,51,0.62)]">
-                  <p><span className="text-[rgba(11,31,51,0.42)]">Start</span> {perk.start_date || 'Not set'}</p>
-                  <p><span className="text-[rgba(11,31,51,0.42)]">End</span> {perk.end_date || 'Not set'}</p>
+                <td className="border-l border-[rgba(11,31,51,0.06)] px-5 py-5">
+                  <div className="grid gap-2">
+                    <DateLine label="Start" value={perk.start_date || 'Not set'} />
+                    <DateLine label="End" value={perk.end_date || 'Not set'} />
+                  </div>
                 </td>
-                <td className="px-4 py-4">
-                  <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-[11px] leading-4 text-[rgba(11,31,51,0.58)]">
+                <td className="border-l border-[rgba(11,31,51,0.06)] px-5 py-5">
+                  <div className="grid grid-cols-2 gap-px overflow-hidden border border-[rgba(11,31,51,0.08)] bg-[rgba(11,31,51,0.08)] text-[11px] leading-4 text-[rgba(11,31,51,0.58)]">
                     <MetricPair label="Views" value={perk.views} />
                     <MetricPair label="Saves" value={perk.saves} />
                     <MetricPair label="Directions" value={perk.directions} />
                     <MetricPair label="Scans" value={perk.scans} />
                   </div>
-                  <p className="mt-3 text-[12px] font-semibold leading-5 text-[#0B1F33]">
+                  <p className="mt-3 border-t border-[rgba(11,31,51,0.08)] pt-3 text-[12px] font-semibold leading-5 text-[#0B1F33]">
                     {perk.redemptionCount} redemptions · {perk.conversion}% conversion
                   </p>
                 </td>
-                <td className="px-4 py-4 text-[12px] leading-5 text-[rgba(11,31,51,0.58)]">
+                <td className="border-l border-[rgba(11,31,51,0.06)] px-5 py-5 text-[12px] leading-5 text-[rgba(11,31,51,0.58)]">
                   <RelationshipLine label="Campaign" value={campaigns.find((campaign) => campaign.id === perk.campaign_id)?.name || perk.campaign_id || 'None'} />
                   <RelationshipLine label="Event" value={events.find((event) => event.id === perk.event_id)?.title || perk.event_id || 'None'} />
                   <RelationshipLine label="Entity" value={entityLabel || 'Not linked'} />
                 </td>
-                <td className="px-4 py-4">
-                  <div className="grid grid-cols-2 gap-1.5">
-                    <Button aria-label={`Edit ${perk.title || 'perk'}`} title="Edit perk" variant="outline" size="sm" onClick={() => openEdit(perk)} disabled={!canManage} className="h-8 w-8 border-[rgba(11,31,51,0.12)] bg-white p-0 text-[#0B1F33]"><Edit2 className="h-3.5 w-3.5" /></Button>
-                    <Button aria-label={`Activate ${perk.title || 'perk'}`} title="Activate perk" variant="outline" size="sm" onClick={() => setPerkStatus(perk, 'active')} disabled={!canManage || status === 'active'} className="h-8 w-8 border-[rgba(11,31,51,0.12)] bg-white p-0 text-[#0B1F33]"><Ticket className="h-3.5 w-3.5" /></Button>
-                    <Button aria-label={`Pause ${perk.title || 'perk'}`} title="Pause perk" variant="outline" size="sm" onClick={() => setPerkStatus(perk, 'paused')} disabled={!canManage || status === 'paused'} className="h-8 w-8 border-[rgba(11,31,51,0.12)] bg-white p-0 text-[#0B1F33]"><Archive className="h-3.5 w-3.5" /></Button>
-                    <Button aria-label={`Archive ${perk.title || 'perk'}`} title="Archive perk" variant="outline" size="sm" onClick={() => archivePerk(perk)} disabled={!canManage} className="h-8 w-8 border-[rgba(11,31,51,0.12)] bg-white p-0 text-rose-600"><Trash2 className="h-3.5 w-3.5" /></Button>
+                <td className="border-l border-[rgba(11,31,51,0.06)] px-5 py-5">
+                  <div className="grid grid-cols-2 gap-2">
+                    <Button aria-label={`Edit ${perk.title || 'perk'}`} title="Edit perk" variant="outline" size="sm" onClick={() => openEdit(perk)} disabled={!canManage} className="h-9 w-9 border-[rgba(11,31,51,0.12)] bg-white p-0 text-[#0B1F33]"><Edit2 className="h-3.5 w-3.5" /></Button>
+                    <Button aria-label={`Activate ${perk.title || 'perk'}`} title="Activate perk" variant="outline" size="sm" onClick={() => setPerkStatus(perk, 'active')} disabled={!canManage || status === 'active'} className="h-9 w-9 border-[rgba(11,31,51,0.12)] bg-white p-0 text-[#0B1F33]"><Ticket className="h-3.5 w-3.5" /></Button>
+                    <Button aria-label={`Pause ${perk.title || 'perk'}`} title="Pause perk" variant="outline" size="sm" onClick={() => setPerkStatus(perk, 'paused')} disabled={!canManage || status === 'paused'} className="h-9 w-9 border-[rgba(11,31,51,0.12)] bg-white p-0 text-[#0B1F33]"><Archive className="h-3.5 w-3.5" /></Button>
+                    <Button aria-label={`Archive ${perk.title || 'perk'}`} title="Archive perk" variant="outline" size="sm" onClick={() => archivePerk(perk)} disabled={!canManage} className="h-9 w-9 border-[rgba(11,31,51,0.12)] bg-white p-0 text-rose-600"><Trash2 className="h-3.5 w-3.5" /></Button>
                   </div>
                 </td>
               </tr>
@@ -459,7 +458,7 @@ export default function DowntownPerks() {
           </tbody>
         </table>
         </div>
-      </section>
+      </details>
 
       <section className="grid gap-5 xl:grid-cols-[1fr_1fr]">
         <Panel title="Perk analytics" eyebrow="Reporting relationships">
@@ -589,9 +588,9 @@ function Field({ label, full, children }: any) {
 
 function Metric({ label, value }: any) {
   return (
-    <article className="rounded-xl border border-[rgba(11,31,51,0.08)] bg-white p-4">
-      <p className="text-[11px] font-bold uppercase text-[rgba(11,31,51,0.52)]">{label}</p>
-      <strong className="mt-2 block text-2xl font-semibold">{Number(value || 0).toLocaleString()}</strong>
+    <article className="dp-summary-matrix__item">
+      <p className="dp-summary-matrix__label">{label}</p>
+      <strong className="dp-summary-matrix__value">{Number(value || 0).toLocaleString()}</strong>
     </article>
   );
 }
@@ -617,19 +616,45 @@ function InsightLine({ label, value }: any) {
 
 function MetricPair({ label, value }: any) {
   return (
-    <div>
+    <div className="bg-white px-3 py-2">
       <span className="block text-[10px] font-semibold uppercase text-[rgba(11,31,51,0.42)]">{label}</span>
       <strong className="mt-0.5 block text-[13px] font-semibold text-[#0B1F33]">{Number(value || 0).toLocaleString()}</strong>
     </div>
   );
 }
 
+function DateLine({ label, value }: any) {
+  return (
+    <div className="grid grid-cols-[44px_1fr] gap-2 text-[12px] leading-5">
+      <span className="font-semibold uppercase text-[10px] text-[rgba(11,31,51,0.42)]">{label}</span>
+      <span className="font-medium text-[#0B1F33]">{value}</span>
+    </div>
+  );
+}
+
 function RelationshipLine({ label, value }: any) {
   return (
-    <p className="flex items-start gap-2">
+    <p className="grid grid-cols-[70px_1fr] gap-2 border-b border-[rgba(11,31,51,0.06)] py-1.5 last:border-b-0">
       <span className="w-16 shrink-0 text-[rgba(11,31,51,0.42)]">{label}</span>
       <span className="min-w-0 font-medium text-[#0B1F33]">{value}</span>
     </p>
+  );
+}
+
+function StatusPill({ status }: { status: string }) {
+  const normalized = String(status || 'draft').toLowerCase();
+  const tone = normalized === 'active'
+    ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+    : normalized === 'paused'
+      ? 'border-amber-200 bg-amber-50 text-amber-700'
+      : normalized === 'expired' || normalized === 'archived'
+        ? 'border-slate-200 bg-slate-50 text-slate-600'
+        : 'border-[rgba(11,31,51,0.10)] bg-white text-[#0B1F33]';
+
+  return (
+    <span className={`inline-flex min-h-7 items-center border px-2.5 text-[10px] font-semibold uppercase ${tone}`}>
+      {normalized}
+    </span>
   );
 }
 

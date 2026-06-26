@@ -1,16 +1,29 @@
 # Frontend Audit
 
-## 3014
+## Route Ownership
 
-The 3014 frontend is an operations UI using one shared shell, shared tokens, and a local API adapter. Main duplication risk is feature pages using generic entity CRUD directly instead of domain-specific endpoints.
+| Route Group | Owner | Status | Required Action |
+| --- | --- | --- | --- |
+| `/`, `/welcome` | Experience layer | Partial | Keep as gateway/product entry; move business logic to services. |
+| `/map` | Resident/partner product | Partial | Verify product actions write map events, analytics, audit, and reports. |
+| `/partners/*` | Partner lifecycle | Built/Partial | Replace localStorage/session assumptions with backend lead, checkout, and provisioning state. |
+| `/workspace/*` | Partner workspace | Partial | Ensure all tabs are tenant-scoped domain views, not generic table renderers. |
+| `/admin/*` | Operations platform | Partial | Keep as control system, but remove page-owned business logic. |
 
-## 5173
+## Page-Level Findings
 
-The 5173 frontend is a separate product app with product, marketing, resident, partner, workspace, map, events, perks, card, and registration routes. It still uses product-local/Base44 data paths. It must be migrated to 3014 operation APIs for runtime source-of-truth behavior.
+- `PartnerLifecycle.tsx` handles signup, pricing, checkout, provisioning, workspace home, AI prompts, quick actions, and workspace tabs in one file.
+- `PropertiesManagement.tsx`, `BuildingsManagement.tsx`, `DowntownPerks.tsx`, `Surveys.tsx`, and `Promotions.tsx` each define local UI primitives instead of using one shared component library.
+- Several pages write directly through `base44.entities.*`, which bypasses explicit domain service contracts.
+- Admin pages have improved structure but need a shared table/card/mobile pattern.
+- Mobile behavior needs route-by-route verification.
 
-## Required Remediation
+## Required Frontend Reconciliation
 
-- Create a shared product API adapter for 5173.
-- Replace product-local map/perk/event/campaign analytics with 3014 endpoints.
-- Keep editorial design in 5173 and operational design in 3014 while sharing tokens where possible.
-
+1. Create `src/services/domain/*` clients for partners, properties, buildings, residents, perks, events, campaigns, surveys, reports, promotions, billing, AI, and map.
+2. Create shared `PageHeader`, `ContextToolbar`, `MetricMatrix`, `DataTable`, `ActionRail`, `Drawer`, `FormField`, `SummaryTable`, and `EmptyState`.
+3. Replace page-local helper components.
+4. Remove direct generic entity mutations from production workflows.
+5. Add route-level loading, empty, error, permission, and offline states.
+6. Add mobile-specific table-to-card behavior.
+7. Verify 5173 product routes separately against shared APIs.

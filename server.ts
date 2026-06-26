@@ -6,8 +6,8 @@ import { fileURLToPath } from "url";
 import fs from "fs/promises";
 import { execFile } from "child_process";
 import { promisify } from "util";
-import { GoogleGenAI, Type } from "@google/genai";
 import { enterpriseComponents, platformArchitecture, platformDomains, serializePlatformDomain } from "./src/platform/registry.js";
+import { createAgentStreamEnvelope, getProviderManager, listAgentTools, logOpenAIStatusOnce, routeAgentQuery } from "./backend/modules/ai/index.js";
 
 dotenv.config({ path: ".env.local" });
 dotenv.config();
@@ -44,6 +44,8 @@ type EntityName =
   | "SurveyExportLog"
   | "ManagementNotification"
   | "ProductOffering"
+  | "Promotion"
+  | "PromotionRedemption"
   | "GlobalSettings"
   | "BuildingDocument"
   | "SurveyProviderForm"
@@ -78,7 +80,17 @@ type EntityName =
   | "AnalyticsEvent"
   | "QrScan"
   | "ReportRun"
-  | "IntegrationStatus";
+  | "IntegrationStatus"
+  | "Interaction"
+  | "InteractionStep"
+  | "GeneratedImage"
+  | "ReferenceImage"
+  | "BatchJob"
+  | "ImageExport"
+  | "PartnerOutreachContact"
+  | "PartnerOutreachCampaign"
+  | "PartnerOutreachStep"
+  | "PartnerOutreachMessage";
 
 type EntityRecord = Record<string, any> & { id: string; created_at?: string; updated_at?: string };
 type Database = {
@@ -109,6 +121,8 @@ const entityNames: EntityName[] = [
   "SurveyExportLog",
   "ManagementNotification",
   "ProductOffering",
+  "Promotion",
+  "PromotionRedemption",
   "GlobalSettings",
   "BuildingDocument",
   "SurveyProviderForm",
@@ -144,6 +158,16 @@ const entityNames: EntityName[] = [
   "QrScan",
   "ReportRun",
   "IntegrationStatus",
+  "Interaction",
+  "InteractionStep",
+  "GeneratedImage",
+  "ReferenceImage",
+  "BatchJob",
+  "ImageExport",
+  "PartnerOutreachContact",
+  "PartnerOutreachCampaign",
+  "PartnerOutreachStep",
+  "PartnerOutreachMessage",
 ];
 
 const now = () => new Date().toISOString();
@@ -354,6 +378,110 @@ function parseExportedArray(content: string, exportName: string) {
 function parseAmount(value: any) {
   const numeric = Number(String(value || "0").replace(/[^0-9.]+/g, ""));
   return Number.isFinite(numeric) ? numeric : 0;
+}
+
+function normalizePromotionCode(value: any) {
+  return String(value || "").trim().toUpperCase();
+}
+
+function addOneYearIso(date = new Date()) {
+  const renewal = new Date(date);
+  renewal.setFullYear(renewal.getFullYear() + 1);
+  return renewal.toISOString();
+}
+
+function getPromotionStatus(promotion: Record<string, any>, at = new Date()) {
+  if (!promotion) return { active: false, reason: "Promotion not found." };
+  if (promotion.deleted_at) return { active: false, reason: "Promotion has been archived." };
+  if (promotion.status && !["active", "scheduled"].includes(String(promotion.status).toLowerCase())) return { active: false, reason: "Promotion is not active." };
+  if (promotion.isActive === false || promotion.is_active === false) return { active: false, reason: "Promotion is disabled." };
+  if (promotion.startsAt || promotion.starts_at) {
+    const startsAt = new Date(promotion.startsAt || promotion.starts_at);
+    if (Number.isFinite(startsAt.getTime()) && startsAt > at) return { active: false, reason: "Promotion has not started yet." };
+  }
+  if (promotion.expiresAt || promotion.expires_at) {
+    const expiresAt = new Date(promotion.expiresAt || promotion.expires_at);
+    if (Number.isFinite(expiresAt.getTime()) && expiresAt < at) return { active: false, reason: "Promotion has expired." };
+  }
+  if (promotion.maxUses && Number(promotion.currentUses || promotion.current_uses || 0) >= Number(promotion.maxUses)) return { active: false, reason: "Promotion usage limit reached." };
+  return { active: true, reason: "" };
+}
+
+function calculatePromotionDiscount(promotion: Record<string, any>, subtotal: number) {
+  const discountType = String(promotion.discountType || promotion.discount_type || "percentage").toLowerCase();
+  if (discountType === "fixed" || discountType === "fixed_amount") {
+    return Math.min(subtotal, Number(promotion.fixedAmount || promotion.fixed_amount || 0));
+  }
+  return Math.min(subtotal, Math.round(subtotal * (Number(promotion.percentage || 0) / 100) * 100) / 100);
+}
+
+function validatePromotion(entities: Database["entities"], input: Record<string, any>) {
+  const code = normalizePromotionCode(input.code || input.coupon || input.promotion_code);
+  const promotion = entities.Promotion.find((item) => normalizePromotionCode(item.code) === code);
+  const subtotal = Number(input.subtotal || input.amount || input.total || 0);
+  const plan = String(input.plan || input.plan_key || input.planId || input.plan_id || "").toLowerCase();
+  const partnerType = String(input.partner_type || input.partnerType || "").toLowerCase();
+  const status = getPromotionStatus(promotion);
+
+  if (!code) return { success: false, valid: false, code, promotion: null, reason: "Promotion code is required.", subtotal, discount: 0, total: subtotal };
+  if (!promotion) return { success: false, valid: false, code, promotion: null, reason: "Promotion code was not found.", subtotal, discount: 0, total: subtotal };
+  if (!status.active) return { success: false, valid: false, code, promotion, reason: status.reason, subtotal, discount: 0, total: subtotal };
+
+  const applicablePlans = Array.isArray(promotion.applicablePlans) ? promotion.applicablePlans : Array.isArray(promotion.applicable_plans) ? promotion.applicable_plans : [];
+  const applicablePartnerTypes = Array.isArray(promotion.applicablePartnerTypes) ? promotion.applicablePartnerTypes : Array.isArray(promotion.applicable_partner_types) ? promotion.applicable_partner_types : [];
+  if (applicablePlans.length && !applicablePlans.map((item: any) => String(item).toLowerCase()).includes("all") && plan && !applicablePlans.map((item: any) => String(item).toLowerCase()).includes(plan)) {
+    return { success: false, valid: false, code, promotion, reason: "Promotion does not apply to the selected plan.", subtotal, discount: 0, total: subtotal };
+  }
+  if (applicablePartnerTypes.length && !applicablePartnerTypes.map((item: any) => String(item).toLowerCase()).includes("all") && partnerType && !applicablePartnerTypes.map((item: any) => String(item).toLowerCase()).includes(partnerType)) {
+    return { success: false, valid: false, code, promotion, reason: "Promotion does not apply to this partner type.", subtotal, discount: 0, total: subtotal };
+  }
+
+  const discount = calculatePromotionDiscount(promotion, subtotal);
+  const total = Math.max(0, subtotal - discount);
+  return {
+    success: true,
+    valid: true,
+    code,
+    promotion,
+    promotion_id: promotion.id,
+    discount,
+    subtotal,
+    total,
+    duration: promotion.duration || "oneTime",
+    message: total === 0 ? "Your first year is complimentary. No payment is required today." : "Promotion applied.",
+  };
+}
+
+function redeemPromotion(entities: Database["entities"], input: Record<string, any>) {
+  const validation = validatePromotion(entities, input);
+  if (!validation.valid || !validation.promotion) return { validation, redemption: null };
+  validation.promotion.currentUses = Number(validation.promotion.currentUses || validation.promotion.current_uses || 0) + 1;
+  validation.promotion.current_uses = validation.promotion.currentUses;
+  validation.promotion.updated_at = now();
+  const redemption = withTimestamps(
+    {
+      promotion_id: validation.promotion.id,
+      code: validation.code,
+      organization_id: input.organization_id || input.tenant_id || "",
+      tenant_id: input.tenant_id || input.organization_id || "",
+      workspace_id: input.workspace_id || "",
+      partner_id: input.partner_id || "",
+      registration_id: input.registration_id || "",
+      checkout_session_id: input.checkout_session_id || "",
+      subscription_id: input.subscription_id || "",
+      plan: input.plan || input.plan_key || "",
+      partner_type: input.partner_type || input.partnerType || "",
+      subtotal: validation.subtotal,
+      discount: validation.discount,
+      total: validation.total,
+      status: "redeemed",
+      redeemed_at: now(),
+      metadata: input.metadata || {},
+    },
+    makeId("promotion_redemption")
+  );
+  entities.PromotionRedemption.push(redemption);
+  return { validation, redemption };
 }
 
 function normalizeProductName(name: string) {
@@ -1293,6 +1421,39 @@ function addOperationalDefaults(entities: Database["entities"]) {
     );
   }
 
+  ensureRecord(entities.Promotion, "promotion_dude2026", {
+    code: "DUDE2026",
+    name: "Launch Promotion",
+    description: "Complimentary first-year partner subscription for launch partners.",
+    status: "active",
+    discountType: "percentage",
+    discount_type: "percentage",
+    percentage: 100,
+    fixedAmount: 0,
+    fixed_amount: 0,
+    duration: "firstYear",
+    oneTime: false,
+    firstYear: true,
+    forever: false,
+    applicablePlans: ["all"],
+    applicable_plans: ["all"],
+    applicablePartnerTypes: ["all"],
+    applicable_partner_types: ["all"],
+    maxUses: null,
+    max_uses: null,
+    currentUses: 0,
+    current_uses: 0,
+    startsAt: null,
+    starts_at: null,
+    expiresAt: null,
+    expires_at: null,
+    isActive: true,
+    is_active: true,
+    createdBy: "system",
+    created_by: "system",
+    campaign_attribution: "launch",
+  });
+
   if (entities.Amenity.length === 0) {
     entities.Amenity.push(
       withTimestamps({ building_id: "bldg_shore", name: "Rooftop Lounge", description: "Resident skyline lounge available by reservation.", capacity: 50, hours_start: "06:00", hours_end: "23:00", slot_duration: 60, is_active: true }, "amenity_rooftop"),
@@ -1389,6 +1550,181 @@ function addOperationalDefaults(entities: Database["entities"]) {
       withTimestamps({ name: "Supabase Operational Store", provider: "Supabase", layer: "Database", purpose: "Persist residents, survey responses, event feedback, redemptions, and partner leads.", status: "pending_credentials", required_env: ["SUPABASE_URL", "SUPABASE_ANON_KEY", "SUPABASE_SERVICE_ROLE_KEY"] }, "integration_supabase"),
       withTimestamps({ name: "n8n Workflow Orchestration", provider: "n8n", layer: "Automation", purpose: "Webhook routing, reminders, report generation, and survey escalation workflows.", status: "pending_credentials", required_env: ["N8N_WEBHOOK_URL", "N8N_API_KEY"] }, "integration_n8n"),
       withTimestamps({ name: "OpenAI Insights", provider: "OpenAI", layer: "AI Layer", purpose: "Summaries, sentiment, recommendations, SMS concierge, and operator insights.", status: process.env.OPENAI_API_KEY ? "configured" : "pending_credentials", required_env: ["OPENAI_API_KEY"] }, "integration_openai")
+    );
+  }
+
+  if (entities.PartnerOutreachContact.length === 0) {
+    entities.PartnerOutreachContact.push(
+      withTimestamps({
+        partner_name: "Cozymeal",
+        contact_name: "Sam Nasserian",
+        role: "Founder & CEO",
+        channel: "LinkedIn",
+        email: "",
+        phone: "",
+        location: "San Francisco, CA",
+        best_use: "Strategic partnership outreach and founder-level ecosystem positioning.",
+        priority: "high",
+        source: "public_contact_research",
+        status: "ready",
+      }, "outreach_contact_cozymeal_sam_nasserian"),
+      withTimestamps({
+        partner_name: "Cozymeal",
+        contact_name: "Cozymeal Sales Team",
+        role: "Sales Team",
+        channel: "Email",
+        email: "sales@cozymeal.com",
+        phone: "",
+        location: "US Headquarters",
+        best_use: "Business partnerships, corporate opportunities, and growth discussions.",
+        priority: "high",
+        source: "public_contact_research",
+        status: "ready",
+      }, "outreach_contact_cozymeal_sales"),
+      withTimestamps({
+        partner_name: "Cozymeal",
+        contact_name: "Cozymeal Operations",
+        role: "General Operations Team",
+        channel: "Email",
+        email: "team@cozymeal.com",
+        phone: "",
+        location: "US Headquarters",
+        best_use: "Internal routing if the correct department is unclear.",
+        priority: "medium",
+        source: "public_contact_research",
+        status: "ready",
+      }, "outreach_contact_cozymeal_team"),
+      withTimestamps({
+        partner_name: "Cozymeal",
+        contact_name: "Main Company Line",
+        role: "Business Development Routing",
+        channel: "Phone",
+        email: "",
+        phone: "800-369-0157",
+        location: "95 Third Street, 2nd Floor, San Francisco, CA 94103",
+        best_use: "Ask for Partnerships, Business Development, or Founder Office.",
+        priority: "medium",
+        source: "public_contact_research",
+        status: "ready",
+      }, "outreach_contact_cozymeal_phone")
+    );
+  }
+
+  if (entities.PartnerOutreachCampaign.length === 0) {
+    entities.PartnerOutreachCampaign.push(
+      withTimestamps({
+        partner_name: "Cozymeal",
+        category: "Experience marketplace",
+        city_focus: "Austin",
+        status: "draft",
+        stage: "research_complete",
+        owner: "Meg Dude",
+        objective: "Explore ways to help more Austin residents discover Cozymeal culinary experiences through Downtown Perks.",
+        positioning: "Complementary discovery and distribution channel, not an advertising or coupon pitch.",
+        strategic_angle: "City-wide discovery distribution across residential communities, hotels, venues, brands, and civic organizations.",
+        recommended_subject: "Exploring Ways to Help More Austin Residents Discover Cozymeal Experiences",
+        primary_contact_id: "outreach_contact_cozymeal_sales",
+        founder_contact_id: "outreach_contact_cozymeal_sam_nasserian",
+        next_action: "Send founder-framed email to sales@cozymeal.com and connect with Sam Nasserian on LinkedIn.",
+        tags: ["culinary", "experiences", "marketplace", "austin", "resident_discovery"],
+      }, "outreach_campaign_cozymeal_austin")
+    );
+  }
+
+  if (entities.PartnerOutreachStep.length === 0) {
+    entities.PartnerOutreachStep.push(
+      withTimestamps({
+        campaign_id: "outreach_campaign_cozymeal_austin",
+        sequence_order: 1,
+        channel: "Email",
+        title: "Send founder-framed partnership email",
+        contact_id: "outreach_contact_cozymeal_sales",
+        status: "ready",
+        due_label: "Step 1",
+        instructions: "Send to sales@cozymeal.com using the recommended subject and full partnership framing.",
+      }, "outreach_step_cozymeal_email"),
+      withTimestamps({
+        campaign_id: "outreach_campaign_cozymeal_austin",
+        sequence_order: 2,
+        channel: "LinkedIn",
+        title: "Connect with Sam Nasserian",
+        contact_id: "outreach_contact_cozymeal_sam_nasserian",
+        status: "ready",
+        due_label: "Step 2",
+        instructions: "Send the short founder note after or shortly before the email.",
+      }, "outreach_step_cozymeal_linkedin"),
+      withTimestamps({
+        campaign_id: "outreach_campaign_cozymeal_austin",
+        sequence_order: 3,
+        channel: "Phone",
+        title: "Call main company line",
+        contact_id: "outreach_contact_cozymeal_phone",
+        status: "ready",
+        due_label: "Step 3",
+        instructions: "Ask for the partnerships, business development, or founder office contact for Austin strategic partnership opportunities.",
+      }, "outreach_step_cozymeal_call")
+    );
+  }
+
+  if (entities.PartnerOutreachMessage.length === 0) {
+    entities.PartnerOutreachMessage.push(
+      withTimestamps({
+        campaign_id: "outreach_campaign_cozymeal_austin",
+        type: "email",
+        title: "Founder partnership email",
+        subject: "Exploring Ways to Help More Austin Residents Discover Cozymeal Experiences",
+        body: `Hello Cozymeal Team,
+
+My name is Meg Dude, and I'm the founder of Downtown Perks, a resident-first discovery platform designed to help people better experience Downtown Austin.
+
+I recently came across Chef Megan's Stir Fry Thai Cuisine class and was genuinely impressed. The quality of the experience, the enthusiasm of the guest reviews, and the emphasis on creating meaningful, hands-on moments align closely with the type of experiences our community actively seeks out.
+
+Downtown Perks exists to help residents and visitors discover what is happening around them in real time -- from restaurants and local businesses to events, wellness experiences, cultural programming, and unique experiences like Cozymeal classes.
+
+We're currently building partnerships across residential communities, hotels, venues, brands, and civic organizations throughout Downtown Austin, creating a single discovery layer for both residents and visitors.
+
+I believe there is a meaningful opportunity for Cozymeal to become one of the featured experience partners within Downtown Austin's emerging discovery ecosystem.
+
+Potential areas of collaboration could include:
+- Featuring Cozymeal experiences within the Downtown Perks discovery platform
+- Introducing cooking classes and culinary experiences to downtown residents actively looking for things to do nearby
+- Highlighting seasonal and neighborhood-specific experiences through curated campaigns
+- Incorporating Cozymeal offerings into resident engagement programs, welcome initiatives, and community events
+- Connecting Cozymeal with our growing network of residential, hospitality, venue, and civic partners
+
+We are not building another directory or coupon platform. We are building the decision layer for Downtown Austin -- helping residents and visitors discover where to go, what to do, and who to support in real time.
+
+I believe Cozymeal would be a natural fit within that vision and would welcome the opportunity to share more.
+
+Warm regards,
+Meg Dude
+Founder, Downtown Perks
+https://downtownperks.com`,
+        status: "approved",
+      }, "outreach_message_cozymeal_email"),
+      withTimestamps({
+        campaign_id: "outreach_campaign_cozymeal_austin",
+        type: "linkedin",
+        title: "Founder LinkedIn note",
+        subject: "Short LinkedIn connection note",
+        body: `Hi Sam,
+
+I'm building Downtown Perks, a resident-first discovery platform focused on Downtown Austin. I recently came across Cozymeal and think there may be a natural alignment between what we're building and the experiences Cozymeal offers.
+
+I'd love to share a quick overview and explore whether there may be opportunities to help more Austin residents discover Cozymeal experiences.
+
+Best,
+Meg Dude`,
+        status: "approved",
+      }, "outreach_message_cozymeal_linkedin"),
+      withTimestamps({
+        campaign_id: "outreach_campaign_cozymeal_austin",
+        type: "call_script",
+        title: "Phone routing script",
+        subject: "Strategic partnership routing",
+        body: "I'd like to speak with someone regarding a strategic partnership opportunity in Austin. Is there someone on the business development or partnerships team I should connect with?",
+        status: "approved",
+      }, "outreach_message_cozymeal_call")
     );
   }
 
@@ -1814,6 +2150,7 @@ function recordsToCsv(records: Record<string, any>[]) {
 export async function createApp() {
   const app = express();
   let db = await ensureDatabase();
+  logOpenAIStatusOnce();
 
   app.use(cors());
   app.use(express.json({ limit: "5mb" }));
@@ -2045,6 +2382,78 @@ export async function createApp() {
     );
   });
 
+  app.get("/api/promotions", (req, res) => {
+    res.json(db.entities.Promotion.filter((item) => !item.deleted_at));
+  });
+
+  app.post("/api/promotions", async (req, res) => {
+    const body = req.body || {};
+    const code = normalizePromotionCode(body.code);
+    if (!code) return res.status(400).json({ error: "Promotion code is required." });
+    const record = withTimestamps(
+      {
+        ...body,
+        code,
+        status: body.status || "active",
+        discountType: body.discountType || body.discount_type || "percentage",
+        discount_type: body.discountType || body.discount_type || "percentage",
+        percentage: Number(body.percentage || 0),
+        duration: body.duration || "oneTime",
+        applicablePlans: Array.isArray(body.applicablePlans) ? body.applicablePlans : ["all"],
+        applicablePartnerTypes: Array.isArray(body.applicablePartnerTypes) ? body.applicablePartnerTypes : ["all"],
+        currentUses: 0,
+        current_uses: 0,
+        isActive: body.isActive !== false,
+        is_active: body.isActive !== false,
+        createdBy: actorFromRequest(req),
+        created_by: actorFromRequest(req),
+      },
+      body.id || `promotion_${slug(code).replace(/_/g, "-")}`
+    );
+    db.entities.Promotion.push(record);
+    writeAuditEvent(db, req, { action: "promotion_created", entity_type: "promotion", entity_id: record.id, after: record });
+    await saveDatabase(db);
+    res.status(201).json(record);
+  });
+
+  app.patch("/api/promotions/:id", async (req, res) => {
+    const promotion = findEntityById(db.entities.Promotion, req.params.id);
+    if (!promotion) return res.status(404).json({ error: "Promotion not found" });
+    const before = { ...promotion };
+    Object.assign(promotion, req.body || {}, {
+      code: req.body?.code ? normalizePromotionCode(req.body.code) : promotion.code,
+      updated_at: now(),
+    });
+    writeAuditEvent(db, req, { action: "promotion_updated", entity_type: "promotion", entity_id: promotion.id, before, after: promotion });
+    await saveDatabase(db);
+    res.json(promotion);
+  });
+
+  app.delete("/api/promotions/:id", async (req, res) => {
+    const promotion = findEntityById(db.entities.Promotion, req.params.id);
+    if (!promotion) return res.status(404).json({ error: "Promotion not found" });
+    const before = { ...promotion };
+    Object.assign(promotion, { status: "archived", isActive: false, is_active: false, deleted_at: now(), updated_at: now() });
+    writeAuditEvent(db, req, { action: "promotion_archived", entity_type: "promotion", entity_id: promotion.id, before, after: promotion });
+    await saveDatabase(db);
+    res.json({ success: true, promotion });
+  });
+
+  app.post("/api/promotions/validate", (req, res) => {
+    const validation = validatePromotion(db.entities, req.body || {});
+    writeAnalyticsEvent(db, req, { event: "promotion_validated", entity_type: "promotion", entity_id: validation.promotion_id || validation.code || "", metadata: { success: validation.success, reason: validation.reason } });
+    res.status(validation.valid ? 200 : 422).json(validation);
+  });
+
+  app.post("/api/promotions/redeem", async (req, res) => {
+    const { validation, redemption } = redeemPromotion(db.entities, req.body || {});
+    if (!validation.valid) return res.status(422).json(validation);
+    writeAuditEvent(db, req, { action: "promotion_redeemed", entity_type: "promotion", entity_id: validation.promotion_id, after: redemption });
+    writeAnalyticsEvent(db, req, { event: "promotion_redeemed", entity_type: "promotion", entity_id: validation.promotion_id, metadata: redemption });
+    await saveDatabase(db);
+    res.status(201).json({ ...validation, redemption });
+  });
+
   app.post("/api/partner-leads", async (req, res) => {
     const body = req.body || {};
     const organizationName = String(body.organization_name || body.organization?.name || body.business_name || "Partner lead").trim();
@@ -2097,8 +2506,17 @@ export async function createApp() {
     const products = db.entities.ProductOffering.filter((product) => selectedPriceIds.includes(product.stripe_price_id) || selectedPriceIds.some((priceId: string) => product.prices?.some((price: any) => price.stripe_price_id === priceId)));
     const billingEmail = body.customer_email || body.billing_email || body.email || "";
     const organizationName = body.organization_name || body.business_name || "Downtown Perks Partner";
+    const subtotal = products.reduce((sum, product) => sum + Number(product.amount || 0), 0);
+    const promotionCode = normalizePromotionCode(body.promotion_code || body.coupon || body.checkout?.coupon);
 
     if (!selectedPriceIds.length) return res.status(400).json({ error: "At least one Stripe price ID is required." });
+    const promotionValidation = promotionCode ? validatePromotion(db.entities, {
+      code: promotionCode,
+      subtotal,
+      plan: body.plan || body.plan_key || products[0]?.tier_id || products[0]?.display_name || products[0]?.name,
+      partner_type: body.partner_type,
+    }) : null;
+    if (promotionValidation && !promotionValidation.valid) return res.status(422).json(promotionValidation);
 
     const tenant = provisionPlatformTenant(db.entities, {
       name: organizationName,
@@ -2116,6 +2534,11 @@ export async function createApp() {
         organization_name: organizationName,
         selected_price_ids: selectedPriceIds,
         products: products.map((product) => ({ id: product.id, name: product.name, stripe_product_id: product.stripe_product_id, stripe_price_id: product.stripe_price_id, amount: product.amount, interval: product.interval })),
+        subtotal,
+        discount: promotionValidation?.discount || 0,
+        total: promotionValidation ? promotionValidation.total : subtotal,
+        promotion_code: promotionValidation?.code || "",
+        promotion_id: promotionValidation?.promotion_id || "",
         provider: process.env.STRIPE_SECRET_KEY ? "stripe" : "local_checkout_ready_for_stripe",
         status: process.env.STRIPE_SECRET_KEY ? "creating" : "pending_credentials",
         success_url: body.success_url || "http://localhost:5173/partners/provision?checkout=success",
@@ -2123,6 +2546,72 @@ export async function createApp() {
       },
       makeId("checkout")
     );
+
+    if (promotionValidation?.valid && promotionValidation.total === 0) {
+      const { redemption } = redeemPromotion(db.entities, {
+        code: promotionValidation.code,
+        subtotal,
+        tenant_id: checkoutRecord.tenant_id,
+        organization_id: checkoutRecord.tenant_id,
+        workspace_id: checkoutRecord.workspace_id,
+        checkout_session_id: checkoutRecord.id,
+        plan: body.plan || products[0]?.display_name || products[0]?.name || "partner",
+        partner_type: body.partner_type || "",
+      });
+      checkoutRecord.provider = "promotion";
+      checkoutRecord.payment_provider = "promotion";
+      checkoutRecord.status = "complete";
+      checkoutRecord.billing_status = "promotional";
+      checkoutRecord.promotion_redemption_id = redemption?.id || "";
+      checkoutRecord.message = "Promotion applied. No Stripe payment is required today.";
+      ensureRecord(db.entities.PartnerSubscription, `subscription_${checkoutRecord.tenant_id || checkoutRecord.id}`, {
+        tenant_id: checkoutRecord.tenant_id,
+        workspace_id: checkoutRecord.workspace_id,
+        plan: body.plan || products[0]?.display_name || products[0]?.name || "partner",
+        plan_label: products[0]?.display_name || products[0]?.name || "Partner Plan",
+        cadence: products[0]?.interval || "annual",
+        amount: subtotal,
+        status: "active",
+        billing_status: "promotional",
+        provider: "promotion",
+        payment_provider: "promotion",
+        promotion_code: promotionValidation.code,
+        promotion_id: promotionValidation.promotion_id,
+        promotion_redemption_id: redemption?.id || "",
+        amount_paid: 0,
+        discount: promotionValidation.discount,
+        renewal_date: addOneYearIso(),
+        billing_email: billingEmail,
+      });
+      ensureRecord(db.entities.PartnerInvoice, `invoice_${checkoutRecord.id}`, {
+        tenant_id: checkoutRecord.tenant_id,
+        workspace_id: checkoutRecord.workspace_id,
+        billing_email: billingEmail,
+        status: "paid",
+        billing_status: "promotional",
+        provider: "promotion",
+        checkout_session_id: checkoutRecord.id,
+        promotion_code: promotionValidation.code,
+        promotion_id: promotionValidation.promotion_id,
+        subtotal,
+        discount: promotionValidation.discount,
+        total: 0,
+        currency: products[0]?.currency || "usd",
+        paid_at: now(),
+      });
+      writeAuditEvent(db, req, { action: "promotional_checkout_completed", entity_type: "checkout", entity_id: checkoutRecord.id, after: checkoutRecord });
+      writeAnalyticsEvent(db, req, { event: "promotional_checkout_completed", entity_type: "promotion", entity_id: promotionValidation.promotion_id, metadata: { code: promotionValidation.code, subtotal, discount: promotionValidation.discount } });
+      await saveDatabase(db);
+      return res.status(201).json({
+        success: true,
+        status: "promotional",
+        checkout_session: checkoutRecord,
+        promotion: promotionValidation,
+        redemption,
+        checkout_url: "/partners/provision?checkout=promotional",
+        message: "Your first year is complimentary. No payment is required today.",
+      });
+    }
 
     if (!process.env.STRIPE_SECRET_KEY) {
       ensureRecord(db.entities.PartnerInvoice, `invoice_${checkoutRecord.id}`, {
@@ -2132,7 +2621,9 @@ export async function createApp() {
         status: "pending_payment",
         provider: "local_checkout_ready_for_stripe",
         checkout_session_id: checkoutRecord.id,
-        total: products.reduce((sum, product) => sum + Number(product.amount || 0), 0),
+        subtotal,
+        discount: promotionValidation?.discount || 0,
+        total: checkoutRecord.total,
         currency: products[0]?.currency || "usd",
       });
       writeAuditEvent(db, req, { action: "checkout_session_created_pending_credentials", entity_type: "checkout", entity_id: checkoutRecord.id, after: checkoutRecord });
@@ -2157,6 +2648,7 @@ export async function createApp() {
     });
     params.set("metadata[organization_name]", organizationName);
     params.set("metadata[tenant_id]", checkoutRecord.tenant_id);
+    if (promotionValidation?.code) params.set("metadata[promotion_code]", promotionValidation.code);
 
     const stripeResponse = await fetch("https://api.stripe.com/v1/checkout/sessions", {
       method: "POST",
@@ -2184,7 +2676,9 @@ export async function createApp() {
       provider: "stripe",
       checkout_session_id: stripePayload.id,
       hosted_invoice_url: stripePayload.url,
-      total: products.reduce((sum, product) => sum + Number(product.amount || 0), 0),
+      subtotal,
+      discount: promotionValidation?.discount || 0,
+      total: checkoutRecord.total,
       currency: products[0]?.currency || "usd",
     });
     writeAuditEvent(db, req, { action: "stripe_checkout_session_created", entity_type: "checkout", entity_id: checkoutRecord.id, after: checkoutRecord });
@@ -2322,6 +2816,15 @@ export async function createApp() {
           "integrations",
           "settings",
         ];
+        const planSubtotal = Number(checkout.subtotal ?? selectedPlan.amount ?? selectedPlan.price ?? 0);
+        const promotionCode = normalizePromotionCode(checkout.promotion_code || checkout.coupon || body.promotion_code || body.coupon);
+        const promotionValidation = promotionCode ? validatePromotion(db.entities, {
+          code: promotionCode,
+          subtotal: planSubtotal,
+          plan: selectedPlan.key || selectedPlan.name || selectedPlan.label,
+          partner_type: organization.type || body.organizationType,
+        }) : null;
+        if (promotionValidation && !promotionValidation.valid) return res.status(422).json({ error: promotionValidation.reason, promotion: promotionValidation });
 
         let partner = db.entities.Partner.find((item) => String(item.contact_email || "").toLowerCase() === contactEmail || item.business_name === organizationName);
         if (!partner) {
@@ -2426,17 +2929,39 @@ export async function createApp() {
           created_from: "workspace_provisioning",
         });
 
-        ensureRecord(db.entities.PartnerSubscription, `subscription_${tenant.slug}`, {
+        const isPromotional = Boolean(promotionValidation?.valid && promotionValidation.total === 0);
+        const subscriptionId = `subscription_${tenant.slug}`;
+        const redemptionResult = isPromotional && !checkout.promotion_redemption_id ? redeemPromotion(db.entities, {
+          code: promotionValidation?.code,
+          subtotal: planSubtotal,
+          tenant_id: tenant.id,
+          organization_id: tenant.id,
+          workspace_id: workspaceId,
+          partner_id: partner.id,
+          registration_id: registration.id,
+          subscription_id: subscriptionId,
+          plan: selectedPlan.key || selectedPlan.name || selectedPlan.label || "starter",
+          partner_type: organization.type || body.organizationType || "",
+        }) : null;
+
+        ensureRecord(db.entities.PartnerSubscription, subscriptionId, {
           tenant_id: tenant.id,
           workspace_id: workspaceId,
           partner_id: partner.id,
           plan: selectedPlan.key || selectedPlan.name || "starter",
           plan_label: selectedPlan.label || selectedPlan.name || "Starter",
           cadence: selectedPlan.cadence || "annual",
-          amount: Number(selectedPlan.amount || selectedPlan.price || 0),
-          status: checkout.status || "active",
-          provider: checkout.provider || "local_checkout_ready_for_stripe",
-          renewal_date: checkout.renewal_date || null,
+          amount: planSubtotal,
+          status: "active",
+          billing_status: isPromotional ? "promotional" : checkout.billing_status || "paid",
+          provider: isPromotional ? "promotion" : checkout.provider || "local_checkout_ready_for_stripe",
+          payment_provider: isPromotional ? "promotion" : checkout.payment_provider || checkout.provider || "local_checkout_ready_for_stripe",
+          promotion_code: isPromotional ? promotionValidation?.code : checkout.coupon || checkout.promotion_code || "",
+          promotion_id: isPromotional ? promotionValidation?.promotion_id : checkout.promotion_id || "",
+          promotion_redemption_id: redemptionResult?.redemption?.id || checkout.promotion_redemption_id || "",
+          amount_paid: isPromotional ? 0 : Number(checkout.total ?? planSubtotal),
+          discount: isPromotional ? promotionValidation?.discount : Number(checkout.discount || 0),
+          renewal_date: checkout.renewal_date || (isPromotional ? addOneYearIso() : null),
           billing_email: checkout.billing_email || contactEmail,
         });
 
@@ -2447,10 +2972,15 @@ export async function createApp() {
           subscription_id: `subscription_${tenant.slug}`,
           invoice_number: `DP-${tenant.slug.toUpperCase().slice(0, 12)}-${new Date().getFullYear()}`,
           status: checkout.invoice_status || "paid",
-          subtotal: Number(checkout.subtotal || selectedPlan.amount || selectedPlan.price || 0),
+          billing_status: isPromotional ? "promotional" : checkout.billing_status || "paid",
+          provider: isPromotional ? "promotion" : checkout.provider || "local_checkout_ready_for_stripe",
+          subtotal: planSubtotal,
           tax: Number(checkout.tax || 0),
-          total: Number(checkout.total || selectedPlan.amount || selectedPlan.price || 0),
-          coupon: checkout.coupon || "",
+          discount: isPromotional ? promotionValidation?.discount : Number(checkout.discount || 0),
+          total: isPromotional ? 0 : Number(checkout.total ?? selectedPlan.amount ?? selectedPlan.price ?? 0),
+          coupon: isPromotional ? promotionValidation?.code : checkout.coupon || "",
+          promotion_code: isPromotional ? promotionValidation?.code : checkout.promotion_code || checkout.coupon || "",
+          promotion_id: isPromotional ? promotionValidation?.promotion_id : checkout.promotion_id || "",
           paid_at: now(),
         });
 
@@ -3019,42 +3549,46 @@ export async function createApp() {
   });
 
   app.post("/api/properties/ingest", async (req, res) => {
-    const apiKey = process.env.GEMINI_API_KEY;
     const { rawData } = req.body || {};
     if (!rawData) return res.status(400).json({ error: "No raw data provided." });
-    if (!apiKey) return res.status(500).json({ error: "GEMINI_API_KEY is not set on the server." });
+    const provider = getProviderManager();
+    if (!provider.metadata.configured) {
+      return res.status(503).json({
+        error: "OPENAI_API_KEY is not set on the server.",
+        provider: provider.metadata.name,
+        configured: false,
+      });
+    }
 
     try {
-      const ai = new GoogleGenAI({ apiKey });
-      const response = await ai.models.generateContent({
-        model: "gemini-2.5-flash",
-        contents: `Extract property records from this text and return JSON only.\n\n${rawData}`,
-        config: {
-          responseMimeType: "application/json",
-          responseSchema: {
-            type: Type.ARRAY,
-            items: {
-              type: Type.OBJECT,
-              properties: {
-                name: { type: Type.STRING },
-                address: { type: Type.STRING },
-                totalUnits: { type: Type.INTEGER },
-                amenities: { type: Type.ARRAY, items: { type: Type.STRING } },
-                status: { type: Type.STRING },
-                photos: { type: Type.ARRAY, items: { type: Type.STRING } },
-              },
-              required: ["name", "address", "totalUnits", "status"],
-            },
-          },
+      const responseText = await provider.primary.chat([
+        {
+          role: "system",
+          content: [
+            "You extract property records for Downtown Perks.",
+            "Return JSON only. No markdown.",
+            "The response must be an array of objects.",
+            "Each object must include: name, address, totalUnits, status, amenities, photos.",
+            "Use status values only from: active, available, occupied, under maintenance, archived.",
+            "If total units are not stated, use 0.",
+            "If amenities or photos are not stated, return empty arrays.",
+          ].join(" "),
         },
-      });
-      const parsed = response.text ? JSON.parse(response.text) : [];
+        {
+          role: "user",
+          content: `Extract property records from this source text:\n\n${String(rawData).slice(0, 20000)}`,
+        },
+      ]);
+      const cleaned = responseText.trim().replace(/^```(?:json)?/i, "").replace(/```$/i, "").trim();
+      const parsed = cleaned ? JSON.parse(cleaned) : [];
       const records = (Array.isArray(parsed) ? parsed : [parsed]).map((item) => withTimestamps(upsertPropertyCompatibility(item), makeId("prop")));
       db.entities.Building.push(...records);
+      writeAnalyticsEvent(db, req, { event: "properties_ai_ingested", entity_type: "property", entity_id: "properties_ingest", metadata: { provider: provider.metadata.name, model: provider.metadata.model, count: records.length } });
+      writeAuditEvent(db, req, { action: "properties_ai_ingested", entity_type: "property", entity_id: "properties_ingest", after: { provider: provider.metadata.name, model: provider.metadata.model, count: records.length } });
       await saveDatabase(db);
-      res.json(records);
+      res.json({ records, count: records.length, provider: provider.metadata.name, model: provider.metadata.model });
     } catch (err: any) {
-      res.status(500).json({ error: err.message || "Failed to ingest data." });
+      res.status(500).json({ error: err.message || "Failed to ingest data.", provider: provider.metadata.name });
     }
   });
 
@@ -3482,57 +4016,190 @@ export async function createApp() {
     res.status(201).json({ success: true, destination_url: qr.destination_url, scan, qr });
   });
 
-  app.post("/api/ai/ask-map", async (req, res) => {
-    const visibleEntities = mapEntityRows(db).slice(0, 12);
-    const insight = withTimestamps(
-      {
-        source: "ask_map",
-        insight_type: "answer",
-        title: req.body?.question || "Ask the Map",
-        summary: `Found ${visibleEntities.length} visible Downtown Perks entities for ${req.body?.mode || "resident"} mode.`,
-        recommended_action: visibleEntities[0]?.title ? `Start with ${visibleEntities[0].title}.` : "Open the map and select a nearby entity.",
-        status: "generated",
-        context: { mode: req.body?.mode || "resident", visible_entities: visibleEntities },
+  const runAgentGateway = async (req: express.Request, res: express.Response, overrides: Record<string, any> = {}) => {
+    const started = Date.now();
+    const payload = {
+      ...(req.body || {}),
+      ...overrides,
+      message: overrides.message || req.body?.message || req.body?.question || req.body?.query || "",
+      context: {
+        ...(req.body?.context || {}),
+        visibleEntities: req.body?.context?.visibleEntities || mapEntityRows(db).slice(0, 25),
       },
-      makeId("ai")
+    };
+    const { response, conversation } = await routeAgentQuery(payload, { entities: db.entities });
+    db.entities.Interaction.push(conversation);
+    db.entities.AiInsight.push(
+      withTimestamps(
+        {
+          source: "agent_gateway",
+          insight_type: response.intent,
+          title: payload.message || "Agent query",
+          summary: response.answer,
+          recommended_action: response.nextSuggestions?.[0] || "",
+          status: "generated",
+          context: response,
+        },
+        makeId("ai")
+      )
     );
-    db.entities.AiInsight.push(insight);
-    writeAnalyticsEvent(db, req, { event: "ai_request_created", entity_type: "ai", entity_id: insight.id, metadata: req.body || {} });
+    writeAnalyticsEvent(db, req, {
+      event: "ai_request_completed",
+      entity_type: "agent",
+      entity_id: response.id,
+      mode: response.mode,
+      source: "agent_gateway",
+      metadata: { intent: response.intent, latency_ms: Date.now() - started, provider: response.provider },
+    });
+    writeAuditEvent(db, req, {
+      action: "agent_query_completed",
+      entity_type: "agent_interaction",
+      entity_id: response.id,
+      after: conversation,
+      metadata: { mode: response.mode, intent: response.intent },
+    });
     await saveDatabase(db);
-    res.json({ answer: insight.summary, recommendations: visibleEntities.slice(0, 5), insight });
+    res.json(response);
+  };
+
+  app.post("/api/agent/query", async (req, res) => {
+    try {
+      await runAgentGateway(req, res);
+    } catch (err: any) {
+      res.status(500).json({ error: err.message || "Agent query failed" });
+    }
+  });
+
+  app.post("/api/agent/stream", async (req, res) => {
+    res.setHeader("Content-Type", "text/event-stream");
+    res.setHeader("Cache-Control", "no-cache");
+    res.setHeader("Connection", "keep-alive");
+    try {
+      const chunks: any[] = [];
+      const responseProxy = {
+        json: (payload: any) => chunks.push(payload),
+      } as unknown as express.Response;
+      await runAgentGateway(req, responseProxy);
+      const payload = chunks[0] || {};
+      res.write(createAgentStreamEnvelope({ type: "agent_start", sessionId: payload.sessionId }));
+      res.write(createAgentStreamEnvelope({ type: "agent_response", payload }));
+      res.write(createAgentStreamEnvelope({ type: "agent_done" }));
+      res.end();
+    } catch (err: any) {
+      res.write(createAgentStreamEnvelope({ type: "agent_error", error: err.message || "Agent stream failed" }));
+      res.end();
+    }
+  });
+
+  app.get("/api/agent/conversations", (req, res) => {
+    const sessionId = String(req.query.sessionId || "");
+    const rows = db.entities.Interaction.filter((item) => !sessionId || item.session_id === sessionId).slice(-50);
+    res.json(rows);
+  });
+
+  app.get("/api/agent/suggestions", (req, res) => {
+    res.json({
+      suggestions: [
+        "What should I do nearby tonight?",
+        "Show partner performance this week.",
+        "Summarize campaign results.",
+        "Find perks with low conversion.",
+      ],
+    });
+  });
+
+  app.post("/api/agent/feedback", async (req, res) => {
+    const record = withTimestamps(
+      {
+        interaction_id: req.body?.interactionId || "",
+        rating: req.body?.rating || "",
+        comment: req.body?.comment || "",
+        status: "received",
+      },
+      makeId("interaction_feedback")
+    );
+    db.entities.InteractionStep.push(record);
+    writeAnalyticsEvent(db, req, { event: "ai_feedback_submitted", entity_type: "agent", entity_id: record.interaction_id, metadata: record });
+    await saveDatabase(db);
+    res.status(201).json(record);
+  });
+
+  app.get("/api/agent/tools", (req, res) => {
+    res.json({ tools: listAgentTools() });
+  });
+
+  app.post("/api/agent/tools/execute", async (req, res) => {
+    try {
+      const { response } = await routeAgentQuery(
+        {
+          ...req.body,
+          intent: req.body?.tool || "searchKnowledge",
+          message: req.body?.message || req.body?.query || req.body?.tool || "",
+        },
+        { entities: db.entities }
+      );
+      writeAnalyticsEvent(db, req, { event: "agent_tool_executed", entity_type: "agent_tool", entity_id: req.body?.tool || "tool", metadata: response });
+      await saveDatabase(db);
+      res.json(response.toolCalls);
+    } catch (err: any) {
+      res.status(500).json({ error: err.message || "Tool execution failed" });
+    }
+  });
+
+  app.post("/api/agent/images", async (req, res) => {
+    try {
+      const provider = getProviderManager();
+      const prompt = String(req.body?.prompt || "");
+      if (!prompt) return res.status(400).json({ error: "Prompt is required." });
+      const result = await provider.primary.image(prompt);
+      const record = withTimestamps({ prompt, provider: provider.metadata.name, model: provider.metadata.imageModel, result, status: "generated" }, makeId("generated_image"));
+      db.entities.GeneratedImage.push(record);
+      writeAnalyticsEvent(db, req, { event: "ai_image_generated", entity_type: "generated_image", entity_id: record.id, metadata: { model: provider.metadata.imageModel } });
+      await saveDatabase(db);
+      res.status(201).json(record);
+    } catch (err: any) {
+      res.status(500).json({ error: err.message || "Image generation failed" });
+    }
+  });
+
+  app.post("/api/agent/campaigns", async (req, res) => {
+    await runAgentGateway(req, res, { mode: "campaign", intent: "campaign_planning" });
+  });
+
+  app.post("/api/agent/reports", async (req, res) => {
+    await runAgentGateway(req, res, { mode: "reports", intent: "report_analysis" });
+  });
+
+  app.post("/api/ai/ask-map", async (req, res) => {
+    try {
+      await runAgentGateway(req, res, { mode: req.body?.mode || "resident", intent: "ask_map", message: req.body?.message || req.body?.question || "Ask the Map" });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message || "Ask the Map failed" });
+    }
   });
 
   app.post("/api/ai/recommendations", async (req, res) => {
-    const recommendations = [
-      ...db.entities.PerkLocation.filter((perk) => perk.active !== false && perk.is_active !== false).slice(0, 4),
-      ...db.entities.Event.filter((event) => event.status !== "draft").slice(0, 3),
-    ];
-    writeAnalyticsEvent(db, req, { event: "ai_recommendations_requested", entity_type: "ai", entity_id: "recommendations", metadata: req.body || {} });
-    await saveDatabase(db);
-    res.json({ recommendations });
+    try {
+      await runAgentGateway(req, res, { intent: "recommendations", message: req.body?.message || "Recommend Downtown Perks next actions" });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message || "Recommendations failed" });
+    }
   });
 
   app.post("/api/ai/report-summary", async (req, res) => {
-    const summary = {
-      title: "Platform report summary",
-      summary: `${db.entities.PerkRedemption.length} redemptions, ${db.entities.EventRSVP.length} RSVPs, and ${db.entities.Campaign.length} campaigns are available for the selected scope.`,
-      generated_at: now(),
-    };
-    db.entities.AiInsight.push(withTimestamps({ source: "report_summary", insight_type: "summary", ...summary, status: "generated" }, makeId("ai")));
-    await saveDatabase(db);
-    res.json(summary);
+    try {
+      await runAgentGateway(req, res, { mode: "reports", intent: "report_summary", message: req.body?.message || "Summarize platform reports" });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message || "Report summary failed" });
+    }
   });
 
   app.post("/api/ai/survey-summary", async (req, res) => {
-    const responses = db.entities.SurveyResponse.filter((response) => !req.body?.survey_id || response.survey_id === req.body.survey_id);
-    const summary = {
-      title: "Survey response summary",
-      summary: `${responses.length} survey responses are stored. Sentiment and escalation routing are ready for configured AI credentials.`,
-      generated_at: now(),
-    };
-    db.entities.AiInsight.push(withTimestamps({ source: "survey_summary", insight_type: "summary", ...summary, status: "generated" }, makeId("ai")));
-    await saveDatabase(db);
-    res.json(summary);
+    try {
+      await runAgentGateway(req, res, { mode: "reports", intent: "survey_summary", message: req.body?.message || "Summarize survey responses" });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message || "Survey summary failed" });
+    }
   });
 
   const updatePerkStatus = async (req: express.Request, res: express.Response, status: string) => {

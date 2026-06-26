@@ -1,27 +1,41 @@
-export const segmentResidents = (residents: any[]) => {
-  const active = residents.filter(r => r.perks_enrolled && (r.perks_tier === 'premium' || r.perks_tier === 'vip'));
-  const occasional = residents.filter(r => r.perks_enrolled && r.perks_tier !== 'premium' && r.perks_tier !== 'vip');
-  const inactive = residents.filter(r => !r.perks_enrolled);
-  
-  return {
-    'Power User': active,
-    'Occasional': occasional,
-    'Inactive': inactive
-  };
+type ResidentLike = {
+  perks_enrolled?: boolean;
+  perks_tier?: string;
+  [key: string]: unknown;
 };
 
-export const getEngagementStats = (residents: any[]) => {
+export function calculateEngagementLevel(resident: ResidentLike) {
+  if (!resident.perks_enrolled) return "Inactive";
+  if (resident.perks_tier === "vip" || resident.perks_tier === "premium") return "Power User";
+  return "Occasional";
+}
+
+export function segmentResidents<T extends ResidentLike>(residents: T[]) {
+  const segments: Record<"Power User" | "Occasional" | "Inactive", T[]> = {
+    "Power User": [],
+    Occasional: [],
+    Inactive: [],
+  };
+
+  residents.forEach((resident) => {
+    segments[calculateEngagementLevel(resident) as keyof typeof segments].push(resident);
+  });
+
+  return segments;
+}
+
+export function getEngagementStats(residents: ResidentLike[]) {
   const total = residents.length;
-  const enrolled = residents.filter(r => r.perks_enrolled).length;
-  const powerUsers = residents.filter(r => r.perks_enrolled && (r.perks_tier === 'premium' || r.perks_tier === 'vip')).length;
-  
+  const powerUsers = residents.filter((resident) => calculateEngagementLevel(resident) === "Power User").length;
+  const occasional = residents.filter((resident) => calculateEngagementLevel(resident) === "Occasional").length;
+  const inactive = residents.filter((resident) => calculateEngagementLevel(resident) === "Inactive").length;
+
   return {
     total,
     powerUsers,
-    inactive: total - enrolled,
-    powerUserRate: total ? Math.round((powerUsers / total) * 100) : 0,
-    engagementRate: total ? Math.round((enrolled / total) * 100) : 0
+    occasional,
+    inactive,
+    powerUserRate: total > 0 ? Math.round((powerUsers / total) * 100) : 0,
+    engagementRate: total > 0 ? Math.round(((powerUsers + occasional) / total) * 100) : 0,
   };
-};
-
-export const calculateEngagementLevel = () => ('medium');
+}

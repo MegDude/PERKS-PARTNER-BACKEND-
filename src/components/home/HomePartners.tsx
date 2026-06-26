@@ -80,6 +80,8 @@ export function HomePartners() {
 }
 
 export function HomePricing() {
+  const navigate = useNavigate();
+
   return (
     <section className="py-[120px] px-6 md:px-12 bg-[#F1F3F7] w-full border-b border-[rgba(11,31,51,0.08)]">
        <div className="max-w-[1200px] mx-auto w-full">
@@ -97,19 +99,19 @@ export function HomePricing() {
              <OperationalSurface className="p-8 md:p-10 flex flex-col items-center text-center bg-transparent">
                 <div className="text-[20px] md:text-[24px] text-[#0B1F33] mb-2 font-medium">Free Forever</div>
                 <div className="text-[13px] text-[rgba(11,31,51,0.62)] mb-8">Basic insights · $0</div>
-                <button className="w-full px-6 py-3 bg-transparent border border-[rgba(11,31,51,0.08)] text-[#0B1F33] text-[13px] font-medium hover:bg-[#F1F3F7] mt-auto">Start Free</button>
+                <button onClick={() => navigate('/partners/pricing?plan=free')} className="w-full px-6 py-3 bg-transparent border border-[rgba(11,31,51,0.08)] text-[#0B1F33] text-[13px] font-medium hover:bg-[#F1F3F7] mt-auto">Start Free</button>
              </OperationalSurface>
              
              <div className="bg-[#0B1F33] p-8 md:p-10 border border-[#0B1F33] flex flex-col items-center text-center text-white">
                 <div className="text-[20px] md:text-[24px] mb-2 font-medium">Analytics</div>
                 <div className="text-[13px] text-white/70 mb-8">Core reporting · $39/year</div>
-                <button className="w-full px-6 py-3 bg-[#C5A028] text-[#0B1F33] text-[13px] font-medium hover:bg-[#A88718] mt-auto">Start Pilot</button>
+                <button onClick={() => navigate('/partners/pricing?plan=analytics')} className="w-full px-6 py-3 bg-[#C5A028] text-[#0B1F33] text-[13px] font-medium hover:bg-[#A88718] mt-auto">Start Pilot</button>
              </div>
              
              <OperationalSurface className="p-8 md:p-10 flex flex-col items-center text-center bg-transparent">
                 <div className="text-[20px] md:text-[24px] text-[#0B1F33] mb-2 font-medium">Full Stack</div>
                 <div className="text-[13px] text-[rgba(11,31,51,0.62)] mb-8">Premium features · $99/year</div>
-                <button className="w-full px-6 py-3 bg-transparent border border-[rgba(11,31,51,0.08)] text-[#0B1F33] text-[13px] font-medium hover:bg-[#F1F3F7] mt-auto">Choose Stack</button>
+                <button onClick={() => navigate('/partners/pricing?plan=full-stack')} className="w-full px-6 py-3 bg-transparent border border-[rgba(11,31,51,0.08)] text-[#0B1F33] text-[13px] font-medium hover:bg-[#F1F3F7] mt-auto">Choose Stack</button>
              </OperationalSurface>
           </div>
        </div>

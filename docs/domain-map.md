@@ -1,21 +1,23 @@
 # Domain Map
 
-| Domain | Owner surface | Primary data |
-| --- | --- | --- |
-| Organizations | 3014 | `PlatformTenant` |
-| Workspaces | 3014 | `TenantWorkspace` |
-| Partners | 3014 + 5173 workspace | `Partner`, `PartnerProfile`, `PartnerLocation` |
-| Properties/buildings | 3014 | `Building`, `Flat`, `Amenity` |
-| Residents | 3014 + 5173 resident product | `Tenant`, `CrmSegment` |
-| Map | 5173 product, 3014 operations | `MapEntityLink`, `PartnerLocation`, `PerkLocation` |
-| Perks | both | `PerkLocation`, `PerkRedemption` |
-| Events | both | `Event`, `EventRSVP` |
-| Campaigns | both | `Campaign` |
-| Surveys | 3014 | `Survey`, `SurveyResponse` |
-| Reports | 3014 | `PartnerReport`, `ReportRun` |
-| Analytics | 3014 | `AnalyticsEvent`, `PartnerAnalytics` |
-| Audit | 3014 | `TenantAuditLog` |
-| QR | both | `PartnerQrExperience`, `QrScan` |
-| AI | both | `AiInsight` |
-| Billing | 3014 + 5173 checkout | `PartnerSubscription`, `PartnerInvoice`, `ProductOffering` |
+| Domain | Owns | Current Evidence | Required Owner |
+| --- | --- | --- | --- |
+| Identity | users, sessions, roles, memberships | User, TenantUser, TenantRole | `auth` service |
+| Organizations | tenants, workspaces, settings | PlatformTenant, TenantWorkspace, PartnerSettings | `organizations/workspaces` services |
+| Partners | profiles, contacts, locations, workspaces | Partner, PartnerProfile, PartnerLocation | `partners` service |
+| Properties | property records, building links | Building, Flat, Amenity, PartnerLocation | `properties/buildings` services |
+| Residents | residents, units, segments, activity | Tenant, Flat, CrmSegment | `residents/segmentation` services |
+| Map | entities, pins, actions, links | MapEntityLink, PartnerLocation, PerkLocation | `map` service |
+| Perks | offers, rules, redemptions | PerkLocation, PerkRedemption | `perks/redemptions` services |
+| Events | events, RSVP, check-in, follow-up | Event, EventRSVP, PartnerEvent | `events/rsvps` services |
+| Campaigns | campaigns, targets, engagement | Campaign, Broadcast | `campaigns/engagement` services |
+| Surveys | templates, questions, responses, exports | Survey, SurveyResponse, SurveyProviderForm | `surveys` service |
+| Reports | report containers, runs, exports | PartnerReport, ReportRun, SurveyExportLog | `reports` service |
+| Analytics | event stream, summaries, metrics | AnalyticsEvent, PartnerAnalytics | `analytics` service |
+| Automations | workflows, runs, retries | AutomationRun, MessagingJourney | `automations` service |
+| Notifications | messages, email/SMS/in-app | TenantNotification, SmsMessageLog | `notifications/messages` services |
+| AI | agent, tools, memory, prompts | AiInsight, Interaction, backend/modules/ai | `ai` service |
+| Billing | plans, checkout, subscriptions, invoices | ProductOffering, PartnerSubscription, PartnerInvoice, Promotion | `billing/promotions` services |
+| Media | images/files/assets | GeneratedImage, ReferenceImage, ImageExport | `media` service |
 
+Rule: UI may read domain views, but every mutation must call the owning domain service.

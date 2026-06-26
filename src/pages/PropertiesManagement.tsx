@@ -1,9 +1,11 @@
 import React, { useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   ArrowRight,
   Building2,
   DatabaseZap,
+  Download,
   ExternalLink,
   Loader2,
   MapPin,
@@ -97,18 +99,21 @@ export default function PropertiesManagement() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ rawData })
       });
-      if (!res.ok) throw new Error('Failed to ingest');
+      if (!res.ok) {
+        const payload = await res.json().catch(() => ({}));
+        throw new Error(payload.error || 'Failed to ingest');
+      }
       return res.json();
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['admin_properties'] });
       queryClient.invalidateQueries({ queryKey: ['properties'] });
-      toast.success(`Successfully ingested ${data.length} properties from AI`);
+      toast.success(`Reviewed ${data.count || data.records?.length || 0} properties with ${data.provider || 'OpenAI'}`);
       setIsIngesting(false);
       setIngestText('');
     },
-    onError: () => {
-      toast.error('Failed to ingest data via AI. Check API Key.');
+    onError: (error: any) => {
+      toast.error(error?.message || 'Failed to ingest data with OpenAI. Check the backend API key.');
     }
   });
 
@@ -169,11 +174,11 @@ export default function PropertiesManagement() {
     const locations = properties.reduce((sum, p) => sum + Number(p.locations || 0), 0);
     const campaigns = properties.reduce((sum, p) => sum + Number(p.campaigns || 0), 0);
     return [
-      { label: 'Properties', value: properties.length, detail: 'property-like records' },
-      { label: 'Workspaces', value: workspaces, detail: 'tenant shells provisioned' },
-      { label: 'Map Linked', value: mapLinked, detail: 'entities with map presence' },
-      { label: 'Locations', value: locations, detail: 'managed locations' },
-      { label: 'Campaigns', value: campaigns, detail: 'connected campaigns' },
+      { label: 'Properties', value: properties.length, detail: 'Places, buildings, and listings available to review', to: '/admin/properties' },
+      { label: 'Workspaces', value: workspaces, detail: 'Partner workspaces connected to property records', to: '/workspace/home' },
+      { label: 'Map linked', value: mapLinked, detail: 'Properties visible through map or location data', to: '/map' },
+      { label: 'Locations', value: locations, detail: 'Managed places attached to property groups', to: '/admin/buildings' },
+      { label: 'Campaigns', value: campaigns, detail: 'Campaign activity connected to properties', to: '/admin/engagement' },
     ];
   }, [properties]);
 
@@ -182,15 +187,45 @@ export default function PropertiesManagement() {
     window.location.href = slug ? `/workspace/home?workspace=${encodeURIComponent(slug)}` : '/workspace/home';
   };
 
+  const buildingHref = (prop: Property) => `/admin/buildings/profile?property=${encodeURIComponent(prop.id)}`;
+
+  const exportProperties = () => {
+    const rows = filteredProps.map((prop) => ({
+      name: prop.name,
+      address: prop.address,
+      type: prop.category || prop.type || '',
+      status: prop.status || '',
+      workspace: prop.workspacePath || prop.workspace_id || '',
+      map_presence: prop.map_presence || '',
+      units: prop.totalUnits || prop.listings || 0,
+      locations: prop.locations || 0,
+      campaigns: prop.campaigns || 0,
+      map_links: prop.mapLinks || 0,
+    }));
+    const headers = Object.keys(rows[0] || { name: '', address: '', type: '', status: '', workspace: '', map_presence: '', units: '', locations: '', campaigns: '', map_links: '' });
+    const csv = [
+      headers.join(','),
+      ...rows.map((row) => headers.map((header) => `"${String((row as any)[header] ?? '').replaceAll('"', '""')}"`).join(',')),
+    ].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = 'downtown-perks-properties.csv';
+    anchor.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
-    <div className="min-h-screen bg-bgMain">
+    <div className="min-h-screen bg-white">
       <div className="mx-auto max-w-[1320px] px-4 py-8 sm:px-6 lg:px-8">
-        <div className="mb-8 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+        <section className="mb-6 border border-[rgba(11,31,51,0.08)] bg-white p-6">
+          <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--dp-gold)]">Admin portfolio</p>
-            <h1 className="mt-2 text-3xl font-bold text-[#11182B]">Properties</h1>
+            <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--dp-gold)]">Property directory</p>
+            <h1 className="mt-2 text-3xl font-semibold text-[#11182B]">Properties</h1>
             <p className="mt-2 max-w-3xl text-sm leading-6 text-textMuted">
-              Navigate every property, residential listing, building tenant, and real estate workspace connected to the Downtown Perks platform.
+              Find every property, residential listing, building, and real estate workspace connected to Downtown Perks. Open the record, workspace, map source, or building operations from one place.
             </p>
           </div>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -207,19 +242,10 @@ export default function PropertiesManagement() {
               Add property
             </Button>
           </div>
-        </div>
+          </div>
+        </section>
 
-        <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
-          {portfolioStats.map((stat) => (
-            <Card key={stat.label}>
-              <CardContent className="p-5">
-                <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-textMuted">{stat.label}</p>
-                <p className="mt-3 text-3xl font-bold text-[#11182B]">{stat.value}</p>
-                <p className="mt-1 text-sm text-textMuted">{stat.detail}</p>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+        <SummaryTable rows={portfolioStats} />
 
         {isIngesting && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
@@ -228,7 +254,7 @@ export default function PropertiesManagement() {
                 <Sparkles className="h-5 w-5 text-[#C5A028]" /> AI property ingestion
               </h2>
               <p className="mb-4 text-sm leading-6 text-textMuted">
-                Paste property notes from an email, broker listing, or asset report. The system extracts the property record for review before it joins the admin portfolio.
+                Paste property notes from an email, broker listing, or asset report. OpenAI extracts structured property records through the backend before they join the admin portfolio.
               </p>
               <textarea
                 value={ingestText}
@@ -298,98 +324,124 @@ export default function PropertiesManagement() {
           </Card>
         )}
 
-        <div className="mb-6 flex items-center border border-[var(--border-subtle)] bg-white p-2">
-          <Search className="ml-3 h-4 w-4 text-textSecondary" />
-          <input
-            type="text"
-            placeholder="Search by property, district, source, workspace, or address..."
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            className="w-full bg-transparent px-4 py-2 text-sm outline-none"
-          />
-        </div>
+        <section className="mb-6 border border-[rgba(11,31,51,0.08)] bg-white p-4">
+          <div className="grid gap-3 lg:grid-cols-[1fr_auto] lg:items-center">
+            <label className="flex min-h-11 items-center gap-2 border-b border-[rgba(11,31,51,0.12)] px-1">
+              <Search className="h-4 w-4 text-[#C8A96A]" />
+              <input
+                type="text"
+                placeholder="Search property, district, source, workspace, or address"
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                className="w-full bg-transparent px-2 py-2 text-sm outline-none"
+              />
+            </label>
+            <div className="flex flex-wrap gap-2">
+              <Button variant="outline" onClick={exportProperties} className="min-h-11 gap-2 text-[#0B1F33]">
+                <Download className="h-4 w-4" />
+                Export CSV
+              </Button>
+              <Link to="/admin/buildings" className="inline-flex min-h-11 items-center gap-2 border border-[rgba(11,31,51,0.12)] bg-white px-4 text-sm font-semibold text-[#0B1F33] hover:border-[#C8A96A] hover:text-[#C8A96A]">
+                Building operations <ArrowRight className="h-4 w-4" />
+              </Link>
+            </div>
+          </div>
+        </section>
 
         {isLoading ? (
           <div className="flex justify-center p-12">
             <Loader2 className="h-6 w-6 animate-spin text-textMuted" />
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
-            {filteredProps.map(prop => {
-              const canEditBuilding = prop.source_type === 'building' && !prop.tenant_id;
-              return (
-                <article key={prop.id} className="group flex h-full flex-col border border-[var(--border-subtle)] bg-white">
-                  <div className="border-b border-[var(--border-subtle)] p-5">
-                    <div className="mb-4 flex items-start justify-between gap-4">
-                      <div className="min-w-0">
-                        <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-textMuted">{prop.category || prop.type || 'Property'}</p>
-                        <h3 className="mt-2 text-xl font-bold leading-tight text-[#11182B]">{prop.name}</h3>
-                      </div>
-                      <span className="shrink-0 border border-[var(--border-subtle)] px-2 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-[#0B1F33]">
-                        {prop.status || 'active'}
-                      </span>
-                    </div>
-                    <p className="flex gap-2 text-sm leading-6 text-textMuted">
-                      <MapPin className="mt-1 h-4 w-4 shrink-0 text-[#C8A96A]" />
-                      <span>{prop.address || prop.district || 'No address listed'}</span>
-                    </p>
-                    <p className="mt-3 text-xs text-textMuted">
-                      {prop.workspacePath ? `Workspace: ${prop.workspacePath.replace('/tenant/', '')}` : 'Workspace not linked'}
-                    </p>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-px bg-[var(--border-subtle)]">
-                    {[
-                      ['Units / listings', prop.totalUnits || prop.listings || 0],
-                      ['Locations', prop.locations || 0],
-                      ['Campaigns', prop.campaigns || 0],
-                      ['Map links', prop.mapLinks || 0],
-                    ].map(([label, value]) => (
-                      <div key={String(label)} className="bg-white p-4">
-                        <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-textMuted">{label}</p>
-                        <p className="mt-2 text-lg font-bold text-[#11182B]">{value}</p>
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="flex flex-1 flex-col p-5">
-                    <div className="mb-5 flex flex-wrap gap-2">
-                      <span className="border border-[var(--border-subtle)] px-2 py-1 text-xs text-textMuted">
-                        {prop.source_type || 'platform'}
-                      </span>
-                      <span className="border border-[var(--border-subtle)] px-2 py-1 text-xs text-textMuted">
-                        {prop.map_presence || 'map pending'}
-                      </span>
-                    </div>
-
-                    <div className="mt-auto flex flex-col gap-3 border-t border-[var(--border-subtle)] pt-4 sm:flex-row sm:items-center sm:justify-between">
-                      <span className="text-xs font-mono text-textMuted">ID: {prop.id.substring(0, 12)}</span>
-                      <div className="flex flex-wrap items-center gap-2">
-                        <Button variant="outline" onClick={() => openWorkspace(prop)} className="min-h-11 gap-2 text-[#0B1F33]">
-                          <ExternalLink className="h-4 w-4" />
-                          Workspace
-                        </Button>
-                        {canEditBuilding && (
-                          <>
-                            <Button variant="ghost" className="min-h-11 w-11 p-0 text-[#0B1F33]" onClick={() => setIsEditing(prop)} aria-label={`Edit ${prop.name}`}>
-                              <Pencil className="h-4 w-4" />
+          <section className="overflow-hidden border border-[rgba(11,31,51,0.08)] bg-white">
+            <div className="border-b border-[rgba(11,31,51,0.08)] px-5 py-4">
+              <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[#C8A96A]">Property records</p>
+              <h2 className="mt-1 text-xl font-semibold text-[#11182B]">Directory and workspace links</h2>
+            </div>
+            <div className="overflow-x-auto [scrollbar-width:thin]">
+              <table className="w-full min-w-[1180px] table-fixed text-left text-sm">
+                <colgroup>
+                  <col className="w-[290px]" />
+                  <col className="w-[190px]" />
+                  <col className="w-[170px]" />
+                  <col className="w-[260px]" />
+                  <col className="w-[190px]" />
+                  <col className="w-[210px]" />
+                </colgroup>
+                <thead className="border-b border-[rgba(11,31,51,0.08)] bg-[#FBFCFD] text-[10px] font-bold uppercase tracking-[0.08em] text-textMuted">
+                  <tr>
+                    <th className="px-5 py-3">Property</th>
+                    <th className="border-l border-[rgba(11,31,51,0.06)] px-5 py-3">Status</th>
+                    <th className="border-l border-[rgba(11,31,51,0.06)] px-5 py-3">Coverage</th>
+                    <th className="border-l border-[rgba(11,31,51,0.06)] px-5 py-3">Workspace</th>
+                    <th className="border-l border-[rgba(11,31,51,0.06)] px-5 py-3">Activity</th>
+                    <th className="border-l border-[rgba(11,31,51,0.06)] px-5 py-3">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[rgba(11,31,51,0.08)]">
+                  {filteredProps.map(prop => {
+                    const canEditBuilding = prop.source_type === 'building' && !prop.tenant_id;
+                    return (
+                      <tr key={prop.id} className="align-top hover:bg-[#F7F8FB]">
+                        <td className="px-5 py-5">
+                          <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-textMuted">{prop.category || prop.type || 'Property'}</p>
+                          <h3 className="mt-1 text-base font-semibold leading-5 text-[#11182B]">{prop.name}</h3>
+                          <p className="mt-2 flex gap-2 text-xs leading-5 text-textMuted">
+                            <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#C8A96A]" />
+                            <span>{prop.address || prop.district || 'No address listed'}</span>
+                          </p>
+                        </td>
+                        <td className="border-l border-[rgba(11,31,51,0.06)] px-5 py-5">
+                          <span className="inline-flex border border-[rgba(11,31,51,0.10)] px-2 py-1 text-[10px] font-bold uppercase text-[#0B1F33]">{prop.status || 'active'}</span>
+                          <p className="mt-3 text-xs text-textMuted">{prop.source_type || 'platform'} source</p>
+                        </td>
+                        <td className="border-l border-[rgba(11,31,51,0.06)] px-5 py-5">
+                          <MiniLine label="Units" value={prop.totalUnits || prop.listings || 0} />
+                          <MiniLine label="Locations" value={prop.locations || 0} />
+                          <MiniLine label="Map links" value={prop.mapLinks || 0} />
+                        </td>
+                        <td className="border-l border-[rgba(11,31,51,0.06)] px-5 py-5">
+                          <p className="text-sm font-semibold text-[#11182B]">{prop.workspacePath ? prop.workspacePath.replace('/tenant/', '') : prop.workspace_id || 'Not linked'}</p>
+                          <p className="mt-2 text-xs text-textMuted">{prop.map_presence || 'map pending'}</p>
+                        </td>
+                        <td className="border-l border-[rgba(11,31,51,0.06)] px-5 py-5">
+                          <MiniLine label="Campaigns" value={prop.campaigns || 0} />
+                          <MiniLine label="Amenities" value={prop.amenities?.length || 0} />
+                          <MiniLine label="Photos" value={prop.photos?.length || 0} />
+                        </td>
+                        <td className="border-l border-[rgba(11,31,51,0.06)] px-5 py-5">
+                          <div className="grid gap-2">
+                            <Button variant="outline" onClick={() => openWorkspace(prop)} className="min-h-10 justify-start gap-2 text-[#0B1F33]">
+                              <ExternalLink className="h-4 w-4" />
+                              Workspace
                             </Button>
-                            <Button variant="ghost" className="min-h-11 w-11 p-0 text-rose-600" onClick={() => {
-                              if (confirm('Are you sure you want to delete this property?')) deletePropMut.mutate(prop.id);
-                            }} aria-label={`Delete ${prop.name}`}>
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </article>
-              );
-            })}
+                            <Link to={buildingHref(prop)} className="inline-flex min-h-10 items-center justify-start gap-2 border border-[rgba(11,31,51,0.12)] bg-white px-3 text-xs font-semibold text-[#0B1F33] hover:border-[#C8A96A] hover:text-[#C8A96A]">
+                              <Building2 className="h-4 w-4" />
+                              Building ops
+                            </Link>
+                            {canEditBuilding && (
+                              <div className="flex gap-2">
+                                <Button variant="ghost" className="min-h-10 w-10 p-0 text-[#0B1F33]" onClick={() => setIsEditing(prop)} aria-label={`Edit ${prop.name}`}>
+                                  <Pencil className="h-4 w-4" />
+                                </Button>
+                                <Button variant="ghost" className="min-h-10 w-10 p-0 text-rose-600" onClick={() => {
+                                  if (confirm('Are you sure you want to delete this property?')) deletePropMut.mutate(prop.id);
+                                }} aria-label={`Delete ${prop.name}`}>
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
 
             {filteredProps.length === 0 && (
-              <div className="col-span-full border border-dashed border-[var(--border-subtle)] bg-white p-12 text-center">
+              <div className="border border-dashed border-[var(--border-subtle)] bg-white p-12 text-center">
                 <Building2 className="mx-auto mb-4 h-8 w-8 text-textMuted" />
                 <p className="font-semibold text-[#11182B]">No properties found</p>
                 <p className="mt-2 text-sm text-textMuted">Try a different search, or sync the latest map data.</p>
@@ -399,9 +451,55 @@ export default function PropertiesManagement() {
                 </Button>
               </div>
             )}
-          </div>
+          </section>
         )}
       </div>
     </div>
+  );
+}
+
+function SummaryTable({ rows }: { rows: Array<{ label: string; value: number; detail: string; to: string }> }) {
+  return (
+    <section className="mb-6 overflow-hidden border border-[rgba(11,31,51,0.08)] bg-white">
+      <div className="border-b border-[rgba(11,31,51,0.08)] px-5 py-4">
+        <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[#C8A96A]">Portfolio summary</p>
+        <h2 className="mt-1 text-xl font-semibold text-[#11182B]">What is connected right now</h2>
+      </div>
+      <div className="overflow-x-auto [scrollbar-width:thin]">
+        <table className="w-full min-w-[760px] text-left text-sm">
+          <thead className="border-b border-[rgba(11,31,51,0.08)] bg-[#FBFCFD] text-[10px] font-bold uppercase tracking-[0.08em] text-textMuted">
+            <tr>
+              <th className="px-4 py-3">Area</th>
+              <th className="px-4 py-3">Total</th>
+              <th className="px-4 py-3">What it means</th>
+              <th className="px-4 py-3">Open</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-[rgba(11,31,51,0.08)]">
+            {rows.map((row) => (
+              <tr key={row.label} className="hover:bg-[#F7F8FB]">
+                <td className="px-4 py-3 font-semibold text-[#11182B]">{row.label}</td>
+                <td className="px-4 py-3 text-2xl font-semibold text-[#11182B]">{Number(row.value || 0).toLocaleString()}</td>
+                <td className="px-4 py-3 text-textMuted">{row.detail}</td>
+                <td className="px-4 py-3">
+                  <Link to={row.to} className="inline-flex min-h-9 items-center gap-2 border border-[rgba(11,31,51,0.12)] bg-white px-3 text-xs font-semibold text-[#0B1F33] hover:border-[#C8A96A] hover:text-[#C8A96A]">
+                    Open <ArrowRight className="h-3.5 w-3.5" />
+                  </Link>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  );
+}
+
+function MiniLine({ label, value }: { label: string; value: React.ReactNode }) {
+  return (
+    <p className="grid grid-cols-[78px_1fr] gap-2 border-b border-[rgba(11,31,51,0.06)] py-1.5 text-xs last:border-b-0">
+      <span className="font-semibold uppercase text-[rgba(11,31,51,0.46)]">{label}</span>
+      <span className="font-semibold text-[#11182B]">{value}</span>
+    </p>
   );
 }

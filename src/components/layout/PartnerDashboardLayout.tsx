@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
-import { Building2, LayoutDashboard, Users, Megaphone, Ticket, Settings, ArrowLeft, BarChart3, Presentation, ListTodo, Menu, X, Home as HomeIcon } from 'lucide-react';
+import { Building2, LayoutDashboard, Users, Megaphone, Ticket, Settings, ArrowLeft, BarChart3, Presentation, ListTodo, Menu, X, Home as HomeIcon, CreditCard } from 'lucide-react';
 
 export default function PartnerDashboardLayout() {
   const navigate = useNavigate();
@@ -21,6 +21,7 @@ export default function PartnerDashboardLayout() {
     { to: '/admin', icon: <LayoutDashboard className="w-4 h-4" />, label: 'Workspace' },
     { to: '/admin/home', icon: <LayoutDashboard className="w-4 h-4" />, label: 'Platform Welcome' },
     { to: '/admin/platform', icon: <ShieldIcon />, label: 'Command Center' },
+    { to: '/admin/platform/modules', icon: <Settings className="w-4 h-4" />, label: 'Module Audit' },
     { to: '/admin/partner-portal', icon: <Presentation className="w-4 h-4" />, label: 'Partner Portal' },
     { to: '/admin/dashboard', icon: <BarChart3 className="w-4 h-4" />, label: 'Performance Stats' },
     
@@ -45,6 +46,7 @@ export default function PartnerDashboardLayout() {
     { section: 'Insights' },
     { to: '/admin/reports', icon: <Settings className="w-4 h-4" />, label: 'Reports' },
     { to: '/admin/analytics', icon: <BarChart3 className="w-4 h-4" />, label: 'Perk Analytics' },
+    { to: '/admin/promotions', icon: <CreditCard className="w-4 h-4" />, label: 'Promotions & Billing' },
   ];
 
   return (

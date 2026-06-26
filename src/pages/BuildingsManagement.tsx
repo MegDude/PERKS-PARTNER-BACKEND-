@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Archive,
@@ -21,7 +21,7 @@ import { toast } from 'sonner';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/input';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsContent } from '@/components/ui/tabs';
 
 type ModalType = 'profile' | 'unit' | 'resident' | 'amenity' | 'document' | null;
 
@@ -47,6 +47,18 @@ const accessStatuses = ['active', 'pending', 'disabled'];
 const onboardingStatuses = ['not_started', 'invited', 'active', 'complete'];
 const amenityCategories = ['Wellness', 'Outdoor', 'Work', 'Hospitality', 'Parking', 'Pet', 'Other'];
 const documentCategories = ['Welcome Guide', 'Policy', 'Leasing Document', 'Partner Agreement', 'Resident Resource', 'Other'];
+
+const buildingTabDescriptions: Record<string, string> = {
+  profile: 'Building record',
+  units: 'Inventory',
+  residents: 'People and access',
+  amenities: 'Shared spaces',
+  surveys: 'Feedback',
+  access: 'Cards and QR',
+  engagement: 'Activity',
+  documents: 'Resources',
+  reporting: 'Exports',
+};
 
 const fetchProperties = async () => {
   const res = await fetch('/api/properties');
@@ -135,6 +147,31 @@ function downloadFile(fileName: string, body: string, type = 'text/csv') {
   URL.revokeObjectURL(url);
 }
 
+function BuildingTabRail({ activeTab }: { activeTab: string }) {
+  return (
+    <nav aria-label="Building workspace areas" className="mb-5 max-w-full overflow-x-auto border-b border-[#11182B]/10 bg-white [scrollbar-width:thin]">
+      <div className="flex min-w-max gap-1">
+        {buildingTabs.map((item) => {
+          const active = activeTab === item.value;
+          return (
+            <Link
+              key={item.value}
+              to={`/admin/buildings/${item.value}`}
+              aria-current={active ? 'page' : undefined}
+              className={`grid min-h-14 shrink-0 border-b-2 px-3 pb-2 pt-2 text-left transition-colors hover:text-[#0B1F33] focus:outline-none focus:ring-2 focus:ring-[#11182B] focus:ring-offset-2 ${
+                active ? 'border-[#C8A96A] text-[#0B1F33]' : 'border-transparent text-[rgba(11,31,51,0.58)]'
+              }`}
+            >
+              <span className="text-[12px] font-semibold leading-none">{item.label}</span>
+              <span className="mt-1 text-[10px] font-medium leading-none text-[rgba(11,31,51,0.46)]">{buildingTabDescriptions[item.value]}</span>
+            </Link>
+          );
+        })}
+      </div>
+    </nav>
+  );
+}
+
 function parseCsv(text: string) {
   const [headerLine, ...lines] = text.split(/\r?\n/).filter(Boolean);
   if (!headerLine) return [];
@@ -150,6 +187,7 @@ export default function BuildingsManagement() {
   const queryClient = useQueryClient();
   const { tab = 'profile' } = useParams();
   const activeTab = legacyTabs[tab] || tab;
+  const validTab = buildingTabs.some((item) => item.value === activeTab);
   const importInputRef = useRef<HTMLInputElement | null>(null);
 
   const [selectedBuildingId, setSelectedBuildingId] = useState<string>('');
@@ -180,6 +218,12 @@ export default function BuildingsManagement() {
       setSelectedBuildingId(theShore.id);
     }
   }, [buildings, selectedBuildingId]);
+
+  useEffect(() => {
+    if (!validTab) {
+      navigate('/admin/buildings/profile', { replace: true });
+    }
+  }, [navigate, validTab]);
 
   const selectedBuilding = buildings.find((building: any) => building.id === selectedBuildingId);
   const buildingUnits = useMemo(() => units.filter((unit: any) => unit.building_id === selectedBuildingId), [units, selectedBuildingId]);
@@ -478,23 +522,20 @@ export default function BuildingsManagement() {
             </div>
           </div>
 
-          <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+          <div className="dp-summary-matrix mt-5">
+            <div className="dp-summary-matrix__grid">
             <Metric label="Units" value={buildingUnits.length} detail={`${occupiedUnits} occupied`} />
             <Metric label="Occupancy" value={`${occupancy}%`} detail="Based on active units" />
             <Metric label="Residents" value={activeResidents} detail={`${activeAccess} with active access`} />
             <Metric label="Surveys" value={buildingSurveys.length} detail={`${buildingSurveyResponses.length} responses`} />
             <Metric label="Resident actions" value={buildingRedemptions.length + buildingBroadcasts.length} detail="Redemptions + broadcasts" />
+            </div>
           </div>
         </header>
 
-        <Tabs value={activeTab} onValueChange={(newTab) => navigate(`/admin/buildings/${newTab}`)}>
-          <TabsList className="mb-5 gap-1 overflow-x-auto border-b border-[#11182B]/10 bg-white pb-0">
-            {buildingTabs.map((item) => (
-              <TabsTrigger key={item.value} value={item.value} className="min-h-10 shrink-0 rounded-none px-3 text-[11px] font-semibold normal-case tracking-normal">
-                {item.label}
-              </TabsTrigger>
-            ))}
-          </TabsList>
+        <BuildingTabRail activeTab={validTab ? activeTab : 'profile'} />
+
+        <Tabs value={validTab ? activeTab : 'profile'}>
 
           <TabsContent value="profile">
             <SectionShell
@@ -671,10 +712,12 @@ export default function BuildingsManagement() {
 
           <TabsContent value="access">
             <SectionShell eyebrow="Access management" title="Control resident and staff access." description="Manage invite status, QR access, resident card status, building rules, partner access, and staff permission groups.">
-              <div className="grid gap-3 md:grid-cols-3">
+              <div className="dp-summary-matrix">
+                <div className="dp-summary-matrix__grid">
                 <Metric label="Invited" value={buildingResidents.filter((r: any) => r.resident_status === 'invited').length} detail="Pending residents" />
                 <Metric label="Activated" value={activeAccess} detail="Cards or perks active" />
                 <Metric label="Disabled" value={buildingResidents.filter((r: any) => r.access_status === 'disabled').length} detail="Access blocked" />
+                </div>
               </div>
               <div className="mt-5 grid gap-3">
                 {buildingResidents.map((resident: any) => (
@@ -686,7 +729,8 @@ export default function BuildingsManagement() {
 
           <TabsContent value="engagement">
             <SectionShell eyebrow="Engagement" title="Measure resident participation." description="Actual building activity from residents, redemptions, surveys, events, and broadcasts.">
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="dp-summary-matrix">
+                <div className="dp-summary-matrix__grid">
                 <Metric label="Residents invited" value={buildingResidents.length} detail="CRM records" />
                 <Metric label="Residents active" value={activeResidents} detail="Active resident status" />
                 <Metric label="Perks redemptions" value={buildingRedemptions.length} detail="Verified actions" />
@@ -695,6 +739,7 @@ export default function BuildingsManagement() {
                 <Metric label="Map opens" value={buildingEvents.length + buildingRedemptions.length} detail="Activity proxy" />
                 <Metric label="Broadcasts" value={buildingBroadcasts.length} detail="Messages sent" />
                 <Metric label="Participation" value={`${activeResidents ? Math.round(((buildingRedemptions.length + buildingSurveyResponses.length) / activeResidents) * 100) : 0}%`} detail="Actions per active resident" />
+                </div>
               </div>
             </SectionShell>
           </TabsContent>
@@ -712,13 +757,15 @@ export default function BuildingsManagement() {
 
           <TabsContent value="reporting">
             <SectionShell eyebrow="Reporting" title="Export operational reports." description="Generate property operations reports using building, unit, resident, survey, amenity, and engagement data." action={<Button onClick={exportReport}><Download className="h-4 w-4" /> Export CSV</Button>}>
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="dp-summary-matrix">
+                <div className="dp-summary-matrix__grid">
                 <Metric label="Buildings" value={buildings.length} detail="Managed properties" />
                 <Metric label="Units" value={buildingUnits.length} detail={`${occupancy}% occupied`} />
                 <Metric label="Residents" value={buildingResidents.length} detail={`${activeAccess} access active`} />
                 <Metric label="Amenities" value={buildingAmenities.length} detail="Managed assets" />
                 <Metric label="Surveys" value={buildingSurveys.length} detail={`${buildingSurveyResponses.length} responses`} />
                 <Metric label="Reports" value={buildingAuditLogs.filter((log: any) => String(log.action).includes('report')).length} detail="Generated exports" />
+                </div>
               </div>
             </SectionShell>
           </TabsContent>
@@ -765,10 +812,10 @@ function SectionShell({ eyebrow, title, description, action, children }: any) {
 
 function Metric({ label, value, detail }: any) {
   return (
-    <div className="bg-white py-4 shadow-[0_18px_50px_rgba(17,24,43,0.06)] ring-1 ring-[#11182B]/5">
-      <div className="px-4 text-[11px] font-bold uppercase text-[#6E7785]">{label}</div>
-      <div className="mt-2 px-4 text-2xl font-semibold text-[#11182B]">{value}</div>
-      <div className="mt-1 px-4 text-xs text-[#6E7785]">{detail}</div>
+    <div className="dp-summary-matrix__item">
+      <div className="dp-summary-matrix__label">{label}</div>
+      <div className="dp-summary-matrix__value">{value}</div>
+      <div className="dp-summary-matrix__detail">{detail}</div>
     </div>
   );
 }

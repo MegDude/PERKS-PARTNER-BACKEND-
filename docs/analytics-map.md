@@ -1,18 +1,34 @@
 # Analytics Map
 
-Analytics collection: `AnalyticsEvent`.
+## Current Evidence
 
-Current event sources:
+- `AnalyticsEvent: 9`
+- `/api/analytics/summary`
+- `/api/analytics/events`
+- Partner analytics containers: 358
 
-- map events
-- perk state changes
-- perk redemption
+## Required Analytics Events
+
+- route opened
+- record created
+- record updated
+- record archived
+- export generated
+- search used
+- filter used
+- workflow started
+- workflow completed
+- workflow failed
+- integration tested
+- report generated
+- survey submitted
+- perk redeemed
 - event RSVP
-- event check-in
-- campaign publish/pause/archive
-- QR scans
-- AI requests
-- report generation where applicable
+- QR scanned
+- campaign published
+- message sent
+- AI request/response/feedback
 
-Aggregation endpoint: `GET /api/analytics/summary`.
+## Gap
 
+Analytics infrastructure exists, but event volume is too low for the number of modules and records. Instrumentation needs to be added to every product and admin action.

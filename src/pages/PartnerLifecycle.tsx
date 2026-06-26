@@ -116,6 +116,7 @@ export default function PartnerLifecycle() {
   const [state, setState] = useState<LifecycleState>(() => loadState());
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<Record<string, any[]>>({});
+  const workspaceParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
 
   useEffect(() => {
     window.localStorage.setItem(storageKey, JSON.stringify(state));
@@ -154,7 +155,29 @@ export default function PartnerLifecycle() {
   }, [state.provision?.tenant?.id]);
 
   const selectedType = partnerTypes.find((type) => type.key === state.organizationType) || partnerTypes[2];
-  const selectedTenantId = state.provision?.tenant?.id || data.tenants?.[0]?.id;
+  const selectedWorkspaceKey = workspaceParams.get('tenant') || workspaceParams.get('workspace') || workspaceParams.get('workspaceId') || workspaceParams.get('tenantId') || '';
+  const selectedPartnerId = workspaceParams.get('partner') || '';
+  const selectedWorkspace = useMemo(() => {
+    if (!selectedWorkspaceKey && !selectedPartnerId) return null;
+    const normalizedKey = selectedWorkspaceKey.toLowerCase();
+    const partner = (data.partners || []).find((item: any) => item.id === selectedPartnerId || item.tenant_id === selectedWorkspaceKey || item.workspace_id === selectedWorkspaceKey);
+    const tenant = (data.tenants || []).find((item: any) => (
+      item.id === selectedWorkspaceKey ||
+      item.slug === selectedWorkspaceKey ||
+      item.workspace_id === selectedWorkspaceKey ||
+      String(item.name || '').toLowerCase().replace(/[^a-z0-9]+/g, '-') === normalizedKey ||
+      item.id === partner?.tenant_id
+    ));
+    const workspace = (data.workspaces || []).find((item: any) => (
+      item.id === selectedWorkspaceKey ||
+      item.tenant_id === selectedWorkspaceKey ||
+      item.tenant_id === tenant?.id ||
+      item.path === `/tenant/${selectedWorkspaceKey}` ||
+      item.slug === selectedWorkspaceKey
+    ));
+    return { partner, tenant, workspace };
+  }, [data.partners, data.tenants, data.workspaces, selectedPartnerId, selectedWorkspaceKey]);
+  const selectedTenantId = selectedWorkspace?.tenant?.id || selectedWorkspace?.workspace?.tenant_id || selectedWorkspace?.partner?.tenant_id || (!selectedWorkspaceKey ? state.provision?.tenant?.id : '') || (!selectedWorkspaceKey ? data.tenants?.[0]?.id : '');
   const scoped = useMemo(() => {
     const filter = (items: any[] = []) => items.filter((item) => !selectedTenantId || item.tenant_id === selectedTenantId || item.id === selectedTenantId);
     return {
@@ -198,7 +221,7 @@ export default function PartnerLifecycle() {
   };
 
   if (location.pathname.startsWith('/workspace')) {
-    return <WorkspaceView state={state} scoped={scoped} data={data} />;
+    return <WorkspaceView state={state} scoped={scoped} data={data} selectedWorkspace={selectedWorkspace} selectedTenantId={selectedTenantId} />;
   }
 
   if (location.pathname === '/partners/start') {
@@ -426,29 +449,32 @@ function Line({ label, value, strong = false }: { label: string; value: React.Re
   );
 }
 
-function WorkspaceView({ state, scoped, data }: { state: LifecycleState; scoped: Record<string, any[]>; data: Record<string, any[]> }) {
+function WorkspaceView({ state, scoped, data, selectedWorkspace, selectedTenantId }: { state: LifecycleState; scoped: Record<string, any[]>; data: Record<string, any[]>; selectedWorkspace: any; selectedTenantId: string }) {
   const location = useLocation();
   const [actionStatus, setActionStatus] = useState('');
   const [assistantResponse, setAssistantResponse] = useState('');
   const moduleSlug = location.pathname.replace('/workspace/', '') || 'home';
-  const orgName = state.provision?.tenant?.name || state.organization.name || data.tenants?.[0]?.name || 'Partner Workspace';
-  const tenantId = state.provision?.tenant?.id || data.tenants?.[0]?.id;
+  const orgName = selectedWorkspace?.tenant?.name || selectedWorkspace?.partner?.business_name || selectedWorkspace?.partner?.name || state.provision?.tenant?.name || state.organization.name || data.tenants?.[0]?.name || 'Partner Workspace';
+  const tenantId = selectedTenantId || state.provision?.tenant?.id || data.tenants?.[0]?.id;
+  const workspaceQuery = location.search || (tenantId ? `?tenant=${encodeURIComponent(tenantId)}` : '');
   const analytics = scoped.analytics?.[0] || {};
   const snapshot = [
-    { label: 'Views', value: analytics.views || 0 },
-    { label: 'Directions', value: analytics.directions || 0 },
-    { label: 'Offer Saves', value: analytics.saves || 0 },
-    { label: 'Redemptions', value: analytics.redemptions || 0 },
-    { label: 'Events', value: scoped.events?.length || 0 },
-    { label: 'Visitors Nearby', value: analytics.guests_reached || 0 },
-    { label: 'Campaign Reach', value: scoped.campaigns?.reduce((sum, item) => sum + Number(item.reach || 0), 0) || 0 },
-    { label: 'Recommendations', value: 4 },
+    { label: 'Views', value: analytics.views || 0, note: 'Profile and map visibility' },
+    { label: 'Directions', value: analytics.directions || 0, note: 'Intent to visit' },
+    { label: 'Offer Saves', value: analytics.saves || 0, note: 'Resident interest' },
+    { label: 'Redemptions', value: analytics.redemptions || 0, note: 'Confirmed use' },
+    { label: 'Events', value: scoped.events?.length || 0, note: 'Active programming' },
+    { label: 'Visitors Nearby', value: analytics.guests_reached || 0, note: 'Local reach signal' },
+    { label: 'Campaign Reach', value: scoped.campaigns?.reduce((sum, item) => sum + Number(item.reach || 0), 0) || 0, note: 'Audience coverage' },
+    { label: 'Recommendations', value: 4, note: 'Next actions queued' },
   ];
 
   if (moduleSlug !== 'home') {
     return (
-      <Shell eyebrow="Workspace module" title={moduleTitle(moduleSlug)} body={`${orgName} data is loaded from the platform workspace records and scoped to the selected organization where records are available.`}>
-        <WorkspaceNav />
+      <Shell eyebrow="Workspace area" title={moduleTitle(moduleSlug)} body={`Showing ${orgName} records only, so each partner workspace stays separated as you move through tabs.`}>
+        <WorkspaceContextBar orgName={orgName} tenantId={tenantId} />
+        <WorkspaceMetricStrip metrics={snapshot} compact />
+        <WorkspaceNav query={workspaceQuery} />
         <ModuleTable slug={moduleSlug} scoped={scoped} />
       </Shell>
     );
@@ -486,17 +512,9 @@ function WorkspaceView({ state, scoped, data }: { state: LifecycleState; scoped:
 
   return (
     <Shell eyebrow="Workspace Home" title={orgName} body="Manage campaigns, offers, events, reporting, team access, billing, QR experiences, and performance from one operating center.">
-      <WorkspaceNav />
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {snapshot.map((metric) => (
-          <React.Fragment key={metric.label}>
-            <SectionCard>
-              <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-[rgba(11,31,51,0.52)]">{metric.label}</p>
-              <strong className="mt-2 block text-2xl font-semibold">{Number(metric.value || 0).toLocaleString()}</strong>
-            </SectionCard>
-          </React.Fragment>
-        ))}
-      </div>
+      <WorkspaceContextBar orgName={orgName} tenantId={tenantId} />
+      <WorkspaceNav query={workspaceQuery} />
+      <WorkspaceMetricStrip metrics={snapshot} />
       <div className="mt-6 grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
         <SectionCard>
           <p className="text-lg font-semibold">Quick actions</p>
@@ -534,7 +552,7 @@ function WorkspaceView({ state, scoped, data }: { state: LifecycleState; scoped:
               <div key={group.label}>
                 <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-[#C8A96A]">{group.label}</p>
                 <div className="mt-3 grid gap-2">
-                  {group.items.map((item) => <Link key={item} to={`/workspace/${slugFor(item)}`} className="flex items-center justify-between border-b border-[rgba(11,31,51,0.08)] py-2 text-sm font-semibold hover:text-[#C8A96A]">{item}<ArrowRight className="h-4 w-4" /></Link>)}
+                  {group.items.map((item) => <Link key={item} to={`/workspace/${slugFor(item)}${workspaceQuery}`} className="flex items-center justify-between border-b border-[rgba(11,31,51,0.08)] py-2 text-sm font-semibold hover:text-[#C8A96A]">{item}<ArrowRight className="h-4 w-4" /></Link>)}
                 </div>
               </div>
             ))}
@@ -564,12 +582,47 @@ function WorkspaceView({ state, scoped, data }: { state: LifecycleState; scoped:
   );
 }
 
-function WorkspaceNav() {
+function WorkspaceContextBar({ orgName, tenantId }: { orgName: string; tenantId: string }) {
+  return (
+    <div className="mb-4 flex flex-col gap-2 border border-[rgba(11,31,51,0.08)] bg-white px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+      <div>
+        <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-[#C8A96A]">Viewing workspace</p>
+        <p className="text-sm font-semibold">{orgName}</p>
+      </div>
+      <p className="text-xs font-semibold text-[rgba(11,31,51,0.54)]">{tenantId ? `Workspace key: ${tenantId}` : 'No workspace selected'}</p>
+    </div>
+  );
+}
+
+function WorkspaceMetricStrip({ metrics, compact = false }: { metrics: Array<{ label: string; value: any; note: string }>; compact?: boolean }) {
+  return (
+    <section className={`dp-summary-matrix mb-6 ${compact ? 'mt-0' : ''}`}>
+      <div className="flex flex-col gap-1 border-b border-[rgba(11,31,51,0.06)] px-3 py-2.5 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="text-[10px] font-bold uppercase text-[#C8A96A]">Today at a glance</p>
+          <h2 className="text-sm font-semibold">A quick read on what people are doing.</h2>
+        </div>
+        <p className="text-xs leading-5 text-[rgba(11,31,51,0.56)]">Shown on each workspace tab.</p>
+      </div>
+      <div className="dp-summary-matrix__grid">
+        {metrics.map((metric) => (
+          <div key={metric.label} className="dp-summary-matrix__item">
+            <p className="dp-summary-matrix__label">{metric.label}</p>
+            <strong className="dp-summary-matrix__value">{Number(metric.value || 0).toLocaleString()}</strong>
+            <p className="dp-summary-matrix__detail">{metric.note}</p>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function WorkspaceNav({ query = '' }: { query?: string }) {
   const links = ['home', 'map', 'offers', 'events', 'campaigns', 'reports', 'analytics', 'profile', 'team', 'billing', 'settings'];
   return (
     <div className="mb-6 flex gap-2 overflow-x-auto border-b border-[rgba(11,31,51,0.08)] pb-3">
       {links.map((link) => (
-        <Link key={link} to={`/workspace/${link}`} className="whitespace-nowrap px-2 py-2 text-xs font-semibold capitalize text-[rgba(11,31,51,0.62)] hover:text-[#C8A96A]">{link}</Link>
+        <Link key={link} to={`/workspace/${link}${query}`} className="whitespace-nowrap px-2 py-2 text-xs font-semibold capitalize text-[rgba(11,31,51,0.62)] hover:text-[#C8A96A]">{link}</Link>
       ))}
     </div>
   );
@@ -620,7 +673,7 @@ function ModuleTable({ slug, scoped }: { slug: string; scoped: Record<string, an
                 <td className="py-3 pr-4 text-[rgba(11,31,51,0.52)]">{row.updated_at ? new Date(row.updated_at).toLocaleDateString() : 'Not updated'}</td>
               </tr>
             ))}
-            {rows.length === 0 && <tr><td colSpan={4} className="py-8 text-center text-[rgba(11,31,51,0.58)]">No records yet. Use Create to start this workflow.</td></tr>}
+            {rows.length === 0 && <tr><td colSpan={4} className="py-8 text-center text-[rgba(11,31,51,0.58)]">No records yet. Use Create to add the first item.</td></tr>}
           </tbody>
         </table>
       </div>
