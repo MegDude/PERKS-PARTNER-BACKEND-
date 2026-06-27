@@ -18,7 +18,7 @@ import {
   Users,
   X,
 } from 'lucide-react';
-import type { FavoriteItem, PartnerLead, PartnerWorkspaceData } from '@/types/partnerWorkspace';
+import type { FavoriteItem, PartnerLead, PartnerWorkspaceData, Perk } from '@/types/partnerWorkspace';
 import {
   applyCoupon,
   calculateSetupProgress,
@@ -31,6 +31,13 @@ import {
 import './partnerWorkspace.css';
 
 type Props = PartnerWorkspaceData;
+type QrArtwork = {
+  headline: string;
+  bodyCopy: string;
+  logoUrl: string;
+  imageUrl: string;
+  printSize: string;
+};
 
 const navItems = [
   { label: 'Home', href: '#home' },
@@ -93,6 +100,39 @@ function ToggleFavorite({ item, onToggle }: { item: FavoriteItem; onToggle: (id:
   );
 }
 
+function absoluteUrl(destination: string) {
+  if (/^https?:\/\//i.test(destination)) return destination;
+  const origin = typeof window === 'undefined' ? 'https://downtownperks.com' : window.location.origin;
+  return `${origin}${destination.startsWith('/') ? destination : `/${destination}`}`;
+}
+
+function qrImageUrl(destination: string, size = 320) {
+  return `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&margin=16&data=${encodeURIComponent(absoluteUrl(destination))}`;
+}
+
+function cleanFileName(value: string) {
+  return value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'qr-artwork';
+}
+
+function QrArtworkPreview({ workspaceName, qr, artwork }: { workspaceName: string; qr: Props['qrs'][number]; artwork: QrArtwork }) {
+  const destination = absoluteUrl(qr.destination);
+  return (
+    <div className="shore-qr-artwork" aria-label={`${qr.name} QR artwork preview`}>
+      {artwork.imageUrl && <img className="shore-qr-artwork-image" src={artwork.imageUrl} alt="" />}
+      <div className="shore-qr-artwork-top">
+        {artwork.logoUrl ? <img className="shore-qr-logo" src={artwork.logoUrl} alt={`${workspaceName} logo`} /> : <span className="shore-qr-logo-text">{workspaceName.slice(0, 2).toUpperCase()}</span>}
+        <span>{workspaceName}</span>
+      </div>
+      <img className="shore-qr-code-image" src={qrImageUrl(qr.destination)} alt={`QR code for ${qr.name}`} />
+      <div className="shore-qr-artwork-copy">
+        <strong>{artwork.headline}</strong>
+        <span>{artwork.bodyCopy}</span>
+        <small>{destination}</small>
+      </div>
+    </div>
+  );
+}
+
 export function PartnerWorkspaceTemplate(props: Props) {
   const workspaceName = props.partner.name || props.profile.propertyName || 'Partner';
   const workspaceSlug = props.partner.id || workspaceName.toLowerCase().replace(/[^a-z0-9]+/g, '-');
@@ -103,8 +143,20 @@ export function PartnerWorkspaceTemplate(props: Props) {
   const [couponResult, setCouponResult] = useState<{ discount: number; totalDue: number; accepted: boolean } | null>(null);
   const [billingNotice, setBillingNotice] = useState('Use DUDE2026 when you want the demo to end with a clean $0 checkout.');
   const [workspaceMenuOpen, setWorkspaceMenuOpen] = useState(false);
+  const [perks, setPerks] = useState<Perk[]>(props.perks);
+  const [perkNotice, setPerkNotice] = useState<Record<string, string>>({});
+  const [qrNotice, setQrNotice] = useState<Record<string, string>>({});
+  const [qrArtwork, setQrArtwork] = useState<Record<string, QrArtwork>>(() =>
+    Object.fromEntries(props.qrs.map((qr) => [qr.id, {
+      headline: qr.headline || qr.name,
+      bodyCopy: qr.bodyCopy || qr.conversionSignal || `Scan for ${workspaceName}.`,
+      logoUrl: qr.logoUrl || '',
+      imageUrl: qr.imageUrl || '',
+      printSize: qr.printSize || '4 x 6 in',
+    }]))
+  );
   const setupProgress = calculateSetupProgress(props, lead);
-  const activePerks = props.perks.filter((perk) => perk.status === 'Active').length;
+  const activePerks = perks.filter((perk) => perk.status === 'Active').length;
   const upcomingEvents = props.events.filter((event) => event.status !== 'Draft').length;
 
   const activeModules = useMemo(
@@ -137,7 +189,7 @@ export function PartnerWorkspaceTemplate(props: Props) {
 
   function toggleFavorite(id: string) {
     const existing = favorites.some((favorite) => favorite.id === id);
-    const perk = props.perks.find((item) => `fav-${item.id.replace('perk-', '')}` === id);
+    const perk = perks.find((item) => `fav-${item.id.replace('perk-', '')}` === id);
     const event = props.events.find((item) => `fav-${item.id.replace('event-', '')}` === id);
     const next = existing
       ? favorites.map((favorite) => (favorite.id === id ? { ...favorite, saved: !favorite.saved } : favorite))
@@ -179,6 +231,20 @@ export function PartnerWorkspaceTemplate(props: Props) {
     await navigator.clipboard?.writeText(text);
   }
 
+  function updateQrArtwork(qrId: string, key: keyof QrArtwork, value: string) {
+    setQrArtwork((current) => ({
+      ...current,
+      [qrId]: {
+        ...current[qrId],
+        [key]: value,
+      },
+    }));
+  }
+
+  function updatePerk(perkId: string, key: keyof Perk, value: string) {
+    setPerks((current) => current.map((perk) => (perk.id === perkId ? { ...perk, [key]: value } : perk)));
+  }
+
   function downloadTextFile(filename: string, text: string) {
     const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
     const url = URL.createObjectURL(blob);
@@ -187,6 +253,117 @@ export function PartnerWorkspaceTemplate(props: Props) {
     link.download = filename;
     link.click();
     URL.revokeObjectURL(url);
+  }
+
+  function qrArtworkSvg(qr: Props['qrs'][number]) {
+    const artwork = qrArtwork[qr.id];
+    const destination = absoluteUrl(qr.destination);
+    const logo = artwork.logoUrl ? `<image href="${artwork.logoUrl}" x="48" y="44" width="48" height="48" preserveAspectRatio="xMidYMid slice" />` : `<rect x="48" y="44" width="48" height="48" fill="#0B1F33"/><text x="72" y="75" text-anchor="middle" fill="#fff" font-family="Inter, Arial" font-size="16" font-weight="800">${workspaceName.slice(0, 2).toUpperCase()}</text>`;
+    const photo = artwork.imageUrl ? `<image href="${artwork.imageUrl}" x="0" y="0" width="720" height="240" preserveAspectRatio="xMidYMid slice" opacity="0.9" />` : '';
+    return `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="1080" viewBox="0 0 720 1080">
+  <rect width="720" height="1080" fill="#FFFFFF"/>
+  ${photo}
+  <rect x="0" y="0" width="720" height="1080" fill="rgba(255,255,255,0.86)"/>
+  ${logo}
+  <text x="116" y="65" fill="#0B1F33" font-family="Inter, Arial" font-size="24" font-weight="800">${workspaceName}</text>
+  <text x="116" y="90" fill="#C8A96A" font-family="Inter, Arial" font-size="14" font-weight="800">${qr.placement}</text>
+  <text x="48" y="184" fill="#0B1F33" font-family="Inter, Arial" font-size="44" font-weight="700">${artwork.headline}</text>
+  <foreignObject x="48" y="214" width="624" height="120"><div xmlns="http://www.w3.org/1999/xhtml" style="font-family:Inter,Arial,sans-serif;font-size:22px;line-height:1.35;color:rgba(11,31,51,.68)">${artwork.bodyCopy}</div></foreignObject>
+  <image href="${qrImageUrl(qr.destination, 520)}" x="100" y="378" width="520" height="520"/>
+  <text x="360" y="952" text-anchor="middle" fill="#0B1F33" font-family="Inter, Arial" font-size="18" font-weight="700">${destination}</text>
+  <text x="360" y="994" text-anchor="middle" fill="#8A6A1F" font-family="Inter, Arial" font-size="15" font-weight="800">Downtown Perks · ${artwork.printSize}</text>
+</svg>`;
+  }
+
+  function exportQrArtwork(qr: Props['qrs'][number]) {
+    downloadTextFile(`${cleanFileName(workspaceName)}-${cleanFileName(qr.name)}.svg`, qrArtworkSvg(qr));
+  }
+
+  async function saveQrMaterial(qr: Props['qrs'][number]) {
+    const artwork = qrArtwork[qr.id];
+    const payload = {
+      id: qr.id,
+      label: qr.name,
+      placement: qr.placement,
+      destination_url: absoluteUrl(qr.destination),
+      status: qr.status.toLowerCase(),
+      scans: qr.scans,
+      artwork,
+      workspace_name: workspaceName,
+      updated_at: new Date().toISOString(),
+    };
+    try {
+      const patch = await fetch(`/api/entities/PartnerQrExperience/${encodeURIComponent(qr.id)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (!patch.ok) {
+        await fetch('/api/entities/PartnerQrExperience', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+      }
+      setQrNotice((current) => ({ ...current, [qr.id]: 'Artwork saved to the workspace.' }));
+    } catch {
+      setQrNotice((current) => ({ ...current, [qr.id]: 'Saved locally. Backend is not reachable from this browser.' }));
+    }
+  }
+
+  function printQrArtwork(qr: Props['qrs'][number]) {
+    const svg = qrArtworkSvg(qr);
+    const printWindow = window.open('', '_blank', 'noopener,noreferrer,width=900,height=1100');
+    if (!printWindow) {
+      exportQrArtwork(qr);
+      return;
+    }
+    printWindow.document.write(`<!doctype html><html><head><title>${qr.name}</title><style>@page{size:${qrArtwork[qr.id].printSize.includes('8.5') ? 'letter' : '4in 6in'};margin:0}body{margin:0;background:#fff}svg{display:block;width:100%;height:auto}</style></head><body>${svg}<script>window.onload=()=>{window.print()}</script></body></html>`);
+    printWindow.document.close();
+  }
+
+  async function savePerkSetup(perk: Perk, nextStatus: Perk['status'] = perk.status) {
+    const nextPerk = { ...perk, status: nextStatus };
+    setPerks((current) => current.map((item) => (item.id === perk.id ? nextPerk : item)));
+    const payload = {
+      id: nextPerk.id,
+      partner: nextPerk.partner,
+      name: nextPerk.partner,
+      title: nextPerk.offerTitle,
+      offer_title: nextPerk.offerTitle,
+      description: nextPerk.description,
+      eligibility: nextPerk.eligibility,
+      start_date: nextPerk.startDate,
+      end_date: nextPerk.endDate,
+      status: nextStatus.toLowerCase(),
+      active: nextStatus === 'Active',
+      is_active: nextStatus === 'Active',
+      saves: nextPerk.saves,
+      redemption_count: nextPerk.redemptions,
+      scans: nextPerk.qrScans,
+      location: nextPerk.location,
+      address: nextPerk.location,
+      workspace_name: workspaceName,
+      updated_at: new Date().toISOString(),
+    };
+    try {
+      const patch = await fetch(`/api/perks/${encodeURIComponent(nextPerk.id)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (!patch.ok) {
+        await fetch('/api/perks', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+      }
+      setPerkNotice((current) => ({ ...current, [perk.id]: nextStatus === 'Active' ? 'Perk published and saved.' : 'Perk saved.' }));
+    } catch {
+      setPerkNotice((current) => ({ ...current, [perk.id]: 'Saved locally. Backend is not reachable from this browser.' }));
+    }
   }
 
   function writeBillingSummary(action: 'quote' | 'invoice') {
@@ -410,25 +587,67 @@ export function PartnerWorkspaceTemplate(props: Props) {
           </div>
         </Section>
 
-        <Section id="qr" eyebrow="Codes" title="Put the entry points where residents already look" description="Each code has a real place, a clear destination, scan activity, and one job: help residents find something worth doing nearby.">
-          <div className="grid gap-x-10 gap-y-6 lg:grid-cols-3">
+        <Section id="qr" eyebrow="Codes" title="Put the entry points where people already look" description="Each code now has artwork, editable copy, print sizing, scan context, and export controls for lobby signs, mailroom cards, elevator sheets, welcome emails, and partner campaign materials.">
+          <div className="grid gap-x-10 gap-y-8 lg:grid-cols-2">
             {props.qrs.map((qr) => (
               <div key={qr.id} className="shore-card py-2">
-                <div className="flex items-start justify-between gap-3">
-                  <QrCode className="h-5 w-5 text-[#C8A96A]" />
-                  <span className="text-[11px] font-bold uppercase text-[rgba(11,31,51,0.52)]">{qr.status}</span>
-                </div>
-                <h3 className="mt-3 text-base font-semibold">{qr.name}</h3>
-                <p className="mt-1 text-xs leading-5 text-[rgba(11,31,51,0.62)]">{qr.placement} → {qr.destination}</p>
-                <div className="mt-3 text-2xl font-semibold">{qr.scans} scans</div>
-                <p className="text-xs text-[rgba(11,31,51,0.6)]">{qr.conversionSignal} · Last scan: {qr.lastScan}</p>
-                <div className="mt-4 grid grid-cols-2 gap-2">
-                  <button type="button" className="shore-button" onClick={() => copyText(`${window.location.origin}${qr.destination}`)}>
-                    <Copy className="h-3.5 w-3.5" /> Copy link
-                  </button>
-                  <button type="button" className="shore-button" onClick={() => downloadTextFile(`${qr.id}.txt`, `${qr.name}\n${window.location.origin}${qr.destination}`)}>
-                    <Download className="h-3.5 w-3.5" /> Download
-                  </button>
+                <div className="grid gap-5 sm:grid-cols-[190px_1fr]">
+                  <QrArtworkPreview workspaceName={workspaceName} qr={qr} artwork={qrArtwork[qr.id]} />
+                  <div>
+                    <div className="flex items-start justify-between gap-3">
+                      <QrCode className="h-5 w-5 text-[#C8A96A]" />
+                      <span className="text-[11px] font-bold uppercase text-[rgba(11,31,51,0.52)]">{qr.status}</span>
+                    </div>
+                    <h3 className="mt-3 text-base font-semibold">{qr.name}</h3>
+                    <p className="mt-1 text-xs leading-5 text-[rgba(11,31,51,0.62)]">{qr.placement} → {qr.destination}</p>
+                    <div className="mt-3 text-2xl font-semibold">{qr.scans} scans</div>
+                    <p className="text-xs text-[rgba(11,31,51,0.6)]">{qr.conversionSignal} · Last scan: {qr.lastScan}</p>
+                    <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                      <label className="block">
+                        <span className="text-[10px] font-bold uppercase text-[rgba(11,31,51,0.52)]">Headline</span>
+                        <input className="shore-input mt-1" value={qrArtwork[qr.id].headline} onChange={(event) => updateQrArtwork(qr.id, 'headline', event.target.value)} />
+                      </label>
+                      <label className="block">
+                        <span className="text-[10px] font-bold uppercase text-[rgba(11,31,51,0.52)]">Print size</span>
+                        <select className="shore-input mt-1" value={qrArtwork[qr.id].printSize} onChange={(event) => updateQrArtwork(qr.id, 'printSize', event.target.value)}>
+                          <option>4 x 6 in</option>
+                          <option>5 x 7 in</option>
+                          <option>8.5 x 11 in</option>
+                          <option>1080 x 1350 social</option>
+                        </select>
+                      </label>
+                      <label className="block sm:col-span-2">
+                        <span className="text-[10px] font-bold uppercase text-[rgba(11,31,51,0.52)]">Sign copy</span>
+                        <input className="shore-input mt-1" value={qrArtwork[qr.id].bodyCopy} onChange={(event) => updateQrArtwork(qr.id, 'bodyCopy', event.target.value)} />
+                      </label>
+                      <label className="block">
+                        <span className="text-[10px] font-bold uppercase text-[rgba(11,31,51,0.52)]">Logo URL</span>
+                        <input className="shore-input mt-1" placeholder="Add a logo image URL" value={qrArtwork[qr.id].logoUrl} onChange={(event) => updateQrArtwork(qr.id, 'logoUrl', event.target.value)} />
+                      </label>
+                      <label className="block">
+                        <span className="text-[10px] font-bold uppercase text-[rgba(11,31,51,0.52)]">Background image URL</span>
+                        <input className="shore-input mt-1" placeholder="Optional image URL" value={qrArtwork[qr.id].imageUrl} onChange={(event) => updateQrArtwork(qr.id, 'imageUrl', event.target.value)} />
+                      </label>
+                    </div>
+                    <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
+                      <button type="button" className="shore-button" onClick={() => copyText(absoluteUrl(qr.destination))}>
+                        <Copy className="h-3.5 w-3.5" /> Copy
+                      </button>
+                      <button type="button" className="shore-button" onClick={() => exportQrArtwork(qr)}>
+                        <Download className="h-3.5 w-3.5" /> SVG
+                      </button>
+                      <button type="button" className="shore-button" onClick={() => printQrArtwork(qr)}>
+                        <Download className="h-3.5 w-3.5" /> Print
+                      </button>
+                      <button type="button" className="shore-button" onClick={() => saveQrMaterial(qr)}>
+                        <Check className="h-3.5 w-3.5" /> Save
+                      </button>
+                      <button type="button" className="shore-button" onClick={() => downloadTextFile(`${qr.id}.txt`, `${qr.name}\n${absoluteUrl(qr.destination)}\n${qrArtwork[qr.id].headline}\n${qrArtwork[qr.id].bodyCopy}`)}>
+                        <Download className="h-3.5 w-3.5" /> Copy deck
+                      </button>
+                    </div>
+                    {qrNotice[qr.id] && <p className="mt-2 text-xs font-semibold text-[rgba(11,31,51,0.58)]">{qrNotice[qr.id]}</p>}
+                  </div>
                 </div>
               </div>
             ))}
@@ -437,29 +656,73 @@ export function PartnerWorkspaceTemplate(props: Props) {
 
         <Section id="perks" eyebrow="Perks" title="Small reasons to choose somewhere nearby" description="Offers should be easy to understand, easy to save, and easy to use without making residents decode fine print.">
           <div className="grid gap-x-12 gap-y-8 lg:grid-cols-2">
-            {props.perks.map((perk) => (
+            {perks.map((perk) => (
               <div key={perk.id} className="shore-card">
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <div className="text-[11px] font-bold uppercase text-[#C8A96A]">{perk.partner}</div>
-                    <h3 className="mt-1 text-lg font-semibold">{perk.offerTitle}</h3>
+                    <label className="block">
+                      <span className="text-[11px] font-bold uppercase text-[#C8A96A]">Partner</span>
+                      <input className="shore-input mt-1" value={perk.partner} onChange={(event) => updatePerk(perk.id, 'partner', event.target.value)} />
+                    </label>
+                    <label className="mt-2 block">
+                      <span className="text-[10px] font-bold uppercase text-[rgba(11,31,51,0.52)]">Offer title</span>
+                      <input className="shore-input mt-1 text-lg font-semibold" value={perk.offerTitle} onChange={(event) => updatePerk(perk.id, 'offerTitle', event.target.value)} />
+                    </label>
                   </div>
-                  <span className="text-[11px] font-bold uppercase text-[rgba(11,31,51,0.5)]">{perk.status}</span>
+                  <label className="min-w-[110px]">
+                    <span className="text-[10px] font-bold uppercase text-[rgba(11,31,51,0.52)]">Status</span>
+                    <select className="shore-input mt-1" value={perk.status} onChange={(event) => updatePerk(perk.id, 'status', event.target.value as Perk['status'])}>
+                      <option>Active</option>
+                      <option>Scheduled</option>
+                      <option>Draft</option>
+                    </select>
+                  </label>
                 </div>
-                <p className="mt-2 text-sm leading-6 text-[rgba(11,31,51,0.66)]">{perk.description}</p>
+                <label className="mt-3 block">
+                  <span className="text-[10px] font-bold uppercase text-[rgba(11,31,51,0.52)]">Resident-facing copy</span>
+                  <textarea className="shore-input mt-1 min-h-20" value={perk.description} onChange={(event) => updatePerk(perk.id, 'description', event.target.value)} />
+                </label>
+                <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                  <label className="block">
+                    <span className="text-[10px] font-bold uppercase text-[rgba(11,31,51,0.52)]">Eligibility</span>
+                    <input className="shore-input mt-1" value={perk.eligibility} onChange={(event) => updatePerk(perk.id, 'eligibility', event.target.value)} />
+                  </label>
+                  <label className="block">
+                    <span className="text-[10px] font-bold uppercase text-[rgba(11,31,51,0.52)]">Location</span>
+                    <input className="shore-input mt-1" value={perk.location} onChange={(event) => updatePerk(perk.id, 'location', event.target.value)} />
+                  </label>
+                  <label className="block">
+                    <span className="text-[10px] font-bold uppercase text-[rgba(11,31,51,0.52)]">Start date</span>
+                    <input className="shore-input mt-1" type="date" value={perk.startDate} onChange={(event) => updatePerk(perk.id, 'startDate', event.target.value)} />
+                  </label>
+                  <label className="block">
+                    <span className="text-[10px] font-bold uppercase text-[rgba(11,31,51,0.52)]">End date</span>
+                    <input className="shore-input mt-1" type="date" value={perk.endDate} onChange={(event) => updatePerk(perk.id, 'endDate', event.target.value)} />
+                  </label>
+                </div>
                 <div className="mt-4 grid grid-cols-3 gap-2 text-center text-xs">
                   <MiniStat label="Saved" value={String(perk.saves)} note="People kept it" />
                   <MiniStat label="Used" value={String(perk.redemptions)} note="People showed up" />
                   <MiniStat label="Scans" value={String(perk.qrScans)} note="How they found it" />
                 </div>
                 <div className="mt-4 flex flex-wrap gap-2">
+                  <button type="button" className="shore-button shore-button-primary" onClick={() => savePerkSetup(perk)}>
+                    <Check className="h-4 w-4" /> Save perk
+                  </button>
+                  <button type="button" className="shore-button" onClick={() => savePerkSetup(perk, 'Active')}>
+                    <Sparkles className="h-4 w-4" /> Publish
+                  </button>
                   <button type="button" className="shore-button" onClick={() => toggleFavorite(`fav-${perk.id.replace('perk-', '')}`)}>
                     <Heart className="h-4 w-4" /> Save
                   </button>
                   <a href={createGoogleCalendarUrl(perk, props.profile.propertyName)} target="_blank" rel="noreferrer" className="shore-button">
                     <CalendarPlus className="h-4 w-4" /> Add to Google Calendar
                   </a>
+                  <button type="button" className="shore-button" onClick={() => downloadTextFile(`${perk.id}-setup.json`, JSON.stringify(perk, null, 2))}>
+                    <Download className="h-4 w-4" /> Export
+                  </button>
                 </div>
+                {perkNotice[perk.id] && <p className="mt-2 text-xs font-semibold text-[rgba(11,31,51,0.58)]">{perkNotice[perk.id]}</p>}
               </div>
             ))}
           </div>
