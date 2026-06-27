@@ -1087,23 +1087,23 @@ export function PartnerWorkspaceTemplate(props: Props) {
               This shows the nearby anchors, partners, perks, and plans that can shape what residents see next. Save an item to feature it in the resident guide, or remove it when it is no longer useful.
             </p>
             <div className="mt-3 overflow-x-auto [scrollbar-width:thin]">
-              <table className="w-full min-w-[760px] table-fixed text-left">
+              <table className="w-full min-w-[720px] table-fixed text-left">
                 <thead>
                   <tr className="text-[9px] font-semibold uppercase leading-3 text-[rgba(11,31,51,0.42)]">
-                    <th className="w-[20%] py-1.5 pr-3 font-semibold">Place</th>
-                    <th className="w-[16%] py-1.5 pr-3 font-semibold">Context</th>
+                    <th className="w-[18%] py-1.5 pr-3 font-semibold">Place</th>
+                    <th className="w-[15%] py-1.5 pr-3 font-semibold">Context</th>
                     <th className="w-[22%] py-1.5 pr-3 font-semibold">Status</th>
-                    <th className="w-[32%] py-1.5 pr-3 font-semibold">Note</th>
-                    <th className="w-[76px] py-1.5 font-semibold">Action</th>
+                    <th className="w-[36%] py-1.5 pr-3 font-semibold">Note</th>
+                    <th className="w-[64px] py-1.5 font-semibold">Action</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[rgba(11,31,51,0.045)]">
               {buzzInsights.map((place) => (
                 <tr key={place.id} className="align-top">
-                  <td className="py-2 pr-3 text-[12px] font-semibold leading-4 text-[#0B1F33]">{place.name}</td>
+                  <td className="py-2 pr-3 text-[11px] font-semibold leading-4 text-[#0B1F33]">{place.name}</td>
                   <td className="py-2 pr-3 text-[10px] font-semibold uppercase leading-4 text-[rgba(11,31,51,0.48)]">{place.role} · {place.distance}</td>
-                  <td className="py-2 pr-3 text-[11px] font-semibold leading-4 text-[#0B1F33]">{place.next}</td>
-                  <td className="py-2 pr-3 text-[11px] leading-5 text-[rgba(11,31,51,0.62)]">{place.why}</td>
+                  <td className="py-2 pr-3 text-[10.5px] font-semibold leading-4 text-[#0B1F33]">{place.next}</td>
+                  <td className="py-2 pr-3 text-[10.5px] leading-4 text-[rgba(11,31,51,0.62)]">{place.why}</td>
                   <td className="py-2">
                     <button type="button" onClick={() => toggleFavorite(place.favoriteId)} className="shore-button min-h-8 px-2 text-[10px]">
                       <Heart className="h-3.5 w-3.5" /> Keep
@@ -1126,7 +1126,7 @@ export function PartnerWorkspaceTemplate(props: Props) {
             </p>
             <div className="mt-3 grid gap-0 sm:grid-cols-2 sm:gap-x-8">
               {favorites.slice(0, 4).map((item) => (
-                <button key={item.id} type="button" onClick={() => toggleFavorite(item.id)} className="group grid min-h-9 grid-cols-[0.82fr_1fr_auto] items-baseline gap-2 border-t border-[rgba(11,31,51,0.045)] py-1.5 text-left first:border-t-0 sm:nth-[2]:border-t-0">
+                <button key={item.id} type="button" onClick={() => toggleFavorite(item.id)} className="group grid min-h-9 grid-cols-[0.82fr_1fr_auto] items-baseline gap-2 border-t border-[rgba(11,31,51,0.045)] py-1.5 text-left first:border-t-0">
                   <span className="min-w-0 truncate text-[11.5px] font-semibold leading-4 text-[#0B1F33] group-hover:text-[#C8A96A]">{item.name}</span>
                   <span className="min-w-0 truncate text-[9.5px] font-semibold uppercase leading-3 text-[rgba(11,31,51,0.46)]">{item.type} · {item.saved ? 'shown first' : 'hidden from first view'}</span>
                   <Heart className={`h-3.5 w-3.5 ${item.saved ? 'fill-[#C8A96A] text-[#C8A96A]' : 'text-[rgba(11,31,51,0.32)]'}`} />
@@ -1155,9 +1155,9 @@ export function PartnerWorkspaceTemplate(props: Props) {
                 <span className="text-[11px] font-bold uppercase text-[rgba(11,31,51,0.58)]">Helpful note</span>
                 <textarea className="shore-input mt-2 min-h-24" value={lead.notes || ''} onChange={(event) => updateLead('notes', event.target.value)} />
               </label>
-              <div className="flex flex-wrap items-center gap-2 sm:col-span-2">
-                <button type="submit" className="shore-button shore-button-primary"><Send className="h-4 w-4" /> Save setup</button>
-                <span className="text-xs font-semibold text-[rgba(11,31,51,0.58)]">{leadNotice}</span>
+              <div className="grid min-w-0 gap-2 sm:col-span-2 sm:grid-cols-[auto_1fr] sm:items-center">
+                <button type="submit" className="shore-button shore-button-primary w-fit"><Send className="h-4 w-4" /> Save setup</button>
+                <span className="min-w-0 text-[11px] font-semibold leading-4 text-[rgba(11,31,51,0.58)]">{leadNotice}</span>
               </div>
             </form>
             <div className="border-t border-[rgba(11,31,51,0.06)] pt-5 lg:border-l lg:border-t-0 lg:pl-6 lg:pt-0">
