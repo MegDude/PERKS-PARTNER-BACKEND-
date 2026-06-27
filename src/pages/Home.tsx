@@ -371,9 +371,9 @@ export default function Home() {
                   ['Real data, real fast', 'See how many people saved your spot, scanned your code, used an offer, or came back for another look.'],
                   ['Better community', 'Help people support the local places that make downtown worth living in.'],
                 ].map(([title, body]) => (
-                  <div key={title} className="grid gap-1 border-b border-[rgba(11,31,51,0.045)] py-3 sm:grid-cols-[190px_minmax(0,1fr)] sm:gap-4">
-                    <h3 className="text-[12px] font-semibold leading-5 text-[#0B1F33]">{title}</h3>
-                    <p className="text-[11px] leading-5 text-[rgba(11,31,51,0.58)]">{body}</p>
+                  <div key={title} className="grid gap-0.5 border-b border-[rgba(11,31,51,0.045)] py-2 sm:grid-cols-[180px_minmax(0,1fr)] sm:gap-3">
+                    <h3 className="text-[12px] font-semibold leading-4 text-[#0B1F33]">{title}</h3>
+                    <p className="text-[11px] leading-4 text-[rgba(11,31,51,0.58)]">{body}</p>
                   </div>
                 ))}
               </div>
@@ -381,24 +381,35 @@ export default function Home() {
               <div className="mt-6">
                 <p className="text-[9px] font-semibold uppercase text-[#C8A96A]">Choose your annual plan</p>
                 <p className="mt-1 max-w-2xl text-[11px] leading-5 text-[rgba(11,31,51,0.58)]">
-                  Keep it simple. Pick the plan that fits your business, and that is your presence on the map for the year.
+                  Pick the partner type that fits how you show up downtown. Each plan keeps your map presence, QR entry points, workspace, and reporting live for the year.
                 </p>
                 <div className="mt-3 overflow-x-auto [scrollbar-width:thin]">
-                  <table className="w-full min-w-[520px] table-fixed text-left">
+                  <table className="w-full min-w-[720px] table-fixed text-left">
                     <thead>
                       <tr className="text-[8.5px] font-semibold uppercase text-[rgba(11,31,51,0.42)]">
-                        <th className="w-[30%] py-1.5 pr-3">Plan</th>
-                        <th className="w-[28%] py-1.5 pr-3">Annual rate</th>
+                        <th className="w-[22%] py-1.5 pr-3">Partner type</th>
+                        <th className="w-[24%] py-1.5 pr-3">Plan</th>
+                        <th className="w-[18%] py-1.5 pr-3">Annual rate</th>
                         <th className="py-1.5">Best for</th>
                       </tr>
                     </thead>
                     <tbody>
                       {[
-                        ['Basic', '$30-$49/yr', 'Getting on the map and showing up.'],
-                        ['Growth', '$79/yr', 'Keeping your place in the rotation.'],
-                        ['Pro', '$199/yr', 'Being a go-to spot all year long.'],
-                      ].map(([plan, rate, use]) => (
-                        <tr key={plan} className="border-t border-[rgba(11,31,51,0.045)]">
+                        ['Properties', 'Basic Building', '$49/yr', 'A clean resident entry point for one building.'],
+                        ['Properties', 'Resident Plus', '$99/yr', 'Resident perks, notes, and annual reporting.'],
+                        ['Properties', 'Property Pro', '$199/yr', 'Campaigns, priority setup, and deeper property reports.'],
+                        ['Venues, restaurants, retail', 'Basic', '$30-$49/yr', 'Getting on the map with one clear reason to visit.'],
+                        ['Venues, restaurants, retail', 'Growth', '$79/yr', 'Keeping offers, events, and notes in the rotation.'],
+                        ['Venues, restaurants, retail', 'Pro', '$199/yr', 'Stronger placement, reporting, and support all year.'],
+                        ['Hotels', 'Hotel Starter', '$99/yr', 'A guest guide tied to lobby, room, and concierge moments.'],
+                        ['Hotels', 'Hotel Pro', '$199/yr', 'Guest campaigns, reporting, and concierge support.'],
+                        ['Brands', 'Brand Access', '$99/yr', 'Local brand presence tied to downtown behavior.'],
+                        ['Brands', 'Brand Campaigns', '$199/yr', 'Sponsored moments, campaigns, and reporting.'],
+                        ['Civic programs', 'Civic Plus', '$30/yr', 'Public programs, events, surveys, and useful notes.'],
+                        ['Civic programs', 'Civic Pro', '$99/yr', 'Campaigns, feedback, and richer program reporting.'],
+                      ].map(([type, plan, rate, use]) => (
+                        <tr key={`${type}-${plan}`} className="border-t border-[rgba(11,31,51,0.045)]">
+                          <td className="py-2 pr-3 text-[10.5px] font-semibold text-[#0B1F33]">{type}</td>
                           <td className="py-2 pr-3 text-[11px] font-semibold text-[#0B1F33]">{plan}</td>
                           <td className="py-2 pr-3 text-[11px] font-semibold text-[#0B1F33]">{rate}</td>
                           <td className="py-2 text-[10.5px] leading-4 text-[rgba(11,31,51,0.58)]">{use}</td>
@@ -408,7 +419,7 @@ export default function Home() {
                   </table>
                 </div>
                 <p className="mt-2 text-[10px] leading-4 text-[rgba(11,31,51,0.5)]">
-                  All plans are annual commitments, billed monthly. Properties can start with a 90-day free pilot to see how it works.
+                  All plans are annual commitments. Properties can start with a 90-day pilot; real estate teams use the property tiers, and custom portfolios can be quoted from the workspace.
                 </p>
               </div>
             </div>
