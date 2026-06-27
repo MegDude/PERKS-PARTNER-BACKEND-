@@ -18,7 +18,7 @@ import {
   Users,
 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
-import { slugify } from '@/data/partnerWorkspaceCatalog';
+import { curatedPartnerWorkspaces, getFeaturedWorkspaceSlugs, slugify } from '@/data/partnerWorkspaceCatalog';
 
 type GatewayData = {
   health: any;
@@ -183,6 +183,29 @@ export default function Home() {
     return needle ? rows.filter((row) => `${row.title} ${row.type} ${row.status}`.toLowerCase().includes(needle)) : rows;
   }, [data.partners, data.properties, data.tenants, search]);
 
+  const workspaceLaunchRows = useMemo(() => {
+    const curatedRows = getFeaturedWorkspaceSlugs().map((slug) => {
+      const workspace = curatedPartnerWorkspaces[slug];
+      return {
+        id: `curated-${slug}`,
+        title: workspace.name,
+        type: workspace.type,
+        status: 'Ready',
+        href: `/admin/workspaces/${slug}`,
+        featured: true,
+      };
+    });
+    const merged = [...curatedRows, ...directories];
+    const seen = new Set<string>();
+    const deduped = merged.filter((row) => {
+      const key = `${row.href}-${row.title}`.toLowerCase();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+    return deduped.slice(0, search.trim() ? 60 : 28);
+  }, [directories, search]);
+
   const tenantCount = data.tenantStatus?.tenants || data.tenants.length;
   const workspaceCount = data.tenantStatus?.workspaces || data.workspaces.length;
   const mapEntityCount = data.mapSummary?.entities || 0;
@@ -234,64 +257,74 @@ export default function Home() {
           </div>
         </header>
 
-        <section className="my-4 border-y border-[rgba(11,31,51,0.08)] bg-white">
-          <div className="flex flex-col gap-1 border-b border-[rgba(11,31,51,0.08)] py-2 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#C8A96A]">Quick read</p>
-              <h2 className="text-sm font-semibold">What is ready to open right now</h2>
-            </div>
-            <p className="text-[11px] leading-4 text-[rgba(11,31,51,0.56)]">Live counts from partners, places, residents, perks, events, and notes.</p>
-          </div>
-          <div className="grid divide-y divide-[rgba(11,31,51,0.08)] sm:grid-cols-2 sm:divide-x sm:divide-y-0 lg:grid-cols-4 xl:grid-cols-8">
-            {stats.map((stat) => (
-              <div key={stat.label} className="min-h-[72px] px-2.5 py-2.5">
-                <div className="flex items-baseline justify-between gap-2">
-                  <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-[rgba(11,31,51,0.52)]">{stat.label}</p>
-                  <p className="text-lg font-semibold leading-none">{Number(stat.value || 0).toLocaleString()}</p>
-                </div>
-                <p className="mt-2 text-[10px] leading-4 text-[rgba(11,31,51,0.6)]">{stat.note}</p>
+        <section className="my-4 grid gap-4 xl:grid-cols-[1.15fr_0.85fr]">
+          <div className="border-y border-[rgba(11,31,51,0.08)] bg-white">
+            <div className="flex flex-col gap-1 border-b border-[rgba(11,31,51,0.08)] py-2 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-[10px] font-bold uppercase text-[#C8A96A]">Quick read</p>
+                <h2 className="text-sm font-semibold">What is ready to open right now</h2>
               </div>
-            ))}
-          </div>
-        </section>
-
-        <section className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
-          <Panel title="People and places" eyebrow="Find your way" action={<Link to="/admin/partner" className="text-xs font-semibold text-[#C8A96A]">Open all partners</Link>}>
-            <div className="mb-4 flex items-center gap-2 border border-[rgba(11,31,51,0.08)] px-3">
-              <Search className="h-4 w-4 text-[rgba(11,31,51,0.44)]" />
-              <input
-                value={search}
-                onChange={(event) => setSearch(event.target.value)}
-                placeholder="Search partners, properties, brands, venues..."
-                className="h-11 w-full bg-transparent text-sm outline-none"
-              />
+              <p className="text-[11px] leading-4 text-[rgba(11,31,51,0.56)]">Live counts from partners, places, residents, perks, events, and notes.</p>
             </div>
-            <div className="max-h-[560px] overflow-y-auto">
-              {directories.slice(0, 18).map((row) => (
-                <Link key={`${row.id}-${row.href}`} to={row.href} className="grid gap-2 border-t border-[rgba(11,31,51,0.08)] py-3 sm:grid-cols-[1fr_120px_90px] sm:items-center">
-                  <span className="font-semibold">{row.title}</span>
-                  <span className="text-xs font-semibold uppercase text-[rgba(11,31,51,0.52)]">{row.type}</span>
-                  <span className="text-xs font-semibold text-[#C8A96A]">{row.status}</span>
+            <div className="grid grid-cols-2 border-b border-[rgba(11,31,51,0.08)] sm:grid-cols-4 xl:grid-cols-8">
+              {stats.map((stat) => (
+                <Link key={stat.label} to={statHref(stat.label)} className="min-h-[58px] border-b border-r border-[rgba(11,31,51,0.06)] px-2.5 py-2 hover:text-[#C8A96A]">
+                  <div className="flex items-baseline justify-between gap-2">
+                    <p className="text-[10px] font-bold uppercase text-[rgba(11,31,51,0.52)]">{stat.label}</p>
+                    <p className="text-base font-semibold leading-none">{Number(stat.value || 0).toLocaleString()}</p>
+                  </div>
+                  <p className="mt-1 text-[10px] leading-4 text-[rgba(11,31,51,0.6)]">{stat.note}</p>
                 </Link>
               ))}
-              {directories.length === 0 && <p className="py-8 text-sm text-[rgba(11,31,51,0.58)]">Nothing matched. Try a place, partner, or building name.</p>}
             </div>
-          </Panel>
+            <div className="py-2">
+              <p className="mb-2 text-[10px] font-bold uppercase text-[rgba(11,31,51,0.48)]">Open an area</p>
+              <div className="flex gap-2 overflow-x-auto pb-1">
+                {primaryModules.map((module) => {
+                  const Icon = module.icon;
+                  const count = Array.isArray((data as any)[module.key]) ? (data as any)[module.key].length : data.tenantStatus?.tenants || 0;
+                  return (
+                    <Link key={module.label} to={module.to} className="inline-flex min-h-9 flex-none items-center gap-2 border border-[rgba(11,31,51,0.08)] bg-white px-3 text-[11px] font-semibold hover:border-[#C8A96A] hover:text-[#C8A96A]">
+                      <Icon className="h-3.5 w-3.5 text-[#C8A96A]" />
+                      {module.label}
+                      <span className="text-[10px] text-[rgba(11,31,51,0.5)]">{Number(count || 0).toLocaleString()}</span>
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
 
-          <Panel title="Where do you want to go?" eyebrow="Shortcuts">
-            <div className="grid gap-3 sm:grid-cols-2">
-              {primaryModules.map((module) => {
-                const Icon = module.icon;
-                const count = Array.isArray((data as any)[module.key]) ? (data as any)[module.key].length : data.tenantStatus?.tenants || 0;
-                return (
-                  <Link key={module.label} to={module.to} className="flex min-h-16 items-center justify-between border border-[rgba(11,31,51,0.08)] bg-white p-4 hover:border-[#C8A96A]">
-                    <span className="flex items-center gap-3 text-sm font-semibold"><Icon className="h-4 w-4 text-[#C8A96A]" /> {module.label}</span>
-                    <span className="text-sm font-semibold">{Number(count || 0).toLocaleString()}</span>
-                  </Link>
-                );
-              })}
+          <div className="border-y border-[rgba(11,31,51,0.08)] bg-white">
+            <div className="flex flex-col gap-2 border-b border-[rgba(11,31,51,0.08)] py-2">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-[10px] font-bold uppercase text-[#C8A96A]">Workspace jump</p>
+                  <h2 className="text-sm font-semibold">Open a partner, brand, civic, or property page</h2>
+                </div>
+                <Link to="/admin/partner" className="text-[11px] font-semibold text-[#C8A96A]">All partners</Link>
+              </div>
+              <label className="flex min-h-9 items-center gap-2 border-b border-[rgba(11,31,51,0.12)]">
+                <Search className="h-4 w-4 text-[rgba(11,31,51,0.44)]" />
+                <input
+                  value={search}
+                  onChange={(event) => setSearch(event.target.value)}
+                  placeholder="Search DANA, Waterloo, inKind, Legends, Whole Foods..."
+                  className="w-full bg-transparent py-2 text-sm outline-none"
+                />
+              </label>
             </div>
-          </Panel>
+            <div className="max-h-[282px] overflow-y-auto">
+              {workspaceLaunchRows.map((row) => (
+                <Link key={`${row.id}-${row.href}`} to={row.href} className="grid gap-2 border-b border-[rgba(11,31,51,0.06)] py-2.5 text-sm hover:text-[#C8A96A] sm:grid-cols-[1fr_112px_58px] sm:items-center">
+                  <span className="font-semibold">{row.title}</span>
+                  <span className="text-[10px] font-semibold uppercase text-[rgba(11,31,51,0.52)]">{row.type}</span>
+                  <span className="text-[10px] font-semibold text-[#C8A96A]">{row.featured ? 'Built' : row.status}</span>
+                </Link>
+              ))}
+              {workspaceLaunchRows.length === 0 && <p className="py-8 text-sm text-[rgba(11,31,51,0.58)]">Nothing matched. Try a partner, brand, civic group, or property name.</p>}
+            </div>
+          </div>
         </section>
 
         <section className="mt-6">
@@ -317,6 +350,20 @@ function GatewayButton({ to, label, icon: Icon, primary = false }: any) {
       <Icon className="h-4 w-4" /> {label}
     </Link>
   );
+}
+
+function statHref(label: string) {
+  const routes: Record<string, string> = {
+    Partners: '/admin/partner',
+    Spaces: '/admin/partner',
+    Map: '/map',
+    Properties: '/admin/properties',
+    Residents: '/admin/residents',
+    Perks: '/admin/perks',
+    Events: '/admin/events',
+    Notes: '/admin/engagement',
+  };
+  return routes[label] || '/admin';
 }
 
 function Panel({ eyebrow, title, action, children }: any) {

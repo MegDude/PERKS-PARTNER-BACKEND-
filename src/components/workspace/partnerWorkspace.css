@@ -30,7 +30,7 @@
 }
 
 .shore-workspace section {
-  padding-block: clamp(30px, 5vw, 62px);
+  padding-block: clamp(28px, 5vw, 62px);
   border-top: 0 !important;
 }
 
@@ -52,11 +52,11 @@
 }
 
 .shore-section-copy {
-  margin-top: 10px;
+  margin-top: 8px;
   max-width: 680px;
   color: rgba(11, 31, 51, 0.64);
   font-size: 14px;
-  line-height: 1.7;
+  line-height: 1.62;
 }
 
 .shore-workspace img {
@@ -354,16 +354,40 @@
 }
 
 @media (max-width: 640px) {
+  .shore-workspace {
+    font-size: 14px;
+  }
+
+  .shore-main {
+    gap: 4px;
+    padding: 8px 18px 28px !important;
+  }
+
+  .shore-workspace section {
+    padding-block: 24px !important;
+  }
+
   .shore-header-shell {
-    padding-block: 10px 8px;
+    padding: 9px 18px 7px !important;
   }
 
   .shore-header-top {
-    min-height: 36px;
+    min-height: 34px;
+    gap: 12px;
+  }
+
+  .shore-brand {
+    gap: 8px;
+  }
+
+  .shore-brand-mark {
+    width: 25px;
+    height: 25px;
+    font-size: 9px;
   }
 
   .shore-brand-word {
-    font-size: 12px;
+    font-size: 11px;
   }
 
   .shore-header-title {
@@ -375,8 +399,9 @@
   }
 
   .shore-rail {
-    min-height: 28px;
-    margin-top: 6px;
+    min-height: 26px;
+    margin-top: 5px;
+    gap: 0 !important;
   }
 
   .shore-rail-link {
@@ -385,11 +410,116 @@
     font-size: 10px;
   }
 
+  .shore-menu-button {
+    width: 34px;
+    height: 34px;
+  }
+
+  .shore-menu-panel {
+    right: 18px;
+    width: min(272px, calc(100vw - 36px));
+  }
+
+  .shore-hero {
+    gap: 20px !important;
+    padding-top: 18px !important;
+  }
+
+  .shore-hero h1 {
+    margin-top: 10px !important;
+    font-size: 27px !important;
+    line-height: 1.04 !important;
+  }
+
+  .shore-hero p {
+    margin-top: 10px !important;
+    font-size: 13px !important;
+    line-height: 1.55 !important;
+  }
+
+  .shore-partner-kicker {
+    gap: 6px 10px;
+    font-size: 10px;
+    line-height: 1.25;
+  }
+
   .shore-hero-photo img {
-    height: 178px;
+    height: 162px;
+    object-position: 50% 44%;
+  }
+
+  .shore-hero-photo figcaption {
+    margin-top: 6px;
+    font-size: 10px;
+  }
+
+  .shore-status-strip {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 14px 18px !important;
+    padding-block: 16px !important;
+  }
+
+  .shore-module-item {
+    min-height: auto;
+    padding-top: 0;
+  }
+
+  .shore-section-heading {
+    margin-bottom: 18px;
+  }
+
+  .shore-section-heading h2 {
+    font-size: 23px !important;
+    line-height: 1.08 !important;
   }
 
   .shore-section-copy {
     font-size: 13px;
+    line-height: 1.55;
+  }
+
+  .shore-card {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+
+  .shore-card .grid.grid-cols-3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 4px !important;
+  }
+
+  .shore-card .grid.grid-cols-3 .shore-card {
+    padding: 0 !important;
+  }
+
+  .shore-button {
+    min-height: 34px;
+    font-size: 10px;
+    gap: 6px;
+  }
+
+  .shore-input {
+    min-height: 40px;
+    font-size: 13px;
+  }
+
+  .shore-progress-track {
+    height: 2px;
+  }
+}
+
+@media (max-width: 430px) {
+  .shore-workspace .grid {
+    gap: 18px;
+  }
+
+  .shore-workspace .sm\:grid-cols-2,
+  .shore-workspace .md\:grid-cols-\[1fr_0\.72fr\],
+  .shore-workspace .lg\:grid-cols-\[1\.05fr_0\.95fr\],
+  .shore-workspace .lg\:grid-cols-\[0\.8fr_1\.2fr\],
+  .shore-workspace .lg\:grid-cols-\[1fr_0\.8fr\],
+  .shore-workspace .lg\:grid-cols-\[0\.85fr_1\.15fr\],
+  .shore-workspace .lg\:grid-cols-\[0\.8fr_1\.2fr\] {
+    grid-template-columns: minmax(0, 1fr) !important;
   }
 }

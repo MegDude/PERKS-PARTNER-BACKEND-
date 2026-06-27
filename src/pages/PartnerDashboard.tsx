@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { H1, Body } from '@/components/ui/Typography';
@@ -7,6 +8,7 @@ import { Button } from '@/components/ui/Button';
 import { motion } from 'framer-motion';
 import { Mail, TrendingUp, MessageSquare, Building2, Download, Activity, CheckCircle2, Clock3 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { slugify } from '@/data/partnerWorkspaceCatalog';
 
 export default function PartnerDashboard() {
   const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7));
@@ -66,12 +68,12 @@ export default function PartnerDashboard() {
     },
   });
 
-  if (user?.role !== 'admin') {
+  if (user && user.role && user.role !== 'admin') {
     return (
       <div className="min-h-screen bg-[#F5F7FA] flex items-center justify-center p-6">
         <div className="text-center">
-          <h2 className="text-lg font-semibold text-[#11182B] mb-2">Access Restricted</h2>
-          <p className="text-slate-500 font-medium">Only administrators can view the partner dashboard.</p>
+          <h2 className="text-lg font-semibold text-[#11182B] mb-2">This area is for the platform team</h2>
+          <p className="text-slate-500 font-medium">Use the workspace link for partner-facing pages.</p>
         </div>
       </div>
     );
@@ -92,7 +94,7 @@ export default function PartnerDashboard() {
     };
   };
 
-  const activePartners = (partners as any[]).filter((p: any) => p.is_active);
+  const activePartners = (partners as any[]).filter((p: any) => p.is_active !== false && p.status !== 'archived');
   const partnerById = useMemo(() => {
     return Object.fromEntries((partners as any[]).map((partner: any) => [partner.id, partner]));
   }, [partners]);
@@ -172,7 +174,22 @@ export default function PartnerDashboard() {
           />
         </div>
         <div className="text-right">
-          <Button className="bg-[#11182B] text-white hover:bg-[#11182B] text-white/90 font-bold tracking-widest uppercase text-xs">
+          <Button
+            onClick={() => {
+              const rows = activePartners.map((partner: any) => {
+                const stats = getPartnerStats(partner.id);
+                return [partner.business_name || partner.name || 'Partner', partner.category || '', stats.perks, stats.redemptions, stats.messages, stats.unread].join(',');
+              });
+              const csv = ['Partner,Category,Perks,Redemptions,Messages,Unread', ...rows].join('\n');
+              const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+              const link = document.createElement('a');
+              link.href = url;
+              link.download = `partner-summary-${selectedMonth}.csv`;
+              link.click();
+              URL.revokeObjectURL(url);
+            }}
+            className="bg-[#11182B] text-white hover:bg-[#11182B] text-white/90 font-bold tracking-widest uppercase text-xs"
+          >
              <Download className="w-4 h-4 mr-2" /> Export summary
           </Button>
         </div>
@@ -247,6 +264,12 @@ export default function PartnerDashboard() {
                           <p className="text-xl font-bold text-[#11182B] ">{stats.unread}</p>
                         </div>
                       </div>
+                      <Link
+                        to={`/admin/workspaces/${slugify(partner.slug || partner.workspace_slug || partner.tenant_id?.replace(/^tenant_/, '') || partner.workspace_id?.replace(/^workspace_/, '') || partner.business_name || partner.name || partner.id)}`}
+                        className="mt-4 inline-flex min-h-9 items-center border border-[rgba(11,31,51,0.12)] bg-white px-3 text-[11px] font-semibold text-[#0B1F33] hover:border-[#C8A96A] hover:text-[#C8A96A]"
+                      >
+                        Open workspace
+                      </Link>
                     </motion.div>
                   );
                 })}
@@ -270,9 +293,9 @@ export default function PartnerDashboard() {
               Track the latest partner messages, redemptions, perk updates, and follow-up items without relying on decorative map previews.
             </p>
           </div>
-          <Button variant="outline">
+          <Link to="/admin/engagement" className="inline-flex min-h-9 items-center gap-2 border border-[rgba(11,31,51,0.12)] bg-white px-3 text-[11px] font-semibold text-[#0B1F33] hover:border-[#C8A96A] hover:text-[#C8A96A]">
             <Activity className="w-4 h-4" /> View all activity
-          </Button>
+          </Link>
         </div>
 
         {recentPartnerActivity.length === 0 ? (

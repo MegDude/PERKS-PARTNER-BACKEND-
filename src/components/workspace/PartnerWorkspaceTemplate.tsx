@@ -502,7 +502,7 @@ export function PartnerWorkspaceTemplate(props: Props) {
           </div>
         </Section>
 
-        <Section id="residents" eyebrow="Residents" title="A small sample, not a spreadsheet" description="Demo residents only. Enough to show who is new, who is active, who saves perks, and who may need a better nudge.">
+        <Section id="residents" eyebrow="Residents" title="People, not a spreadsheet" description="A light resident view for the workspace. It keeps the useful signals visible while leaving private details out of the way.">
           <div className="grid gap-x-8 gap-y-6 sm:grid-cols-2 lg:grid-cols-3">
             {props.residents.map((resident) => (
               <div key={resident.id} className="shore-card">
@@ -511,7 +511,7 @@ export function PartnerWorkspaceTemplate(props: Props) {
                   <span className="text-[10px] font-bold uppercase text-[rgba(11,31,51,0.5)]">{resident.engagementStatus}</span>
                 </div>
                 <h3 className="mt-3 text-sm font-semibold">{resident.name}</h3>
-                <p className="text-xs leading-5 text-[rgba(11,31,51,0.62)]">Unit {resident.unit} · Move-in {resident.moveInDate}</p>
+                <p className="text-xs leading-5 text-[rgba(11,31,51,0.62)]">Home {resident.unit} · Since {resident.moveInDate}</p>
                 <p className="mt-2 text-xs leading-5 text-[rgba(11,31,51,0.62)]">{resident.interests.join(', ')}</p>
                 <div className="mt-3 text-xs font-semibold">{resident.savedPerks} saved perks · {resident.rsvps} RSVPs</div>
               </div>
