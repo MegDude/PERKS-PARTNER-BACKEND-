@@ -17,44 +17,51 @@ export default function PartnerDashboardLayout() {
 
   const links = [
     { section: 'Start' },
-    { to: '/', icon: <HomeIcon className="w-4 h-4" />, label: 'Launchpad' },
+    { to: '/', icon: <HomeIcon className="w-4 h-4" />, label: 'Home' },
     { to: '/admin', icon: <LayoutDashboard className="w-4 h-4" />, label: 'Command center' },
     { to: '/admin/platform', icon: <ShieldIcon />, label: 'Today downtown' },
-    { to: '/admin/partner', icon: <Building2 className="w-4 h-4" />, label: 'Partner workspaces' },
 
-    { section: 'Directory' },
+    { section: 'Network' },
+    { to: '/admin/partner', icon: <Building2 className="w-4 h-4" />, label: 'Partner workspaces' },
     { to: '/admin/properties', icon: <Building2 className="w-4 h-4" />, label: 'Properties' },
     { to: '/admin/buildings', icon: <Users className="w-4 h-4" />, label: 'Buildings' },
-    { to: '/admin/partner-portal', icon: <Presentation className="w-4 h-4" />, label: 'Partner view' },
     { to: '/admin/residents', icon: <Users className="w-4 h-4" />, label: 'Residents' },
     { to: '/admin/segmentation', icon: <ListTodo className="w-4 h-4" />, label: 'Resident groups' },
 
     { section: 'Programs' },
-    { to: '/admin/perks', icon: <Ticket className="w-4 h-4" />, label: 'Downtown Perks' },
+    { to: '/admin/perks', icon: <Ticket className="w-4 h-4" />, label: 'Perks' },
     { to: '/admin/events', icon: <Presentation className="w-4 h-4" />, label: 'Events' },
     { to: '/admin/engagement', icon: <Megaphone className="w-4 h-4" />, label: 'Campaign notes' },
+    { to: '/admin/surveys', icon: <ListTodo className="w-4 h-4" />, label: 'Surveys' },
 
     { section: 'Messages' },
     { to: '/admin/announcements', icon: <Megaphone className="w-4 h-4" />, label: 'Building notes' },
-    { to: '/admin/surveys', icon: <ListTodo className="w-4 h-4" />, label: 'Surveys' },
+    { to: '/admin/partner-portal', icon: <Presentation className="w-4 h-4" />, label: 'Partner preview' },
 
-    { section: 'Reports & AI' },
+    { section: 'Insights' },
     { to: '/admin/dashboard', icon: <BarChart3 className="w-4 h-4" />, label: 'Performance' },
     { to: '/admin/reports', icon: <Settings className="w-4 h-4" />, label: 'Reports' },
     { to: '/admin/analytics', icon: <BarChart3 className="w-4 h-4" />, label: 'Perk results' },
     { to: '/admin/platform/modules', icon: <Sparkles className="w-4 h-4" />, label: 'AI and tools' },
-    { to: '/admin/promotions', icon: <CreditCard className="w-4 h-4" />, label: 'Plans & billing' },
 
-    { section: 'Program info' },
-    { to: '/admin/about', icon: <Ticket className="w-4 h-4" />, label: 'About' },
+    { section: 'Account' },
+    { to: '/admin/promotions', icon: <CreditCard className="w-4 h-4" />, label: 'Plans and billing' },
+
+    { section: 'About' },
+    { to: '/admin/about', icon: <Ticket className="w-4 h-4" />, label: 'Program guide' },
     { to: '/admin/developer-engagement', icon: <Building2 className="w-4 h-4" />, label: 'Sponsor view' },
   ];
+
+  const isActiveRoute = (to: string) => {
+    if (to === '/') return location.pathname === '/';
+    return location.pathname === to || location.pathname.startsWith(`${to}/`);
+  };
 
   return (
     <div className="dp-admin-shell min-h-screen bg-white font-sans flex">
       {/* Sidebar */}
-      <aside className="w-64 bg-white border-r border-[#EFEFEF] flex-col hidden lg:flex">
-        <div className="p-6 pb-2">
+      <aside className="hidden w-64 flex-col bg-white lg:flex">
+        <div className="px-6 pb-2 pt-6">
            <Link to="/" className="flex items-center gap-2 group">
               <div className="w-6 h-6 bg-[#11182B] flex items-center justify-center">
                  <Building2 className="w-3 h-3 text-white" />
@@ -63,39 +70,33 @@ export default function PartnerDashboardLayout() {
            </Link>
         </div>
         
-        <div className="flex-1 overflow-y-auto px-4 py-6 space-y-1">
+        <nav className="flex-1 overflow-y-auto px-4 py-5">
           {links.map((link: any, idx) => {
             if (link.section) {
               return (
-                <div key={idx} className="mt-5 mb-2 px-3 text-[11px] font-semibold uppercase text-slate-500">
+                <div key={idx} className="mb-1 mt-5 px-3 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#C5A028] first:mt-2">
                   {link.section}
                 </div>
               );
             }
-            const isActive = location.pathname === link.to;
+            const isActive = isActiveRoute(link.to);
             return (
               <Link 
                 key={link.to} 
                 to={link.to}
-                className={`flex items-center gap-3 px-3 py-2.5 font-semibold text-[14px] leading-5 transition-colors rounded-none ${isActive ? 'text-[#11182B] bg-[#11182B]/5 border-l-2 border-[#C5A028]' : 'text-slate-600 hover:text-[#11182B] hover:bg-slate-50 border-l-2 border-transparent'}`}
+                className={`flex min-h-9 items-center gap-2.5 px-3 py-2 text-[13px] font-semibold leading-5 transition-colors ${isActive ? 'text-[#11182B]' : 'text-[rgba(11,31,51,0.58)] hover:text-[#11182B]'}`}
               >
-                {link.icon}
-                {link.label}
+                <span className={isActive ? 'text-[#C5A028]' : 'text-[rgba(11,31,51,0.36)]'}>{link.icon}</span>
+                <span>{link.label}</span>
               </Link>
             )
           })}
-        </div>
-
-        <div className="p-4 border-t border-[#EFEFEF]">
-          <Button variant="ghost" onClick={() => navigate('/')} className="w-full justify-start gap-2 text-[#0B1F33]">
-            <HomeIcon className="w-4 h-4" /> Home
-          </Button>
-        </div>
+        </nav>
       </aside>
 
       {/* Main Content */}
       <main className="flex-1 h-screen overflow-y-auto bg-white">
-        <div className="lg:hidden sticky top-0 z-40 p-4 bg-white border-b border-[#EFEFEF] flex items-center justify-between">
+        <div className="sticky top-0 z-40 flex items-center justify-between bg-white p-4 lg:hidden">
            <div className="flex items-center gap-2 text-[#11182B] ">
               <Button
                 onClick={goBack}
@@ -137,8 +138,8 @@ export default function PartnerDashboardLayout() {
               aria-label="Close navigation overlay"
               onClick={() => setMobileOpen(false)}
             />
-            <div className="absolute right-0 top-0 h-full w-[min(92vw,390px)] border-l border-[#EFEFEF] bg-white shadow-none flex flex-col">
-              <div className="p-4 border-b border-[#EFEFEF] flex items-center justify-between">
+            <div className="absolute right-0 top-0 flex h-full w-[min(92vw,390px)] flex-col bg-white shadow-none">
+              <div className="flex items-center justify-between p-4">
                 <div>
                   <div className="text-[10px] font-semibold uppercase text-slate-400">Downtown Perks</div>
                   <div className="text-sm font-bold text-[#11182B]">Where do you want to go?</div>
@@ -153,40 +154,34 @@ export default function PartnerDashboardLayout() {
                 </Button>
               </div>
 
-              <nav className="flex-1 overflow-y-auto px-4 py-5 space-y-1">
+              <nav className="flex-1 overflow-y-auto px-4 py-5">
                 {links.map((link: any, idx) => {
                   if (link.section) {
                     return (
-                      <div key={idx} className="mt-5 mb-2 px-3 text-[10px] font-semibold uppercase text-slate-400">
+                      <div key={idx} className="mb-1 mt-5 px-3 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#C5A028] first:mt-2">
                         {link.section}
                       </div>
                     );
                   }
-                  const isActive = location.pathname === link.to;
+                  const isActive = isActiveRoute(link.to);
                   return (
                     <Link
                       key={link.to}
                       to={link.to}
                       onClick={() => setMobileOpen(false)}
-                      className={`flex min-h-11 items-center gap-3 px-3 py-2.5 font-semibold text-xs transition-colors ${isActive ? 'text-[#11182B] bg-[#11182B]/5 border-l-2 border-[#C5A028]' : 'text-slate-500 hover:text-[#11182B] hover:bg-slate-50 border-l-2 border-transparent'}`}
+                      className={`flex min-h-10 items-center gap-2.5 px-3 py-2 text-[13px] font-semibold transition-colors ${isActive ? 'text-[#11182B]' : 'text-[rgba(11,31,51,0.58)] hover:text-[#11182B]'}`}
                     >
-                      {link.icon}
-                      {link.label}
+                      <span className={isActive ? 'text-[#C5A028]' : 'text-[rgba(11,31,51,0.36)]'}>{link.icon}</span>
+                      <span>{link.label}</span>
                     </Link>
                   );
                 })}
               </nav>
-
-              <div className="p-4 border-t border-[#EFEFEF]">
-                <Button variant="ghost" onClick={() => { setMobileOpen(false); navigate('/'); }} className="w-full justify-start gap-2 text-[#0B1F33]">
-                  <HomeIcon className="w-4 h-4" /> Home
-                </Button>
-              </div>
             </div>
           </div>
         )}
 
-        <div className="sticky top-0 z-30 hidden border-b border-[#EFEFEF] bg-white/96 px-6 py-3 backdrop-blur lg:block">
+        <div className="sticky top-0 z-30 hidden bg-white/96 px-6 py-3 backdrop-blur lg:block">
           <div className="flex items-center gap-4">
             <Button
               onClick={goBack}
