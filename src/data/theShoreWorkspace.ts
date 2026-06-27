@@ -60,10 +60,10 @@ export const theShoreWorkspace: PartnerWorkspaceData = {
     { id: 'event-first-thursday', title: 'First Thursday Downtown', dateTime: '2026-08-06T23:00:00', location: 'Downtown Austin', description: 'A short list of places to try downtown, built for residents who want a plan.', rsvpCount: 22, capacity: 80, status: 'Draft', linkedQR: 'Resident event flyer', linkedCampaign: 'Weekend Nearby Picks' },
   ],
   campaigns: [
-    { id: 'campaign-welcome', name: 'Welcome to the neighborhood', audience: 'New residents', channel: 'Move-in email + lobby code', linkedItems: ['Lobby welcome code', 'Resident card'], sendStatus: 'Live', opensViews: 312, saves: 62, redemptions: 21, qrScans: 128 },
+    { id: 'campaign-welcome', name: 'Welcome to the neighborhood', audience: 'New residents', channel: 'Move-in email + lobby code', linkedItems: ['Lobby welcome code', 'Resident guide'], sendStatus: 'Live', opensViews: 312, saves: 62, redemptions: 21, qrScans: 128 },
     { id: 'campaign-weekend', name: 'This weekend nearby', audience: 'Residents who already use it', channel: 'Building note', linkedItems: ['Rainey Night Out', 'Jo’s Coffee'], sendStatus: 'Scheduled', opensViews: 188, saves: 44, redemptions: 13, qrScans: 91 },
     { id: 'campaign-dinner', name: 'Rainey dinner idea', audience: 'People who RSVP’d', channel: 'Push + elevator code', linkedItems: ['Two Hands', 'Hotel Van Zandt'], sendStatus: 'Sent', opensViews: 221, saves: 39, redemptions: 17, qrScans: 73 },
-    { id: 'campaign-card', name: 'Use your resident card', audience: 'Residents who have not used it yet', channel: 'QR reminder', linkedItems: ['Resident card', 'Desnudo Coffee'], sendStatus: 'Live', opensViews: 146, saves: 31, redemptions: 8, qrScans: 52 },
+    { id: 'campaign-card', name: 'Use your resident guide', audience: 'Residents who have not used it yet', channel: 'QR reminder', linkedItems: ['Resident guide', 'Desnudo Coffee'], sendStatus: 'Live', opensViews: 146, saves: 31, redemptions: 8, qrScans: 52 },
     { id: 'campaign-digest', name: 'A monthly note from The Shore', audience: 'All residents', channel: 'Email', linkedItems: ['Morning Yoga at Waterloo Park', 'First Thursday Downtown'], sendStatus: 'Draft', opensViews: 0, saves: 0, redemptions: 0, qrScans: 0 },
   ],
   residents: [
