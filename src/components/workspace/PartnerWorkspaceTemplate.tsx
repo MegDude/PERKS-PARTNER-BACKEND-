@@ -110,6 +110,60 @@ function qrImageUrl(destination: string, size = 320) {
   return `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&margin=16&data=${encodeURIComponent(absoluteUrl(destination))}`;
 }
 
+const qrPrintFormats = [
+  'Table talker · 4 x 6 in',
+  'Counter card · 5 x 7 in',
+  'Snap frame · 8.5 x 11 in',
+  'Window sticker · 3 x 3 in',
+  'Outdoor sticker · 4 x 4 in',
+  'Flyer · 8.5 x 11 in',
+  'Poster · 11 x 17 in',
+  'Social story · 1080 x 1920',
+  'Social post · 1080 x 1350',
+];
+
+function qrPrintPageSize(format: string) {
+  const normalized = format.toLowerCase();
+  if (normalized.includes('11 x 17')) return '11in 17in';
+  if (normalized.includes('8.5 x 11')) return 'letter';
+  if (normalized.includes('5 x 7')) return '5in 7in';
+  if (normalized.includes('3 x 3')) return '3in 3in';
+  if (normalized.includes('4 x 4')) return '4in 4in';
+  if (normalized.includes('1080 x 1920')) return '1080px 1920px';
+  if (normalized.includes('1080 x 1350')) return '1080px 1350px';
+  return '4in 6in';
+}
+
+function residentFacingQrCopy(qr: Props['qrs'][number], workspaceName: string, partnerType = '') {
+  const text = `${qr.name} ${qr.placement} ${qr.destination}`.toLowerCase();
+  const type = partnerType.toLowerCase();
+  if (text.includes('dining') || text.includes('restaurant') || text.includes('perk') || type.includes('brand')) {
+    return `Scan for a good downtown plan from ${workspaceName}.`;
+  }
+  if (text.includes('event') || text.includes('rsvp') || text.includes('weekend')) {
+    return 'Scan for what is happening nearby.';
+  }
+  if (text.includes('welcome') || text.includes('move-in') || text.includes('intro')) {
+    return `Scan to start your ${workspaceName} guide.`;
+  }
+  if (text.includes('mailroom') || text.includes('lobby') || text.includes('elevator')) {
+    return 'Scan for a quick look at what is nearby.';
+  }
+  if (text.includes('report') || text.includes('readout')) {
+    return 'Scan for the latest downtown readout.';
+  }
+  if (type.includes('property') || type.includes('residential')) {
+    return `Scan for perks, places, and plans near ${workspaceName}.`;
+  }
+  if (type.includes('hotel')) {
+    return 'Scan for places worth knowing while you are downtown.';
+  }
+  if (type.includes('civic') || type.includes('park')) {
+    return 'Scan for updates, events, and ways to take part nearby.';
+  }
+  return 'Scan for a useful downtown plan.';
+}
+
 function cleanFileName(value: string) {
   return value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'qr-artwork';
 }
@@ -206,10 +260,10 @@ export function PartnerWorkspaceTemplate(props: Props) {
   const [qrArtwork, setQrArtwork] = useState<Record<string, QrArtwork>>(() =>
     Object.fromEntries(props.qrs.map((qr) => [qr.id, {
       headline: qr.headline || qr.name,
-      bodyCopy: qr.bodyCopy || qr.conversionSignal || `Scan for ${workspaceName}.`,
+      bodyCopy: qr.bodyCopy || residentFacingQrCopy(qr, workspaceName, props.partner.type),
       logoUrl: qr.logoUrl || '',
       imageUrl: qr.imageUrl || '',
-      printSize: qr.printSize || '4 x 6 in',
+      printSize: qr.printSize || qrPrintFormats[0],
     }]))
   );
   const setupProgress = calculateSetupProgress(props, lead);
@@ -525,7 +579,7 @@ export function PartnerWorkspaceTemplate(props: Props) {
       exportQrArtwork(qr);
       return;
     }
-    printWindow.document.write(`<!doctype html><html><head><title>${qr.name}</title><style>@page{size:${qrArtwork[qr.id].printSize.includes('8.5') ? 'letter' : '4in 6in'};margin:0}body{margin:0;background:#fff}svg{display:block;width:100%;height:auto}</style></head><body>${svg}<script>window.onload=()=>{window.print()}</script></body></html>`);
+    printWindow.document.write(`<!doctype html><html><head><title>${qr.name}</title><style>@page{size:${qrPrintPageSize(qrArtwork[qr.id].printSize)};margin:0}body{margin:0;background:#fff}svg{display:block;width:100%;height:auto}</style></head><body>${svg}<script>window.onload=()=>{window.print()}</script></body></html>`);
     printWindow.document.close();
   }
 
@@ -1162,16 +1216,13 @@ export function PartnerWorkspaceTemplate(props: Props) {
                         <input className="shore-input mt-1" value={qrArtwork[qr.id].headline} onChange={(event) => updateQrArtwork(qr.id, 'headline', event.target.value)} />
                       </label>
                       <label className="block">
-                        <span className="text-[10px] font-bold uppercase text-[rgba(11,31,51,0.52)]">Print size</span>
+                        <span className="text-[10px] font-bold uppercase text-[rgba(11,31,51,0.52)]">Format</span>
                         <select className="shore-input mt-1" value={qrArtwork[qr.id].printSize} onChange={(event) => updateQrArtwork(qr.id, 'printSize', event.target.value)}>
-                          <option>4 x 6 in</option>
-                          <option>5 x 7 in</option>
-                          <option>8.5 x 11 in</option>
-                          <option>1080 x 1350 social</option>
+                          {qrPrintFormats.map((format) => <option key={format}>{format}</option>)}
                         </select>
                       </label>
                       <label className="block sm:col-span-2">
-                        <span className="text-[10px] font-bold uppercase text-[rgba(11,31,51,0.52)]">Sign copy</span>
+                        <span className="text-[10px] font-bold uppercase text-[rgba(11,31,51,0.52)]">Resident-facing copy</span>
                         <input className="shore-input mt-1" value={qrArtwork[qr.id].bodyCopy} onChange={(event) => updateQrArtwork(qr.id, 'bodyCopy', event.target.value)} />
                       </label>
                       <label className="block">
