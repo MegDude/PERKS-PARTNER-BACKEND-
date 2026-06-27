@@ -117,16 +117,16 @@ export default function PartnerPortal() {
   return (
     <div className="min-h-screen bg-[#F5F7FA] p-6 lg:p-8">
       <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
-        <h1 className="text-3xl font-bold text-[#11182B] mb-1">Partner Portal</h1>
-        <p className="text-slate-500 mb-4 font-medium">Manage your perks and track performance</p>
+        <h1 className="text-3xl font-bold text-[#11182B] mb-1">Partner view</h1>
+        <p className="text-slate-500 mb-4 font-medium">See what residents saved, used, and came back for.</p>
       </motion.div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
         {[
-          { label: 'Total Redemptions', value: totalRedemptions, icon: Star },
-          { label: 'Unique Customers', value: uniqueUsers, icon: Users },
-          { label: 'Active Perks', value: (perks as any[]).length, icon: Calendar },
-          { label: 'Avg per Perk', value: avgPerPerk, icon: TrendingUp },
+          { label: 'Perks used', value: totalRedemptions, icon: Star },
+          { label: 'People reached', value: uniqueUsers, icon: Users },
+          { label: 'Live perks', value: (perks as any[]).length, icon: Calendar },
+          { label: 'Average use', value: avgPerPerk, icon: TrendingUp },
         ].map((stat, i) => {
           const Icon = stat.icon;
           return (
@@ -145,8 +145,8 @@ export default function PartnerPortal() {
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }} className="mb-8">
         <Card className="  ">
           <CardHeader>
-            <CardTitle className="text-[#11182B] font-bold">Monthly Redemptions</CardTitle>
-            <CardDescription className="font-medium text-slate-500">Redemption trends for your perks</CardDescription>
+            <CardTitle className="text-[#11182B] font-bold">Monthly use</CardTitle>
+            <CardDescription className="font-medium text-slate-500">How residents used your perks over time.</CardDescription>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>

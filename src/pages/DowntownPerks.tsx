@@ -273,10 +273,10 @@ export default function DowntownPerks() {
       const response = await fetch('/api/tenant-provisioning/sync', { method: 'POST' });
       if (!response.ok) throw new Error('Tenant sync failed');
       const result = await response.json();
-      toast.success(`Workspace sync complete: ${result.after.tenants} tenants and ${result.after.workspaces} workspaces active.`);
+      toast.success(`Partner spaces refreshed: ${result.after.tenants} partners and ${result.after.workspaces} spaces are ready.`);
       await loadData();
     } catch {
-      toast.error('Workspace sync could not be completed. Please try again.');
+      toast.error('Partner spaces could not be refreshed. Please try again.');
     } finally {
       setSyncing(false);
     }
@@ -299,7 +299,7 @@ export default function DowntownPerks() {
       `${perk.conversion}%`,
     ]);
     downloadFile('downtown-perks-perk-performance.csv', [header, ...rows].map((row) => row.map(csvEscape).join(',')).join('\n'));
-    toast.success('Perk performance export downloaded.');
+    toast.success('Perk report downloaded.');
   }
 
   if (loading) {
@@ -315,10 +315,10 @@ export default function DowntownPerks() {
       <section className="rounded-xl border border-[rgba(11,31,51,0.08)] bg-white p-6">
         <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-[#C8A96A]">Perks Network</p>
-            <h1 className="mt-2 text-3xl font-semibold tracking-normal">Offer management system.</h1>
+            <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-[#C8A96A]">Perks</p>
+            <h1 className="mt-2 text-3xl font-semibold tracking-normal">Small reasons to go somewhere nearby</h1>
             <p className="mt-2 max-w-4xl text-sm leading-6 text-[rgba(11,31,51,0.66)]">
-              Create, publish, measure, and archive tenant-owned offers. Every perk should connect to a partner, campaign or entity context, audit trail, redemption engine, and reportable performance record.
+              Create offers residents can understand, save, scan, and use. Keep the partner, dates, results, and next move close at hand.
             </p>
           </div>
           <div className="flex flex-wrap gap-3">
@@ -326,10 +326,10 @@ export default function DowntownPerks() {
               <ArrowDownToLine className="h-4 w-4" /> Export
             </Button>
             <Button variant="outline" onClick={syncTenantProvisioning} disabled={syncing} className="gap-2 border-[rgba(11,31,51,0.12)] bg-white text-[#0B1F33]">
-              {syncing ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />} Sync Workspaces
+              {syncing ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />} Refresh partners
             </Button>
             <Button onClick={openCreate} className="gap-1.5 text-[#11182B]" disabled={!canManage}>
-              <Plus className="h-3.5 w-3.5" /> Create Perk
+              <Plus className="h-3.5 w-3.5" /> Add perk
             </Button>
           </div>
         </div>
@@ -368,7 +368,7 @@ export default function DowntownPerks() {
         <summary>
           <span>
             Offers, partners, performance, and links
-            <span className="dp-admin-collapsible__meta">Perk inventory. Showing {filteredPerks.length} records.</span>
+            <span className="dp-admin-collapsible__meta">Showing {filteredPerks.length} perks.</span>
           </span>
         </summary>
 
@@ -400,7 +400,7 @@ export default function DowntownPerks() {
             {filteredPerks.length === 0 ? (
               <tr>
                 <td colSpan={8} className="p-8 text-center text-[rgba(11,31,51,0.58)]">
-                  No perks match this view. Create the first offer, adjust filters, or sync partner workspaces.
+                  Nothing matches this view. Add a perk, adjust the filters, or refresh partners.
                 </td>
               </tr>
             ) : filteredPerks.map((perk) => {
@@ -437,7 +437,7 @@ export default function DowntownPerks() {
                     <MetricPair label="Scans" value={perk.scans} />
                   </div>
                   <p className="mt-3 border-t border-[rgba(11,31,51,0.08)] pt-3 text-[12px] font-semibold leading-5 text-[#0B1F33]">
-                    {perk.redemptionCount} redemptions · {perk.conversion}% conversion
+                    {perk.redemptionCount} used · {perk.conversion}% follow-through
                   </p>
                 </td>
                 <td className="border-l border-[rgba(11,31,51,0.06)] px-5 py-5 text-[12px] leading-5 text-[rgba(11,31,51,0.58)]">
@@ -473,7 +473,7 @@ export default function DowntownPerks() {
         <Panel title="Recent audit log" eyebrow="Audit trail">
           <div className="grid gap-3">
             {auditLogs.length === 0 ? (
-              <p className="text-sm text-[rgba(11,31,51,0.58)]">No perk audit events yet.</p>
+              <p className="text-sm text-[rgba(11,31,51,0.58)]">No perk updates yet.</p>
             ) : auditLogs.map((log) => (
               <div key={log.id} className="border-t border-[rgba(11,31,51,0.08)] pt-3">
                 <p className="text-sm font-semibold">{String(log.action || '').replace(/_/g, ' ')}</p>
@@ -509,7 +509,7 @@ function PerkModal({ form, partners, campaigns, events, saving, editing, onClose
           <div>
             <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-[#C8A96A]">{editing ? 'Edit perk' : 'Create perk'}</p>
             <h2 className="mt-2 text-2xl font-semibold">Offer record</h2>
-            <p className="mt-2 text-sm leading-6 text-[rgba(11,31,51,0.62)]">Complete the operating fields needed for publishing, redemption, reporting, media, and campaign attribution.</p>
+            <p className="mt-2 text-sm leading-6 text-[rgba(11,31,51,0.62)]">Add the details people need to understand the offer, use it, and see the results clearly.</p>
           </div>
           <Button type="button" variant="outline" onClick={onClose} className="border-[rgba(11,31,51,0.12)] bg-white text-[#0B1F33]">Cancel</Button>
         </div>

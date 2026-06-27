@@ -37,8 +37,8 @@ export default function PerkAnalytics() {
     return (
       <div className="min-h-screen bg-[#F5F7FA] flex items-center justify-center p-6">
         <div className="text-center">
-          <h2 className="text-lg font-semibold text-[#11182B] mb-2">Access Restricted</h2>
-          <p className="text-slate-500">Only administrators can view perk analytics.</p>
+          <h2 className="text-lg font-semibold text-[#11182B] mb-2">This area is private</h2>
+          <p className="text-slate-500">You need admin access to see perk results.</p>
         </div>
       </div>
     );
@@ -70,13 +70,13 @@ export default function PerkAnalytics() {
 
   const stats = [
     {
-      label: 'Total Redemptions',
+      label: 'Perks used',
       value: filtered.length,
       icon: Star,
       color: 'bg-slate-50 text-[#11182B] ',
     },
     {
-      label: 'Unique Users',
+      label: 'People reached',
       value: new Set(filtered.map((r: any) => r.user_email)).size,
       icon: Users,
       color: 'bg-slate-50 text-[#11182B] ',
@@ -92,17 +92,17 @@ export default function PerkAnalytics() {
   return (
     <div className="min-h-screen bg-[#F5F7FA] p-6 lg:p-8">
       <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
-        <H1 className="text-3xl font-bold text-[#11182B] mb-2">Perk Analytics</H1>
-        <Body className="text-slate-500">Track which perks your residents love most</Body>
+        <H1 className="text-3xl font-bold text-[#11182B] mb-2">Perk results</H1>
+        <Body className="text-slate-500">See which perks residents come back to.</Body>
       </motion.div>
 
       {/* Time Range Filter */}
       <div className="mb-8 flex gap-3">
         {[
           { value: '1', label: 'Today' },
-          { value: '7', label: 'Last 7 Days' },
-          { value: '30', label: 'Last 30 Days' },
-          { value: 'all', label: 'All Time' },
+          { value: '7', label: 'Last 7 days' },
+          { value: '30', label: 'Last 30 days' },
+          { value: 'all', label: 'All time' },
         ].map(range => (
           <Button
             key={range.value}
@@ -147,7 +147,7 @@ export default function PerkAnalytics() {
           <Card className="  ">
             <CardHeader>
               <CardTitle className="text-[#11182B] font-bold">Top 10 Perks</CardTitle>
-              <CardDescription>Most redeemed locations</CardDescription>
+              <CardDescription>Places residents used most.</CardDescription>
             </CardHeader>
             <CardContent>
               {isLoading ? (
@@ -165,7 +165,7 @@ export default function PerkAnalytics() {
                   </BarChart>
                 </ResponsiveContainer>
               ) : (
-                <div className="h-64 flex items-center justify-center text-slate-500 font-medium">No data available</div>
+                <div className="h-64 flex items-center justify-center text-slate-500 font-medium">No perk use yet.</div>
               )}
             </CardContent>
           </Card>

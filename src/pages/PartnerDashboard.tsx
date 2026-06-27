@@ -157,13 +157,13 @@ export default function PartnerDashboard() {
   return (
     <div className="min-h-screen bg-[#F5F7FA] p-6 lg:p-8">
       <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
-        <H1 className="text-3xl font-bold text-[#11182B] mb-2">Partner Dashboard</H1>
-        <Body className="text-slate-500 font-medium">Monitor partner performance and resident engagement</Body>
+        <H1 className="text-3xl font-bold text-[#11182B] mb-2">Partner reports</H1>
+        <Body className="text-slate-500 font-medium">See what partners offered, residents used, and what needs a follow-up.</Body>
       </motion.div>
 
       <div className="flex items-center justify-between gap-4 mb-8 bg-white border border-[#EFEFEF] rounded-none p-6 shadow-none">
         <div>
-          <label className="text-[10px] font-bold text-[#11182B] uppercase tracking-widest mb-2 block">Report Month</label>
+          <label className="text-[10px] font-bold text-[#11182B] uppercase tracking-widest mb-2 block">Report month</label>
           <input
             type="month"
             value={selectedMonth}
@@ -173,17 +173,17 @@ export default function PartnerDashboard() {
         </div>
         <div className="text-right">
           <Button className="bg-[#11182B] text-white hover:bg-[#11182B] text-white/90 font-bold tracking-widest uppercase text-xs">
-             <Download className="w-4 h-4 mr-2" /> Export Summary
+             <Download className="w-4 h-4 mr-2" /> Export summary
           </Button>
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
         {[
-          { label: 'Active Partners', value: activePartners.length, icon: Building2 },
-          { label: 'Total Redemptions', value: (redemptions as any[]).length, icon: TrendingUp },
-          { label: 'Total Messages', value: (messages as any[]).length, icon: Mail },
-          { label: 'Unread Messages', value: (messages as any[]).filter((m: any) => m.status === 'unread').length, icon: MessageSquare },
+          { label: 'Active partners', value: activePartners.length, icon: Building2 },
+          { label: 'Perks used', value: (redemptions as any[]).length, icon: TrendingUp },
+          { label: 'Messages', value: (messages as any[]).length, icon: Mail },
+          { label: 'Unread notes', value: (messages as any[]).filter((m: any) => m.status === 'unread').length, icon: MessageSquare },
         ].map((stat, i) => {
           const Icon = stat.icon;
           return (

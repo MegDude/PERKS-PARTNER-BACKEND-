@@ -4,14 +4,14 @@ import { ArrowRight, BarChart3, Building2, CalendarDays, FileText, Megaphone, Me
 import { base44 } from '@/api/base44Client';
 
 const platformRoutes = [
-  { label: 'Partners', to: '/admin/partner', icon: ShieldCheck, description: 'Open every business, brand, venue, hotel, civic group, and workspace connected to Downtown Perks.' },
-  { label: 'Buildings', to: '/admin/buildings', icon: Building2, description: 'Manage properties, buildings, resident access, amenities, and building-level activity.' },
-  { label: 'Events', to: '/admin/events', icon: CalendarDays, description: 'Review upcoming events, RSVPs, attendance, follow-up tasks, and event reporting.' },
-  { label: 'Perks', to: '/admin/perks', icon: Ticket, description: 'Create and manage offers, redemption rules, partner links, scans, and redemptions.' },
-  { label: 'Campaigns', to: '/admin/engagement', icon: Megaphone, description: 'Plan outreach, messages, placements, and partner campaigns from one area.' },
-  { label: 'Residents', to: '/admin/residents', icon: Users, description: 'Find resident profiles, access status, building assignment, activity, and preferences.' },
-  { label: 'Reports', to: '/admin/reports', icon: FileText, description: 'Open partner, property, event, campaign, resident, and platform reports.' },
-  { label: 'Settings', to: '/admin/settings', icon: BarChart3, description: 'Manage account settings, notifications, user access, and connected services.' },
+  { label: 'Partners', to: '/admin/partner', icon: ShieldCheck, description: 'Open the businesses, brands, venues, hotels, and civic groups in Downtown Perks.' },
+  { label: 'Buildings', to: '/admin/buildings', icon: Building2, description: 'See properties, residents, amenities, and building activity in one place.' },
+  { label: 'Events', to: '/admin/events', icon: CalendarDays, description: 'Review what is coming up, who said yes, and what needs a follow-up.' },
+  { label: 'Perks', to: '/admin/perks', icon: Ticket, description: 'Create offers residents can understand, save, scan, and use.' },
+  { label: 'Notes', to: '/admin/engagement', icon: Megaphone, description: 'Plan the short messages that help people know what is happening nearby.' },
+  { label: 'Residents', to: '/admin/residents', icon: Users, description: 'Find resident profiles, building links, saved perks, and event activity.' },
+  { label: 'Reports', to: '/admin/reports', icon: FileText, description: 'See what people found, saved, joined, and used.' },
+  { label: 'Settings', to: '/admin/settings', icon: BarChart3, description: 'Adjust access, messages, and connected tools.' },
 ];
 
 export default function PlatformCommandCenter() {
@@ -60,18 +60,18 @@ export default function PlatformCommandCenter() {
   }, []);
 
   const metrics = [
-    { label: 'Active Partners', value: data.tenants?.tenants || data.partners.length, detail: 'Businesses and organizations you can open, review, and support.', area: 'Partners', to: '/admin/partner' },
-    { label: 'Active Buildings', value: data.buildings.length, detail: 'Properties with resident, amenity, or building activity to manage.', area: 'Properties', to: '/admin/buildings' },
+    { label: 'Partners', value: data.tenants?.tenants || data.partners.length, detail: 'Businesses and organizations you can open and support.', area: 'Partners', to: '/admin/partner' },
+    { label: 'Buildings', value: data.buildings.length, detail: 'Properties with resident, amenity, or building activity.', area: 'Properties', to: '/admin/buildings' },
     { label: 'Residents', value: data.residents.length, detail: 'People with profiles, access status, building links, or saved activity.', area: 'Residents', to: '/admin/residents' },
-    { label: 'Events', value: data.events.length, detail: 'Programming that can be promoted, tracked, and reported.', area: 'Events', to: '/admin/events' },
-    { label: 'Perks', value: data.perks.length, detail: 'Offers that residents can discover, save, scan, and redeem.', area: 'Perks', to: '/admin/perks' },
-    { label: 'Campaigns', value: data.campaigns.length, detail: 'Outreach efforts that connect partners, residents, offers, and events.', area: 'Campaigns', to: '/admin/engagement' },
+    { label: 'Events', value: data.events.length, detail: 'Programming that can be shared, followed up on, and reviewed.', area: 'Events', to: '/admin/events' },
+    { label: 'Perks', value: data.perks.length, detail: 'Offers residents can find, save, scan, and use.', area: 'Perks', to: '/admin/perks' },
+    { label: 'Notes', value: data.campaigns.length, detail: 'Short messages that connect residents to offers and events.', area: 'Notes', to: '/admin/engagement' },
     { label: 'Surveys', value: data.surveys.length, detail: 'Feedback forms used to learn what residents and partners need.', area: 'Surveys', to: '/admin/surveys' },
-    { label: 'Reports', value: data.reports.length, detail: 'Saved report spaces for partners, properties, campaigns, and activity.', area: 'Reports', to: '/admin/reports' },
-    { label: 'Integrations', value: data.integrations.length, detail: 'Connected tools and setup checks for forms, messages, reports, and AI.', area: 'Integrations', to: '/admin/settings' },
-    { label: 'Automations', value: data.automations.length, detail: 'Follow-ups, reminders, and handoffs that help work keep moving.', area: 'Automation', to: '/admin/home' },
-    { label: 'Messaging Journeys', value: data.journeys.length, detail: 'Message paths for residents, events, passports, and partner follow-up.', area: 'Messaging', to: '/admin/engagement' },
-    { label: 'AI Insights', value: data.insights.length, detail: 'Suggested next steps and summaries ready for review.', area: 'Insights', to: '/admin/analytics' },
+    { label: 'Reports', value: data.reports.length, detail: 'Clear summaries for partners, properties, notes, and activity.', area: 'Reports', to: '/admin/reports' },
+    { label: 'Connected tools', value: data.integrations.length, detail: 'Forms, messages, and reports that can talk to each other.', area: 'Tools', to: '/admin/settings' },
+    { label: 'Follow-ups', value: data.automations.length, detail: 'Reminders and handoffs that keep people from missing the next step.', area: 'Follow-ups', to: '/admin/home' },
+    { label: 'Message paths', value: data.journeys.length, detail: 'Resident, event, passport, and partner follow-up messages.', area: 'Messages', to: '/admin/engagement' },
+    { label: 'Next steps', value: data.insights.length, detail: 'Recommended moves ready for review.', area: 'Suggestions', to: '/admin/analytics' },
   ];
 
   const topEntities = [
@@ -86,18 +86,18 @@ export default function PlatformCommandCenter() {
     <div className="min-h-screen bg-[#F7F8FB] text-[#0B1F33]">
       <div className="mx-auto max-w-[1440px] px-5 py-8 sm:px-8">
         <section className="border border-[rgba(11,31,51,0.08)] bg-white p-6 md:p-8">
-          <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-[#C8A96A]">Platform overview</p>
-          <h1 className="mt-3 text-3xl font-semibold md:text-5xl">Command Center</h1>
+          <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-[#C8A96A]">Today downtown</p>
+          <h1 className="mt-3 text-3xl font-semibold md:text-5xl">A clear read on what is moving</h1>
           <p className="mt-4 max-w-4xl text-base leading-7 text-[rgba(11,31,51,0.68)]">
-            Start here to open partners, buildings, residents, events, perks, campaigns, surveys, reports, connected tools, and platform activity.
+            Start here to open partners, buildings, residents, events, perks, notes, surveys, reports, and the tools that keep the day moving.
           </p>
         </section>
 
         <section className="py-10">
           <SummaryTable
-            eyebrow="Platform summary"
+            eyebrow="Quick read"
             title="What is active right now"
-            description="Use each row to jump directly into the area you want to review."
+            description="Use each row to jump to the area you want to review."
             rows={metrics}
           />
         </section>
@@ -105,8 +105,8 @@ export default function PlatformCommandCenter() {
         <section className="grid gap-6 py-10 xl:grid-cols-[0.8fr_1.2fr]">
           <div>
             <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-[#C8A96A]">Main areas</p>
-            <h2 className="mt-2 text-2xl font-semibold">Open the right workspace.</h2>
-            <p className="mt-2 text-sm leading-6 text-[rgba(11,31,51,0.62)]">Each area below explains what it helps you review, manage, or share during a walkthrough.</p>
+            <h2 className="mt-2 text-2xl font-semibold">Open the right area.</h2>
+            <p className="mt-2 text-sm leading-6 text-[rgba(11,31,51,0.62)]">Each area below explains what it helps you review or share during a walkthrough.</p>
           </div>
           <div className="border border-[rgba(11,31,51,0.08)] bg-white">
             {platformRoutes.map((route) => {
@@ -127,8 +127,8 @@ export default function PlatformCommandCenter() {
         <details open className="dp-admin-collapsible py-3">
           <summary>
             <span>
-              Top performing entities
-              <span className="dp-admin-collapsible__meta">Quick access to the strongest partner, property, event, and campaign records.</span>
+              Places with momentum
+              <span className="dp-admin-collapsible__meta">Quick access to the partners, places, events, and notes worth opening first.</span>
             </span>
           </summary>
           <div className="mt-5 overflow-x-auto border border-[rgba(11,31,51,0.08)] bg-white">
@@ -152,17 +152,17 @@ export default function PlatformCommandCenter() {
 
         <section className="grid gap-6 py-10 xl:grid-cols-[0.9fr_1.1fr]">
           <div>
-            <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-[#C8A96A]">Survey + messaging operations</p>
-            <h2 className="mt-2 text-2xl font-semibold">Resident intelligence stack.</h2>
+            <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-[#C8A96A]">Listening and follow-up</p>
+            <h2 className="mt-2 text-2xl font-semibold">What residents tell us, and what we do next.</h2>
             <p className="mt-2 text-sm leading-6 text-[rgba(11,31,51,0.62)]">
-              The platform now tracks survey providers, Twilio messaging journeys, workflow automations, passport programs, and AI insight records as operating objects.
+              Surveys, reminders, passports, and suggestions sit together so the next helpful move is easier to see.
             </p>
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
-            <InfoLink icon={MessageSquare} label="Survey OS" value={`${data.surveys.length} surveys`} to="/admin/surveys" />
-            <InfoLink icon={Workflow} label="Automations" value={`${data.automations.length} workflow records`} to="/admin/home" />
-            <InfoLink icon={Ticket} label="Passport Programs" value={`${data.passports.length} programs`} to="/admin/perks" />
-            <InfoLink icon={BarChart3} label="AI Insights" value={`${data.insights.length} recommendations`} to="/admin/analytics" />
+            <InfoLink icon={MessageSquare} label="Surveys" value={`${data.surveys.length} live or saved`} to="/admin/surveys" />
+            <InfoLink icon={Workflow} label="Follow-ups" value={`${data.automations.length} ready`} to="/admin/home" />
+            <InfoLink icon={Ticket} label="Passports" value={`${data.passports.length} programs`} to="/admin/perks" />
+            <InfoLink icon={BarChart3} label="Suggestions" value={`${data.insights.length} ready`} to="/admin/analytics" />
           </div>
         </section>
       </div>
@@ -196,7 +196,7 @@ function SummaryTable({ eyebrow, title, description, rows }: any) {
             <tr>
               <th className="px-4 py-3">Area</th>
               <th className="px-4 py-3">Total</th>
-              <th className="px-4 py-3">Use this for</th>
+              <th className="px-4 py-3">Why it matters</th>
               <th className="px-4 py-3">Action</th>
             </tr>
           </thead>

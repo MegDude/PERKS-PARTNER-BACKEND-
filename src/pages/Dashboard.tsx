@@ -66,14 +66,14 @@ export default function Dashboard() {
   return (
     <div className="p-8 max-w-7xl mx-auto space-y-8">
       <div>
-        <h1 className="text-3xl font-bold text-[#11182B] tracking-tight">Performance Dashboard</h1>
-        <p className="text-slate-500 font-medium mt-1">Live platform performance, resident activity, and partner engagement.</p>
+        <h1 className="text-3xl font-bold text-[#11182B] tracking-tight">How Downtown Perks is doing</h1>
+        <p className="text-slate-500 font-medium mt-1">A live read on residents, partners, perks, and places.</p>
       </div>
 
       {/* Primary Metrics Grid */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <div className="bg-transparent border-t border-b border-[#EFEFEF] py-4 flex flex-col justify-center transition-colors hover:border-[#11182B]">
-           <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 flex items-center gap-2"><Users className="w-3.5 h-3.5 text-[#11182B]" /> Total Reach</div>
+           <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 flex items-center gap-2"><Users className="w-3.5 h-3.5 text-[#11182B]" /> People reached</div>
            <div className="text-xl font-medium tracking-tight text-[#11182B] ">{overview.totalTenants.toLocaleString()}</div>
         </div>
         <div className="bg-transparent border-t border-b border-[#EFEFEF] py-4 flex flex-col justify-center transition-colors hover:border-[#11182B]">
@@ -96,8 +96,8 @@ export default function Dashboard() {
         <div className="lg:col-span-2 bg-white border border-[#EFEFEF] rounded-none p-6 shadow-none">
           <div className="flex flex-col items-start justify-between gap-4 mb-8 sm:flex-row sm:items-center">
              <div>
-                <h2 className="text-lg font-bold text-[#11182B] ">Engagement Momentum</h2>
-                <p className="text-sm text-slate-500">Total redemptions and saves, shown {range.toLowerCase()}.</p>
+                <h2 className="text-lg font-bold text-[#11182B] ">What people used</h2>
+                <p className="text-sm text-slate-500">Perk use and saves, shown {range.toLowerCase()}.</p>
              </div>
              <div className="flex flex-wrap items-center gap-3 border-b border-[#EFEFEF]">
                 {(['Daily', 'Weekly', 'Monthly'] as const).map((item) => (
@@ -133,12 +133,11 @@ export default function Dashboard() {
            
            <h3 className="text-xl font-bold mb-4 leading-tight text-[#11182B]">Weekend demand is surging near The Shore.</h3>
            <p className="text-slate-500 font-medium text-sm leading-relaxed mb-8 flex-1">
-             Our model indicates a 32% increase in foot traffic and app activity from residents at 603 Davis St during late afternoons. 
-             You currently have no active campaigns capturing this segment.
+             Late afternoons near 603 Davis Street are getting busier. The Shore does not have a weekend note running for that moment yet.
            </p>
            
            <Button onClick={() => navigate('/admin/engagement')} className="w-full bg-[#11182B] text-white hover:bg-[#1a243d] py-3 rounded-none font-bold uppercase tracking-widest text-[10px] transition-colors flex items-center justify-center gap-2">
-             <Zap className="w-4 h-4" /> Launch Campaign
+             <Zap className="w-4 h-4" /> Write a note
            </Button>
         </div>
 

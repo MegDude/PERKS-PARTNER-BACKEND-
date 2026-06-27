@@ -97,11 +97,11 @@ export default function EngagementHub() {
     <div className="p-8 max-w-7xl mx-auto space-y-8 relative">
       <div className="flex justify-between items-end">
         <div>
-          <h1 className="text-3xl font-bold text-[#11182B] tracking-tight">Engagement Hub</h1>
-          <p className="text-slate-500 font-medium mt-1">Communicate with residents, launch events, and manage broadcasts.</p>
+          <h1 className="text-3xl font-bold text-[#11182B] tracking-tight">Notes to send</h1>
+          <p className="text-slate-500 font-medium mt-1">Write to residents, share events, and keep building messages moving.</p>
         </div>
         <Button onClick={() => setShowBroadcastModal(true)} className="px-5 py-2.5 bg-[#11182B] text-white rounded-none font-bold text-xs uppercase hover:bg-white hover:text-[#11182B] border border-[#11182B] transition-colors flex items-center gap-2">
-          <Zap className="w-4 h-4" /> New Broadcast
+          <Zap className="w-4 h-4" /> New note
         </Button>
       </div>
 
@@ -113,7 +113,7 @@ export default function EngagementHub() {
                   type="text" 
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search broadcasts..." 
+                  placeholder="Search notes..." 
                   className="w-full pl-9 pr-4 py-2 rounded-none border border-[#EFEFEF] text-sm focus:outline-none focus:ring-2 focus:ring-[#11182B]" 
                />
             </div>

@@ -28,7 +28,7 @@ import BackendWorkspace from './pages/BackendWorkspace';
 import PlatformCommandCenter from './pages/PlatformCommandCenter';
 import PartnerLifecycle from './pages/PartnerLifecycle';
 import Promotions from './pages/Promotions';
-import TheShoreWorkspace from './routes/TheShoreWorkspace';
+import PartnerWorkspaceRoute from './routes/PartnerWorkspaceRoute';
 import PlatformModuleAudit from './pages/PlatformModuleAudit';
 
 export default function App() {
@@ -47,8 +47,9 @@ export default function App() {
       <Route path="/partner-portal" element={<Navigate to="/admin/partner-portal" replace />} />
       <Route path="/partner-workspace" element={<Navigate to="/workspace/home" replace />} />
       <Route path="/partner-workspace/*" element={<Navigate to="/workspace/home" replace />} />
-      <Route path="/the-shore-workspace" element={<TheShoreWorkspace />} />
-      <Route path="/admin/workspaces/the-shore" element={<TheShoreWorkspace />} />
+      <Route path="/the-shore-workspace" element={<PartnerWorkspaceRoute />} />
+      <Route path="/workspaces/:slug" element={<PartnerWorkspaceRoute />} />
+      <Route path="/admin/workspaces/:slug" element={<PartnerWorkspaceRoute />} />
       <Route path="/admin" element={<PartnerDashboardLayout />}>
         <Route index element={<BackendWorkspace />} />
         <Route path="home" element={<Home />} />

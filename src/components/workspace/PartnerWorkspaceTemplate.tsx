@@ -10,11 +10,13 @@ import {
   Eye,
   Heart,
   MapPin,
+  Menu,
   QrCode,
   Send,
   Sparkles,
   Star,
   Users,
+  X,
 } from 'lucide-react';
 import type { FavoriteItem, PartnerLead, PartnerWorkspaceData } from '@/types/partnerWorkspace';
 import {
@@ -46,21 +48,22 @@ function money(value: number) {
   return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(value);
 }
 
-function Field({ label, value, onChange, type = 'text' }: { label: string; value: string | number; onChange: (value: string) => void; type?: string }) {
+function Field({ label, value, onChange, type = 'text', placeholder = '' }: { label: string; value: string | number; onChange: (value: string) => void; type?: string; placeholder?: string }) {
   return (
     <label className="block">
       <span className="text-[11px] font-bold uppercase text-[rgba(11,31,51,0.58)]">{label}</span>
-      <input className="shore-input mt-2" type={type} value={value} onChange={(event) => onChange(event.target.value)} />
+      <input className="shore-input mt-2" type={type} value={value} placeholder={placeholder} onChange={(event) => onChange(event.target.value)} />
     </label>
   );
 }
 
-function Section({ id, eyebrow, title, children }: { id: string; eyebrow: string; title: string; children: React.ReactNode }) {
+function Section({ id, eyebrow, title, description, children }: { id: string; eyebrow: string; title: string; description?: string; children: React.ReactNode }) {
   return (
-    <section id={id} className="scroll-mt-32">
-      <div className="mb-4">
+    <section id={id} className="shore-section scroll-mt-32">
+      <div className="shore-section-heading">
         <div className="text-[11px] font-bold uppercase text-[#C8A96A]">{eyebrow}</div>
-        <h2 className="shore-editorial mt-1 text-2xl leading-tight text-[#0B1F33] sm:text-[28px]">{title}</h2>
+        <h2 className="mt-1 text-2xl leading-tight text-[#0B1F33] sm:text-[28px]">{title}</h2>
+        {description && <p className="shore-section-copy">{description}</p>}
       </div>
       {children}
     </section>
@@ -91,12 +94,15 @@ function ToggleFavorite({ item, onToggle }: { item: FavoriteItem; onToggle: (id:
 }
 
 export function PartnerWorkspaceTemplate(props: Props) {
-  const [lead, setLead] = useState<PartnerLead>(() => loadPartnerLead(props.lead));
-  const [favorites, setFavorites] = useState(() => loadFavoriteState(props.favorites));
-  const [leadNotice, setLeadNotice] = useState('The Shore is ready to review.');
+  const workspaceName = props.partner.name || props.profile.propertyName || 'Partner';
+  const workspaceSlug = props.partner.id || workspaceName.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+  const [lead, setLead] = useState<PartnerLead>(() => loadPartnerLead(props.lead, workspaceSlug));
+  const [favorites, setFavorites] = useState(() => loadFavoriteState(props.favorites, workspaceSlug));
+  const [leadNotice, setLeadNotice] = useState(`${workspaceName} is ready for a quick review.`);
   const [coupon, setCoupon] = useState('');
   const [couponResult, setCouponResult] = useState<{ discount: number; totalDue: number; accepted: boolean } | null>(null);
-  const [billingNotice, setBillingNotice] = useState('DUDE2026 covers the demo conversion when you want to show the close.');
+  const [billingNotice, setBillingNotice] = useState('Use DUDE2026 when you want the demo to end with a clean $0 checkout.');
+  const [workspaceMenuOpen, setWorkspaceMenuOpen] = useState(false);
   const setupProgress = calculateSetupProgress(props, lead);
   const activePerks = props.perks.filter((perk) => perk.status === 'Active').length;
   const upcomingEvents = props.events.filter((event) => event.status !== 'Draft').length;
@@ -105,10 +111,10 @@ export function PartnerWorkspaceTemplate(props: Props) {
     () => [
       ['Profile', 'Ready'],
       ['Codes', 'Live'],
-      ['Residents', 'Added'],
+      ['Residents', 'Ready'],
       ['Perks', `${activePerks} live`],
       ['Events', `${upcomingEvents} next up`],
-      ['Reports', 'Current'],
+      ['Reports', 'Fresh'],
       ['Plan', props.partner.status],
     ],
     [activePerks, props.partner.status, upcomingEvents],
@@ -124,9 +130,9 @@ export function PartnerWorkspaceTemplate(props: Props) {
 
   function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
-    const submitted = submitPartnerLead(lead);
+    const submitted = submitPartnerLead(lead, workspaceSlug);
     setLead(submitted);
-    setLeadNotice(`Saved. The next step is a quick approval for ${submitted.organizationName}.`);
+    setLeadNotice(`Saved. ${submitted.organizationName} is ready for the next pass.`);
   }
 
   function toggleFavorite(id: string) {
@@ -166,7 +172,7 @@ export function PartnerWorkspaceTemplate(props: Props) {
             })),
         ];
     setFavorites(next);
-    saveFavoriteState(next);
+    saveFavoriteState(next, workspaceSlug);
   }
 
   async function copyText(text: string) {
@@ -187,16 +193,16 @@ export function PartnerWorkspaceTemplate(props: Props) {
     const totalDue = couponResult?.accepted ? couponResult.totalDue : props.billing.price;
     const label = action === 'quote' ? 'quote' : 'invoice request';
     downloadTextFile(
-      `the-shore-${label.replace(' ', '-')}.txt`,
+      `${workspaceSlug.replace(/^partner-/, '')}-${label.replace(' ', '-')}.txt`,
       [
-        'The Shore Downtown Perks plan',
+        `${workspaceName} Downtown Perks plan`,
         `${props.billing.name}: ${money(props.billing.price)}/${props.billing.cadence}`,
         `Coupon: ${couponResult?.accepted ? coupon.toUpperCase() : 'none'}`,
         `Total due today: ${money(totalDue)}`,
         `Add-ons: ${props.billing.addOns.join(', ')}`,
       ].join('\n'),
     );
-    setBillingNotice(action === 'quote' ? 'Quote downloaded. Neat, useful, and ready to send.' : 'Invoice request downloaded. The next step is finance, not guesswork.');
+    setBillingNotice(action === 'quote' ? 'Quote downloaded. Short, tidy, and ready to send.' : 'Invoice request downloaded. Finance has what it needs.');
   }
 
   return (
@@ -204,18 +210,34 @@ export function PartnerWorkspaceTemplate(props: Props) {
       <header className="shore-workspace-header sticky top-0 z-20 bg-white/95 backdrop-blur">
         <div className="shore-header-shell mx-auto max-w-6xl px-5 sm:px-8">
           <div className="shore-header-top">
-            <div className="min-w-0">
-              <div className="shore-header-eyebrow">
-                <Building2 className="h-3.5 w-3.5" />
-                The Shore
-              </div>
-              <div className="shore-header-title">Resident workspace</div>
-            </div>
-            <div className="shore-header-status">
-              {props.partner.status}
+            <a href="/admin" className="shore-brand" aria-label="Downtown Perks home">
+              <span className="shore-brand-mark">DP</span>
+              <span className="shore-brand-word">Downtown Perks</span>
+            </a>
+            <div className="shore-header-actions">
+              <span className="shore-header-title">Partner workspace</span>
+              <div className="shore-header-status">{props.partner.status}</div>
+              <button
+                type="button"
+                className="shore-menu-button"
+                aria-label={workspaceMenuOpen ? 'Close workspace menu' : 'Open workspace menu'}
+                aria-expanded={workspaceMenuOpen}
+                onClick={() => setWorkspaceMenuOpen((open) => !open)}
+              >
+                {workspaceMenuOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+              </button>
             </div>
           </div>
-          <nav className="shore-rail shore-scrollbar flex gap-1 overflow-x-auto" aria-label="The Shore workspace sections">
+          {workspaceMenuOpen && (
+            <div className="shore-menu-panel" role="dialog" aria-label={`${workspaceName} workspace menu`}>
+              <a href="#home" onClick={() => setWorkspaceMenuOpen(false)} className="shore-menu-link">{workspaceName} overview</a>
+              <a href="/admin" onClick={() => setWorkspaceMenuOpen(false)} className="shore-menu-link">Main portal</a>
+              <a href="/admin/platform" onClick={() => setWorkspaceMenuOpen(false)} className="shore-menu-link">Today downtown</a>
+              <a href="#reports" onClick={() => setWorkspaceMenuOpen(false)} className="shore-menu-link">Reports</a>
+              <a href="#billing" onClick={() => setWorkspaceMenuOpen(false)} className="shore-menu-link">Plan</a>
+            </div>
+          )}
+          <nav className="shore-rail shore-scrollbar flex gap-1 overflow-x-auto" aria-label={`${workspaceName} workspace sections`}>
             {navItems.map((item) => (
               <a key={item.href} href={item.href} className="shore-rail-link shrink-0">
                 {item.label}
@@ -225,24 +247,28 @@ export function PartnerWorkspaceTemplate(props: Props) {
         </div>
       </header>
 
-      <main className="mx-auto max-w-6xl space-y-1 px-5 py-4 sm:px-8 lg:py-6">
-        <section id="home" className="grid items-start gap-8 lg:grid-cols-[1.05fr_0.95fr]">
-          <div className="shore-card overflow-hidden">
+      <main className="shore-main mx-auto max-w-6xl px-5 py-4 sm:px-8 lg:py-6">
+        <section id="home" className="shore-hero grid items-start gap-8 lg:grid-cols-[1.05fr_0.95fr]">
+          <div className="shore-card shore-hero-copy overflow-hidden">
             <div className="grid gap-6 md:grid-cols-[1fr_0.72fr]">
               <div className="py-2">
-                <div className="text-[11px] font-bold uppercase text-[#C8A96A]">Start here</div>
-                <h1 className="shore-editorial mt-2 text-[28px] leading-tight text-[#0B1F33] sm:text-[34px]">The Shore resident workspace</h1>
+                <div className="shore-partner-kicker">
+                  <Building2 className="h-4 w-4" />
+                  <span>{props.partner.type}</span>
+                  <span>{props.partner.district}</span>
+                </div>
+                <h1 className="mt-2 text-[28px] leading-tight text-[#0B1F33] sm:text-[34px]">{workspaceName} workspace</h1>
                 <p className="mt-3 text-sm leading-6 text-[rgba(11,31,51,0.66)]">
-                  {props.profile.residentFacingCopy} The workspace keeps the setup, resident view, QR links, perks, events, campaigns, reports, and billing in one place.
+                  {props.profile.residentFacingCopy} Keep the building’s resident view, signs, perks, events, notes, reports, and plan in one easy place.
                 </p>
                 <div className="mt-5 flex flex-wrap gap-2">
-                  <a href="#setup" className="shore-button shore-button-primary">Set up The Shore</a>
-                  <a href="#resident-preview" className="shore-button">See the resident view</a>
+                  <a href="#setup" className="shore-button shore-button-primary">Finish setup</a>
+                  <a href="#resident-preview" className="shore-button">Preview the resident view</a>
                 </div>
               </div>
               <figure className="shore-hero-photo">
-                <img src={props.profile.heroImage} alt="The Shore building in downtown Austin" />
-                <figcaption>The Shore · 603 Davis Street</figcaption>
+                <img src={props.profile.heroImage} alt={`${workspaceName} in Downtown Austin`} />
+                <figcaption>{workspaceName} · {props.profile.address || props.partner.district}</figcaption>
               </figure>
             </div>
           </div>
@@ -256,19 +282,19 @@ export function PartnerWorkspaceTemplate(props: Props) {
                 <Check className="h-7 w-7 text-[#C8A96A]" />
               </div>
             </div>
-            <div className="mt-5 h-2 bg-[#F7F8FB]">
+            <div className="shore-progress-track mt-5">
               <div className="h-full bg-[#C8A96A]" style={{ width: `${setupProgress}%` }} />
             </div>
             <div className="mt-5 grid grid-cols-2 gap-6">
               <MiniStat label="Seen this month" value="867" note="Resident notes opened" />
-              <MiniStat label="Next step" value="Ready" note="Put it in the move-in email" />
+              <MiniStat label="Best next move" value="Ready" note="Add the lobby link to the move-in email" />
             </div>
           </div>
         </section>
 
-        <section className="grid gap-x-8 gap-y-4 sm:grid-cols-2 lg:grid-cols-4">
+        <section className="shore-status-strip grid gap-x-8 gap-y-4 sm:grid-cols-2 lg:grid-cols-4" aria-label={`${workspaceName} workspace status`}>
           {activeModules.map(([label, value]) => (
-            <div key={label} className="shore-card p-4">
+            <div key={label} className="shore-module-item">
               <div className="text-xs font-semibold text-[#0B1F33]">{label}</div>
               <div className="mt-2 text-[11px] font-bold uppercase text-[#C8A96A]">{value}</div>
             </div>
@@ -281,8 +307,8 @@ export function PartnerWorkspaceTemplate(props: Props) {
               <Star className="h-4 w-4" />
               My favorites
             </div>
-            <h2 className="shore-editorial mt-2 text-2xl leading-tight text-[#0B1F33] sm:text-[28px]">A short list worth keeping</h2>
-            <p className="mt-2 text-sm leading-6 text-[rgba(11,31,51,0.64)]">Save the places, perks, and plans residents should see first.</p>
+            <h2 className="mt-2 text-2xl leading-tight text-[#0B1F33] sm:text-[28px]">A short list worth keeping</h2>
+            <p className="mt-2 text-sm leading-6 text-[rgba(11,31,51,0.64)]">Save the places, perks, and plans residents should see first. Tap once to keep something, tap again to clear it.</p>
             <div className="mt-4 space-y-2">
               {favorites.map((item) => (
                 <div key={item.id}>
@@ -294,9 +320,9 @@ export function PartnerWorkspaceTemplate(props: Props) {
           <div className="shore-card">
             <div className="flex items-center gap-2 text-[11px] font-bold uppercase text-[#C8A96A]">
               <MapPin className="h-4 w-4" />
-              What feels lively
+              Buzz nearby
             </div>
-            <h2 className="shore-editorial mt-2 text-2xl leading-tight text-[#0B1F33] sm:text-[28px]">Nearby spots residents are already choosing</h2>
+            <h2 className="mt-2 text-2xl leading-tight text-[#0B1F33] sm:text-[28px]">Nearby spots residents are already choosing</h2>
             <div className="mt-4 grid gap-x-8 gap-y-5 sm:grid-cols-2">
               {props.trendingLocations.map((place) => (
                 <div key={place.id} className="py-2">
@@ -307,7 +333,7 @@ export function PartnerWorkspaceTemplate(props: Props) {
                     </div>
                     <span className="text-[11px] font-bold uppercase text-[#C8A96A]">{place.trend}</span>
                   </div>
-                  <p className="mt-3 text-xs leading-5 text-[rgba(11,31,51,0.66)]">{place.anonymizedCheckIns} anonymous check-ins. No names, just a useful read on what is moving.</p>
+                  <p className="mt-3 text-xs leading-5 text-[rgba(11,31,51,0.66)]">{place.anonymizedCheckIns} anonymous check-ins. No names, just a quick read on what feels lively.</p>
                   <button type="button" onClick={() => toggleFavorite(`fav-${place.id.replace('trend-', '')}`)} className="shore-button mt-3 w-full">
                     <Heart className="h-4 w-4" /> Save or remove
                   </button>
@@ -317,22 +343,22 @@ export function PartnerWorkspaceTemplate(props: Props) {
           </div>
         </section>
 
-        <Section id="setup" eyebrow="Setup" title="The few details we actually need">
+        <Section id="setup" eyebrow="Setup" title={`The details that make ${workspaceName} feel ready`} description="Start with the basics people notice first: the place, the neighborhood, the right contact, and the first note worth sending.">
           <div className="grid gap-10 lg:grid-cols-[1fr_0.8fr]">
             <form onSubmit={handleSubmit} className="shore-card grid gap-4 sm:grid-cols-2">
               <Field label="Organization name" value={lead.organizationName} onChange={(value) => updateLead('organizationName', value)} />
               <Field label="Partner type" value={lead.partnerType} onChange={(value) => updateLead('partnerType', value)} />
-              <Field label="Contact name" value={lead.contactName} onChange={(value) => updateLead('contactName', value)} />
-              <Field label="Email" value={lead.email} onChange={(value) => updateLead('email', value)} type="email" />
-              <Field label="Phone" value={lead.phone} onChange={(value) => updateLead('phone', value)} />
-              <Field label="Residents / units" value={lead.unitCount} onChange={(value) => updateLead('unitCount', value)} type="number" />
+              <Field label="Contact name" value={lead.contactName} placeholder="Add the property contact" onChange={(value) => updateLead('contactName', value)} />
+              <Field label="Email" value={lead.email} placeholder="name@theshore.com" onChange={(value) => updateLead('email', value)} type="email" />
+              <Field label="Phone" value={lead.phone} placeholder="Add a direct line" onChange={(value) => updateLead('phone', value)} />
+              <Field label="Homes / residents" value={lead.unitCount} onChange={(value) => updateLead('unitCount', value)} type="number" />
               <label className="block sm:col-span-2">
                 <span className="text-[11px] font-bold uppercase text-[rgba(11,31,51,0.58)]">Property address</span>
                 <input className="shore-input mt-2" value={lead.address} onChange={(event) => updateLead('address', event.target.value)} />
               </label>
               <Field label="Plan selection" value={lead.selectedPlan} onChange={(value) => updateLead('selectedPlan', value)} />
               <label className="block sm:col-span-2">
-                <span className="text-[11px] font-bold uppercase text-[rgba(11,31,51,0.58)]">Notes</span>
+                <span className="text-[11px] font-bold uppercase text-[rgba(11,31,51,0.58)]">Helpful note</span>
                 <textarea className="shore-input mt-2 min-h-24" value={lead.notes || ''} onChange={(event) => updateLead('notes', event.target.value)} />
               </label>
               <div className="sm:col-span-2 flex flex-wrap items-center gap-2">
@@ -345,7 +371,7 @@ export function PartnerWorkspaceTemplate(props: Props) {
               <h3 className="mt-2 text-xl font-semibold text-[#0B1F33]">{props.profile.propertyName}</h3>
               <p className="mt-2 text-sm leading-6 text-[rgba(11,31,51,0.66)]">{props.profile.description}</p>
               <div className="mt-4 space-y-3 text-sm">
-                <div><strong>Who it is for:</strong> {props.profile.residentAudience}</div>
+                <div><strong>Who it helps:</strong> {props.profile.residentAudience}</div>
                 <div><strong>Amenities:</strong> {props.profile.buildingAmenities.join(', ')}</div>
                 <div><strong>Nearby:</strong> {props.profile.nearbyAnchors.join(', ')}</div>
                 <div><strong>Best first move:</strong> {props.profile.managerNotes}</div>
@@ -354,7 +380,7 @@ export function PartnerWorkspaceTemplate(props: Props) {
           </div>
         </Section>
 
-        <Section id="resident-preview" eyebrow="Resident view" title="What it feels like on their side">
+        <Section id="resident-preview" eyebrow="Resident view" title="What residents see" description="A quick preview of the card, map links, nearby places, and one-tap actions residents can use from the lobby, elevator, or move-in email.">
           <div className="shore-card grid gap-8 lg:grid-cols-[0.85fr_1.15fr]">
             <div>
               <div className="text-[11px] font-bold uppercase text-[#C8A96A]">Resident card</div>
@@ -384,7 +410,7 @@ export function PartnerWorkspaceTemplate(props: Props) {
           </div>
         </Section>
 
-        <Section id="qr" eyebrow="Codes" title="Put the entry points where residents already look">
+        <Section id="qr" eyebrow="Codes" title="Put the entry points where residents already look" description="Each code has a real place, a clear destination, scan activity, and one job: help residents find something worth doing nearby.">
           <div className="grid gap-x-10 gap-y-6 lg:grid-cols-3">
             {props.qrs.map((qr) => (
               <div key={qr.id} className="shore-card py-2">
@@ -409,7 +435,7 @@ export function PartnerWorkspaceTemplate(props: Props) {
           </div>
         </Section>
 
-        <Section id="perks" eyebrow="Perks" title="Small reasons to choose somewhere nearby">
+        <Section id="perks" eyebrow="Perks" title="Small reasons to choose somewhere nearby" description="Offers should be easy to understand, easy to save, and easy to use without making residents decode fine print.">
           <div className="grid gap-x-12 gap-y-8 lg:grid-cols-2">
             {props.perks.map((perk) => (
               <div key={perk.id} className="shore-card">
@@ -439,7 +465,7 @@ export function PartnerWorkspaceTemplate(props: Props) {
           </div>
         </Section>
 
-        <Section id="events" eyebrow="Events" title="Plans residents can say yes to">
+        <Section id="events" eyebrow="Events" title="Plans residents can say yes to" description="Simple invites with the count, the place, the linked sign, and a calendar tap for anyone who wants the reminder.">
           <div className="grid gap-x-12 gap-y-8 lg:grid-cols-2">
             {props.events.map((event) => (
               <div key={event.id} className="shore-card">
@@ -447,7 +473,7 @@ export function PartnerWorkspaceTemplate(props: Props) {
                 <h3 className="mt-1 text-lg font-semibold">{event.title}</h3>
                 <p className="mt-2 text-sm leading-6 text-[rgba(11,31,51,0.66)]">{event.description}</p>
                 <div className="mt-3 text-xs text-[rgba(11,31,51,0.62)]">{new Date(event.dateTime).toLocaleString()} · {event.location}</div>
-                <div className="mt-4 h-2 bg-[#F7F8FB]"><div className="h-full bg-[#C8A96A]" style={{ width: `${Math.min(100, Math.round((event.rsvpCount / event.capacity) * 100))}%` }} /></div>
+                <div className="shore-progress-track mt-4"><div className="h-full bg-[#C8A96A]" style={{ width: `${Math.min(100, Math.round((event.rsvpCount / event.capacity) * 100))}%` }} /></div>
                 <div className="mt-2 text-xs font-semibold">{event.rsvpCount}/{event.capacity} RSVPs · {event.linkedQR} · {event.linkedCampaign}</div>
                 <div className="mt-4 flex flex-wrap gap-2">
                   <button type="button" className="shore-button" onClick={() => downloadTextFile(`${event.id}-attendees.csv`, `event,rsvps,capacity\n"${event.title}",${event.rsvpCount},${event.capacity}\n`)}>
@@ -462,7 +488,7 @@ export function PartnerWorkspaceTemplate(props: Props) {
           </div>
         </Section>
 
-        <Section id="campaigns" eyebrow="Notes" title="What The Shore sends out">
+        <Section id="campaigns" eyebrow="Notes" title={`What ${workspaceName} sends out`} description="Short, useful notes for welcome moments, weekends, campaigns, partner updates, and the monthly roundup.">
           <div className="grid gap-x-8 gap-y-6 lg:grid-cols-3">
             {props.campaigns.map((campaign) => (
               <div key={campaign.id} className="shore-card">
@@ -476,7 +502,7 @@ export function PartnerWorkspaceTemplate(props: Props) {
           </div>
         </Section>
 
-        <Section id="residents" eyebrow="Residents" title="A small sample, not a spreadsheet">
+        <Section id="residents" eyebrow="Residents" title="A small sample, not a spreadsheet" description="Demo residents only. Enough to show who is new, who is active, who saves perks, and who may need a better nudge.">
           <div className="grid gap-x-8 gap-y-6 sm:grid-cols-2 lg:grid-cols-3">
             {props.residents.map((resident) => (
               <div key={resident.id} className="shore-card">
@@ -493,7 +519,7 @@ export function PartnerWorkspaceTemplate(props: Props) {
           </div>
         </Section>
 
-        <Section id="reports" eyebrow="Reports" title="What residents found, saved, joined, and used">
+        <Section id="reports" eyebrow="Reports" title="What residents found, saved, joined, and used" description="A plain 30-day read on whether the building is helping people use the neighborhood more often.">
           <div className="shore-card">
             <div className="grid gap-x-8 gap-y-6 sm:grid-cols-2 lg:grid-cols-4">
               {props.reports.map((metric) => (
@@ -512,7 +538,7 @@ export function PartnerWorkspaceTemplate(props: Props) {
           </div>
         </Section>
 
-        <Section id="billing" eyebrow="Plan" title="Keep it running for the year">
+        <Section id="billing" eyebrow="Plan" title="Keep it running for the year" description="One yearly plan, optional help, invoice support, and a demo coupon when it is time to show the close.">
           <div className="shore-card grid gap-8 lg:grid-cols-[0.8fr_1.2fr]">
             <div>
               <div className="flex items-center gap-2 text-[11px] font-bold uppercase text-[#C8A96A]"><CreditCard className="h-4 w-4" /> {props.billing.conversionState}</div>
@@ -538,9 +564,9 @@ export function PartnerWorkspaceTemplate(props: Props) {
                 <button type="button" className="shore-button shore-button-primary" onClick={() => {
                   setCoupon('DUDE2026');
                   setCouponResult(applyCoupon('DUDE2026', props.billing.price, props.billing.couponCodes));
-                  setBillingNotice('DUDE2026 applied. The Shore is converted for the demo.');
+                  setBillingNotice(`DUDE2026 applied. ${workspaceName} can stay live for the demo.`);
                 }}>
-                  <Sparkles className="h-4 w-4" /> Keep The Shore live
+                  <Sparkles className="h-4 w-4" /> Keep workspace live
                 </button>
                 <button type="button" className="shore-button" onClick={() => writeBillingSummary('quote')}>Download quote</button>
                 <button type="button" className="shore-button" onClick={() => writeBillingSummary('invoice')}>Request invoice</button>

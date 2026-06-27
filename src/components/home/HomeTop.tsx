@@ -9,7 +9,7 @@ export function HomeHeader() {
   const navLinks = [
     { label: 'Residents', href: '#join' },
     { label: 'Partners', href: '#partners' },
-    { label: 'Explore', href: '#map' },
+    { label: 'Map', href: '#map' },
     { label: 'Events', href: '#map' },
     { label: 'Perks', href: '#map' },
     { label: 'Perks Card', href: '#perks-card' },
@@ -138,7 +138,7 @@ export function HomeHero() {
 
       <div className="relative z-10 w-full max-w-[760px] mx-auto flex flex-col items-center text-center">
          <span className="text-[10px] md:text-[12px] uppercase tracking-[0.1em] font-medium text-[rgba(11,31,51,0.62)] mb-6 md:mb-8">Downtown Perks</span>
-         <h1 className="font-serif text-[52px] leading-[1.05] md:text-[88px] lg:text-[104px] text-[#0B1F33] mb-6 tracking-[-0.02em] text-balance break-words overflow-wrap-anywhere min-w-0">
+         <h1 className="text-[52px] leading-[1.05] md:text-[88px] lg:text-[104px] text-[#0B1F33] mb-6 tracking-[-0.02em] text-balance break-words overflow-wrap-anywhere min-w-0">
            Where downtown meets you.
          </h1>
          <p className="text-[18px] md:text-[24px] lg:text-[30px] leading-[1.4] text-[rgba(11,31,51,0.62)] max-w-[680px] mb-12 text-balance overflow-wrap-anywhere min-w-0">
@@ -186,7 +186,7 @@ export function HomeHero() {
                Open map
             </button>
             <button onClick={() => navigate('/map?mode=resident&tab=map')} className="px-8 py-4 bg-transparent border border-[rgba(11,31,51,0.08)] text-[#0B1F33] text-[15px] font-medium hover:bg-[#F1F3F7] transition-colors w-full sm:w-auto">
-               Explore downtown
+               See what is nearby
             </button>
          </div>
 
@@ -204,7 +204,7 @@ export function HomeContext() {
   return (
     <section className="py-[120px] px-6 md:px-12 bg-[#FFFFFF] w-full border-b border-[rgba(11,31,51,0.08)]">
        <div className="max-w-[760px] mx-auto w-full">
-          <h2 className="font-serif text-[38px] md:text-[56px] lg:text-[72px] leading-[1.1] text-[#0B1F33] mb-8 overflow-wrap-anywhere min-w-0">
+          <h2 className="text-[38px] md:text-[56px] lg:text-[72px] leading-[1.1] text-[#0B1F33] mb-8 overflow-wrap-anywhere min-w-0">
              Downtown, in one place.
           </h2>
           <div className="space-y-6 text-[15px] md:text-[18px] leading-[1.6] text-[rgba(11,31,51,0.62)] overflow-wrap-anywhere min-w-0">
@@ -232,14 +232,14 @@ export function HomeSearchLess() {
     <section className="py-[100px] px-6 md:px-12 bg-[#F1F3F7] w-full border-b border-[rgba(11,31,51,0.08)]">
        <div className="max-w-[1200px] mx-auto w-full flex flex-col md:flex-row gap-16 md:items-center">
           <div className="w-full md:w-1/2">
-             <h2 className="font-serif text-[38px] md:text-[56px] lg:text-[64px] leading-[1.1] text-[#0B1F33] mb-6 overflow-wrap-anywhere min-w-0">
+             <h2 className="text-[38px] md:text-[56px] lg:text-[64px] leading-[1.1] text-[#0B1F33] mb-6 overflow-wrap-anywhere min-w-0">
                 Search less.<br/>Do more.
              </h2>
              <p className="text-[15px] md:text-[18px] leading-[1.6] text-[rgba(11,31,51,0.62)] mb-10 overflow-wrap-anywhere min-w-0">
                 Places, plans, and perks in one view — so deciding what to do next takes seconds, not ten tabs.
              </p>
              <button onClick={() => navigate('/map?mode=resident&tab=map')} className="w-full md:w-auto px-8 py-4 bg-[#0B1F33] text-white text-[15px] font-medium hover:bg-[#132238] transition-colors">
-                Explore the map
+                Open the map
              </button>
           </div>
           <div className="w-full md:w-1/2 flex justify-center">

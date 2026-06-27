@@ -14,10 +14,10 @@
   --dp-admin-max: 1320px;
   --dp-admin-sidebar: 240px;
   --dp-admin-gutter: clamp(20px, 4vw, 32px);
-  --dp-admin-section-gap: 32px;
-  --dp-admin-card-pad: 24px;
-  --dp-admin-card-radius: 16px;
-  --dp-admin-control-radius: 8px;
+  --dp-admin-section-gap: 24px;
+  --dp-admin-card-pad: 18px;
+  --dp-admin-card-radius: 0;
+  --dp-admin-control-radius: 0;
 
   --radius-sm: 8px;
   --radius-md: 16px;

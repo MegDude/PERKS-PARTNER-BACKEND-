@@ -12,7 +12,7 @@ export function HomePartners() {
     <section id="partners" className="py-[120px] px-6 md:px-12 bg-[#0B1F33] text-white w-full border-b border-[rgba(11,31,51,0.08)]">
        <div className="max-w-[1200px] mx-auto w-full">
           <div className="mb-16 md:mb-24">
-             <h2 className="font-serif text-[38px] md:text-[56px] lg:text-[72px] leading-[1.1] mb-6 overflow-wrap-anywhere min-w-0">
+             <h2 className="text-[38px] md:text-[56px] lg:text-[72px] leading-[1.1] mb-6 overflow-wrap-anywhere min-w-0">
                 Turn residents into regulars.
              </h2>
              <p className="text-[15px] md:text-[18px] leading-[1.6] text-white/70 max-w-[600px] overflow-wrap-anywhere min-w-0">
@@ -86,7 +86,7 @@ export function HomePricing() {
     <section className="py-[120px] px-6 md:px-12 bg-[#F1F3F7] w-full border-b border-[rgba(11,31,51,0.08)]">
        <div className="max-w-[1200px] mx-auto w-full">
           <div className="text-center mb-16">
-             <h2 className="font-serif text-[38px] md:text-[56px] text-[#0B1F33] mb-6 leading-[1.1]">Pricing & Access</h2>
+             <h2 className="text-[38px] md:text-[56px] text-[#0B1F33] mb-6 leading-[1.1]">Pricing & Access</h2>
              <p className="text-[18px] md:text-[24px] text-[rgba(11,31,51,0.62)] max-w-[600px] mx-auto">
                 90-day pilot then choose your level. Management pays. Residents stay.
              </p>
@@ -131,7 +131,7 @@ export function HomeRollout() {
     <section className="py-[120px] px-6 md:px-12 bg-[#FFFFFF] w-full border-b border-[rgba(11,31,51,0.08)]">
        <div className="max-w-[1200px] mx-auto w-full">
           <div className="mb-16 md:mb-24">
-             <h2 className="font-serif text-[38px] md:text-[56px] text-[#0B1F33] mb-6 leading-[1.1]">Rollout path</h2>
+             <h2 className="text-[38px] md:text-[56px] text-[#0B1F33] mb-6 leading-[1.1]">Rollout path</h2>
              <p className="text-[18px] md:text-[24px] text-[rgba(11,31,51,0.62)] max-w-[800px]">
                 A continuous loop from pilot to scale. Start fast, measure real actions, and scale only what works.
              </p>
@@ -169,7 +169,7 @@ export function HomeIncluded() {
     <section className="py-[120px] px-6 md:px-12 bg-[#F7F8FB] w-full border-b border-[rgba(11,31,51,0.08)]">
        <div className="max-w-[1200px] mx-auto w-full">
           <div className="text-center mb-16 md:mb-24">
-             <h2 className="font-serif text-[38px] md:text-[56px] text-[#0B1F33] mb-6 leading-[1.1]">What's Included</h2>
+             <h2 className="text-[38px] md:text-[56px] text-[#0B1F33] mb-6 leading-[1.1]">What's Included</h2>
              <p className="text-[18px] md:text-[24px] text-[rgba(11,31,51,0.62)] max-w-[600px] mx-auto">
                 Everything you need to run your program. Connect your location to the rest of downtown easily.
              </p>

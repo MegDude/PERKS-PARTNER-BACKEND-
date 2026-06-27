@@ -18,35 +18,35 @@ export default function PartnerDashboardLayout() {
   const links = [
     { section: 'Overview' },
     { to: '/', icon: <HomeIcon className="w-4 h-4" />, label: 'Home' },
-    { to: '/admin', icon: <LayoutDashboard className="w-4 h-4" />, label: 'Workspace' },
-    { to: '/admin/home', icon: <LayoutDashboard className="w-4 h-4" />, label: 'Platform Welcome' },
-    { to: '/admin/platform', icon: <ShieldIcon />, label: 'Command Center' },
-    { to: '/admin/platform/modules', icon: <Settings className="w-4 h-4" />, label: 'Module Audit' },
-    { to: '/admin/partner-portal', icon: <Presentation className="w-4 h-4" />, label: 'Partner Portal' },
-    { to: '/admin/dashboard', icon: <BarChart3 className="w-4 h-4" />, label: 'Performance Stats' },
+    { to: '/admin', icon: <LayoutDashboard className="w-4 h-4" />, label: 'Start here' },
+    { to: '/admin/home', icon: <LayoutDashboard className="w-4 h-4" />, label: 'Welcome' },
+    { to: '/admin/platform', icon: <ShieldIcon />, label: 'Today downtown' },
+    { to: '/admin/platform/modules', icon: <Settings className="w-4 h-4" />, label: 'What is wired' },
+    { to: '/admin/partner-portal', icon: <Presentation className="w-4 h-4" />, label: 'Partner view' },
+    { to: '/admin/dashboard', icon: <BarChart3 className="w-4 h-4" />, label: 'How it is going' },
     
     { section: 'Network' },
-    { to: '/admin/partner', icon: <Building2 className="w-4 h-4" />, label: 'Partner Directory' },
-    { to: '/admin/properties', icon: <Building2 className="w-4 h-4" />, label: 'Manage Properties' },
-    { to: '/admin/buildings', icon: <Users className="w-4 h-4" />, label: 'Property Operations' },
-    { to: '/admin/residents', icon: <Users className="w-4 h-4" />, label: 'Resident Directory' },
-    { to: '/admin/segmentation', icon: <ListTodo className="w-4 h-4" />, label: 'Segmentation' },
+    { to: '/admin/partner', icon: <Building2 className="w-4 h-4" />, label: 'Partners' },
+    { to: '/admin/properties', icon: <Building2 className="w-4 h-4" />, label: 'Properties' },
+    { to: '/admin/buildings', icon: <Users className="w-4 h-4" />, label: 'Buildings' },
+    { to: '/admin/residents', icon: <Users className="w-4 h-4" />, label: 'Residents' },
+    { to: '/admin/segmentation', icon: <ListTodo className="w-4 h-4" />, label: 'Resident groups' },
     
     { section: 'Programs & Perks' },
     { to: '/admin/about', icon: <Ticket className="w-4 h-4" />, label: 'About Program' },
-    { to: '/admin/developer-engagement', icon: <Building2 className="w-4 h-4" />, label: 'Sponsor Engagement' },
+    { to: '/admin/developer-engagement', icon: <Building2 className="w-4 h-4" />, label: 'Sponsor view' },
     { to: '/admin/perks', icon: <Ticket className="w-4 h-4" />, label: 'Downtown Perks' },
     { to: '/admin/events', icon: <Presentation className="w-4 h-4" />, label: 'Events' },
     
     { section: 'Communication' },
-    { to: '/admin/engagement', icon: <Megaphone className="w-4 h-4" />, label: 'Engagement Hub' },
-    { to: '/admin/announcements', icon: <Megaphone className="w-4 h-4" />, label: 'Announcements' },
+    { to: '/admin/engagement', icon: <Megaphone className="w-4 h-4" />, label: 'Notes to send' },
+    { to: '/admin/announcements', icon: <Megaphone className="w-4 h-4" />, label: 'Building notes' },
     { to: '/admin/surveys', icon: <ListTodo className="w-4 h-4" />, label: 'Surveys' },
     
     { section: 'Insights' },
     { to: '/admin/reports', icon: <Settings className="w-4 h-4" />, label: 'Reports' },
-    { to: '/admin/analytics', icon: <BarChart3 className="w-4 h-4" />, label: 'Perk Analytics' },
-    { to: '/admin/promotions', icon: <CreditCard className="w-4 h-4" />, label: 'Promotions & Billing' },
+    { to: '/admin/analytics', icon: <BarChart3 className="w-4 h-4" />, label: 'Perk results' },
+    { to: '/admin/promotions', icon: <CreditCard className="w-4 h-4" />, label: 'Plans & billing' },
   ];
 
   return (
@@ -107,7 +107,7 @@ export default function PartnerDashboardLayout() {
               <div className="w-6 h-6 bg-[#11182B] flex items-center justify-center">
                  <Building2 className="w-3 h-3 text-white" />
               </div>
-              <span className="font-bold tracking-tight uppercase text-sm">Partner Platform</span>
+              <span className="font-bold tracking-tight uppercase text-sm">Downtown Perks</span>
            </div>
            <div className="flex items-center gap-2">
              <Button
@@ -148,8 +148,8 @@ export default function PartnerDashboardLayout() {
             <div className="absolute right-0 top-0 h-full w-[min(92vw,390px)] border-l border-[#EFEFEF] bg-white shadow-none flex flex-col">
               <div className="p-4 border-b border-[#EFEFEF] flex items-center justify-between">
                 <div>
-                  <div className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Partner Platform</div>
-                  <div className="text-sm font-bold text-[#11182B]">Platform Navigation</div>
+                  <div className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Downtown Perks</div>
+                  <div className="text-sm font-bold text-[#11182B]">Where do you want to go?</div>
                 </div>
                 <Button
                   onClick={() => setMobileOpen(false)}

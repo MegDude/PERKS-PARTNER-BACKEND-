@@ -10,11 +10,11 @@ export function HomeLiveMap() {
     <section id="map" className="py-[120px] px-6 md:px-12 bg-[#F7F8FB] w-full border-b border-[rgba(11,31,51,0.08)]">
        <div className="max-w-[1200px] mx-auto w-full text-center flex flex-col items-center">
           <span className="text-[10px] md:text-[12px] uppercase tracking-[0.1em] font-medium text-[#C5A028] mb-4">Happening now</span>
-          <h2 className="font-serif text-[38px] md:text-[56px] lg:text-[72px] leading-[1.1] text-[#0B1F33] mb-6 overflow-wrap-anywhere min-w-0">
+          <h2 className="text-[38px] md:text-[56px] lg:text-[72px] leading-[1.1] text-[#0B1F33] mb-6 overflow-wrap-anywhere min-w-0">
              See what's nearby.
           </h2>
           <p className="text-[15px] md:text-[18px] leading-[1.6] text-[rgba(11,31,51,0.62)] mb-10 max-w-[600px] overflow-wrap-anywhere min-w-0">
-             Explore the map to find active events, special deals, and local perks right around the corner.
+             Open the map to find events, local perks, and useful spots right around the corner.
           </p>
           <button onClick={() => navigate('/map?mode=resident&tab=map')} className="px-8 py-4 bg-[#0B1F33] text-white text-[15px] font-medium hover:bg-[#132238] transition-colors mb-16">
              Open the map
@@ -68,7 +68,7 @@ export function HomeHowItWorks() {
     <section className="py-[120px] px-6 md:px-12 bg-[#FFFFFF] w-full border-b border-[rgba(11,31,51,0.08)]">
        <div className="max-w-[1200px] mx-auto w-full">
           <div className="mb-16 md:mb-20">
-             <h2 className="font-serif text-[38px] md:text-[56px] lg:text-[72px] leading-[1.1] text-[#0B1F33] mb-6 overflow-wrap-anywhere min-w-0">
+             <h2 className="text-[38px] md:text-[56px] lg:text-[72px] leading-[1.1] text-[#0B1F33] mb-6 overflow-wrap-anywhere min-w-0">
                 Friction dies here.
              </h2>
              <h3 className="text-[24px] md:text-[30px] text-[#0B1F33] mb-4 overflow-wrap-anywhere min-w-0">
@@ -111,7 +111,7 @@ export function HomePerksCard() {
        <div className="max-w-[1200px] mx-auto w-full bg-[#FFFFFF] p-8 md:p-16 border border-[rgba(11,31,51,0.08)] flex flex-col md:flex-row gap-16 items-center">
           
           <div className="w-full md:w-1/2 flex flex-col z-10 order-2 md:order-1">
-             <h2 className="font-serif text-[38px] md:text-[56px] text-[#0B1F33] mb-6 leading-[1.1] overflow-wrap-anywhere min-w-0">
+             <h2 className="text-[38px] md:text-[56px] text-[#0B1F33] mb-6 leading-[1.1] overflow-wrap-anywhere min-w-0">
                 Digital Member Card
              </h2>
              <div className="text-[24px] md:text-[30px] text-[#0B1F33] mb-8">$25 / yr</div>

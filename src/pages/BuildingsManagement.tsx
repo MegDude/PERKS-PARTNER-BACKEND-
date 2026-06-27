@@ -490,7 +490,7 @@ export default function BuildingsManagement() {
     return (
       <div className="flex min-h-[60vh] items-center justify-center bg-white text-[#11182B]">
         <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-        Loading property operations...
+        Loading buildings...
       </div>
     );
   }
@@ -501,10 +501,10 @@ export default function BuildingsManagement() {
         <header className="mb-6 border-b border-[#11182B]/10 pb-6">
           <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-end">
             <div>
-              <p className="text-[11px] font-bold uppercase text-[#C5A028]">Property operations</p>
-              <h1 className="mt-2 text-3xl font-semibold tracking-normal text-[#11182B]">Buildings workspace</h1>
+              <p className="text-[11px] font-bold uppercase text-[#C5A028]">Buildings</p>
+              <h1 className="mt-2 text-3xl font-semibold tracking-normal text-[#11182B]">Everything the building needs</h1>
               <p className="mt-2 max-w-3xl text-sm leading-6 text-[#5f6b7a]">
-                Manage building records, unit inventory, resident access, amenities, surveys, documents, and reporting from one operational workspace.
+                Keep units, residents, access, amenities, surveys, documents, and reports in one steady place.
               </p>
             </div>
             <div className="grid gap-2">
@@ -541,8 +541,8 @@ export default function BuildingsManagement() {
             <SectionShell
               eyebrow="Building profile"
               title={selectedBuilding?.name || 'Building profile'}
-              description="The canonical building record that drives units, residents, access, surveys, and reports."
-              action={<Button onClick={() => openModal('profile')}><Edit3 className="h-4 w-4" /> Edit Profile</Button>}
+              description="The building record that keeps units, residents, access, surveys, and reports pointing the same way."
+              action={<Button onClick={() => openModal('profile')}><Edit3 className="h-4 w-4" /> Edit profile</Button>}
             >
               <div className="grid gap-4 lg:grid-cols-[1fr_0.8fr]">
                 <div className="grid gap-3 sm:grid-cols-2">
@@ -577,9 +577,9 @@ export default function BuildingsManagement() {
           <TabsContent value="units">
             <SectionShell
               eyebrow="Unit inventory"
-              title="Manage units and occupancy."
-              description="Create units, assign residents, track access status, import inventory, and export building records."
-              action={<Button onClick={() => openModal('unit')}><Plus className="h-4 w-4" /> Add Unit</Button>}
+              title="Units and occupancy"
+              description="Add units, assign residents, check access, import a list, or export the building record."
+              action={<Button onClick={() => openModal('unit')}><Plus className="h-4 w-4" /> Add unit</Button>}
             >
               <Toolbar>
                 <SearchBox value={unitSearch} onChange={setUnitSearch} placeholder="Search units" />
@@ -640,10 +640,10 @@ export default function BuildingsManagement() {
 
           <TabsContent value="residents">
             <SectionShell
-              eyebrow="Resident CRM"
-              title="Manage residents and access."
-              description="Invite residents, assign units, update card/access status, and review building-level history."
-              action={<Button onClick={() => openModal('resident')}><Plus className="h-4 w-4" /> Invite Resident</Button>}
+              eyebrow="Residents"
+              title="Residents and access"
+              description="Invite residents, assign units, update card access, and review what has changed."
+              action={<Button onClick={() => openModal('resident')}><Plus className="h-4 w-4" /> Invite resident</Button>}
             >
               <Toolbar><SearchBox value={residentSearch} onChange={setResidentSearch} placeholder="Search residents" /></Toolbar>
               <div className="grid gap-3">
@@ -670,7 +670,7 @@ export default function BuildingsManagement() {
           </TabsContent>
 
           <TabsContent value="amenities">
-            <SectionShell eyebrow="Amenities" title="Manage building assets." description="Amenities are operational assets with hours, status, access rules, and usage tracking." action={<Button onClick={() => openModal('amenity')}><Plus className="h-4 w-4" /> Add Amenity</Button>}>
+            <SectionShell eyebrow="Amenities" title="Building amenities" description="Hours, status, access rules, and usage in one clean list." action={<Button onClick={() => openModal('amenity')}><Plus className="h-4 w-4" /> Add amenity</Button>}>
               <Toolbar><SearchBox value={amenitySearch} onChange={setAmenitySearch} placeholder="Search amenities" /></Toolbar>
               <div className="grid gap-3 md:grid-cols-2">
                 {filteredAmenities.map((amenity: any) => (
@@ -700,7 +700,7 @@ export default function BuildingsManagement() {
           </TabsContent>
 
           <TabsContent value="surveys">
-            <SectionShell eyebrow="Surveys" title="Survey operations." description="Create, publish, close, clone, archive, review, and export resident survey programs scoped to this building." action={<Button onClick={() => navigate('/admin/surveys')}><Plus className="h-4 w-4" /> Create Survey</Button>}>
+            <SectionShell eyebrow="Surveys" title="Ask residents what they think" description="Create, publish, close, review, and export building surveys." action={<Button onClick={() => navigate('/admin/surveys')}><Plus className="h-4 w-4" /> Create survey</Button>}>
               <div className="grid gap-3">
                 {buildingSurveys.map((survey: any) => (
                   <Row key={survey.id} title={survey.title} detail={`${survey.status} • ${survey.responses_count || 0} responses • ${survey.ends_at || 'No end date'}`} actions={<><Button variant="secondary" onClick={() => navigate('/admin/surveys')}>Manage</Button><Button variant="secondary" onClick={() => downloadFile(`${survey.title}-responses.csv`, toCsv(buildingSurveyResponses, [{ key: 'resident_name', label: 'Resident' }, { key: 'resident_email', label: 'Email' }, { key: 'score', label: 'Score' }, { key: 'sentiment', label: 'Sentiment' }]))}>Export</Button></>} />
@@ -711,7 +711,7 @@ export default function BuildingsManagement() {
           </TabsContent>
 
           <TabsContent value="access">
-            <SectionShell eyebrow="Access management" title="Control resident and staff access." description="Manage invite status, QR access, resident card status, building rules, partner access, and staff permission groups.">
+            <SectionShell eyebrow="Access" title="Resident and staff access" description="Review invite status, QR access, resident cards, building rules, partner access, and staff groups.">
               <div className="dp-summary-matrix">
                 <div className="dp-summary-matrix__grid">
                 <Metric label="Invited" value={buildingResidents.filter((r: any) => r.resident_status === 'invited').length} detail="Pending residents" />
@@ -728,7 +728,7 @@ export default function BuildingsManagement() {
           </TabsContent>
 
           <TabsContent value="engagement">
-            <SectionShell eyebrow="Engagement" title="Measure resident participation." description="Actual building activity from residents, redemptions, surveys, events, and broadcasts.">
+            <SectionShell eyebrow="Participation" title="What residents are doing" description="Building activity from residents, perk use, surveys, events, and messages.">
               <div className="dp-summary-matrix">
                 <div className="dp-summary-matrix__grid">
                 <Metric label="Residents invited" value={buildingResidents.length} detail="CRM records" />
@@ -745,7 +745,7 @@ export default function BuildingsManagement() {
           </TabsContent>
 
           <TabsContent value="documents">
-            <SectionShell eyebrow="Documents" title="Manage building resources." description="Track leasing documents, welcome guides, partner agreements, policies, and resident resources with version and permission metadata." action={<Button onClick={() => openModal('document')}><Plus className="h-4 w-4" /> Add Document</Button>}>
+            <SectionShell eyebrow="Documents" title="Building resources" description="Keep leasing documents, welcome guides, partner agreements, policies, and resident resources easy to find." action={<Button onClick={() => openModal('document')}><Plus className="h-4 w-4" /> Add document</Button>}>
               <div className="grid gap-3">
                 {buildingDocuments.map((document: any) => (
                   <Row key={document.id} title={document.title} detail={`${document.category} • Version ${document.version || '1.0'} • ${document.permission_group || 'Property team'} • ${document.status || 'active'}`} actions={<><Button variant="secondary" onClick={() => openModal('document', document)}>Edit</Button><Button variant="secondary" onClick={() => document.file_url ? window.open(document.file_url, '_blank') : toast.info('No file URL is attached yet')}>Download</Button><Button variant="secondary" onClick={() => archiveDocument(document)}>Archive</Button></>} />
@@ -756,13 +756,13 @@ export default function BuildingsManagement() {
           </TabsContent>
 
           <TabsContent value="reporting">
-            <SectionShell eyebrow="Reporting" title="Export operational reports." description="Generate property operations reports using building, unit, resident, survey, amenity, and engagement data." action={<Button onClick={exportReport}><Download className="h-4 w-4" /> Export CSV</Button>}>
+            <SectionShell eyebrow="Reports" title="Share a clean building report" description="Export the building, unit, resident, survey, amenity, and participation details." action={<Button onClick={exportReport}><Download className="h-4 w-4" /> Export CSV</Button>}>
               <div className="dp-summary-matrix">
                 <div className="dp-summary-matrix__grid">
-                <Metric label="Buildings" value={buildings.length} detail="Managed properties" />
+                <Metric label="Buildings" value={buildings.length} detail="Properties in the program" />
                 <Metric label="Units" value={buildingUnits.length} detail={`${occupancy}% occupied`} />
                 <Metric label="Residents" value={buildingResidents.length} detail={`${activeAccess} access active`} />
-                <Metric label="Amenities" value={buildingAmenities.length} detail="Managed assets" />
+                <Metric label="Amenities" value={buildingAmenities.length} detail="Building amenities" />
                 <Metric label="Surveys" value={buildingSurveys.length} detail={`${buildingSurveyResponses.length} responses`} />
                 <Metric label="Reports" value={buildingAuditLogs.filter((log: any) => String(log.action).includes('report')).length} detail="Generated exports" />
                 </div>
@@ -891,7 +891,7 @@ function AuditTrail({ logs }: any) {
             <span className="font-semibold text-[#11182B]">{log.action}</span> {log.detail ? `• ${log.detail}` : ''} <span className="text-xs">{log.timestamp?.slice(0, 16) || log.created_at?.slice(0, 16)}</span>
           </p>
         ))}
-        {!logs.length && <p className="text-sm text-[#6E7785]">No audit events recorded yet. Updates made from this workspace will appear here.</p>}
+        {!logs.length && <p className="text-sm text-[#6E7785]">No building updates yet. Changes made here will appear in this list.</p>}
       </div>
     </div>
   );
@@ -995,7 +995,7 @@ function DocumentForm({ form, setForm, onSubmit, loading }: any) {
       <Field label="File Name"><Input value={form.file_name || ''} onChange={(e: any) => setForm({ ...form, file_name: e.target.value })} /></Field>
       <Field label="File URL"><Input value={form.file_url || ''} onChange={(e: any) => setForm({ ...form, file_url: e.target.value })} /></Field>
       <Field label="Version"><Input value={form.version || ''} onChange={(e: any) => setForm({ ...form, version: e.target.value })} /></Field>
-      <Field label="Permission Group"><Input value={form.permission_group || ''} onChange={(e: any) => setForm({ ...form, permission_group: e.target.value })} /></Field>
+      <Field label="Who can see this"><Input value={form.permission_group || ''} onChange={(e: any) => setForm({ ...form, permission_group: e.target.value })} /></Field>
     </FormGrid>
   );
 }

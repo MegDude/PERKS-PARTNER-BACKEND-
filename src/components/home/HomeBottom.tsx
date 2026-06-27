@@ -25,7 +25,7 @@ export function HomeFaq() {
     <section className="py-[120px] px-6 md:px-12 bg-[#FFFFFF] w-full border-b border-[rgba(11,31,51,0.08)]">
        <div className="max-w-[760px] mx-auto w-full">
           <div className="text-center mb-16">
-             <h2 className="font-serif text-[38px] md:text-[56px] text-[#0B1F33] mb-6 leading-[1.1]">FAQ</h2>
+             <h2 className="text-[38px] md:text-[56px] text-[#0B1F33] mb-6 leading-[1.1]">FAQ</h2>
              <p className="text-[18px] md:text-[24px] text-[rgba(11,31,51,0.62)]">
                 Everything you need to know about how Downtown Perks works for residents and partners.
              </p>
@@ -62,7 +62,7 @@ export function HomeJoin() {
     <section id="join" className="py-[120px] px-6 md:px-12 bg-[#F1F3F7] w-full border-b border-[rgba(11,31,51,0.08)]">
        <div className="max-w-[1200px] mx-auto w-full">
           <div className="text-center mb-16 md:mb-24">
-             <h2 className="font-serif text-[38px] md:text-[56px] text-[#0B1F33] mb-6 leading-[1.1]">Ready when you are.</h2>
+             <h2 className="text-[38px] md:text-[56px] text-[#0B1F33] mb-6 leading-[1.1]">Ready when you are.</h2>
              <p className="text-[18px] md:text-[24px] text-[rgba(11,31,51,0.62)] max-w-[600px] mx-auto">
                 People choose what's clear and easy to act on. Select who you are so we can guide you to the right setup.
              </p>
@@ -71,7 +71,7 @@ export function HomeJoin() {
           <div className="flex flex-col md:flex-row gap-8">
              {/* Path A */}
              <OperationalSurface className="w-full md:w-1/2 p-8 md:p-12 flex flex-col items-start relative overflow-hidden bg-transparent">
-                <div className="absolute top-0 right-0 p-8 text-[rgba(11,31,51,0.04)] font-serif text-[120px] leading-none pointer-events-none select-none">R</div>
+                <div className="absolute top-0 right-0 p-8 text-[rgba(11,31,51,0.04)] text-[120px] leading-none pointer-events-none select-none">R</div>
                 
                 <h3 className="text-[24px] md:text-[30px] font-medium text-[#0B1F33] mb-6 relative z-10">I'm a resident</h3>
                 <p className="text-[15px] md:text-[16px] text-[rgba(11,31,51,0.62)] leading-[1.6] mb-8 relative z-10">
@@ -96,7 +96,7 @@ export function HomeJoin() {
 
              {/* Path B */}
              <div className="w-full md:w-1/2 bg-[#0B1F33] text-white p-8 md:p-12 border border-[#0B1F33] flex flex-col items-start relative overflow-hidden">
-                <div className="absolute top-0 right-0 p-8 text-white/5 font-serif text-[120px] leading-none pointer-events-none select-none">P</div>
+                <div className="absolute top-0 right-0 p-8 text-white/5 text-[120px] leading-none pointer-events-none select-none">P</div>
                 
                 <h3 className="text-[24px] md:text-[30px] font-medium mb-6 relative z-10">I'm a partner</h3>
                 <p className="text-[15px] md:text-[16px] text-white/70 leading-[1.6] mb-8 relative z-10">
@@ -149,7 +149,7 @@ export function HomeFooter() {
              
              <div className="flex-1 grid grid-cols-2 lg:grid-cols-3 gap-10">
                 <div className="flex flex-col gap-4">
-                   <div className="text-[11px] font-mono uppercase tracking-[0.1em] text-[#C5A028] mb-2">Explore</div>
+                   <div className="text-[11px] font-mono uppercase tracking-[0.1em] text-[#C5A028] mb-2">Find nearby</div>
                    <button onClick={() => navigate('/map?mode=resident&tab=map')} className="text-[13px] text-white/70 hover:text-white transition-colors text-left">Live Map</button>
                    <button onClick={() => navigate('/map?mode=resident&tab=events')} className="text-[13px] text-white/70 hover:text-white transition-colors text-left">Events</button>
                    <button onClick={() => navigate('/map?mode=resident&tab=saved')} className="text-[13px] text-white/70 hover:text-white transition-colors text-left">Perks</button>
@@ -169,8 +169,8 @@ export function HomeFooter() {
                 <div className="flex flex-col gap-4 col-span-2 lg:col-span-1">
                    <div className="text-[11px] font-mono uppercase tracking-[0.1em] text-[#C5A028] mb-2">Platform</div>
                    <button onClick={() => document.querySelector('#partners')?.scrollIntoView()} className="text-[13px] text-white/70 hover:text-white transition-colors text-left">Partner Overview</button>
-                   <button onClick={() => navigate('/admin')} className="text-[13px] text-white/70 hover:text-white transition-colors text-left">Partner Workspace</button>
-                   <button onClick={() => navigate('/admin/dashboard')} className="text-[13px] text-white/70 hover:text-white transition-colors text-left">Dashboard</button>
+                   <button onClick={() => navigate('/admin')} className="text-[13px] text-white/70 hover:text-white transition-colors text-left">Partner space</button>
+                   <button onClick={() => navigate('/admin/dashboard')} className="text-[13px] text-white/70 hover:text-white transition-colors text-left">How it is going</button>
                    <button onClick={() => navigate('/admin')} className="text-[13px] text-white/70 hover:text-white transition-colors text-left">Start Here</button>
                    <button onClick={() => navigate('/map')} className="text-[13px] text-white/70 hover:text-white transition-colors text-left">Brand Directory</button>
                 </div>

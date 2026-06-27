@@ -1,35 +1,40 @@
 import type { Event, PartnerLead, PartnerWorkspaceData, Perk } from '@/types/partnerWorkspace';
 
-const leadStorageKey = 'dp_the_shore_partner_lead';
-const favoriteStorageKey = 'dp_the_shore_favorites';
+function storageKey(base: string, workspaceId = 'the-shore') {
+  return `${base}_${workspaceId}`;
+}
 
-export function submitPartnerLead(lead: PartnerLead): PartnerLead {
+export function submitPartnerLead(lead: PartnerLead, workspaceId?: string): PartnerLead {
   const nextLead: PartnerLead = {
     ...lead,
     id: lead.id || `lead-${Date.now()}`,
     status: 'Submitted',
     createdAt: lead.createdAt || new Date().toISOString(),
   };
-  window.localStorage.setItem(leadStorageKey, JSON.stringify(nextLead));
+  window.localStorage.setItem(storageKey('dp_partner_lead_v2', workspaceId), JSON.stringify(nextLead));
   return nextLead;
 }
 
-export function loadPartnerLead(fallback: PartnerLead): PartnerLead {
+export function loadPartnerLead(fallback: PartnerLead, workspaceId?: string): PartnerLead {
   try {
-    const saved = window.localStorage.getItem(leadStorageKey);
-    return saved ? JSON.parse(saved) : fallback;
+    const saved = window.localStorage.getItem(storageKey('dp_partner_lead_v2', workspaceId));
+    const parsed = saved ? JSON.parse(saved) : fallback;
+    if (String(parsed.contactName || '').toLowerCase().includes('maya thompson')) parsed.contactName = '';
+    if (String(parsed.email || '').toLowerCase().includes('maya.thompson')) parsed.email = '';
+    if (String(parsed.phone || '') === '(512) 555-0148') parsed.phone = '';
+    return parsed;
   } catch {
     return fallback;
   }
 }
 
-export function saveFavoriteState(favorites: PartnerWorkspaceData['favorites']) {
-  window.localStorage.setItem(favoriteStorageKey, JSON.stringify(favorites));
+export function saveFavoriteState(favorites: PartnerWorkspaceData['favorites'], workspaceId?: string) {
+  window.localStorage.setItem(storageKey('dp_partner_favorites', workspaceId), JSON.stringify(favorites));
 }
 
-export function loadFavoriteState(fallback: PartnerWorkspaceData['favorites']) {
+export function loadFavoriteState(fallback: PartnerWorkspaceData['favorites'], workspaceId?: string) {
   try {
-    const saved = window.localStorage.getItem(favoriteStorageKey);
+    const saved = window.localStorage.getItem(storageKey('dp_partner_favorites', workspaceId));
     return saved ? JSON.parse(saved) : fallback;
   } catch {
     return fallback;

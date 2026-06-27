@@ -14,6 +14,12 @@ const statusStyles: Record<string, string> = {
   "pending-configuration": "border-amber-300 text-amber-800",
 };
 
+const statusLabels: Record<string, string> = {
+  installed: "Ready",
+  "existing-backend": "Already here",
+  "pending-configuration": "Needs setup",
+};
+
 export default function PlatformModuleAudit() {
   const summary = summarizePlatformModuleAudit();
   const smokeTests = [
@@ -33,11 +39,11 @@ export default function PlatformModuleAudit() {
             <div>
               <div className="flex items-center gap-2 text-[11px] font-bold uppercase text-[#C8A96A]">
                 <PlugZap className="h-4 w-4" />
-                Module installation audit
+                What is wired
               </div>
-              <h1 className="mt-2 text-3xl font-semibold leading-tight sm:text-4xl">Downtown Perks backend modules</h1>
+              <h1 className="mt-2 text-3xl font-semibold leading-tight sm:text-4xl">Downtown Perks, checked and ready</h1>
               <p className="mt-3 max-w-3xl text-sm leading-6 text-[rgba(11,31,51,0.66)]">
-                This checks the BASE44 product-side functionality and Base44 entity/config modules, then shows where each one is installed or bridged inside this operations app.
+                A simple check of the pieces that keep the app useful: map questions, resident signals, events, results, and follow-up.
               </p>
             </div>
             <div className="grid grid-cols-2 gap-2 text-center sm:grid-cols-4">
@@ -66,7 +72,7 @@ export default function PlatformModuleAudit() {
             <div key={test.label} className="border border-[rgba(11,31,51,0.08)] bg-white p-4">
               <div className="flex items-center gap-2 text-[11px] font-bold uppercase text-[#C8A96A]">
                 <CheckCircle2 className="h-4 w-4" />
-                Runtime check
+                Quick check
               </div>
               <div className="mt-2 text-sm font-semibold">{test.label}</div>
               <div className="mt-1 text-xs leading-5 text-[rgba(11,31,51,0.64)]">{String(test.value)}</div>
@@ -85,11 +91,11 @@ export default function PlatformModuleAudit() {
                   </div>
                   <p className="mt-2 text-sm leading-6 text-[rgba(11,31,51,0.66)]">{item.notes}</p>
                 </div>
-                <span className={`shrink-0 border px-3 py-2 text-[10px] font-bold uppercase ${statusStyles[item.status]}`}>{item.status}</span>
+                <span className={`shrink-0 border px-3 py-2 text-[10px] font-bold uppercase ${statusStyles[item.status]}`}>{statusLabels[item.status] || item.status}</span>
               </div>
               <div className="mt-4 grid gap-2 text-xs leading-5 text-[rgba(11,31,51,0.62)] lg:grid-cols-2">
-                <div><span className="font-bold text-[#0B1F33]">Source:</span> {item.sourcePath}</div>
-                <div><span className="font-bold text-[#0B1F33]">Installed:</span> {item.installedPath}</div>
+                <div><span className="font-bold text-[#0B1F33]">Comes from:</span> {item.sourcePath}</div>
+                <div><span className="font-bold text-[#0B1F33]">Lives here:</span> {item.installedPath}</div>
               </div>
             </article>
           ))}

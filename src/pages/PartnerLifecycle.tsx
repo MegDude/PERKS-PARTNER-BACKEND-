@@ -47,7 +47,7 @@ const partnerTypes = [
 
 const plans = [
   { key: 'starter', label: 'Starter', amount: 99, cadence: 'annual', summary: 'Launch the workspace with profile, map presence, offers, events, QR, and reporting basics.', limits: 'Single location or starter program', modules: ['Workspace', 'Map presence', 'Offers', 'Events', 'QR', 'Reports'] },
-  { key: 'growth', label: 'Growth', amount: 149, cadence: 'annual', summary: 'Add campaigns, richer analytics, exports, team access, and stronger reporting loops.', limits: 'Active partner operations', modules: ['Everything in Starter', 'Campaigns', 'Analytics', 'Team', 'Exports', 'AI assistant'] },
+  { key: 'growth', label: 'Growth', amount: 149, cadence: 'annual', summary: 'Add notes, clearer reports, exports, team access, and stronger follow-up loops.', limits: 'Active partner operations', modules: ['Everything in Starter', 'Notes', 'Reports', 'Team', 'Exports', 'Helpful suggestions'] },
   { key: 'enterprise', label: 'Enterprise', amount: 0, cadence: 'custom', summary: 'Multi-location, sponsorship, integrations, custom reporting, and managed onboarding.', limits: 'Portfolio or district programs', modules: ['Multi-location', 'API', 'Custom research', 'Billing support', 'Advanced permissions'] },
 ];
 
@@ -359,15 +359,15 @@ export default function PartnerLifecycle() {
   if (location.pathname === '/partners/provision') {
     const provisioned = Boolean(state.provision?.success);
     return (
-      <Shell eyebrow="Workspace creation" title={provisioned ? 'Your workspace is ready.' : 'Create your workspace.'} body="Provisioning connects the organization, permissions, reports, billing, AI context, QR, map presence, and starter operating records.">
+      <Shell eyebrow="Workspace creation" title={provisioned ? 'Your workspace is ready.' : 'Create your workspace.'} body="This connects the organization, permissions, reports, billing, codes, map presence, and starter records.">
         <SectionCard>
           <div className="grid gap-3 md:grid-cols-2">
-            {['Organization', 'Permissions', 'Reports', 'Billing', 'AI', 'Map', 'Offers', 'Events'].map((item) => (
+            {['Organization', 'Permissions', 'Reports', 'Billing', 'Codes', 'Map', 'Offers', 'Events'].map((item) => (
               <p key={item} className="flex items-center gap-2 text-sm"><CheckCircle2 className="h-4 w-4 text-[#C8A96A]" /> {item}</p>
             ))}
           </div>
           <div className="mt-6 flex flex-wrap gap-3">
-            {provisioned ? <ActionLink to="/workspace/home">Open Workspace <ArrowRight className="h-4 w-4" /></ActionLink> : <button onClick={provisionWorkspace} className="inline-flex h-10 items-center gap-2 border border-[rgba(11,31,51,0.12)] bg-white px-4 text-xs font-semibold text-[#0B1F33] hover:border-[#C8A96A]">Provision workspace</button>}
+            {provisioned ? <ActionLink to="/workspace/home">Open workspace <ArrowRight className="h-4 w-4" /></ActionLink> : <button onClick={provisionWorkspace} className="inline-flex h-10 items-center gap-2 border border-[rgba(11,31,51,0.12)] bg-white px-4 text-xs font-semibold text-[#0B1F33] hover:border-[#C8A96A]">Create workspace</button>}
             <ActionLink to="/partners/checkout">Review checkout</ActionLink>
           </div>
         </SectionCard>
@@ -376,11 +376,11 @@ export default function PartnerLifecycle() {
   }
 
   return (
-    <Shell eyebrow="Partner platform" title="Start your workspace." body="Move from partner type to registration, checkout, provisioning, and daily operations without switching products or losing context.">
+    <Shell eyebrow="Partner platform" title="Start your workspace." body="Move from partner type to registration, checkout, setup, and daily work without losing the thread.">
       <div className="grid gap-4 lg:grid-cols-[1fr_0.75fr]">
         <SectionCard>
           <div className="grid gap-4 sm:grid-cols-2">
-            {['Landing Page', 'Partner Type', 'Registration', 'Organization Setup', 'Pricing', 'Checkout', 'Verification', 'Workspace Creation', 'Partner Dashboard', 'Daily Operations'].map((step, index) => (
+            {['First page', 'Partner type', 'Registration', 'Organization setup', 'Pricing', 'Checkout', 'Review', 'Workspace created', 'Partner view', 'Daily work'].map((step, index) => (
               <div key={step} className="border-t border-[rgba(11,31,51,0.08)] pt-4">
                 <p className="text-xs font-semibold text-[#C8A96A]">{String(index + 1).padStart(2, '0')}</p>
                 <p className="mt-1 text-sm font-semibold">{step}</p>
@@ -389,11 +389,11 @@ export default function PartnerLifecycle() {
           </div>
         </SectionCard>
         <SectionCard>
-          <p className="text-lg font-semibold">Partner operating center</p>
-          <p className="mt-3 text-sm leading-6 text-[rgba(11,31,51,0.62)]">The workspace is where partners manage offers, events, campaigns, QR, reporting, billing, team access, and optimization.</p>
+          <p className="text-lg font-semibold">Partner workspace</p>
+          <p className="mt-3 text-sm leading-6 text-[rgba(11,31,51,0.62)]">The workspace is where partners keep offers, events, notes, codes, reports, billing, and team access in one place.</p>
           <div className="mt-6 flex flex-wrap gap-3">
-            <ActionLink to="/partners/start">Start Your Workspace <ArrowRight className="h-4 w-4" /></ActionLink>
-            <ActionLink to="/partners/pricing">Compare Plans</ActionLink>
+            <ActionLink to="/partners/start">Start your workspace <ArrowRight className="h-4 w-4" /></ActionLink>
+            <ActionLink to="/partners/pricing">Compare plans</ActionLink>
           </div>
         </SectionCard>
       </div>
@@ -471,7 +471,7 @@ function WorkspaceView({ state, scoped, data, selectedWorkspace, selectedTenantI
 
   if (moduleSlug !== 'home') {
     return (
-      <Shell eyebrow="Workspace area" title={moduleTitle(moduleSlug)} body={`Showing ${orgName} records only, so each partner workspace stays separated as you move through tabs.`}>
+      <Shell eyebrow="Workspace area" title={moduleTitle(moduleSlug)} body={`Showing only ${orgName}, so each partner space stays easy to follow as you move through tabs.`}>
         <WorkspaceContextBar orgName={orgName} tenantId={tenantId} />
         <WorkspaceMetricStrip metrics={snapshot} compact />
         <WorkspaceNav query={workspaceQuery} />
@@ -511,7 +511,7 @@ function WorkspaceView({ state, scoped, data, selectedWorkspace, selectedTenantI
   };
 
   return (
-    <Shell eyebrow="Workspace Home" title={orgName} body="Manage campaigns, offers, events, reporting, team access, billing, QR experiences, and performance from one operating center.">
+    <Shell eyebrow="Workspace Home" title={orgName} body="Manage offers, events, notes, reports, team access, billing, QR codes, and results from one place.">
       <WorkspaceContextBar orgName={orgName} tenantId={tenantId} />
       <WorkspaceNav query={workspaceQuery} />
       <WorkspaceMetricStrip metrics={snapshot} />
@@ -546,7 +546,7 @@ function WorkspaceView({ state, scoped, data, selectedWorkspace, selectedTenantI
       </div>
       <div className="mt-6 grid gap-6 xl:grid-cols-[1fr_420px]">
         <SectionCard>
-          <p className="text-lg font-semibold">Workspace modules</p>
+          <p className="text-lg font-semibold">Workspace areas</p>
           <div className="mt-5 grid gap-5 md:grid-cols-2">
             {workspaceGroups.map((group) => (
               <div key={group.label}>
@@ -589,7 +589,7 @@ function WorkspaceContextBar({ orgName, tenantId }: { orgName: string; tenantId:
         <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-[#C8A96A]">Viewing workspace</p>
         <p className="text-sm font-semibold">{orgName}</p>
       </div>
-      <p className="text-xs font-semibold text-[rgba(11,31,51,0.54)]">{tenantId ? `Workspace key: ${tenantId}` : 'No workspace selected'}</p>
+      <p className="text-xs font-semibold text-[rgba(11,31,51,0.54)]">{tenantId ? 'Selected workspace' : 'No workspace selected'}</p>
     </div>
   );
 }
@@ -652,7 +652,7 @@ function ModuleTable({ slug, scoped }: { slug: string; scoped: Record<string, an
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div>
           <p className="text-lg font-semibold">{moduleTitle(slug)}</p>
-          <p className="mt-1 text-sm text-[rgba(11,31,51,0.62)]">{rows.length} connected records</p>
+          <p className="mt-1 text-sm text-[rgba(11,31,51,0.62)]">{rows.length} items ready to review</p>
         </div>
         <div className="flex gap-2">
           <button className="inline-flex h-9 items-center gap-2 border border-[rgba(11,31,51,0.12)] bg-white px-3 text-xs font-semibold"><Search className="h-4 w-4" /> Search</button>
@@ -673,7 +673,7 @@ function ModuleTable({ slug, scoped }: { slug: string; scoped: Record<string, an
                 <td className="py-3 pr-4 text-[rgba(11,31,51,0.52)]">{row.updated_at ? new Date(row.updated_at).toLocaleDateString() : 'Not updated'}</td>
               </tr>
             ))}
-            {rows.length === 0 && <tr><td colSpan={4} className="py-8 text-center text-[rgba(11,31,51,0.58)]">No records yet. Use Create to add the first item.</td></tr>}
+            {rows.length === 0 && <tr><td colSpan={4} className="py-8 text-[rgba(11,31,51,0.58)]">Nothing here yet. Use Create to add the first item.</td></tr>}
           </tbody>
         </table>
       </div>

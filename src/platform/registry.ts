@@ -222,7 +222,7 @@ export const platformDomains: PlatformDomain[] = [
     id: 'engagement',
     route: '/admin/engagement',
     productName: 'Resident Marketing Platform',
-    label: 'Engagement Hub',
+    label: 'Notes to send',
     positioning: 'Audience, campaigns, notifications, and journeys.',
     purpose: 'Combines audience building, segmentation, messaging, notifications, broadcasts, and journey orchestration across buildings and partner activity.',
     icon: Megaphone,
@@ -258,7 +258,7 @@ export const platformDomains: PlatformDomain[] = [
     purpose: 'Connects resident, building, event, perk, NPS, and poll feedback to Tally/Jotform forms, Twilio messaging, CRM segments, exports, notifications, retry logs, and insight generation.',
     icon: MessageSquare,
     capabilities: ['data_model', 'workflow', 'permissions', 'automation', 'analytics', 'api', 'agent'],
-    coreObjects: ['Survey', 'Survey Provider Form', 'Survey Response', 'Question', 'Answer', 'CRM Segment', 'Messaging Journey', 'Export Log', 'Management Notification', 'AI Insight'],
+    coreObjects: ['Survey', 'Survey Provider Form', 'Survey Response', 'Question', 'Answer', 'CRM Segment', 'Messaging Journey', 'Export Log', 'Management Notification', 'Suggestion'],
     states: ['Draft', 'Distributed', 'Collecting', 'Completed', 'Analyzed', 'Escalated', 'Archived'],
     lifecycle: ['Survey Created', 'Provider Form Connected', 'Webhook Received', 'Response Stored', 'CRM Segment Updated', 'Message Journey Triggered', 'Insights Generated'],
     workflows: ['Tally resident onboarding', 'Perk redemption feedback', 'Event feedback', 'Twilio reminders', 'Google Sheets export', 'n8n webhook routing', 'Management escalation'],
@@ -269,7 +269,7 @@ export const platformDomains: PlatformDomain[] = [
       {
         trigger: 'Resident completes survey or Tally/Jotform webhook is received',
         condition: 'NPS is below 6',
-        action: 'Store response, sync report row, create AI summary, and create follow-up task',
+        action: 'Store response, update report row, create summary, and create follow-up task',
         notification: 'Notify property manager',
         auditLog: 'survey_escalation_created',
       },
@@ -391,14 +391,14 @@ export const enterpriseComponents: EnterpriseComponent[] = [
   { name: 'Workflow Engine', requirement: 'Trigger, condition, action, notification, audit-log backbone for every module.', status: 'foundation' },
   { name: 'API Layer', requirement: 'Public and internal APIs with tenant isolation and stable domain contracts.', status: 'foundation' },
   { name: 'Integration Layer', requirement: 'Google, Stripe, Twilio, HubSpot, calendar, sheets, and webhook adapters.', status: 'partial' },
-  { name: 'AI Layer', requirement: 'Agent orchestration, prompt-safe tools, task queue, approval gates, and insight logs.', status: 'foundation' },
+  { name: 'Suggestions Layer', requirement: 'Helpful prompts, task queue, approval gates, and insight logs.', status: 'foundation' },
   { name: 'Data Warehouse', requirement: 'Unified analytics source of truth for residents, buildings, partners, events, offers, and surveys.', status: 'required' },
   { name: 'Observability', requirement: 'Runtime logs, health checks, errors, monitoring, workflow alerts, and deployment traces.', status: 'partial' },
 ];
 
 export const platformArchitecture = {
   layers: ['Identity Layer', 'Resident OS', 'Property OS', 'Partner OS', 'Events OS', 'Perks OS', 'Engagement OS', 'Survey OS', 'Reporting OS', 'Analytics OS', 'Automation + Agent Layer'],
-  operatingLoop: ['Discovery', 'Participation', 'Measurement', 'Reporting', 'Action'],
+  operatingLoop: ['Find it', 'Take part', 'See what happened', 'Share the result', 'Act'],
   automationFramework: ['Trigger', 'Condition', 'Action', 'Notification', 'Audit Log'],
   masterAgent: {
     name: 'Downtown Perks Intelligence Layer',

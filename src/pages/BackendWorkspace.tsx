@@ -22,7 +22,7 @@ import { base44 } from '@/api/base44Client';
 import { platformArchitecture } from '@/platform/registry';
 
 const moduleRoutes = [
-  { label: 'Platform Overview', to: '/admin/platform', icon: ShieldCheck },
+  { label: 'Today downtown', to: '/admin/platform', icon: ShieldCheck },
   { label: 'Partners', to: '/admin/partner', icon: ShoppingBag },
   { label: 'Properties', to: '/admin/properties', icon: Building2 },
   { label: 'Hotels', to: '/admin/partner', icon: Hotel },
@@ -31,12 +31,12 @@ const moduleRoutes = [
   { label: 'Civic', to: '/admin/partner', icon: ShieldCheck },
   { label: 'Events', to: '/admin/events', icon: CalendarDays },
   { label: 'Perks', to: '/admin/perks', icon: Ticket },
-  { label: 'Campaigns', to: '/admin/engagement', icon: Megaphone },
+  { label: 'Notes to send', to: '/admin/engagement', icon: Megaphone },
   { label: 'Reports', to: '/admin/reports', icon: FileText },
-  { label: 'Promotions & Billing', to: '/admin/promotions', icon: CreditCard },
-  { label: 'Users', to: '/admin/settings', icon: Users },
-  { label: 'Notifications', to: '/admin/settings', icon: Bell },
-  { label: 'System Health', to: '/admin/platform', icon: Activity },
+  { label: 'Plans & billing', to: '/admin/promotions', icon: CreditCard },
+  { label: 'People with access', to: '/admin/settings', icon: Users },
+  { label: 'Messages', to: '/admin/settings', icon: Bell },
+  { label: 'Health check', to: '/admin/platform', icon: Activity },
 ];
 
 export default function BackendWorkspace() {
@@ -133,18 +133,18 @@ export default function BackendWorkspace() {
   const qrScans = data.perks.reduce((sum: number, perk: any) => sum + Number(perk.scans || perk.scan_count || 0), 0) + data.redemptions.length;
 
   const kpis = [
-    { label: 'Total Partners', value: data.partners.length || data.tenantsStatus?.tenants || 0, detail: 'Partner profiles ready to open', area: 'Partners', to: '/admin/partner' },
-    { label: 'Active Properties', value: data.buildings.filter((building: any) => building.active !== false).length, detail: 'Property and building records in use', area: 'Properties', to: '/admin/properties' },
-    { label: 'Active Hotels', value: tenantTypeCounts.hotel || tenantTypeCounts.hotel_group || 0, detail: 'Hotel partners available to manage', area: 'Hotels', to: '/admin/partner' },
-    { label: 'Active Venues', value: tenantTypeCounts.venue || tenantTypeCounts.venue_group || 0, detail: 'Venues available for offers and events', area: 'Venues', to: '/admin/partner' },
-    { label: 'Active Perks', value: activePerks, detail: 'Offers currently visible or ready', area: 'Perks', to: '/admin/perks' },
-    { label: 'Upcoming Events', value: upcomingEvents, detail: 'Programming that can be reviewed', area: 'Events', to: '/admin/events' },
-    { label: 'Campaigns Running', value: runningCampaigns, detail: 'Campaigns and broadcasts in motion', area: 'Campaigns', to: '/admin/engagement' },
-    { label: 'Resident Profiles', value: data.residents.length, detail: 'Resident records available for support', area: 'Residents', to: '/admin/residents' },
-    { label: 'Perk Saves', value: perkSaves, detail: 'Resident interest in offers', area: 'Engagement', to: '/admin/perks' },
-    { label: 'Perk Redemptions', value: data.redemptions.length, detail: 'Confirmed offer use', area: 'Redemptions', to: '/admin/perks' },
-    { label: 'Event RSVPs', value: data.rsvps.length, detail: 'Resident event participation', area: 'Events', to: '/admin/events' },
-    { label: 'QR Scans', value: qrScans, detail: 'QR activity across perks and access points', area: 'QR', to: '/admin/perks' },
+    { label: 'Partners', value: data.partners.length || data.tenantsStatus?.tenants || 0, detail: 'Partner profiles ready to open', area: 'Partners', to: '/admin/partner' },
+    { label: 'Properties', value: data.buildings.filter((building: any) => building.active !== false).length, detail: 'Buildings ready to review', area: 'Properties', to: '/admin/properties' },
+    { label: 'Hotels', value: tenantTypeCounts.hotel || tenantTypeCounts.hotel_group || 0, detail: 'Hotel partners in the mix', area: 'Hotels', to: '/admin/partner' },
+    { label: 'Venues', value: tenantTypeCounts.venue || tenantTypeCounts.venue_group || 0, detail: 'Places ready for offers and events', area: 'Venues', to: '/admin/partner' },
+    { label: 'Perks', value: activePerks, detail: 'Offers residents can see or use soon', area: 'Perks', to: '/admin/perks' },
+    { label: 'Events', value: upcomingEvents, detail: 'Plans coming up downtown', area: 'Events', to: '/admin/events' },
+    { label: 'Notes', value: runningCampaigns, detail: 'Messages and building notes in motion', area: 'Notes', to: '/admin/engagement' },
+    { label: 'Residents', value: data.residents.length, detail: 'Resident profiles ready for support', area: 'Residents', to: '/admin/residents' },
+    { label: 'Saved perks', value: perkSaves, detail: 'What residents wanted to keep', area: 'Perks', to: '/admin/perks' },
+    { label: 'Perks used', value: data.redemptions.length, detail: 'Offers people actually used', area: 'Perks', to: '/admin/perks' },
+    { label: 'Event RSVPs', value: data.rsvps.length, detail: 'People who said yes', area: 'Events', to: '/admin/events' },
+    { label: 'Code scans', value: qrScans, detail: 'How residents found their way in', area: 'Codes', to: '/admin/perks' },
   ];
 
   const recentActivity = [...data.auditLogs, ...data.notifications]
@@ -154,19 +154,19 @@ export default function BackendWorkspace() {
   const groupedModules = [
     {
       title: 'Operate',
-      routes: moduleRoutes.filter((route) => ['Platform Overview', 'Partners', 'Properties', 'Hotels', 'Venues', 'Brands', 'Civic'].includes(route.label)),
+      routes: moduleRoutes.filter((route) => ['Today downtown', 'Partners', 'Properties', 'Hotels', 'Venues', 'Brands', 'Civic'].includes(route.label)),
     },
     {
       title: 'Activate',
-      routes: moduleRoutes.filter((route) => ['Events', 'Perks', 'Campaigns'].includes(route.label)),
+      routes: moduleRoutes.filter((route) => ['Events', 'Perks', 'Notes to send'].includes(route.label)),
     },
     {
       title: 'Measure',
-      routes: moduleRoutes.filter((route) => ['Reports', 'Promotions & Billing', 'System Health'].includes(route.label)),
+      routes: moduleRoutes.filter((route) => ['Reports', 'Plans & billing', 'Health check'].includes(route.label)),
     },
     {
       title: 'Support',
-      routes: moduleRoutes.filter((route) => ['Users', 'Notifications'].includes(route.label)),
+      routes: moduleRoutes.filter((route) => ['People with access', 'Messages'].includes(route.label)),
     },
   ];
 
@@ -207,25 +207,25 @@ export default function BackendWorkspace() {
       <section className="rounded-xl border border-[rgba(11,31,51,0.08)] bg-white p-6">
         <div className="grid gap-6 xl:grid-cols-[1fr_360px] xl:items-end">
           <div>
-            <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-[#C8A96A]">Partner platform</p>
-            <h1 className="mt-2 text-3xl font-semibold tracking-normal">Downtown Perks Partner Platform</h1>
+            <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-[#C8A96A]">Start here</p>
+            <h1 className="mt-2 text-3xl font-semibold tracking-normal">Downtown Perks, ready to run</h1>
             <p className="mt-3 max-w-4xl text-sm leading-6 text-[rgba(11,31,51,0.66)]">
-              Open partners, properties, hotels, venues, brands, civic programs, events, perks, campaigns, residents, reports, and support tools from one place.
+              Open the people, places, perks, events, notes, reports, and plans that keep downtown moving.
             </p>
           </div>
           <div className="rounded-xl border border-[rgba(11,31,51,0.08)] bg-white p-4">
-            <StatusLine label="Platform status" value={data.health?.status || 'unknown'} />
-            <StatusLine label="Data areas" value={data.health?.entities ? Object.keys(data.health.entities).length : 0} />
-            <StatusLine label="Partner workspaces" value={data.tenantsStatus?.workspaces || 0} />
+            <StatusLine label="Site status" value={data.health?.status || 'unknown'} />
+            <StatusLine label="Areas to open" value={data.health?.entities ? Object.keys(data.health.entities).length : 0} />
+            <StatusLine label="Partner spaces" value={data.tenantsStatus?.workspaces || 0} />
             <StatusLine label="Recent changes" value={data.auditLogs.length} />
           </div>
         </div>
       </section>
 
       <SummaryTable
-        eyebrow="Platform summary"
+        eyebrow="Quick read"
         title="What is active right now"
-        description="A compact view of the partners, properties, campaigns, resident activity, and reporting signals available for walkthroughs."
+        description="A compact view of the partners, properties, notes, resident activity, and reports ready to review."
         rows={kpis}
       />
 
@@ -234,7 +234,7 @@ export default function BackendWorkspace() {
           <div className="mb-5">
             <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-[#C8A96A]">Quick navigation</p>
             <h2 className="mt-2 text-xl font-semibold">Find the right area fast.</h2>
-            <p className="mt-2 text-sm leading-6 text-[rgba(11,31,51,0.62)]">Use these groups to walk through partners, properties, campaigns, reporting, billing, and support without hunting through the sidebar.</p>
+            <p className="mt-2 text-sm leading-6 text-[rgba(11,31,51,0.62)]">Use these groups to move through partners, properties, notes, reports, billing, and support without hunting through the sidebar.</p>
           </div>
           <div className="grid gap-4 lg:grid-cols-2">
             {groupedModules.map((group) => (
@@ -258,10 +258,10 @@ export default function BackendWorkspace() {
 
         <article className="rounded-xl border border-[rgba(11,31,51,0.08)] bg-white p-5">
           <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-[#C8A96A]">Active directory</p>
-          <h2 className="mt-2 text-xl font-semibold">Partners, businesses, and workspaces.</h2>
+          <h2 className="mt-2 text-xl font-semibold">Partners, businesses, and places.</h2>
           <div className="mt-5 grid gap-3">
             {activeDirectory.length === 0 ? (
-              <p className="text-sm text-[rgba(11,31,51,0.58)]">No active partner or property records yet.</p>
+              <p className="text-sm text-[rgba(11,31,51,0.58)]">No active partners or places yet.</p>
             ) : activeDirectory.map((item: any) => (
               <Link key={`${item.id}-${item.name}`} to={item.href} className="grid gap-1 border-t border-[rgba(11,31,51,0.08)] pt-3 text-sm hover:text-[#C8A96A]">
                 <span className="font-semibold">{item.name}</span>
@@ -280,8 +280,8 @@ export default function BackendWorkspace() {
             <p className="text-sm text-[rgba(11,31,51,0.58)]">No recent updates or messages yet.</p>
           ) : recentActivity.map((item: any) => (
             <div key={item.id} className="border-t border-[rgba(11,31,51,0.08)] pt-3">
-              <p className="text-sm font-semibold">{item.action ? String(item.action).replace(/_/g, ' ') : item.message || item.type || 'Platform activity'}</p>
-              <p className="mt-1 text-xs text-[rgba(11,31,51,0.52)]">{item.actor_email || item.recipient_email || 'system'} · {new Date(item.created_at || item.sent_at || Date.now()).toLocaleString()}</p>
+              <p className="text-sm font-semibold">{item.action ? String(item.action).replace(/_/g, ' ') : item.message || item.type || 'Recent activity'}</p>
+              <p className="mt-1 text-xs text-[rgba(11,31,51,0.52)]">{item.actor_email || item.recipient_email || 'Downtown Perks'} · {new Date(item.created_at || item.sent_at || Date.now()).toLocaleString()}</p>
             </div>
           ))}
         </div>
@@ -291,12 +291,12 @@ export default function BackendWorkspace() {
         <article className="rounded-xl border border-[rgba(11,31,51,0.08)] bg-white p-5">
           <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-[#C8A96A]">Action readiness</p>
           <h2 className="mt-2 text-xl font-semibold">Know what is ready to use.</h2>
-          <p className="mt-2 text-sm leading-6 text-[rgba(11,31,51,0.62)]">Before you walk someone through a feature, check that the experience can be opened, changed, saved, tracked, and reported.</p>
+          <p className="mt-2 text-sm leading-6 text-[rgba(11,31,51,0.62)]">Before a walkthrough, check that each part can open, save, show activity, and report back clearly.</p>
           <div className="mt-4 grid gap-2">
-            {['Open', 'Edit', 'Save', 'Assign access', 'Track changes', 'Report results'].map((step, index) => (
+            {['Open', 'Edit', 'Save', 'Give access', 'See changes', 'Share results'].map((step, index) => (
               <div key={step} className="flex items-center justify-between border-t border-[rgba(11,31,51,0.08)] py-2 text-sm">
                 <span className="font-semibold">{step}</span>
-                <span className="text-xs font-semibold uppercase text-[rgba(11,31,51,0.48)]">{index < 3 ? 'Core' : 'Follow-up'}</span>
+                <span className="text-xs font-semibold uppercase text-[rgba(11,31,51,0.48)]">{index < 3 ? 'Ready' : 'Next'}</span>
               </div>
             ))}
           </div>
@@ -306,19 +306,19 @@ export default function BackendWorkspace() {
           <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-[#C8A96A]">How the work flows</p>
           <h2 className="mt-2 text-xl font-semibold">Help people find, use, and improve what is downtown.</h2>
           <p className="mt-3 text-sm leading-6 text-[rgba(11,31,51,0.62)]">
-            People discover a place or offer, take part, and the results show up in reports so the next campaign can improve.
+            People find a place or offer, take part, and the results show up clearly enough to make the next note better.
           </p>
           <div className="mt-4 flex flex-wrap gap-2">
-            {['Discover', 'Participate', 'Measure', 'Report', 'Improve'].map((item) => (
+            {['Find it', 'Take part', 'See what happened', 'Share the result', 'Make it better'].map((item) => (
               <span key={item} className="border border-[rgba(11,31,51,0.08)] px-3 py-2 text-xs font-semibold text-[#0B1F33]">{item}</span>
             ))}
           </div>
           <div className="mt-5 flex flex-wrap gap-3">
             <Link to="/admin/platform" className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-[#0B1F33] bg-[#0B1F33] px-4 text-xs font-semibold text-white">
-              Open Command Center <Settings className="h-4 w-4" />
+              See today <Settings className="h-4 w-4" />
             </Link>
             <Link to="/admin/perks" className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-[rgba(11,31,51,0.12)] bg-white px-4 text-xs font-semibold text-[#0B1F33]">
-              Review Perks <Ticket className="h-4 w-4" />
+              Review perks <Ticket className="h-4 w-4" />
             </Link>
           </div>
         </article>
@@ -354,7 +354,7 @@ function SummaryTable({ eyebrow, title, description, rows }: any) {
             <tr>
               <th className="px-4 py-3">Area</th>
               <th className="px-4 py-3">Total</th>
-              <th className="px-4 py-3">What it shows</th>
+              <th className="px-4 py-3">Why it matters</th>
               <th className="px-4 py-3">Action</th>
             </tr>
           </thead>

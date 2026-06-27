@@ -4,20 +4,20 @@ import { ArrowRight, Building2, Globe2, Handshake, LineChart, MapPin, ShieldChec
 
 const storySections = [
   {
-    title: 'Mission',
-    body: 'Downtown Perks helps operators understand and improve the relationship between buildings, residents, local partners, events, perks, and neighborhood participation.',
+    title: 'Why it exists',
+    body: 'Downtown Perks helps buildings, residents, local partners, and events feel a little closer to each other.',
   },
   {
     title: 'Vision',
-    body: 'The platform is designed to become the operating layer for downtown engagement: one place to manage access, campaigns, partner activity, reporting, and neighborhood intelligence.',
+    body: 'One calm place to keep access, local notes, partner activity, and reports from drifting apart.',
   },
   {
     title: 'Austin Focus',
-    body: 'The first operating model is built around Downtown Austin, where residential buildings, hotels, venues, brands, civic groups, and real estate teams share the same local ecosystem.',
+    body: 'The first version is built for Downtown Austin, where buildings, hotels, venues, brands, civic groups, and real estate teams already share the same streets.',
   },
   {
     title: 'Future Expansion',
-    body: 'As the model matures, the same architecture can support additional districts, cities, portfolios, civic programs, sponsorships, and multi-location partner workspaces.',
+    body: 'As the model grows, the same shape can support more districts, cities, portfolios, civic programs, sponsors, and partner spaces.',
   },
 ];
 
@@ -30,24 +30,24 @@ const networkRoles = [
   {
     icon: Handshake,
     title: 'Partners',
-    body: 'Manage offers, campaigns, events, messages, locations, reporting, and tenant workspace access.',
+    body: 'Keep offers, events, messages, locations, reports, and partner access in good order.',
   },
   {
     icon: MapPin,
     title: 'Civic and Neighborhood Programs',
-    body: 'Coordinate public events, district participation, surveys, programming, and community reporting.',
+    body: 'Coordinate public events, local participation, surveys, programming, and useful reporting.',
   },
   {
     icon: LineChart,
-    title: 'Platform Operators',
-    body: 'Use the command center to monitor participation, provisioning, performance, reporting, automations, and support needs.',
+    title: 'Downtown Perks Team',
+    body: 'See participation, setup, reports, follow-ups, and support needs before they get messy.',
   },
 ];
 
 const operatingPrinciples = [
-  'Every public entity should map to an operational tenant, workspace, owner, and reporting container.',
-  'Every module should support create, read, update, archive, delete, history, and audit logging.',
-  'Every workflow should produce a measurable signal: enrollment, view, save, RSVP, redemption, response, export, or report.',
+  'Every public place should have a clear owner and a clear report.',
+  'Every area should be easy to open, edit, save, archive, and review.',
+  'Every action should leave a useful signal: join, view, save, RSVP, use, respond, export, or report.',
   'Every partner and property should understand what happened, what is happening, and what to do next.',
 ];
 
@@ -56,23 +56,23 @@ export default function About() {
     <div className="min-h-screen bg-[#F7F8FB] text-[#0B1F33]">
       <div className="mx-auto max-w-[1440px] px-5 py-8 sm:px-8">
         <section className="rounded-xl border border-[rgba(11,31,51,0.08)] bg-white p-6 md:p-8">
-          <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-[#C8A96A]">Internal program overview</p>
-          <h1 className="mt-3 max-w-4xl text-3xl font-semibold tracking-normal md:text-5xl">Downtown Perks as an operating platform.</h1>
+          <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-[#C8A96A]">About Downtown Perks</p>
+          <h1 className="mt-3 max-w-4xl text-3xl font-semibold tracking-normal md:text-5xl">A better downtown starts close to home.</h1>
           <p className="mt-4 max-w-4xl text-base leading-7 text-[rgba(11,31,51,0.68)]">
-            This page explains Downtown Perks for platform operators, property teams, partner managers, and civic collaborators. It is not a resident onboarding page. It describes the program model, the network, and the operational architecture behind the admin workspace.
+            Downtown Perks connects buildings, residents, local partners, events, and reports so the neighborhood feels easier to use and easier to care for.
           </p>
           <div className="mt-6 flex flex-wrap gap-3">
             <Link to="/admin/home" className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-[#0B1F33] bg-[#0B1F33] px-4 text-xs font-semibold text-white">
-              Platform Welcome <ArrowRight className="h-4 w-4" />
+              Start here <ArrowRight className="h-4 w-4" />
             </Link>
             <Link to="/admin/platform" className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-[rgba(11,31,51,0.12)] bg-white px-4 text-xs font-semibold text-[#0B1F33]">
-              Command Center <ShieldCheck className="h-4 w-4" />
+              See today <ShieldCheck className="h-4 w-4" />
             </Link>
           </div>
         </section>
 
         <section className="py-12">
-          <SectionHeader eyebrow="Program story" title="A shared layer for downtown operations." body="Downtown Perks is structured to connect audience, place, participation, and reporting in one system." />
+          <SectionHeader eyebrow="Program story" title="Life downtown moves fast. We help people keep up." body="The work is simple: connect people to nearby places, then show what helped." />
           <div className="grid gap-4 md:grid-cols-2">
             {storySections.map((section) => (
               <article key={section.title} className="rounded-xl border border-[rgba(11,31,51,0.08)] bg-white p-5">
@@ -84,7 +84,7 @@ export default function About() {
         </section>
 
         <section className="py-12">
-          <SectionHeader eyebrow="Partner network" title="Who the platform connects." body="Each participant group contributes data, context, or activity that becomes useful to the broader operating model." />
+          <SectionHeader eyebrow="Partner network" title="Who comes along." body="Each group adds something useful: a place, a perk, an event, a resident moment, or a clearer next step." />
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             {networkRoles.map((role) => {
               const Icon = role.icon;
@@ -100,14 +100,14 @@ export default function About() {
         </section>
 
         <section className="py-12">
-          <SectionHeader eyebrow="Architecture principles" title="How the program should scale." body="The backend should stay organized around platform, workspace, entity, engagement, and reporting layers." />
+          <SectionHeader eyebrow="How it grows" title="Keep the shape simple." body="Every place, partner, event, and report should be easy to find, understand, and act on." />
           <div className="rounded-xl border border-[rgba(11,31,51,0.08)] bg-white p-5">
             <div className="grid gap-4 lg:grid-cols-[0.7fr_1.3fr]">
               <div>
                 <Globe2 className="h-6 w-6 text-[#C8A96A]" />
-                <h2 className="mt-4 text-xl font-semibold">Platform → Partner → Location → Action → Reporting</h2>
+                <h2 className="mt-4 text-xl font-semibold">Place → Partner → Action → Report</h2>
                 <p className="mt-3 text-sm leading-6 text-[rgba(11,31,51,0.64)]">
-                  The system should keep every module tied to an entity owner, a workspace, permission rules, measurable activity, and an exportable report.
+                  The app should make it clear who owns the work, what happened, and what should happen next.
                 </p>
               </div>
               <div className="grid gap-3">
@@ -122,13 +122,13 @@ export default function About() {
         </section>
 
         <section className="py-12">
-          <SectionHeader eyebrow="Civic role" title="Neighborhood value, measured operationally." body="The civic layer turns community programs, public activity, local business participation, and resident engagement into visible, reportable outcomes." />
+          <SectionHeader eyebrow="Civic role" title="The neighborhood gets better when people can see what is working." body="Public programs, local business activity, resident feedback, and events become easier to understand and easier to improve." />
           <div className="grid gap-4 md:grid-cols-3">
             {['Participation', 'Awareness', 'Economic Activity'].map((item) => (
               <article key={item} className="rounded-xl border border-[rgba(11,31,51,0.08)] bg-white p-5">
                 <h2 className="text-lg font-semibold">{item}</h2>
                 <p className="mt-3 text-sm leading-6 text-[rgba(11,31,51,0.64)]">
-                  Track signals across events, campaigns, offers, surveys, reports, and partner workspaces so operators can act on what is happening downtown.
+                  Track what people joined, saved, used, answered, and cared about so the next downtown move is smarter.
                 </p>
               </article>
             ))}

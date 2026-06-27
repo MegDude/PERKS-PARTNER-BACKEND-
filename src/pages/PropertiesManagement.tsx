@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Card, CardContent } from '@/components/ui/card';
+import { slugify } from '@/data/partnerWorkspaceCatalog';
 import { toast } from 'sonner';
 
 interface Property {
@@ -108,27 +109,27 @@ export default function PropertiesManagement() {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['admin_properties'] });
       queryClient.invalidateQueries({ queryKey: ['properties'] });
-      toast.success(`Reviewed ${data.count || data.records?.length || 0} properties with ${data.provider || 'OpenAI'}`);
+      toast.success(`Reviewed ${data.count || data.records?.length || 0} properties.`);
       setIsIngesting(false);
       setIngestText('');
     },
     onError: (error: any) => {
-      toast.error(error?.message || 'Failed to ingest data with OpenAI. Check the backend API key.');
+      toast.error(error?.message || 'Those notes could not be reviewed. Please try again.');
     }
   });
 
   const mapSyncMut = useMutation({
     mutationFn: async () => {
       const res = await fetch('/api/map-data/import', { method: 'POST' });
-      if (!res.ok) throw new Error('Failed to sync map data');
+      if (!res.ok) throw new Error('Map refresh failed');
       return res.json();
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['admin_properties'] });
-      toast.success(`Map data synced: ${data.imported_count || 0} records checked`);
+      toast.success(`Map refreshed: ${data.imported_count || 0} places checked`);
     },
     onError: () => {
-      toast.error('Map data sync failed');
+      toast.error('The map could not be refreshed.');
     }
   });
 
@@ -175,7 +176,7 @@ export default function PropertiesManagement() {
     const campaigns = properties.reduce((sum, p) => sum + Number(p.campaigns || 0), 0);
     return [
       { label: 'Properties', value: properties.length, detail: 'Places, buildings, and listings available to review', to: '/admin/properties' },
-      { label: 'Workspaces', value: workspaces, detail: 'Partner workspaces connected to property records', to: '/workspace/home' },
+      { label: 'Workspaces', value: workspaces, detail: 'Partner workspaces connected to property records', to: '/admin' },
       { label: 'Map linked', value: mapLinked, detail: 'Properties visible through map or location data', to: '/map' },
       { label: 'Locations', value: locations, detail: 'Managed places attached to property groups', to: '/admin/buildings' },
       { label: 'Campaigns', value: campaigns, detail: 'Campaign activity connected to properties', to: '/admin/engagement' },
@@ -183,8 +184,8 @@ export default function PropertiesManagement() {
   }, [properties]);
 
   const openWorkspace = (prop: Property) => {
-    const slug = prop.workspacePath?.replace('/tenant/', '') || prop.workspace_id?.replace(/^workspace_/, '') || prop.tenant_id || '';
-    window.location.href = slug ? `/workspace/home?workspace=${encodeURIComponent(slug)}` : '/workspace/home';
+    const slug = slugify(prop.workspacePath?.replace('/tenant/', '') || prop.workspace_id?.replace(/^workspace_/, '') || prop.tenant_id?.replace(/^tenant_/, '') || prop.name || prop.id);
+    window.location.href = slug ? `/admin/workspaces/${encodeURIComponent(slug)}` : '/admin';
   };
 
   const buildingHref = (prop: Property) => `/admin/buildings/profile?property=${encodeURIComponent(prop.id)}`;
@@ -225,17 +226,17 @@ export default function PropertiesManagement() {
             <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--dp-gold)]">Property directory</p>
             <h1 className="mt-2 text-3xl font-semibold text-[#11182B]">Properties</h1>
             <p className="mt-2 max-w-3xl text-sm leading-6 text-textMuted">
-              Find every property, residential listing, building, and real estate workspace connected to Downtown Perks. Open the record, workspace, map source, or building operations from one place.
+              Find every property, residential listing, building, and real estate space connected to Downtown Perks. Open the record, map source, or building view from one place.
             </p>
           </div>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
             <Button variant="outline" onClick={() => mapSyncMut.mutate()} disabled={mapSyncMut.isPending} className="min-h-11 gap-2 text-[#0B1F33]">
               {mapSyncMut.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <DatabaseZap className="h-4 w-4" />}
-              Sync map data
+              Refresh map
             </Button>
             <Button variant="outline" onClick={() => setIsIngesting(true)} className="min-h-11 gap-2 text-[#0B1F33]">
               <Sparkles className="h-4 w-4 text-[#C5A028]" />
-              AI ingest
+              Review notes
             </Button>
             <Button onClick={() => setIsAdding(true)} className="min-h-11 gap-2 text-[#0B1F33]">
               <Plus className="h-4 w-4" />
@@ -251,10 +252,10 @@ export default function PropertiesManagement() {
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
             <div className="relative w-full max-w-xl border border-[var(--border-subtle)] bg-white p-6 shadow-lg">
               <h2 className="mb-4 flex items-center gap-2 text-xl font-bold text-[#11182B]">
-                <Sparkles className="h-5 w-5 text-[#C5A028]" /> AI property ingestion
+                <Sparkles className="h-5 w-5 text-[#C5A028]" /> Review property notes
               </h2>
               <p className="mb-4 text-sm leading-6 text-textMuted">
-                Paste property notes from an email, broker listing, or asset report. OpenAI extracts structured property records through the backend before they join the admin portfolio.
+                Paste notes from an email, broker listing, or asset report. Downtown Perks will turn them into a clean property draft for review.
               </p>
               <textarea
                 value={ingestText}
@@ -276,10 +277,10 @@ export default function PropertiesManagement() {
         {(isAdding || isEditing) && (
           <Card className="mb-8">
             <CardContent className="p-6">
-              <h2 className="mb-2 text-lg font-bold text-[#11182B]">{isEditing ? 'Edit property record' : 'Add property record'}</h2>
+              <h2 className="mb-2 text-lg font-bold text-[#11182B]">{isEditing ? 'Edit property' : 'Add property'}</h2>
               {isEditing?.source_type !== 'building' && (
                 <p className="mb-6 text-sm leading-6 text-textMuted">
-                  Imported tenant records are managed through workspace/profile data. Saving here creates a standalone admin property record instead of rewriting the imported tenant.
+                  Imported profiles stay connected to their partner space. Saving here creates a separate property profile for your admin directory.
                 </p>
               )}
               <form onSubmit={handleSave} className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -355,7 +356,7 @@ export default function PropertiesManagement() {
         ) : (
           <section className="overflow-hidden border border-[rgba(11,31,51,0.08)] bg-white">
             <div className="border-b border-[rgba(11,31,51,0.08)] px-5 py-4">
-              <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[#C8A96A]">Property records</p>
+              <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[#C8A96A]">Properties</p>
               <h2 className="mt-1 text-xl font-semibold text-[#11182B]">Directory and workspace links</h2>
             </div>
             <div className="overflow-x-auto [scrollbar-width:thin]">
@@ -444,9 +445,9 @@ export default function PropertiesManagement() {
               <div className="border border-dashed border-[var(--border-subtle)] bg-white p-12 text-center">
                 <Building2 className="mx-auto mb-4 h-8 w-8 text-textMuted" />
                 <p className="font-semibold text-[#11182B]">No properties found</p>
-                <p className="mt-2 text-sm text-textMuted">Try a different search, or sync the latest map data.</p>
+                <p className="mt-2 text-sm text-textMuted">Try a different search, or refresh the latest map places.</p>
                 <Button variant="outline" onClick={() => mapSyncMut.mutate()} className="mx-auto mt-5 min-h-11 gap-2 text-[#0B1F33]">
-                  Sync map data
+                  Refresh map
                   <ArrowRight className="h-4 w-4" />
                 </Button>
               </div>
@@ -463,7 +464,7 @@ function SummaryTable({ rows }: { rows: Array<{ label: string; value: number; de
     <section className="mb-6 overflow-hidden border border-[rgba(11,31,51,0.08)] bg-white">
       <div className="border-b border-[rgba(11,31,51,0.08)] px-5 py-4">
         <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[#C8A96A]">Portfolio summary</p>
-        <h2 className="mt-1 text-xl font-semibold text-[#11182B]">What is connected right now</h2>
+        <h2 className="mt-1 text-xl font-semibold text-[#11182B]">What is ready right now</h2>
       </div>
       <div className="overflow-x-auto [scrollbar-width:thin]">
         <table className="w-full min-w-[760px] text-left text-sm">

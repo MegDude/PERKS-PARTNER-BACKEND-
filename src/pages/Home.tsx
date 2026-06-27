@@ -18,6 +18,7 @@ import {
   Users,
 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
+import { slugify } from '@/data/partnerWorkspaceCatalog';
 
 type GatewayData = {
   health: any;
@@ -34,7 +35,6 @@ type GatewayData = {
   reports: any[];
   subscriptions: any[];
   invoices: any[];
-  auditLogs: any[];
   promotions: any[];
 };
 
@@ -53,23 +53,22 @@ const initialData: GatewayData = {
   reports: [],
   subscriptions: [],
   invoices: [],
-  auditLogs: [],
   promotions: [],
 };
 
 const primaryModules = [
-  { label: 'Partner Directory', to: '/admin/partner', icon: Building2, key: 'partners' },
+  { label: 'Partners', to: '/admin/partner', icon: Building2, key: 'partners' },
   { label: 'Properties', to: '/admin/properties', icon: Building2, key: 'properties' },
-  { label: 'Property Operations', to: '/admin/buildings', icon: Users, key: 'properties' },
+  { label: 'Buildings', to: '/admin/buildings', icon: Users, key: 'properties' },
   { label: 'Residents', to: '/admin/residents', icon: Users, key: 'residents' },
   { label: 'Perks', to: '/admin/perks', icon: Ticket, key: 'perks' },
   { label: 'Events', to: '/admin/events', icon: CalendarDays, key: 'events' },
-  { label: 'Campaigns', to: '/admin/engagement', icon: Megaphone, key: 'campaigns' },
+  { label: 'Notes to send', to: '/admin/engagement', icon: Megaphone, key: 'campaigns' },
   { label: 'Reports', to: '/admin/reports', icon: FileText, key: 'reports' },
-  { label: 'Analytics', to: '/admin/analytics', icon: BarChart3, key: 'reports' },
-  { label: 'Promotions & Billing', to: '/admin/promotions', icon: CreditCard, key: 'promotions' },
-  { label: 'Command Center', to: '/admin/platform', icon: ShieldCheck, key: 'tenants' },
-  { label: 'Partner Portal', to: '/admin/partner-portal', icon: Activity, key: 'workspaces' },
+  { label: 'Perk results', to: '/admin/analytics', icon: BarChart3, key: 'reports' },
+  { label: 'Plans & billing', to: '/admin/promotions', icon: CreditCard, key: 'promotions' },
+  { label: 'Today downtown', to: '/admin/platform', icon: ShieldCheck, key: 'tenants' },
+  { label: 'Partner view', to: '/admin/partner-portal', icon: Activity, key: 'workspaces' },
 ];
 
 export default function Home() {
@@ -97,7 +96,6 @@ export default function Home() {
           reports,
           subscriptions,
           invoices,
-          auditLogs,
           promotions,
         ] = await Promise.all([
           fetch('/api/health').then((res) => res.json()).catch(() => null),
@@ -114,7 +112,6 @@ export default function Home() {
           base44.entities.PartnerReport.list().catch(() => []),
           base44.entities.PartnerSubscription.list().catch(() => []),
           base44.entities.PartnerInvoice.list().catch(() => []),
-          base44.entities.TenantAuditLog.list().catch(() => []),
           base44.entities.Promotion.list().catch(() => []),
         ]);
 
@@ -140,7 +137,6 @@ export default function Home() {
           reports,
           subscriptions,
           invoices,
-          auditLogs,
           promotions,
         });
       } finally {
@@ -155,20 +151,21 @@ export default function Home() {
   }, []);
 
   const directories = useMemo(() => {
-    const partnerTenantKey = (partner: any) => partner.tenant_id || partner.organization_id || partner.workspace_id || partner.id;
+    const partnerSlug = (partner: any) => slugify(partner.slug || partner.workspace_slug || partner.tenant_id?.replace(/^tenant_/, '') || partner.workspace_id?.replace(/^workspace_/, '') || partner.business_name || partner.name || partner.id);
+    const tenantSlug = (tenant: any) => slugify(tenant.slug || tenant.id?.replace(/^tenant_/, '') || tenant.name);
     const partnerRows = data.partners.map((partner) => ({
       id: partner.id,
       title: partner.business_name || partner.name || 'Partner',
       type: partner.category || partner.partner_type || 'partner',
       status: partner.status || (partner.is_active ? 'active' : 'review'),
-      href: `/workspace/home?tenant=${encodeURIComponent(partnerTenantKey(partner))}&partner=${encodeURIComponent(partner.id)}`,
+      href: `/admin/workspaces/${partnerSlug(partner)}`,
     }));
     const tenantRows = data.tenants.map((tenant) => ({
       id: tenant.id,
       title: tenant.name,
       type: tenant.type || 'workspace',
       status: tenant.status || 'active',
-      href: `/workspace/home?tenant=${encodeURIComponent(tenant.id)}&workspace=${encodeURIComponent(tenant.slug || tenant.id)}`,
+      href: `/admin/workspaces/${tenantSlug(tenant)}`,
     }));
     const propertyRows = data.properties.map((property) => ({
       id: property.id,
@@ -176,9 +173,9 @@ export default function Home() {
       type: property.type || property.category || 'property',
       status: property.status || 'active',
       href: property.tenant_id
-        ? `/workspace/home?tenant=${encodeURIComponent(property.tenant_id)}&property=${encodeURIComponent(property.id)}`
+        ? `/admin/workspaces/${slugify(property.tenant_id.replace(/^tenant_/, '') || property.name || property.id)}`
         : property.workspacePath
-          ? `/workspace/home?workspace=${encodeURIComponent(property.workspacePath.replace('/tenant/', ''))}&property=${encodeURIComponent(property.id)}`
+          ? `/admin/workspaces/${slugify(property.workspacePath.replace('/tenant/', ''))}`
           : '/admin/properties',
     }));
     const rows = [...partnerRows, ...tenantRows, ...propertyRows];
@@ -191,16 +188,21 @@ export default function Home() {
   const mapEntityCount = data.mapSummary?.entities || 0;
   const mappedPartnerCount = data.mapSummary?.partners || 0;
   const mappedCampaignCount = data.mapSummary?.campaigns || 0;
+  const activePerkCount = data.perks.filter((perk) => perk.active || perk.is_active || perk.status === 'active').length;
+  const upcomingEventCount = data.events.filter((event) => {
+    const rawDate = event.date || event.dateTime || event.start_date || event.starts_at;
+    return !rawDate || new Date(rawDate) >= new Date(new Date().toDateString());
+  }).length;
 
   const stats = [
-    { label: 'Partners', value: tenantCount, note: tenantCount === workspaceCount ? 'Each partner has a workspace' : `${Math.max(tenantCount - workspaceCount, 0)} need workspace review` },
-    { label: 'Workspaces', value: workspaceCount, note: 'Ready for teams to manage' },
-    { label: 'Map entities', value: mapEntityCount, note: `${mappedPartnerCount} partner-linked records` },
-    { label: 'Partners', value: data.partners.length, note: 'Directory records available' },
-    { label: 'Properties', value: data.properties.length, note: 'Portfolio navigation records' },
-    { label: 'Campaigns', value: data.campaigns.length, note: `${mappedCampaignCount} tied to map presence` },
-    { label: 'Subscriptions', value: data.subscriptions.length, note: 'Plans ready for review' },
-    { label: 'Promotions', value: data.promotions.length, note: 'Launch offer configured' },
+    { label: 'Partners', value: tenantCount, note: `${data.partners.length} profiles ready` },
+    { label: 'Spaces', value: workspaceCount, note: tenantCount === workspaceCount ? 'Ready to open' : `${Math.max(tenantCount - workspaceCount, 0)} need a final check` },
+    { label: 'Map', value: mapEntityCount, note: `${mappedPartnerCount} partners · ${mappedCampaignCount} notes` },
+    { label: 'Properties', value: data.properties.length, note: 'Buildings ready to review' },
+    { label: 'Residents', value: data.residents.length, note: 'Profiles available' },
+    { label: 'Perks', value: data.perks.length, note: `${activePerkCount} active now` },
+    { label: 'Events', value: data.events.length, note: `${upcomingEventCount} upcoming` },
+    { label: 'Notes', value: data.campaigns.length, note: `${mappedCampaignCount} tied to the map` },
   ];
 
   if (loading) {
@@ -217,50 +219,50 @@ export default function Home() {
         <header className="border-b border-[rgba(11,31,51,0.08)] pb-6">
           <div className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
             <div>
-              <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[#C8A96A]">Workspace gateway</p>
-              <h1 className="mt-2 text-3xl font-semibold tracking-normal md:text-4xl">Downtown Perks Partner Platform</h1>
+              <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[#C8A96A]">Start here</p>
+              <h1 className="mt-2 text-3xl font-semibold tracking-normal md:text-4xl">Welcome to Downtown Perks</h1>
               <p className="mt-2 max-w-3xl text-sm leading-6 text-[rgba(11,31,51,0.62)]">
-                Start here to find partners, properties, map listings, campaigns, plans, reports, and the tools you need for a walkthrough.
+                Find the partners, buildings, perks, events, notes, plans, and reports you need without wandering around the app.
               </p>
             </div>
             <div className="flex flex-wrap gap-3">
-              <GatewayButton to="/admin/platform" label="Command Center" icon={ShieldCheck} primary />
+              <GatewayButton to="/admin/platform" label="See today" icon={ShieldCheck} primary />
               <GatewayButton to="/admin/partner" label="Partners" icon={Building2} />
               <GatewayButton to="/admin/properties" label="Properties" icon={MapPin} />
-              <GatewayButton to="/admin/promotions" label="Promotions" icon={CreditCard} />
+              <GatewayButton to="/admin/promotions" label="Plans" icon={CreditCard} />
             </div>
           </div>
         </header>
 
-        <section className="my-5 border border-[rgba(11,31,51,0.08)] bg-white">
-          <div className="flex flex-col gap-1 border-b border-[rgba(11,31,51,0.08)] px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+        <section className="my-4 border-y border-[rgba(11,31,51,0.08)] bg-white">
+          <div className="flex flex-col gap-1 border-b border-[rgba(11,31,51,0.08)] py-2 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#C8A96A]">Platform snapshot</p>
-              <h2 className="text-base font-semibold">What is active right now</h2>
+              <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#C8A96A]">Quick read</p>
+              <h2 className="text-sm font-semibold">What is ready to open right now</h2>
             </div>
-            <p className="text-xs leading-5 text-[rgba(11,31,51,0.56)]">Quick read before opening a partner, property, or campaign.</p>
+            <p className="text-[11px] leading-4 text-[rgba(11,31,51,0.56)]">Live counts from partners, places, residents, perks, events, and notes.</p>
           </div>
           <div className="grid divide-y divide-[rgba(11,31,51,0.08)] sm:grid-cols-2 sm:divide-x sm:divide-y-0 lg:grid-cols-4 xl:grid-cols-8">
             {stats.map((stat) => (
-              <div key={stat.label} className="min-h-[92px] px-3 py-3">
+              <div key={stat.label} className="min-h-[72px] px-2.5 py-2.5">
                 <div className="flex items-baseline justify-between gap-2">
                   <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-[rgba(11,31,51,0.52)]">{stat.label}</p>
-                  <p className="text-xl font-semibold leading-none">{Number(stat.value || 0).toLocaleString()}</p>
+                  <p className="text-lg font-semibold leading-none">{Number(stat.value || 0).toLocaleString()}</p>
                 </div>
-                <p className="mt-3 text-[11px] leading-4 text-[rgba(11,31,51,0.58)]">{stat.note}</p>
+                <p className="mt-2 text-[10px] leading-4 text-[rgba(11,31,51,0.6)]">{stat.note}</p>
               </div>
             ))}
           </div>
         </section>
 
         <section className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
-          <Panel title="Active directories" eyebrow="Navigate people and places" action={<Link to="/admin/partner" className="text-xs font-semibold text-[#C8A96A]">Open full directory</Link>}>
+          <Panel title="People and places" eyebrow="Find your way" action={<Link to="/admin/partner" className="text-xs font-semibold text-[#C8A96A]">Open all partners</Link>}>
             <div className="mb-4 flex items-center gap-2 border border-[rgba(11,31,51,0.08)] px-3">
               <Search className="h-4 w-4 text-[rgba(11,31,51,0.44)]" />
               <input
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
-                placeholder="Search partners, properties, tenants, brands, venues..."
+                placeholder="Search partners, properties, brands, venues..."
                 className="h-11 w-full bg-transparent text-sm outline-none"
               />
             </div>
@@ -272,11 +274,11 @@ export default function Home() {
                   <span className="text-xs font-semibold text-[#C8A96A]">{row.status}</span>
                 </Link>
               ))}
-              {directories.length === 0 && <p className="py-8 text-sm text-[rgba(11,31,51,0.58)]">No matching directory records.</p>}
+              {directories.length === 0 && <p className="py-8 text-sm text-[rgba(11,31,51,0.58)]">Nothing matched. Try a place, partner, or building name.</p>}
             </div>
           </Panel>
 
-          <Panel title="Open a workspace area" eyebrow="Shortcuts">
+          <Panel title="Where do you want to go?" eyebrow="Shortcuts">
             <div className="grid gap-3 sm:grid-cols-2">
               {primaryModules.map((module) => {
                 const Icon = module.icon;
@@ -292,27 +294,15 @@ export default function Home() {
           </Panel>
         </section>
 
-        <section className="mt-6 grid gap-6 xl:grid-cols-[1fr_420px]">
-          <Panel title="Ready for walkthrough" eyebrow="Coverage">
+        <section className="mt-6">
+          <Panel title="Ready for a walkthrough" eyebrow="Coverage">
             <div className="grid gap-3 md:grid-cols-2">
-              <Readiness label="Partner profiles" value={`${data.tenants.length} profiles available`} ready={data.tenants.length > 0} />
-              <Readiness label="Workspaces" value={`${data.workspaces.length} partner workspaces`} ready={data.workspaces.length > 0} />
+              <Readiness label="Partner profiles" value={`${data.tenants.length} profiles ready`} ready={data.tenants.length > 0} />
+              <Readiness label="Partner spaces" value={`${data.workspaces.length} spaces to open`} ready={data.workspaces.length > 0} />
               <Readiness label="Map listings" value={`${data.mapSummary?.entities || 0} places and offers`} ready={(data.mapSummary?.entities || 0) > 0} />
               <Readiness label="Partner directory" value={`${data.partners.length} partners listed`} ready={data.partners.length > 0} />
               <Readiness label="Campaigns" value={`${data.campaigns.length} campaigns available`} ready={data.campaigns.length > 0} />
               <Readiness label="Plans and invoices" value={`${data.subscriptions.length} plans · ${data.invoices.length} invoices`} ready={data.subscriptions.length > 0} />
-            </div>
-          </Panel>
-
-          <Panel title="Recent changes" eyebrow="Activity">
-            <div className="grid gap-3">
-              {data.auditLogs.slice(-7).reverse().map((item) => (
-                <div key={item.id} className="border-t border-[rgba(11,31,51,0.08)] pt-3">
-                  <p className="text-sm font-semibold">{String(item.action || item.resource || 'Platform activity').replace(/_/g, ' ')}</p>
-                  <p className="mt-1 text-xs text-[rgba(11,31,51,0.52)]">{item.actor_id || 'system'} · {new Date(item.timestamp || item.created_at || Date.now()).toLocaleString()}</p>
-                </div>
-              ))}
-              {data.auditLogs.length === 0 && <p className="text-sm text-[rgba(11,31,51,0.58)]">No audit activity yet.</p>}
             </div>
           </Panel>
         </section>
