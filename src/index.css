@@ -916,7 +916,7 @@ body {
   }
 
   .dp-admin-shell :where(button) {
-    min-height: 40px;
+    min-height: 36px;
     white-space: normal;
     text-align: left;
   }
@@ -935,15 +935,15 @@ body {
   }
 
   .dp-admin-shell :where(th) {
-    padding: 0.58rem 0.62rem !important;
-    font-size: 10px !important;
+    padding: 0.5rem 0.56rem !important;
+    font-size: 9.25px !important;
     line-height: 1.2 !important;
   }
 
   .dp-admin-shell :where(td) {
-    padding: 0.68rem 0.62rem !important;
-    font-size: 12px !important;
-    line-height: 1.36 !important;
+    padding: 0.58rem 0.56rem !important;
+    font-size: 11.25px !important;
+    line-height: 1.32 !important;
   }
 
   .dp-admin-shell :where(td p) {
@@ -969,8 +969,21 @@ body {
   }
 
   .dp-admin-shell :where(td button, td a[role="button"], td a[class*="inline-flex"]) {
-    min-height: 40px;
-    min-width: 40px;
+    min-height: 36px;
+    min-width: 36px;
+  }
+
+  .dp-admin-shell .dp-outreach-crm-page :where(button) {
+    min-height: 34px;
+    font-size: 10px;
+  }
+
+  .dp-admin-shell .dp-outreach-crm-page .dp-outreach-crm-table :where(th) {
+    font-size: 8.5px !important;
+  }
+
+  .dp-admin-shell .dp-outreach-crm-page .dp-outreach-crm-table :where(td) {
+    font-size: 9.5px !important;
   }
 
   .dp-admin-shell :where(td .grid[class*="grid-cols-2"]) {
