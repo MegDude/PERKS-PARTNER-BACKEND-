@@ -571,6 +571,17 @@ export default function PartnerOutreachCRM() {
               </div>
               <EditableMessage icon={<MessageSquare className="h-4 w-4" />} title="Short text / DM" body={clean(selected.sms_message?.body)} onCopy={() => copyText(selected.sms_message?.body || '')} onSave={(value) => patchMessage(selected.sms_message?.id, { body: value })} />
               <EditableMessage icon={<Mail className="h-4 w-4" />} title={clean(selected.message?.subject)} body={clean(selected.message?.body)} onCopy={() => copyText(selected.message?.body || '')} onSave={(value) => patchMessage(selected.message?.id, { body: value })} />
+              {(selected.message?.strategy || selected.message?.intelligence) && (
+                <div className="mb-2 border border-[rgba(11,31,51,0.08)] p-2.5">
+                  <p className="text-[9px] font-bold uppercase text-[#C8A96A]">Strategy intelligence</p>
+                  <div className="mt-2 grid gap-1.5 text-[11px] leading-5 text-[rgba(11,31,51,0.68)]">
+                    <p><span className="font-semibold text-[#0B1F33]">Angle:</span> {clean(selected.message?.strategy?.angle || selected.message?.intelligence?.recommended_angle)}</p>
+                    <p><span className="font-semibold text-[#0B1F33]">Audience:</span> {clean(selected.message?.strategy?.audience || selected.message?.intelligence?.audience)}</p>
+                    <p><span className="font-semibold text-[#0B1F33]">Benefit:</span> {clean(selected.message?.strategy?.benefit || selected.message?.intelligence?.strategic_benefit)}</p>
+                    {selected.message?.guardrail && <p><span className="font-semibold text-[#0B1F33]">Guardrail:</span> {selected.message.guardrail}</p>}
+                  </div>
+                </div>
+              )}
               <div className="mt-3 overflow-hidden border border-[rgba(11,31,51,0.08)]">
                 <div className="flex items-center justify-between gap-2 border-b border-[rgba(11,31,51,0.08)] px-3 py-1.5">
                   <span className="text-[9px] font-bold uppercase text-[rgba(11,31,51,0.52)]">Downtown Perks HTML email</span>

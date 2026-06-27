@@ -4398,6 +4398,7 @@ export async function createApp() {
     if (!partner) return res.status(404).json({ error: "Partner not found" });
     const contact = (db.entities.PartnerOutreachContact.find((item) => item.partner_id === partner.id) || {}) as Record<string, any>;
     const generated = await generatePersonalizedOutreachCopy({ ...partner, ...(req.body || {}) }, contact);
+    const guardrail = "guardrail" in generated ? generated.guardrail || "" : "";
     const email = ensureRecord(db.entities.PartnerOutreachMessage, `outreach_message_${slug(partner.external_entity_id || partner.id)}_email`, {
       partner_id: partner.id,
       contact_id: contact.id || "",
@@ -4406,6 +4407,10 @@ export async function createApp() {
       body: generated.body,
       html: generated.html,
       status: "draft",
+      strategy: generated.strategy || {},
+      intelligence: generated.intelligence || {},
+      provider: generated.provider || "local_strategy",
+      guardrail,
     });
     const sms = ensureRecord(db.entities.PartnerOutreachMessage, `outreach_message_${slug(partner.external_entity_id || partner.id)}_sms`, {
       partner_id: partner.id,
@@ -4414,6 +4419,10 @@ export async function createApp() {
       subject: "Short text / DM",
       body: generated.shortText,
       status: "draft",
+      strategy: generated.strategy || {},
+      intelligence: generated.intelligence || {},
+      provider: generated.provider || "local_strategy",
+      guardrail,
     });
     logOutreachActivity(db.entities, {
       partner_id: partner.id,
@@ -4422,7 +4431,18 @@ export async function createApp() {
       title: "Personalized outreach generated",
       notes: `Generated ${generated.provider || "local"} email and short text draft.`,
       status: partner.outreach_stage || partner.status || "Not started",
-      metadata: { provider: generated.provider || "local" },
+      metadata: {
+        provider: generated.provider || "local_strategy",
+        strategy: generated.strategy || {},
+        guardrail,
+        intelligence: {
+          partner_type: generated.intelligence?.partner_type,
+          district: generated.intelligence?.district,
+          suggested_perk: generated.intelligence?.suggested_perk,
+          suggested_campaign: generated.intelligence?.suggested_campaign,
+          recommended_angle: generated.intelligence?.recommended_angle,
+        },
+      },
     });
     await saveDatabase(db);
     res.json({ email, sms, generated });
