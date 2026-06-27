@@ -350,6 +350,125 @@ export default function Home() {
             </div>
           </div>
         </section>
+
+        <section className="mt-7 border-t border-[rgba(11,31,51,0.08)] pt-6">
+          <div className="max-w-4xl">
+            <p className="text-[9px] font-semibold uppercase text-[#C8A96A]">Partner with the neighborhood</p>
+            <h2 className="mt-1 text-2xl font-semibold leading-tight text-[#0B1F33] sm:text-3xl">
+              Downtown Perks helps people find the good stuff.
+            </h2>
+            <p className="mt-3 text-[13px] leading-6 text-[rgba(11,31,51,0.62)]">
+              Downtown Perks is the digital layer for downtown Austin. It is built by people who live here to help neighbors, guests, and workers find local places, support small businesses, and stay in the loop without another app to manage.
+            </p>
+          </div>
+
+          <div className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(340px,0.72fr)]">
+            <div className="min-w-0">
+              <div className="grid gap-0">
+                {[
+                  ['We put you where plans are made', 'People decide where to eat, meet, or hang out before they leave. Downtown Perks puts your business on the map while they are still choosing.'],
+                  ['No apps, no friction', 'Residents scan a code and they are in. No download, password reset, or extra account just to find what is nearby.'],
+                  ['Real data, real fast', 'See how many people saved your spot, scanned your code, used an offer, or came back for another look.'],
+                  ['Better community', 'Help people support the local places that make downtown worth living in.'],
+                ].map(([title, body]) => (
+                  <div key={title} className="grid gap-1 border-b border-[rgba(11,31,51,0.045)] py-3 sm:grid-cols-[190px_minmax(0,1fr)] sm:gap-4">
+                    <h3 className="text-[12px] font-semibold leading-5 text-[#0B1F33]">{title}</h3>
+                    <p className="text-[11px] leading-5 text-[rgba(11,31,51,0.58)]">{body}</p>
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-6">
+                <p className="text-[9px] font-semibold uppercase text-[#C8A96A]">Choose your annual plan</p>
+                <p className="mt-1 max-w-2xl text-[11px] leading-5 text-[rgba(11,31,51,0.58)]">
+                  Keep it simple. Pick the plan that fits your business, and that is your presence on the map for the year.
+                </p>
+                <div className="mt-3 overflow-x-auto [scrollbar-width:thin]">
+                  <table className="w-full min-w-[520px] table-fixed text-left">
+                    <thead>
+                      <tr className="text-[8.5px] font-semibold uppercase text-[rgba(11,31,51,0.42)]">
+                        <th className="w-[30%] py-1.5 pr-3">Plan</th>
+                        <th className="w-[28%] py-1.5 pr-3">Annual rate</th>
+                        <th className="py-1.5">Best for</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {[
+                        ['Basic', '$30-$49/yr', 'Getting on the map and showing up.'],
+                        ['Growth', '$79/yr', 'Keeping your place in the rotation.'],
+                        ['Pro', '$199/yr', 'Being a go-to spot all year long.'],
+                      ].map(([plan, rate, use]) => (
+                        <tr key={plan} className="border-t border-[rgba(11,31,51,0.045)]">
+                          <td className="py-2 pr-3 text-[11px] font-semibold text-[#0B1F33]">{plan}</td>
+                          <td className="py-2 pr-3 text-[11px] font-semibold text-[#0B1F33]">{rate}</td>
+                          <td className="py-2 text-[10.5px] leading-4 text-[rgba(11,31,51,0.58)]">{use}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <p className="mt-2 text-[10px] leading-4 text-[rgba(11,31,51,0.5)]">
+                  All plans are annual commitments, billed monthly. Properties can start with a 90-day free pilot to see how it works.
+                </p>
+              </div>
+            </div>
+
+            <aside className="min-w-0 border-y border-[rgba(11,31,51,0.08)] py-3">
+              <div>
+                <p className="text-[9px] font-semibold uppercase text-[#C8A96A]">Add things when you need them</p>
+                <div className="mt-2 grid gap-0">
+                  {[
+                    ['Campaigns', '$30-$99 each', 'Run a special, feature your spot, or sponsor a moment when you need a crowd.'],
+                    ['Events', '$20-$99 each', 'Boost the plan before people make other plans.'],
+                    ['Broadcasts', '$20-$149 each', 'Send a quick heads up to people nearby.'],
+                    ['Feedback', '$30-$199 each', 'Ask one simple question instead of guessing.'],
+                  ].map(([label, price, detail]) => (
+                    <div key={label} className="border-b border-[rgba(11,31,51,0.045)] py-2.5">
+                      <div className="flex items-baseline justify-between gap-3">
+                        <h3 className="text-[11px] font-semibold text-[#0B1F33]">{label}</h3>
+                        <span className="text-[9.5px] font-semibold text-[#9A7A2F]">{price}</span>
+                      </div>
+                      <p className="mt-1 text-[10.5px] leading-4 text-[rgba(11,31,51,0.58)]">{detail}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="mt-5">
+                <p className="text-[9px] font-semibold uppercase text-[#C8A96A]">How setup works</p>
+                <div className="mt-2 grid gap-0">
+                  {[
+                    ['Build your setup', 'Use the calculator to pick your plan and add the boosts you need now.'],
+                    ['Verify', 'Drop in your business email so we know you are a local operator.'],
+                    ['Go live', 'Once checkout is complete, your workspace and map presence can open.'],
+                    ['Watch the signal', 'Your dashboard shows what is working so you can adjust quickly.'],
+                  ].map(([title, body], index) => (
+                    <div key={title} className="grid grid-cols-[24px_minmax(0,1fr)] gap-2 border-b border-[rgba(11,31,51,0.045)] py-2">
+                      <span className="text-[10px] font-semibold text-[#9A7A2F]">{String(index + 1).padStart(2, '0')}</span>
+                      <div>
+                        <h3 className="text-[11px] font-semibold text-[#0B1F33]">{title}</h3>
+                        <p className="mt-0.5 text-[10.5px] leading-4 text-[rgba(11,31,51,0.58)]">{body}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="mt-5">
+                <p className="text-[9px] font-semibold uppercase text-[#C8A96A]">The technical bits</p>
+                <p className="mt-1 text-[10.5px] leading-5 text-[rgba(11,31,51,0.58)]">
+                  It is fast on Vercel, mobile-first, and runs through a simple secure web link. It should feel like part of your downtown presence, not another ad layer.
+                </p>
+                <Link to="/partners/start" className="mt-3 inline-flex min-h-8 items-center gap-1.5 border border-[#0B1F33] bg-[#0B1F33] px-3 text-[10px] font-semibold uppercase text-white">
+                  Activate district reach <ArrowRight className="h-3.5 w-3.5" />
+                </Link>
+                <p className="mt-2 text-[10px] leading-4 text-[rgba(11,31,51,0.5)]">
+                  Questions? Chat with the DANA partnership team. We are local and here to help.
+                </p>
+              </div>
+            </aside>
+          </div>
+        </section>
       </div>
     </div>
   );

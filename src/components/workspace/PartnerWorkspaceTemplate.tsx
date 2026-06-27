@@ -265,6 +265,28 @@ export function PartnerWorkspaceTemplate(props: Props) {
       favoriteId: `fav-${place.id.replace('trend-', '')}`,
     };
   });
+  const partnerEducationItems = [
+    {
+      title: 'Be easy to find',
+      copy: 'Your profile, perks, events, and codes give residents one clear place to open first.',
+      href: '#setup',
+    },
+    {
+      title: 'Let people scan in',
+      copy: 'Printed codes, emails, and signs send people straight to the right resident view without another app.',
+      href: '#qr',
+    },
+    {
+      title: 'Keep offers useful',
+      copy: 'Perks, broadcasts, and events can be edited here, then measured from the same workspace.',
+      href: '#perks',
+    },
+    {
+      title: 'See what worked',
+      copy: 'Reports show the scans, saves, joins, and offer use that are ready to guide the next push.',
+      href: '#reports',
+    },
+  ];
 
   function updateLead(key: keyof PartnerLead, value: string) {
     setLead((current) => ({
@@ -920,7 +942,7 @@ export function PartnerWorkspaceTemplate(props: Props) {
                 </div>
                 <h1 className="mt-2 text-[28px] leading-tight text-[#0B1F33] sm:text-[34px]">{workspaceName} workspace</h1>
                 <p className="mt-3 text-sm leading-6 text-[rgba(11,31,51,0.66)]">
-                  Keep The Shore’s resident guide, building signs, perks, events, broadcasts, reports, and plan in order from one calm workspace.
+                  Keep {workspaceName}’s resident guide, signs, perks, events, broadcasts, reports, and plan in order from one calm workspace.
                 </p>
               </div>
               <figure className="shore-hero-photo">
@@ -964,6 +986,31 @@ export function PartnerWorkspaceTemplate(props: Props) {
               </div>
               <p className="mt-2 text-[10.5px] leading-4 text-[rgba(11,31,51,0.5)]">Saved favorites are stored in partner settings and can be reused by the map, resident guide, reports, and broadcasts.</p>
             </div>
+          </div>
+        </section>
+
+        <section className="shore-partner-education" aria-label={`How ${workspaceName} works on Downtown Perks`}>
+          <div className="shore-partner-education-head">
+            <div>
+              <div className="text-[11px] font-bold uppercase text-[#C8A96A]">How it works</div>
+              <h2 className="mt-1 text-xl font-semibold leading-tight text-[#0B1F33]">A quick guide before you start</h2>
+            </div>
+            <p>
+              This workspace is where {workspaceName} gets found, keeps resident-facing details current, and sees what people actually used.
+            </p>
+          </div>
+          <div className="shore-partner-education-grid">
+            {partnerEducationItems.map((item) => (
+              <a key={item.title} href={item.href} className="shore-partner-education-item">
+                <strong>{item.title}</strong>
+                <span>{item.copy}</span>
+              </a>
+            ))}
+          </div>
+          <div className="shore-action-rail mt-4">
+            <a href="#setup" className="shore-button">Set up profile</a>
+            <a href="#qr" className="shore-button">Create codes</a>
+            <a href="#billing" className="shore-button">Review plan</a>
           </div>
         </section>
 

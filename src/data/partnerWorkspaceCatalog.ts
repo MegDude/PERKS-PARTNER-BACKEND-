@@ -18,6 +18,9 @@ type WorkspaceSeed = {
 
 function residentCopyForSeed(seed: WorkspaceSeed) {
   const anchors = seed.anchors.slice(0, 2).join(' and ') || 'downtown';
+  if (seed.slug === 'inkind') {
+    return 'Downtown Perks brings inKind dining moments into the resident guide, so people can find a good table nearby without leaving the neighborhood flow.';
+  }
   if (seed.type.toLowerCase().includes('property') || seed.type.toLowerCase().includes('residential')) {
     return `${seed.name} helps residents turn a regular day into a better one: what to try nearby, what to save for later, and what is worth saying yes to this week.`;
   }
@@ -230,10 +233,10 @@ const seeds: WorkspaceSeed[] = [
     type: 'Brand Partner',
     district: 'Downtown Austin',
     address: 'Downtown Austin',
-    description: 'inKind has a brand workspace for restaurant partner visibility, offer ideas, dining campaigns, and performance reporting.',
-    audience: 'Restaurant partners, resident diners, hotel guests, campaign teams, and downtown hospitality operators.',
-    managerNotes: 'Use this workspace to keep dining partners, campaign ideas, redemptions, and partner reports together.',
-    amenities: ['Restaurant network', 'Dining campaigns', 'Offer testing', 'Redemption reporting', 'Partner outreach'],
+    description: 'inKind plugs its restaurant network into Downtown Perks, giving residents and guests an easier path from “where should we go?” to a real downtown table.',
+    audience: 'Restaurant partners, residents, hotel guests, and hospitality teams who want dining ideas to feel useful, timely, and close by.',
+    managerNotes: 'Keep the inKind role clear: dining partners, useful offers, restaurant notes, redemptions, and simple readouts for what people tried next.',
+    amenities: ['Restaurant partners', 'Dining notes', 'Useful offers', 'Redemption readouts', 'Hospitality follow-up'],
     anchors: ['TenTen', 'Ember Kitchen', 'The Guest House', 'Downtown Austin', 'Rainey'],
     plan: 'Brand Partner Workspace',
   },
@@ -364,6 +367,23 @@ export function buildPartnerWorkspaceFromSeed(seed: WorkspaceSeed): PartnerWorks
   const metrics = metricBase(seed);
   const id = seed.slug;
   const partnerId = `partner-${id}`;
+  const isInkind = id === 'inkind';
+  const perkFeatureTitle = isInkind ? 'Dinner plans people can use' : `${seed.name} pick`;
+  const perkFeatureDescription = isInkind
+    ? 'A clear dining offer from an inKind restaurant partner, written for someone deciding where to go tonight.'
+    : `A clear reason to choose ${seed.name} when someone is looking for a good downtown plan.`;
+  const perkWelcomeTitle = isInkind ? 'A first table to try' : 'A first reason to stop by';
+  const perkWelcomeDescription = isInkind
+    ? 'A simple introduction to one downtown restaurant in the inKind network, surfaced through Downtown Perks at the right moment.'
+    : `A simple welcome offer for people seeing ${seed.name} through Downtown Perks for the first time.`;
+  const introEventTitle = isInkind ? 'Dining partner walkthrough' : `${seed.name} intro`;
+  const introEventDescription = isInkind
+    ? 'A short review of which restaurant offers belong in the resident guide and where they should appear.'
+    : `A simple activation moment for ${seed.name}.`;
+  const monthlyEventTitle = isInkind ? 'Downtown dining readout' : `${seed.name} monthly check-in`;
+  const welcomeCampaignName = isInkind ? 'Downtown dining note' : 'Welcome campaign';
+  const welcomeCampaignChannel = isInkind ? 'Resident guide + QR + dining note' : 'Workspace + QR + partner note';
+  const monthlyCampaignName = isInkind ? 'Restaurant partner readout' : 'Monthly partner note';
 
   return {
     partner: {
@@ -405,31 +425,31 @@ export function buildPartnerWorkspaceFromSeed(seed: WorkspaceSeed): PartnerWorks
       residentFacingCopy: residentCopyForSeed(seed),
     },
     qrs: [
-      { id: `qr-${id}-profile`, name: 'Profile code', placement: 'Partner profile', destination: `/workspaces/${id}`, status: 'Active', scans: metrics.scans, lastScan: 'Today', conversionSignal: `${metrics.saves} people saved or opened this page` },
-      { id: `qr-${id}-campaign`, name: 'Broadcast code', placement: 'Resident message', destination: `/campaigns?partner=${id}`, status: 'Active', scans: Math.round(metrics.scans * 0.62), lastScan: 'Yesterday', conversionSignal: 'People are opening the message' },
-      { id: `qr-${id}-report`, name: 'Monthly readout link', placement: 'Monthly readout', destination: `/reports?partner=${id}`, status: 'Draft', scans: 0, lastScan: 'Not sent', conversionSignal: 'Ready for the next monthly note' },
+      { id: `qr-${id}-profile`, name: isInkind ? 'Dining guide code' : 'Profile code', placement: isInkind ? 'Restaurant partner note' : 'Partner profile', destination: `/workspaces/${id}`, status: 'Active', scans: metrics.scans, lastScan: 'Today', conversionSignal: isInkind ? `${metrics.saves} people opened an inKind dining idea` : `${metrics.saves} people saved or opened this page` },
+      { id: `qr-${id}-campaign`, name: isInkind ? 'Dining note code' : 'Broadcast code', placement: 'Resident message', destination: `/campaigns?partner=${id}`, status: 'Active', scans: Math.round(metrics.scans * 0.62), lastScan: 'Yesterday', conversionSignal: isInkind ? 'People are opening the dining note' : 'People are opening the message' },
+      { id: `qr-${id}-report`, name: 'Monthly readout link', placement: 'Monthly readout', destination: `/reports?partner=${id}`, status: 'Draft', scans: 0, lastScan: 'Not sent', conversionSignal: isInkind ? 'Ready for the next restaurant partner readout' : 'Ready for the next monthly note' },
     ],
     perks: [
-      { id: `perk-${id}-feature`, partner: seed.name, offerTitle: `${seed.name} pick`, description: `A clear reason to choose ${seed.name} when someone is looking for a good downtown plan.`, eligibility: 'Downtown Perks members', startDate: '2026-06-26', endDate: '2026-09-30', status: 'Active', saves: metrics.saves, redemptions: metrics.redemptions, qrScans: metrics.scans, location: seed.address || 'Downtown Austin', calendarDate: '2026-07-10T17:00:00' },
-      { id: `perk-${id}-welcome`, partner: seed.name, offerTitle: 'A first reason to stop by', description: `A simple welcome offer for people seeing ${seed.name} through Downtown Perks for the first time.`, eligibility: 'Downtown Perks members', startDate: '2026-07-01', endDate: '2026-10-01', status: 'Scheduled', saves: Math.round(metrics.saves * 0.55), redemptions: Math.round(metrics.redemptions * 0.4), qrScans: Math.round(metrics.scans * 0.38), location: seed.address || 'Downtown Austin', calendarDate: '2026-07-20T17:00:00' },
+      { id: `perk-${id}-feature`, partner: seed.name, offerTitle: perkFeatureTitle, description: perkFeatureDescription, eligibility: 'Downtown Perks members', startDate: '2026-06-26', endDate: '2026-09-30', status: 'Active', saves: metrics.saves, redemptions: metrics.redemptions, qrScans: metrics.scans, location: seed.address || 'Downtown Austin', calendarDate: '2026-07-10T17:00:00' },
+      { id: `perk-${id}-welcome`, partner: seed.name, offerTitle: perkWelcomeTitle, description: perkWelcomeDescription, eligibility: 'Downtown Perks members', startDate: '2026-07-01', endDate: '2026-10-01', status: 'Scheduled', saves: Math.round(metrics.saves * 0.55), redemptions: Math.round(metrics.redemptions * 0.4), qrScans: Math.round(metrics.scans * 0.38), location: seed.address || 'Downtown Austin', calendarDate: '2026-07-20T17:00:00' },
     ],
     events: [
-      { id: `event-${id}-intro`, title: `${seed.name} intro`, dateTime: '2026-07-18T23:00:00', location: seed.address || 'Downtown Austin', description: `A simple activation moment for ${seed.name}.`, rsvpCount: Math.max(12, Math.round(metrics.saves * 0.45)), capacity: 90, status: 'Published', linkedQR: 'Profile code', linkedCampaign: 'Welcome campaign' },
-      { id: `event-${id}-report`, title: `${seed.name} monthly check-in`, dateTime: '2026-08-06T18:00:00', location: 'Downtown Perks workspace', description: 'Review what worked, what people opened, and what should happen next.', rsvpCount: 8, capacity: 20, status: 'Scheduled', linkedQR: 'Report link', linkedCampaign: 'Monthly report' },
+      { id: `event-${id}-intro`, title: introEventTitle, dateTime: '2026-07-18T23:00:00', location: seed.address || 'Downtown Austin', description: introEventDescription, rsvpCount: Math.max(12, Math.round(metrics.saves * 0.45)), capacity: 90, status: 'Published', linkedQR: isInkind ? 'Dining guide code' : 'Profile code', linkedCampaign: welcomeCampaignName },
+      { id: `event-${id}-report`, title: monthlyEventTitle, dateTime: '2026-08-06T18:00:00', location: 'Downtown Perks workspace', description: 'Review what people opened, saved, tried, and which restaurant note deserves another push.', rsvpCount: 8, capacity: 20, status: 'Scheduled', linkedQR: 'Report link', linkedCampaign: 'Monthly report' },
     ],
     campaigns: [
-      { id: `campaign-${id}-welcome`, name: 'Welcome campaign', audience: seed.audience, channel: 'Workspace + QR + partner note', linkedItems: ['Profile code', `${seed.name} feature`], sendStatus: 'Live', opensViews: metrics.views, saves: metrics.saves, redemptions: metrics.redemptions, qrScans: metrics.scans },
-      { id: `campaign-${id}-monthly`, name: 'Monthly partner note', audience: 'Partner and operator review', channel: 'Report export', linkedItems: ['Report link', 'Monthly check-in'], sendStatus: 'Draft', opensViews: 0, saves: 0, redemptions: 0, qrScans: 0 },
+      { id: `campaign-${id}-welcome`, name: welcomeCampaignName, audience: seed.audience, channel: welcomeCampaignChannel, linkedItems: [isInkind ? 'Dining guide code' : 'Profile code', perkFeatureTitle], sendStatus: 'Live', opensViews: metrics.views, saves: metrics.saves, redemptions: metrics.redemptions, qrScans: metrics.scans },
+      { id: `campaign-${id}-monthly`, name: monthlyCampaignName, audience: 'Partner and operator review', channel: 'Report export', linkedItems: ['Report link', monthlyEventTitle], sendStatus: 'Draft', opensViews: 0, saves: 0, redemptions: 0, qrScans: 0 },
     ],
     residents: [
       { id: `audience-${id}-1`, name: 'Resident audience', unit: 'Downtown', email: 'resident-audience@downtownperks.local', moveInDate: '2026-06-26', interests: seed.anchors.slice(0, 3), savedPerks: Math.round(metrics.saves * 0.4), rsvps: 2, engagementStatus: 'Active resident' },
       { id: `audience-${id}-2`, name: 'Local audience', unit: 'Downtown', email: 'local-audience@downtownperks.local', moveInDate: '2026-06-26', interests: seed.amenities.slice(0, 3), savedPerks: Math.round(metrics.saves * 0.28), rsvps: 1, engagementStatus: 'Perk saver' },
     ],
     reports: [
-      { id: `metric-${id}-views`, label: 'Views', value: String(metrics.views), change: '+12%', explanation: `${seed.name} has a live partner profile ready for walkthroughs.` },
-      { id: `metric-${id}-saves`, label: 'Saves', value: String(metrics.saves), change: '+8%', explanation: 'Saves show where people are showing interest.' },
-      { id: `metric-${id}-scans`, label: 'Code scans', value: String(metrics.scans), change: '+10%', explanation: 'People are using the signs and links to find their way in.' },
-      { id: `metric-${id}-redemptions`, label: 'Used', value: String(metrics.redemptions), change: '+5%', explanation: 'People are moving from interest to action.' },
+      { id: `metric-${id}-views`, label: 'Views', value: String(metrics.views), change: '+12%', explanation: isInkind ? 'People are opening the inKind dining page inside Downtown Perks.' : `${seed.name} has a live partner profile ready for walkthroughs.` },
+      { id: `metric-${id}-saves`, label: 'Saves', value: String(metrics.saves), change: '+8%', explanation: isInkind ? 'Saves show which restaurant ideas are worth keeping in front of residents.' : 'Saves show where people are showing interest.' },
+      { id: `metric-${id}-scans`, label: 'Code scans', value: String(metrics.scans), change: '+10%', explanation: isInkind ? 'People are using dining notes and links to open the restaurant guide.' : 'People are using the signs and links to find their way in.' },
+      { id: `metric-${id}-redemptions`, label: 'Used', value: String(metrics.redemptions), change: '+5%', explanation: isInkind ? 'Use shows when a dining idea turns into an actual visit.' : 'People are moving from interest to action.' },
     ],
     billing: {
       id: `plan-${id}`,
@@ -452,7 +472,7 @@ export function buildPartnerWorkspaceFromSeed(seed: WorkspaceSeed): PartnerWorks
       id: `fav-${id}-${index}`,
       type: index === 0 ? 'Venue' : index === 1 ? 'Event' : 'Perk',
       name: anchor,
-      detail: `${seed.name} workspace anchor`,
+      detail: isInkind ? 'Restaurant partner to keep in the dining guide' : `${seed.name} workspace anchor`,
       saved: index < 2,
     })),
   };

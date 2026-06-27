@@ -327,7 +327,7 @@ export default function DowntownPerks() {
   }
 
   return (
-    <div className="mx-auto max-w-[1320px] space-y-5 px-4 py-5 text-left text-[#0B1F33] sm:px-6 lg:px-8">
+    <div className="w-full max-w-none space-y-5 px-4 py-4 text-left text-[#0B1F33] sm:px-5 lg:px-6">
       <section className="bg-white">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
@@ -369,25 +369,28 @@ export default function DowntownPerks() {
       </section>
 
       <details open className="dp-admin-collapsible bg-white">
-        <summary>
-          <span className="text-[12px] font-semibold leading-4">
-            Offers, partners, performance, and links
-            <span className="dp-admin-collapsible__meta text-[10px] font-medium">Showing {filteredPerks.length} perks.</span>
+        <summary className="items-start">
+          <span className="block">
+            <span className="block text-[11px] font-bold uppercase tracking-[0.08em] text-[#C8A96A]">{filteredPerks.length} perks</span>
+            <span className="mt-2 flex items-center gap-2 text-xl font-semibold leading-tight text-[#0B1F33]">
+              <BarChart3 className="h-4 w-4 shrink-0 text-[#C8A96A]" />
+              Offers, partners, performance, and links
+            </span>
           </span>
         </summary>
 
         <div className="overflow-x-auto [scrollbar-width:thin]" aria-label="Perk inventory table. Scroll horizontally to view all columns.">
-        <table className="w-full min-w-[1180px] table-fixed border-collapse text-left text-[10px]">
+        <table className="w-full min-w-[1460px] table-fixed border-collapse text-left text-[10px]">
           <colgroup>
-            <col className="w-[210px]" />
-            <col className="w-[112px]" />
-            <col className="w-[132px]" />
-            <col className="w-[108px]" />
-            <col className="w-[82px]" />
-            <col className="w-[116px]" />
-            <col className="w-[188px]" />
-            <col className="w-[220px]" />
-            <col className="w-[112px]" />
+            <col style={{ width: 260 }} />
+            <col style={{ width: 140 }} />
+            <col style={{ width: 180 }} />
+            <col style={{ width: 130 }} />
+            <col style={{ width: 104 }} />
+            <col style={{ width: 140 }} />
+            <col style={{ width: 196 }} />
+            <col style={{ width: 290 }} />
+            <col style={{ width: 120 }} />
           </colgroup>
           <thead className="border-b border-[rgba(11,31,51,0.05)] bg-white text-[9px] font-semibold uppercase text-[rgba(11,31,51,0.48)]">
               <tr>
@@ -416,17 +419,17 @@ export default function DowntownPerks() {
               <tr key={perk.id} className="align-top transition-colors hover:bg-white">
                 <td className="bg-white px-0 py-2 pr-3 lg:sticky lg:left-0 lg:z-10">
                   <p className="text-[11px] font-semibold leading-4 text-[#0B1F33]">{perk.title || 'Untitled perk'}</p>
-                  <p className="mt-1 max-w-[198px] text-[9.5px] leading-3 text-[rgba(11,31,51,0.62)]">{perk.description || 'No description added.'}</p>
+                  <p className="mt-1 text-[9.5px] leading-4 text-[rgba(11,31,51,0.62)]">{perk.description || 'No description added.'}</p>
                 </td>
                 <td className="px-0 py-2 pr-3">
-                  <p className="max-w-[106px] text-[9.5px] font-semibold leading-3 text-[#0B1F33]">{perk.cta_label || perk.cta || 'Redeem perk'}</p>
+                  <p className="text-[9.5px] font-semibold leading-4 text-[#0B1F33]">{perk.cta_label || perk.cta || 'Redeem perk'}</p>
                   <p className="mt-1 text-[8.5px] font-semibold uppercase text-[rgba(11,31,51,0.42)]">{perk.redemption_type || 'QR scan'}</p>
                 </td>
                 <td className="px-0 py-2 pr-3">
-                  <p className="text-[10px] font-semibold leading-3 text-[#0B1F33]">{perk.partnerName}</p>
+                  <p className="text-[10px] font-semibold leading-4 text-[#0B1F33]">{perk.partnerName}</p>
                 </td>
                 <td className="px-0 py-2 pr-3">
-                  <p className="text-[10px] font-semibold leading-3 text-[#0B1F33]">{perk.category || 'Uncategorized'}</p>
+                  <p className="text-[10px] font-semibold leading-4 text-[#0B1F33]">{perk.category || 'Uncategorized'}</p>
                   <p className="mt-1 text-[8.5px] font-semibold uppercase text-[rgba(11,31,51,0.46)]">{formatDistrict(perk.district)}</p>
                 </td>
                 <td className="px-0 py-2 pr-3">
@@ -449,7 +452,7 @@ export default function DowntownPerks() {
                     {perk.redemptionCount} used · {perk.conversion}% follow-through
                   </p>
                 </td>
-                <td className="px-0 py-2 pr-3 text-[9.5px] leading-3 text-[rgba(11,31,51,0.58)]">
+                <td className="px-0 py-2 pr-3 text-[9.5px] leading-4 text-[rgba(11,31,51,0.58)]">
                   <RelationshipLine label="Camp." value={campaigns.find((campaign) => campaign.id === perk.campaign_id)?.name || perk.campaign_id || 'None'} />
                   <RelationshipLine label="Event" value={events.find((event) => event.id === perk.event_id)?.title || perk.event_id || 'None'} />
                   <RelationshipLine label="Place" value={entityLabel || 'Not linked'} />
@@ -609,10 +612,10 @@ function Metric({ label, value }: any) {
 
 function Panel({ eyebrow, title, children }: any) {
   return (
-    <article className="rounded-xl border border-[rgba(11,31,51,0.08)] bg-white p-5">
+    <article className="bg-white p-0">
       <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-[#C8A96A]">{eyebrow}</p>
       <h2 className="mt-2 flex items-center gap-2 text-xl font-semibold"><BarChart3 className="h-4 w-4 text-[#C8A96A]" /> {title}</h2>
-      <div className="mt-5">{children}</div>
+      <div className="mt-3">{children}</div>
     </article>
   );
 }
@@ -679,9 +682,9 @@ function DateLine({ label, value }: any) {
 
 function RelationshipLine({ label, value }: any) {
   return (
-    <p className="grid grid-cols-[36px_1fr] gap-1 py-0.5">
-      <span className="shrink-0 text-[rgba(11,31,51,0.42)]">{label}</span>
-      <span className="min-w-0 font-medium leading-3 text-[#0B1F33]">{value}</span>
+    <p className="grid grid-cols-[48px_minmax(0,1fr)] gap-1.5 py-0.5">
+      <span className="shrink-0 whitespace-nowrap text-[rgba(11,31,51,0.42)]">{label}</span>
+      <span className="min-w-0 break-words font-medium leading-4 text-[#0B1F33]">{value}</span>
     </p>
   );
 }
@@ -697,7 +700,7 @@ function StatusPill({ status }: { status: string }) {
         : 'border-[rgba(11,31,51,0.10)] bg-white text-[#0B1F33]';
 
   return (
-    <span className={`inline-flex min-h-6 items-center px-1.5 text-[9px] font-semibold uppercase ${tone}`}>
+    <span className={`inline-flex min-h-6 items-center whitespace-nowrap px-1.5 text-[9px] font-semibold uppercase ${tone}`}>
       {normalized}
     </span>
   );

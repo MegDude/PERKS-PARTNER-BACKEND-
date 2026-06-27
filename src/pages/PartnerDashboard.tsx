@@ -6,12 +6,14 @@ import { H1, Body } from '@/components/ui/Typography';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/Button';
 import { motion } from 'framer-motion';
-import { Mail, TrendingUp, MessageSquare, Building2, Download, Activity, CheckCircle2, Clock3, ArrowUpRight } from 'lucide-react';
+import { Activity, ArrowUpRight, CheckCircle2, Clock3, Download, Search, SlidersHorizontal } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { slugify } from '@/data/partnerWorkspaceCatalog';
 
 export default function PartnerDashboard() {
   const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7));
+  const [partnerSearch, setPartnerSearch] = useState('');
+  const [partnerType, setPartnerType] = useState('All');
 
   const { data: user } = useQuery({
     queryKey: ['current_user'],
@@ -95,6 +97,26 @@ export default function PartnerDashboard() {
   };
 
   const activePartners = (partners as any[]).filter((p: any) => p.is_active !== false && p.status !== 'archived');
+  const partnerTypes = useMemo(() => {
+    const values = activePartners
+      .map((partner: any) => partner.category || partner.type)
+      .filter(Boolean)
+      .map((value: string) => String(value).trim())
+      .filter(Boolean);
+    return ['All', ...Array.from(new Set(values)).sort((a, b) => a.localeCompare(b))];
+  }, [activePartners]);
+
+  const filteredPartners = useMemo(() => {
+    const needle = partnerSearch.trim().toLowerCase();
+    return activePartners.filter((partner: any) => {
+      const category = String(partner.category || partner.type || '').trim();
+      const haystack = `${partner.business_name || ''} ${partner.name || ''} ${partner.contact_person || ''} ${partner.email || ''} ${category}`.toLowerCase();
+      const matchesSearch = !needle || haystack.includes(needle);
+      const matchesType = partnerType === 'All' || category === partnerType;
+      return matchesSearch && matchesType;
+    });
+  }, [activePartners, partnerSearch, partnerType]);
+
   const partnerById = useMemo(() => {
     return Object.fromEntries((partners as any[]).map((partner: any) => [partner.id, partner]));
   }, [partners]);
@@ -171,15 +193,40 @@ export default function PartnerDashboard() {
   )}`;
 
   return (
-    <div className="w-full max-w-none bg-white p-4 text-left text-[#0B1F33] sm:p-5 lg:p-6">
-      <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="mb-4">
-        <H1 className="mb-1 text-xl font-semibold leading-tight text-[#11182B] sm:text-2xl">Partner workspaces</H1>
-        <Body className="max-w-3xl text-[12px] font-medium leading-5 text-[rgba(11,31,51,0.58)]">
-          Open partner pages, review current activity, and export the monthly summary.
-        </Body>
+    <div className="w-full max-w-none bg-white px-4 py-4 text-left text-[#0B1F33] sm:px-5 lg:px-6">
+      <motion.div
+        initial={{ opacity: 0, y: -12 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="mb-4 grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end"
+      >
+        <div>
+          <p className="mb-1 text-[9px] font-semibold uppercase tracking-normal text-[#C5A028]">Partner directory</p>
+          <H1 className="mb-1 text-xl font-semibold leading-tight text-[#11182B] sm:text-2xl">Partner workspaces</H1>
+          <Body className="max-w-3xl text-[11px] font-medium leading-5 text-[rgba(11,31,51,0.58)]">
+            Open each partner workspace, check what is active, and export the month without leaving the platform.
+          </Body>
+        </div>
+        <Button
+          onClick={() => {
+            const rows = filteredPartners.map((partner: any) => {
+              const stats = getPartnerStats(partner.id);
+              return [partner.business_name || partner.name || 'Partner', partner.category || '', stats.perks, stats.redemptions, stats.messages, stats.unread].join(',');
+            });
+            const csv = ['Partner,Category,Perks,Redemptions,Messages,Unread', ...rows].join('\n');
+            const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `partner-summary-${selectedMonth}.csv`;
+            link.click();
+            URL.revokeObjectURL(url);
+          }}
+          className="min-h-8 w-fit max-w-full text-[9px] font-semibold uppercase"
+        >
+          <Download className="h-3.5 w-3.5" /> Export
+        </Button>
       </motion.div>
 
-      <div className="mb-5 flex flex-wrap items-end justify-between gap-3 bg-white py-1">
+      <div className="mb-4 grid gap-2 bg-white sm:grid-cols-[170px_minmax(220px,1fr)_180px] sm:items-end">
         <div>
           <label className="mb-1 block text-[9px] font-bold uppercase tracking-normal text-[#C5A028]">Report month</label>
           <input
@@ -189,29 +236,28 @@ export default function PartnerDashboard() {
             className="min-h-8 border-0 border-b border-[rgba(11,31,51,0.18)] bg-white px-0 py-1 text-[12px] font-semibold text-[#11182B] outline-none focus:border-[#C5A028]"
           />
         </div>
-        <div>
-          <Button
-            onClick={() => {
-              const rows = activePartners.map((partner: any) => {
-                const stats = getPartnerStats(partner.id);
-                return [partner.business_name || partner.name || 'Partner', partner.category || '', stats.perks, stats.redemptions, stats.messages, stats.unread].join(',');
-              });
-              const csv = ['Partner,Category,Perks,Redemptions,Messages,Unread', ...rows].join('\n');
-              const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
-              const link = document.createElement('a');
-              link.href = url;
-              link.download = `partner-summary-${selectedMonth}.csv`;
-              link.click();
-              URL.revokeObjectURL(url);
-            }}
-            className="min-h-8 max-w-full text-[9.5px] font-semibold uppercase"
+        <label className="flex min-h-8 items-center gap-2 border-0 border-b border-[rgba(11,31,51,0.14)] bg-white py-1">
+          <Search className="h-3.5 w-3.5 shrink-0 text-[#C5A028]" />
+          <input
+            value={partnerSearch}
+            onChange={(event) => setPartnerSearch(event.target.value)}
+            placeholder="Search partners"
+            className="w-full bg-transparent text-[11px] font-medium leading-none text-[#0B1F33] outline-none placeholder:text-[rgba(11,31,51,0.36)]"
+          />
+        </label>
+        <label className="flex min-h-8 items-center gap-2 border-0 border-b border-[rgba(11,31,51,0.14)] bg-white py-1">
+          <SlidersHorizontal className="h-3.5 w-3.5 shrink-0 text-[#C5A028]" />
+          <select
+            value={partnerType}
+            onChange={(event) => setPartnerType(event.target.value)}
+            className="w-full bg-transparent text-[11px] font-semibold text-[#0B1F33] outline-none"
           >
-             <Download className="w-3.5 h-3.5" /> Export
-          </Button>
-        </div>
+            {partnerTypes.map((type) => <option key={type}>{type}</option>)}
+          </select>
+        </label>
       </div>
 
-      <div className="mb-5 overflow-x-auto [scrollbar-width:thin]">
+      <section className="mb-5 overflow-x-auto [scrollbar-width:thin]" aria-label="Partner workspace summary">
         <table className="w-full min-w-[520px] table-fixed text-left">
           <colgroup>
             <col className="w-[38%]" />
@@ -240,29 +286,45 @@ export default function PartnerDashboard() {
             ))}
           </tbody>
         </table>
-      </div>
+      </section>
 
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }}>
-        <Card className="border-0 p-0">
+        <Card className="border-0 p-0 shadow-none">
           <CardHeader className="mb-2 border-0 p-0 pb-2">
-            <CardTitle className="text-[15px] font-semibold leading-5 text-[#11182B]">Active partners</CardTitle>
+            <div className="flex flex-wrap items-end justify-between gap-2">
+              <div>
+                <CardTitle className="text-[15px] font-semibold leading-5 text-[#11182B]">Active partners</CardTitle>
             <CardDescription className="mt-0 text-[11px] font-medium leading-4 text-[rgba(11,31,51,0.54)]">
-              Open the workspace or scan the latest partner signals.
+                  {filteredPartners.length.toLocaleString()} shown. Open the workspace or scan the latest partner signals.
             </CardDescription>
+              </div>
+              {(partnerSearch || partnerType !== 'All') && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPartnerSearch('');
+                    setPartnerType('All');
+                  }}
+                  className="min-h-7 text-[9px] font-semibold uppercase text-[rgba(11,31,51,0.54)] transition-colors hover:text-[#C5A028]"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
           </CardHeader>
           <CardContent>
-            {activePartners.length === 0 ? (
-              <p className="py-8 text-[12px] font-medium text-[rgba(11,31,51,0.54)]">No active partners yet.</p>
+            {filteredPartners.length === 0 ? (
+              <p className="py-8 text-[12px] font-medium text-[rgba(11,31,51,0.54)]">No partners match this view.</p>
             ) : (
-              <div className="divide-y divide-[rgba(11,31,51,0.05)]">
-                {activePartners.map((partner) => {
+              <div className="divide-y divide-[rgba(11,31,51,0.045)]">
+                {filteredPartners.map((partner) => {
                   const stats = getPartnerStats(partner.id);
                   return (
                     <motion.div
                       key={partner.id}
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}
-                      className="grid gap-2 bg-white py-2.5 transition-all lg:grid-cols-[minmax(180px,1.2fr)_minmax(260px,1.4fr)_110px] lg:items-center"
+                      className="grid gap-2 bg-white py-2.5 transition-colors hover:bg-[rgba(197,160,40,0.025)] lg:grid-cols-[minmax(190px,1.25fr)_minmax(260px,1.45fr)_82px] lg:items-center"
                     >
                       <div className="min-w-0">
                         <h3 className="truncate text-[12px] font-semibold leading-4 text-[#11182B]">{partner.business_name || partner.name || 'Partner'}</h3>
@@ -287,7 +349,7 @@ export default function PartnerDashboard() {
                       </div>
                       <Link
                         to={partnerWorkspacePath(partner)}
-                        className="inline-flex min-h-8 max-w-full items-center justify-center gap-1 border border-[rgba(11,31,51,0.12)] bg-white px-2 text-[9.5px] font-semibold uppercase leading-none text-[#0B1F33] hover:border-[#C8A96A] hover:text-[#C8A96A]"
+                        className="inline-flex min-h-7 max-w-full items-center justify-center gap-1 border border-[rgba(11,31,51,0.10)] bg-white px-2 text-[8.5px] font-semibold uppercase leading-none text-[#0B1F33] transition-colors hover:border-[#C8A96A] hover:text-[#C8A96A]"
                       >
                         Open <ArrowUpRight className="h-3 w-3 shrink-0" />
                       </Link>
@@ -314,7 +376,7 @@ export default function PartnerDashboard() {
               Messages, redemptions, perk updates, and follow-up items ready to open.
             </p>
           </div>
-          <Link to="/admin/engagement" className="inline-flex min-h-8 max-w-full items-center gap-1.5 border border-[rgba(11,31,51,0.12)] bg-white px-2 text-[9.5px] font-semibold uppercase leading-none text-[#0B1F33] hover:border-[#C8A96A] hover:text-[#C8A96A]">
+          <Link to="/admin/engagement" className="inline-flex min-h-7 max-w-full items-center gap-1.5 border border-[rgba(11,31,51,0.10)] bg-white px-2 text-[8.5px] font-semibold uppercase leading-none text-[#0B1F33] transition-colors hover:border-[#C8A96A] hover:text-[#C8A96A]">
             <Activity className="w-3.5 h-3.5 shrink-0" /> Activity
           </Link>
         </div>
@@ -325,8 +387,8 @@ export default function PartnerDashboard() {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <div className="min-w-[690px] divide-y divide-[rgba(11,31,51,0.055)]">
-              <div className="grid grid-cols-[1.1fr_.9fr_1.15fr_.78fr_.58fr_72px] gap-2 px-1 pb-2 text-[8.5px] font-semibold uppercase text-[rgba(11,31,51,0.48)]">
+            <div className="min-w-[660px] divide-y divide-[rgba(11,31,51,0.05)]">
+              <div className="grid grid-cols-[1.1fr_.85fr_1.15fr_.75fr_.52fr_62px] gap-2 px-1 pb-2 text-[8px] font-semibold uppercase text-[rgba(11,31,51,0.46)]">
                 <span>Partner</span>
                 <span>Activity type</span>
                 <span>Related item</span>
@@ -335,7 +397,7 @@ export default function PartnerDashboard() {
                 <span>Action</span>
               </div>
               {recentPartnerActivity.map((item) => (
-                <div key={item.id} className="grid grid-cols-[1.1fr_.9fr_1.15fr_.78fr_.58fr_72px] items-center gap-2 px-1 py-2.5 text-[10px] leading-4 text-[#0B1F33]">
+                <div key={item.id} className="grid grid-cols-[1.1fr_.85fr_1.15fr_.75fr_.52fr_62px] items-center gap-2 px-1 py-2 text-[9.5px] leading-4 text-[#0B1F33]">
                   <div className="truncate font-semibold">{item.partnerName}</div>
                   <div className="truncate text-[rgba(11,31,51,0.66)]">{item.type}</div>
                   <div className="truncate text-[rgba(11,31,51,0.66)]">{item.related}</div>
@@ -344,13 +406,13 @@ export default function PartnerDashboard() {
                     {formatActivityTime(item.timestamp)}
                   </div>
                   <div>
-                    <span className="inline-flex min-h-6 max-w-full items-center gap-1 border border-[rgba(11,31,51,0.10)] bg-white px-1.5 text-[8.5px] font-semibold uppercase leading-none text-[#0B1F33]">
+                    <span className="inline-flex min-h-6 max-w-full items-center gap-1 border border-[rgba(11,31,51,0.08)] bg-white px-1.5 text-[8px] font-semibold uppercase leading-none text-[#0B1F33]">
                       <CheckCircle2 className="h-3 w-3 shrink-0 text-[#C8A96A]" />
                       {item.status}
                     </span>
                   </div>
                   <div>
-                    <Link to={item.href} className="inline-flex min-h-7 max-w-full items-center justify-center border border-transparent px-1.5 text-[8.5px] font-semibold uppercase leading-none text-[#0B1F33] hover:border-[#C8A96A]">
+                    <Link to={item.href} className="inline-flex min-h-7 max-w-full items-center justify-center border border-transparent px-1 text-[8px] font-semibold uppercase leading-none text-[#0B1F33] transition-colors hover:border-[#C8A96A]">
                       {item.action}
                     </Link>
                   </div>

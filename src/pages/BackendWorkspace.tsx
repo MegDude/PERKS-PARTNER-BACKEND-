@@ -207,17 +207,17 @@ export default function BackendWorkspace() {
   }
 
   return (
-    <div className="mx-auto max-w-[1440px] space-y-6 p-5 text-[#0B1F33] sm:p-8">
-      <section className="rounded-xl border border-[rgba(11,31,51,0.08)] bg-white p-6">
-        <div className="grid gap-6 xl:grid-cols-[1fr_360px] xl:items-end">
+    <div className="w-full max-w-none space-y-5 px-4 py-4 text-left text-[#0B1F33] sm:px-5 lg:px-6">
+      <section className="bg-white py-1">
+        <div className="grid gap-5 xl:grid-cols-[1fr_340px] xl:items-end">
           <div>
             <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-[#C8A96A]">Start here</p>
-            <h1 className="mt-2 text-3xl font-semibold tracking-normal">Downtown Perks, ready to run</h1>
-            <p className="mt-3 max-w-4xl text-sm leading-6 text-[rgba(11,31,51,0.66)]">
+            <h1 className="mt-1 text-2xl font-semibold tracking-normal sm:text-3xl">Downtown Perks, ready to run</h1>
+            <p className="mt-2 max-w-4xl text-[12px] leading-5 text-[rgba(11,31,51,0.62)] sm:text-sm sm:leading-6">
               Open the people, places, perks, events, broadcasts, reports, and plans that keep downtown moving.
             </p>
           </div>
-          <div className="rounded-xl border border-[rgba(11,31,51,0.08)] bg-white p-4">
+          <div className="border-y border-[rgba(11,31,51,0.08)] bg-white py-2">
             <StatusLine label="Site status" value={data.health?.status || 'unknown'} />
             <StatusLine label="Areas to open" value={data.health?.entities ? Object.keys(data.health.entities).length : 0} />
             <StatusLine label="Partner spaces" value={data.tenantsStatus?.workspaces || 0} />
@@ -233,8 +233,8 @@ export default function BackendWorkspace() {
         rows={kpis}
       />
 
-      <section className="grid gap-6 xl:grid-cols-[1fr_420px]">
-        <article className="rounded-xl border border-[rgba(11,31,51,0.08)] bg-white p-5">
+      <section className="grid gap-5 xl:grid-cols-[1fr_420px]">
+        <article className="bg-white p-0">
           <div className="mb-5">
             <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-[#C8A96A]">Quick navigation</p>
             <h2 className="mt-2 text-xl font-semibold">Find the right area fast.</h2>
@@ -296,7 +296,7 @@ export default function BackendWorkspace() {
         </article>
       </section>
 
-      <section className="rounded-xl border border-[rgba(11,31,51,0.08)] bg-white p-5">
+      <section className="bg-white p-0">
         <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-[#C8A96A]">Recent activity</p>
         <h2 className="mt-2 text-xl font-semibold">Latest updates and messages.</h2>
         <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
@@ -311,8 +311,8 @@ export default function BackendWorkspace() {
         </div>
       </section>
 
-      <section className="grid gap-6">
-        <article className="rounded-xl border border-[rgba(11,31,51,0.08)] bg-white p-5">
+      <section className="grid gap-5">
+        <article className="bg-white p-0">
           <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-[#C8A96A]">How the work flows</p>
           <h2 className="mt-2 text-xl font-semibold">Help people find, use, and improve what is downtown.</h2>
           <p className="mt-3 text-sm leading-6 text-[rgba(11,31,51,0.62)]">
@@ -326,7 +326,7 @@ export default function BackendWorkspace() {
               { label: 'Share the result', detail: 'Open reports for partner-ready summaries.', to: '/admin/reports' },
               { label: 'Make it better', detail: 'Adjust offers, notes, and follow-ups.', to: '/admin/perks' },
             ].map((item) => (
-              <Link key={item.label} to={item.to} className="grid min-h-9 grid-cols-[130px_1fr_auto] items-center gap-3 border-t border-[rgba(11,31,51,0.045)] py-1.5 text-left text-[12px] hover:text-[#C8A96A] first:border-t-0">
+              <Link key={item.label} to={item.to} className="grid min-h-9 gap-1 border-t border-[rgba(11,31,51,0.045)] py-1.5 text-left text-[12px] hover:text-[#C8A96A] first:border-t-0 sm:grid-cols-[130px_1fr_auto] sm:items-center sm:gap-3">
                 <span className="font-semibold text-[#0B1F33]">{item.label}</span>
                 <span className="text-[11px] leading-4 text-[rgba(11,31,51,0.58)]">{item.detail}</span>
                 <ArrowRight className="h-3.5 w-3.5 text-[#C8A96A]" />
@@ -334,10 +334,10 @@ export default function BackendWorkspace() {
             ))}
           </div>
           <div className="mt-5 flex flex-wrap gap-3">
-            <Link to="/admin/platform" className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-[#0B1F33] bg-[#0B1F33] px-4 text-xs font-semibold text-white">
+            <Link to="/admin/platform" className="inline-flex min-h-8 items-center gap-2 border border-[#0B1F33] bg-[#0B1F33] px-3 text-[10px] font-semibold text-white">
               See today <Settings className="h-4 w-4" />
             </Link>
-            <Link to="/admin/perks" className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-[rgba(11,31,51,0.12)] bg-white px-4 text-xs font-semibold text-[#0B1F33]">
+            <Link to="/admin/perks" className="inline-flex min-h-8 items-center gap-2 border border-[rgba(11,31,51,0.12)] bg-white px-3 text-[10px] font-semibold text-[#0B1F33]">
               Review perks <Ticket className="h-4 w-4" />
             </Link>
           </div>
@@ -360,7 +360,7 @@ function SummaryTable({ eyebrow, title, description, rows }: any) {
   const navigate = useNavigate();
 
   return (
-    <section className="overflow-hidden rounded-xl border border-[rgba(11,31,51,0.08)] bg-white">
+    <section className="overflow-hidden bg-white">
       <div className="px-0 py-3">
         <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-[#C8A96A]">{eyebrow}</p>
         <div className="mt-1 grid gap-1">
