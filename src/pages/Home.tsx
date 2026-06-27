@@ -10,7 +10,6 @@ import {
   CreditCard,
   FileText,
   Loader2,
-  MapPin,
   Megaphone,
   Search,
   ShieldCheck,
@@ -63,7 +62,7 @@ const primaryModules = [
   { label: 'Residents', to: '/admin/residents', icon: Users, key: 'residents' },
   { label: 'Perks', to: '/admin/perks', icon: Ticket, key: 'perks' },
   { label: 'Events', to: '/admin/events', icon: CalendarDays, key: 'events' },
-  { label: 'Broadcasts', to: '/admin/engagement', icon: Megaphone, key: 'campaigns' },
+  { label: 'Notes to send', to: '/admin/engagement', icon: Megaphone, key: 'campaigns' },
   { label: 'Reports', to: '/admin/reports', icon: FileText, key: 'reports' },
   { label: 'Perk results', to: '/admin/analytics', icon: BarChart3, key: 'reports' },
   { label: 'Plans & billing', to: '/admin/promotions', icon: CreditCard, key: 'promotions' },
@@ -220,13 +219,19 @@ export default function Home() {
   const stats = [
     { label: 'Partners', value: tenantCount, note: `${data.partners.length} profiles ready` },
     { label: 'Spaces', value: workspaceCount, note: tenantCount === workspaceCount ? 'Ready to open' : `${Math.max(tenantCount - workspaceCount, 0)} need a final check` },
-    { label: 'Map', value: mapEntityCount, note: `${mappedPartnerCount} partners · ${mappedCampaignCount} broadcasts` },
+    { label: 'Map', value: mapEntityCount, note: `${mappedPartnerCount} partners · ${mappedCampaignCount} notes` },
     { label: 'Properties', value: data.properties.length, note: 'Buildings ready to review' },
     { label: 'Residents', value: data.residents.length, note: 'Profiles available' },
     { label: 'Perks', value: data.perks.length, note: `${activePerkCount} active now` },
     { label: 'Events', value: data.events.length, note: `${upcomingEventCount} upcoming` },
-    { label: 'Broadcasts', value: data.campaigns.length, note: `${mappedCampaignCount} tied to the map` },
+    { label: 'Notes', value: data.campaigns.length, note: `${mappedCampaignCount} tied to the map` },
+    { label: 'Billing', value: data.invoices.length, note: `${data.subscriptions.length} plans on file` },
   ];
+
+  const moduleCount = (module: (typeof primaryModules)[number]) => {
+    const value = (data as any)[module.key];
+    return Array.isArray(value) ? value.length : data.tenantStatus?.tenants || 0;
+  };
 
   if (loading) {
     return (
@@ -245,110 +250,87 @@ export default function Home() {
               <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[#C8A96A]">Start here</p>
               <h1 className="mt-2 text-3xl font-semibold tracking-normal md:text-4xl">Welcome to Downtown Perks</h1>
               <p className="mt-2 max-w-3xl text-sm leading-6 text-[rgba(11,31,51,0.62)]">
-                Find the partners, buildings, perks, events, broadcasts, plans, and reports you need without wandering around the app.
+                Find the partners, buildings, perks, events, notes, reports, invoices, and plans you need without wandering around.
               </p>
             </div>
-            <div className="flex flex-wrap gap-3">
-              <GatewayButton to="/admin/platform" label="See today" icon={ShieldCheck} primary />
-              <GatewayButton to="/admin/partner" label="Partners" icon={Building2} />
-              <GatewayButton to="/admin/properties" label="Properties" icon={MapPin} />
-              <GatewayButton to="/admin/promotions" label="Plans" icon={CreditCard} />
+            <div className="flex max-w-full gap-2 overflow-x-auto pb-1 xl:max-w-[560px] xl:justify-end">
+              {primaryModules.map((module) => {
+                const Icon = module.icon;
+                return (
+                  <Link
+                    key={module.label}
+                    to={module.to}
+                    className="group inline-flex min-h-8 flex-none items-center gap-1.5 bg-white px-0 text-[10.5px] font-semibold leading-none transition-colors hover:text-[#C8A96A]"
+                  >
+                    <Icon className="h-3 w-3 shrink-0 text-[#C8A96A]" />
+                    <span>{module.label}</span>
+                    <span className="text-[9.5px] font-semibold text-[rgba(11,31,51,0.42)] group-hover:text-[#8A6A1F]">
+                      {Number(moduleCount(module) || 0).toLocaleString()}
+                    </span>
+                  </Link>
+                );
+              })}
             </div>
           </div>
         </header>
 
         <section className="my-5 grid gap-5 xl:grid-cols-[minmax(0,1.08fr)_minmax(360px,0.92fr)]">
-          <div className="overflow-hidden border-y border-[rgba(11,31,51,0.08)] bg-white">
-            <div className="grid gap-2 border-b border-[rgba(11,31,51,0.08)] px-1 py-3 md:grid-cols-[minmax(0,1fr)_minmax(220px,0.58fr)] md:items-end">
+          <div className="overflow-hidden bg-white">
+            <div className="grid gap-1.5 px-0 py-2.5 md:grid-cols-[minmax(0,1fr)_minmax(220px,0.58fr)] md:items-end">
               <div className="min-w-0">
-                <p className="text-[10px] font-bold uppercase text-[#C8A96A]">Quick read</p>
-                <h2 className="text-sm font-semibold">What is ready to open right now</h2>
+                <p className="text-[9px] font-semibold uppercase text-[#C8A96A]">Quick read</p>
+                <h2 className="text-[13px] font-semibold leading-tight">What is ready to open</h2>
               </div>
-              <p className="max-w-md text-[11px] leading-4 text-[rgba(11,31,51,0.56)] md:text-right">Live counts from partners, places, residents, perks, events, and broadcasts.</p>
+              <p className="max-w-md text-[10px] leading-4 text-[rgba(11,31,51,0.52)] md:text-left">Live counts from partners, places, residents, perks, events, notes, invoices, and plans.</p>
             </div>
-            <div className="grid grid-cols-2 border-b border-[rgba(11,31,51,0.08)] md:grid-cols-4">
+            <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 py-1 md:grid-cols-5">
               {stats.map((stat) => (
-                <Link key={stat.label} to={statHref(stat.label)} className="group flex min-h-[82px] min-w-0 flex-col justify-between border-b border-r border-[rgba(11,31,51,0.06)] p-3 transition-colors hover:text-[#C8A96A] sm:min-h-[88px]">
-                  <div className="flex min-w-0 items-start justify-between gap-3">
-                    <p className="min-w-0 text-[10px] font-bold uppercase leading-4 text-[rgba(11,31,51,0.52)]">{stat.label}</p>
-                    <p className="shrink-0 text-lg font-semibold leading-none tracking-normal sm:text-xl">{Number(stat.value || 0).toLocaleString()}</p>
+                <Link key={stat.label} to={statHref(stat.label)} className="group min-w-0 py-0.5 transition-colors hover:text-[#C8A96A]">
+                  <div className="flex min-w-0 items-baseline gap-1.5">
+                    <p className="min-w-0 text-[8px] font-semibold uppercase leading-3 text-[rgba(11,31,51,0.46)]">{stat.label}</p>
+                    <p className="shrink-0 text-[12.5px] font-semibold leading-none tracking-normal">{Number(stat.value || 0).toLocaleString()}</p>
                   </div>
-                  <p className="mt-2 text-[10px] leading-4 text-[rgba(11,31,51,0.6)] group-hover:text-[#8A6A1F]">{stat.note}</p>
+                  <p className="mt-0.5 text-[8.5px] leading-3 text-[rgba(11,31,51,0.52)] group-hover:text-[#8A6A1F]">{stat.note}</p>
                 </Link>
               ))}
-            </div>
-            <div className="px-1 py-3">
-              <p className="mb-2 text-[10px] font-bold uppercase text-[rgba(11,31,51,0.48)]">Open an area</p>
-              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
-                {primaryModules.map((module) => {
-                  const Icon = module.icon;
-                  const count = Array.isArray((data as any)[module.key]) ? (data as any)[module.key].length : data.tenantStatus?.tenants || 0;
-                  return (
-                    <Link key={module.label} to={module.to} className="inline-flex min-h-10 min-w-0 items-center gap-2 border border-[rgba(11,31,51,0.08)] bg-white px-3 text-[11px] font-semibold transition-colors hover:border-[#C8A96A] hover:text-[#C8A96A]">
-                      <Icon className="h-3.5 w-3.5 shrink-0 text-[#C8A96A]" />
-                      <span className="min-w-0 flex-1 truncate">{module.label}</span>
-                      <span className="shrink-0 text-[10px] text-[rgba(11,31,51,0.5)]">{Number(count || 0).toLocaleString()}</span>
-                    </Link>
-                  );
-                })}
-              </div>
             </div>
           </div>
 
           <div className="min-w-0 overflow-hidden border-y border-[rgba(11,31,51,0.08)] bg-white">
-            <div className="flex flex-col gap-3 border-b border-[rgba(11,31,51,0.08)] px-1 py-3">
-              <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start">
+            <div className="flex flex-col gap-2 px-0 py-2.5">
+              <div className="grid gap-1.5">
                 <div className="min-w-0">
-                  <p className="text-[10px] font-bold uppercase text-[#C8A96A]">Workspace jump</p>
-                  <h2 className="text-sm font-semibold">Open a partner, brand, civic, or property page</h2>
+                  <p className="text-[9px] font-semibold uppercase text-[#C8A96A]">Workspace jump</p>
+                  <h2 className="text-[13px] font-semibold leading-tight">Open a partner, brand, civic, or property page</h2>
                 </div>
-                <Link to="/admin/partner" className="text-[11px] font-semibold text-[#C8A96A]">All partners</Link>
               </div>
-              <label className="flex min-h-9 items-center gap-2 border-b border-[rgba(11,31,51,0.12)]">
-                <Search className="h-4 w-4 text-[rgba(11,31,51,0.44)]" />
+              <label className="flex min-h-8 items-center gap-2 border-b border-[rgba(11,31,51,0.1)]">
+                <Search className="h-3.5 w-3.5 text-[rgba(11,31,51,0.42)]" />
                 <input
                   value={search}
                   onChange={(event) => setSearch(event.target.value)}
                   placeholder="Search DANA, Waterloo, inKind, Legends, Whole Foods..."
-                  className="w-full bg-transparent py-2 text-sm outline-none"
+                  className="w-full bg-transparent py-1.5 text-[12px] outline-none placeholder:text-[rgba(11,31,51,0.38)]"
                 />
               </label>
             </div>
-            <div className="max-h-[340px] overflow-y-auto">
+            <div className="max-h-[286px] overflow-y-auto pr-1 [scrollbar-width:thin]">
               {workspaceLaunchRows.map((row) => (
-                <Link key={`${row.id}-${row.href}`} to={row.href} className="grid min-w-0 gap-1 border-b border-[rgba(11,31,51,0.06)] px-1 py-3 text-sm transition-colors hover:text-[#C8A96A] sm:grid-cols-[minmax(0,1fr)_96px_58px] sm:items-center sm:gap-3">
+                <Link key={`${row.id}-${row.href}`} to={row.href} className="grid min-w-0 gap-x-3 gap-y-0.5 border-b border-[rgba(11,31,51,0.035)] px-0 py-1.5 text-[12px] leading-tight transition-colors hover:text-[#C8A96A] sm:grid-cols-[minmax(0,1fr)_92px_44px] sm:items-baseline">
                   <span className="min-w-0 truncate font-semibold">{row.title}</span>
-                  <span className="text-[10px] font-semibold uppercase leading-4 text-[rgba(11,31,51,0.52)]">{row.type}</span>
-                  <span className="text-[10px] font-semibold leading-4 text-[#C8A96A]">{row.featured ? 'Built' : row.status}</span>
+                  <span className="truncate text-[9.5px] font-semibold uppercase leading-4 text-[rgba(11,31,51,0.48)]">{row.type}</span>
+                  <span className="text-[9.5px] font-semibold uppercase leading-4 text-[#9A7A2F]">{row.featured ? 'Built' : row.status}</span>
                 </Link>
               ))}
-              {workspaceLaunchRows.length === 0 && <p className="py-8 text-sm text-[rgba(11,31,51,0.58)]">Nothing matched. Try a partner, brand, civic group, or property name.</p>}
+              {workspaceLaunchRows.length === 0 && <p className="py-6 text-[12px] text-[rgba(11,31,51,0.58)]">Nothing matched. Try a partner, brand, civic group, or property name.</p>}
+              <Link to="/admin/partner" className="inline-flex min-h-7 items-center gap-1 px-0 pt-2 text-[10.5px] font-semibold text-[#0B1F33] hover:text-[#C8A96A]">
+                Open full partner directory <ArrowRight className="h-3.5 w-3.5" />
+              </Link>
             </div>
           </div>
         </section>
-
-        <section className="mt-6">
-          <Panel title="Ready for a walkthrough" eyebrow="Coverage">
-            <div className="grid gap-3 md:grid-cols-2">
-              <Readiness label="Partner profiles" value={`${data.tenants.length} profiles ready`} ready={data.tenants.length > 0} />
-              <Readiness label="Partner spaces" value={`${data.workspaces.length} spaces to open`} ready={data.workspaces.length > 0} />
-              <Readiness label="Map listings" value={`${data.mapSummary?.entities || 0} places and offers`} ready={(data.mapSummary?.entities || 0) > 0} />
-              <Readiness label="Partner directory" value={`${data.partners.length} partners listed`} ready={data.partners.length > 0} />
-              <Readiness label="Campaigns" value={`${data.campaigns.length} campaigns available`} ready={data.campaigns.length > 0} />
-              <Readiness label="Plans and invoices" value={`${data.subscriptions.length} plans · ${data.invoices.length} invoices`} ready={data.subscriptions.length > 0} />
-            </div>
-          </Panel>
-        </section>
       </div>
     </div>
-  );
-}
-
-function GatewayButton({ to, label, icon: Icon, primary = false }: any) {
-  return (
-    <Link to={to} className={`inline-flex min-h-11 items-center gap-2 border px-4 text-xs font-semibold ${primary ? 'border-[#0B1F33] bg-[#0B1F33] text-white' : 'border-[rgba(11,31,51,0.12)] bg-white text-[#0B1F33]'}`}>
-      <Icon className="h-4 w-4" /> {label}
-    </Link>
   );
 }
 
@@ -361,7 +343,8 @@ function statHref(label: string) {
     Residents: '/admin/residents',
     Perks: '/admin/perks',
     Events: '/admin/events',
-    Broadcasts: '/admin/engagement',
+    Notes: '/admin/engagement',
+    Billing: '/admin/promotions',
   };
   return routes[label] || '/admin';
 }

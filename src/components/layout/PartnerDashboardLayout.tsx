@@ -130,15 +130,6 @@ export default function PartnerDashboardLayout() {
            </div>
         </div>
 
-        <Button
-          onClick={() => setMobileOpen(true)}
-          variant="outline"
-          className="lg:hidden fixed bottom-5 right-5 z-40 h-12 w-12 p-0 bg-white shadow-[0_12px_35px_rgba(17,24,43,0.16)]"
-          aria-label="Open partner platform navigation"
-        >
-          <Menu className="w-5 h-5" />
-        </Button>
-
         {mobileOpen && (
           <div className="lg:hidden fixed inset-0 z-50 bg-[#11182B]/30" role="dialog" aria-modal="true">
             <button

@@ -130,7 +130,6 @@ function localDateTimeValue(value: string) {
 }
 
 function QrArtworkPreview({ workspaceName, qr, artwork }: { workspaceName: string; qr: Props['qrs'][number]; artwork: QrArtwork }) {
-  const destination = absoluteUrl(qr.destination);
   return (
     <div className="shore-qr-artwork" aria-label={`${qr.name} QR artwork preview`}>
       {artwork.imageUrl && <img className="shore-qr-artwork-image" src={artwork.imageUrl} alt="" />}
@@ -142,7 +141,7 @@ function QrArtworkPreview({ workspaceName, qr, artwork }: { workspaceName: strin
       <div className="shore-qr-artwork-copy">
         <strong>{artwork.headline}</strong>
         <span>{artwork.bodyCopy}</span>
-        <small>{destination}</small>
+        <small>{qr.placement}</small>
       </div>
     </div>
   );
@@ -185,40 +184,25 @@ export function PartnerWorkspaceTemplate(props: Props) {
   const previewEvent = events.find((event) => event.status === 'Published' || event.status === 'Scheduled') || events[0];
   const previewCode = props.qrs.find((qr) => qr.status === 'Active') || props.qrs[0];
   const reportSnapshot = useMemo(() => {
-    const qrScans = props.qrs.reduce((total, qr) => total + qr.scans, 0);
-    const residentActivations = Math.round(residents.length * 23.4);
-    const perkSaves = perks.reduce((total, perk) => total + Number(perk.saves || 0), 0);
-    const perkRedemptions = perks.reduce((total, perk) => total + Number(perk.redemptions || 0), 0);
-    const eventRsvps = events.reduce((total, event) => total + Number(event.rsvpCount || 0), 0);
-    const campaignViews = campaigns.reduce((total, campaign) => total + Number(campaign.opensViews || 0), 0);
-    const nearbyOpenRate = Math.min(78, Math.max(24, Math.round((props.trendingLocations.reduce((total, place) => total + place.anonymizedCheckIns, 0) / Math.max(residents.length, 1)) * 0.42)));
-    const participationRate = Math.min(92, Math.round(((residentActivations + eventRsvps + perkRedemptions) / Math.max(Number(lead.unitCount || 1), 1)) * 100));
     const topQr = [...props.qrs].sort((a, b) => b.scans - a.scans)[0];
-    const topPerk = [...perks].sort((a, b) => (b.saves + b.redemptions) - (a.saves + a.redemptions))[0];
-    const topEvent = [...events].sort((a, b) => b.rsvpCount - a.rsvpCount)[0];
-    const topPlace = [...props.trendingLocations].sort((a, b) => b.anonymizedCheckIns - a.anonymizedCheckIns)[0];
     return {
       metrics: [
-        { id: 'qr-scans', label: 'Code scans', value: String(qrScans), change: '+18%', explanation: `${topQr?.placement || 'Lobby'} is where residents are finding this first.` },
-        { id: 'resident-activations', label: 'Residents joined', value: String(residentActivations), change: '+24%', explanation: 'New residents are saving their card after seeing a building sign.' },
-        { id: 'perk-saves', label: 'Things saved', value: String(perkSaves), change: '+15%', explanation: `${topPerk?.partner || 'Nearby coffee'} is the clearest sign of interest.` },
-        { id: 'perk-redemptions', label: 'Offers used', value: String(perkRedemptions), change: '+11%', explanation: 'People are moving from “that looks good” to actually using it.' },
-        { id: 'event-rsvps', label: 'Event yeses', value: String(eventRsvps), change: '+20%', explanation: `${topEvent?.title || 'Resident events'} gives residents a simple reason to show up.` },
-        { id: 'broadcast-views', label: 'Broadcasts opened', value: String(campaignViews), change: '+27%', explanation: 'Move-in and weekend broadcasts are starting to become useful habits.' },
-        { id: 'nearby-open-rate', label: 'Nearby places opened', value: `${nearbyOpenRate}%`, change: '+9%', explanation: `${topPlace?.name || 'Nearby places'} is getting the most anonymous activity right now.` },
-        { id: 'participation-rate', label: 'Residents taking part', value: `${participationRate}%`, change: '+6%', explanation: 'Enough residents are using this to make the program worth keeping.' },
+        { id: 'qr-scans', label: 'Code scans', value: 'Not tracked yet', change: 'Ready', explanation: 'Scans will appear after a printed sign, flyer, or email code is used.' },
+        { id: 'resident-activations', label: 'Residents joined', value: 'Not tracked yet', change: 'Ready', explanation: 'Resident joins will appear once real residents start using the guide.' },
+        { id: 'perk-saves', label: 'Things saved', value: 'Not tracked yet', change: 'Ready', explanation: 'Saves will appear after residents keep a perk, place, or event.' },
+        { id: 'perk-redemptions', label: 'Offers used', value: 'Not tracked yet', change: 'Ready', explanation: 'Offer use will appear after partner redemptions are recorded.' },
       ],
       recommendation: topQr
-        ? `${topQr.name} is doing the most work. Put the same link in the move-in email, elevator sign, and the next resident broadcast.`
+        ? `Start with ${topQr.name}. Print it, add it to the move-in email, and let the next report show what residents actually used.`
         : 'Start with one lobby code, one useful offer, and one resident invite. Then let the report show what caught on.',
     };
-  }, [campaigns, events, lead.unitCount, perks, props.qrs, props.trendingLocations, residents.length]);
+  }, [props.qrs]);
 
   const workspaceMatrix = [
     { label: 'Setup', value: `${setupProgress}%`, note: 'Profile, signs, perks, and plan are almost there.', href: '#setup' },
-    { label: 'Resident reach', value: String(reportSnapshot.metrics.find((metric) => metric.id === 'broadcast-views')?.value || 0), note: 'Broadcasts opened this month.', href: '#campaigns' },
-    { label: 'Residents', value: String(residents.length), note: 'People in the sample list.', href: '#residents' },
-    { label: 'Live tools', value: `${activePerks}/${upcomingEvents}/${campaigns.length}`, note: 'Perks, events, and broadcasts ready to use.', href: '#perks' },
+    { label: 'Resident reach', value: 'Ready', note: 'Broadcast tracking starts after the next send.', href: '#campaigns' },
+    { label: 'Residents', value: 'Manage', note: 'Add or import the real resident list.', href: '#residents' },
+    { label: 'Live tools', value: 'Open', note: 'Perks, events, and broadcasts are ready to edit.', href: '#perks' },
     { label: 'Next move', value: 'Lobby link', note: 'Add it to the move-in email and elevator sign.', href: '#qr' },
     { label: 'Plan', value: props.partner.status, note: props.billing.name, href: '#billing' },
   ];
@@ -662,7 +646,7 @@ export function PartnerWorkspaceTemplate(props: Props) {
         `Add-ons: ${props.billing.addOns.join(', ')}`,
       ].join('\n'),
     );
-    setBillingNotice(action === 'quote' ? 'Quote downloaded. Short, tidy, and ready to send.' : 'Invoice request downloaded. Finance has what it needs.');
+    setBillingNotice(action === 'quote' ? 'Quote file downloaded.' : 'Invoice request file downloaded.');
   }
 
   return (
@@ -718,7 +702,7 @@ export function PartnerWorkspaceTemplate(props: Props) {
                 </div>
                 <h1 className="mt-2 text-[28px] leading-tight text-[#0B1F33] sm:text-[34px]">{workspaceName} workspace</h1>
                 <p className="mt-3 text-sm leading-6 text-[rgba(11,31,51,0.66)]">
-                  {props.profile.residentFacingCopy} Keep the building’s resident view, signs, perks, events, broadcasts, reports, and plan in one easy place.
+                  Keep The Shore’s resident guide, building signs, perks, events, broadcasts, reports, and plan in order from one calm workspace.
                 </p>
               </div>
               <figure className="shore-hero-photo">
@@ -781,7 +765,7 @@ export function PartnerWorkspaceTemplate(props: Props) {
                     </div>
                     <span className="text-[11px] font-bold uppercase text-[#C8A96A]">{place.trend}</span>
                   </div>
-                  <p className="mt-3 text-xs leading-5 text-[rgba(11,31,51,0.66)]">{place.anonymizedCheckIns} anonymous check-ins. No names, just a quick read on what feels lively.</p>
+                    <p className="mt-3 text-xs leading-5 text-[rgba(11,31,51,0.66)]">Anonymous activity will show here once residents start checking in.</p>
                   <button type="button" onClick={() => toggleFavorite(`fav-${place.id.replace('trend-', '')}`)} className="shore-button mt-3 w-full">
                     <Heart className="h-4 w-4" /> Save or remove
                   </button>
@@ -870,9 +854,9 @@ export function PartnerWorkspaceTemplate(props: Props) {
                       <span className="text-[11px] font-bold uppercase text-[rgba(11,31,51,0.52)]">{qr.status}</span>
                     </div>
                     <h3 className="mt-3 text-base font-semibold">{qr.name}</h3>
-                    <p className="mt-1 text-xs leading-5 text-[rgba(11,31,51,0.62)]">{qr.placement} → {qr.destination}</p>
-                    <div className="mt-3 text-2xl font-semibold">{qr.scans} scans</div>
-                    <p className="text-xs text-[rgba(11,31,51,0.6)]">{qr.conversionSignal} · Last scan: {qr.lastScan}</p>
+                    <p className="mt-1 text-xs leading-5 text-[rgba(11,31,51,0.62)]">{qr.placement} sign for the resident experience.</p>
+                    <div className="mt-3 text-sm font-semibold">Tracking starts after this code is used.</div>
+                    <p className="text-xs text-[rgba(11,31,51,0.6)]">Keep the destination hidden here; residents only need the code and the promise.</p>
                     <div className="mt-4 grid gap-3 sm:grid-cols-2">
                       <label className="block">
                         <span className="text-[10px] font-bold uppercase text-[rgba(11,31,51,0.52)]">Headline</span>

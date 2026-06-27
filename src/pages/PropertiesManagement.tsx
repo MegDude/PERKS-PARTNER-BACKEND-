@@ -221,28 +221,28 @@ export default function PropertiesManagement() {
     <div className="min-h-screen bg-white">
       <div className="mx-auto max-w-[1320px] px-4 py-8 sm:px-6 lg:px-8">
         <section className="mb-5 border border-[rgba(11,31,51,0.08)] bg-white p-5">
-          <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-          <div>
-            <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--dp-gold)]">Property directory</p>
-            <h1 className="mt-2 text-2xl font-semibold text-[#11182B] sm:text-3xl">Properties</h1>
-            <p className="mt-2 max-w-3xl text-sm leading-6 text-textMuted">
-              Find every property, residential listing, building, and real estate space connected to Downtown Perks. Open the record, map source, or building view from one place.
-            </p>
-          </div>
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-            <Button variant="outline" onClick={() => mapSyncMut.mutate()} disabled={mapSyncMut.isPending} className="min-h-11 gap-2 text-[#0B1F33]">
-              {mapSyncMut.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <DatabaseZap className="h-4 w-4" />}
-              Refresh map
-            </Button>
-            <Button variant="outline" onClick={() => setIsIngesting(true)} className="min-h-11 gap-2 text-[#0B1F33]">
-              <Sparkles className="h-4 w-4 text-[#C5A028]" />
-              Review notes
-            </Button>
-            <Button onClick={() => setIsAdding(true)} className="min-h-11 gap-2 text-[#0B1F33]">
-              <Plus className="h-4 w-4" />
-              Add property
-            </Button>
-          </div>
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+            <div>
+              <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--dp-gold)]">Property directory</p>
+              <h1 className="mt-2 text-2xl font-semibold text-[#11182B] sm:text-3xl">Properties</h1>
+              <p className="mt-2 max-w-3xl text-sm leading-6 text-textMuted">
+                Find every property, residential listing, building, and real estate space connected to Downtown Perks. Open the record, map source, or building view from one place.
+              </p>
+            </div>
+            <div className="flex flex-row flex-wrap items-center gap-2">
+              <Button variant="outline" onClick={() => mapSyncMut.mutate()} disabled={mapSyncMut.isPending} className="h-8 min-h-8 gap-1.5 px-2.5 text-[10px] text-[#0B1F33]">
+                {mapSyncMut.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <DatabaseZap className="h-3.5 w-3.5" />}
+                Refresh
+              </Button>
+              <Button variant="outline" onClick={() => setIsIngesting(true)} className="h-8 min-h-8 gap-1.5 px-2.5 text-[10px] text-[#0B1F33]">
+                <Sparkles className="h-3.5 w-3.5 text-[#C5A028]" />
+                Notes
+              </Button>
+              <Button onClick={() => setIsAdding(true)} className="h-8 min-h-8 gap-1.5 px-2.5 text-[10px] text-[#0B1F33]">
+                <Plus className="h-3.5 w-3.5" />
+                Add
+              </Button>
+            </div>
           </div>
         </section>
 
@@ -337,13 +337,13 @@ export default function PropertiesManagement() {
                 className="w-full bg-transparent px-2 py-2 text-sm outline-none"
               />
             </label>
-            <div className="grid gap-2 sm:flex sm:flex-wrap">
-              <Button variant="outline" onClick={exportProperties} className="min-h-11 gap-2 text-[#0B1F33]">
-                <Download className="h-4 w-4" />
-                Export CSV
+            <div className="flex flex-row flex-wrap items-center gap-2">
+              <Button variant="outline" onClick={exportProperties} className="h-8 min-h-8 gap-1.5 px-2.5 text-[10px] text-[#0B1F33]">
+                <Download className="h-3.5 w-3.5" />
+                Export
               </Button>
-              <Link to="/admin/buildings" className="inline-flex min-h-11 items-center gap-2 border border-[rgba(11,31,51,0.12)] bg-white px-4 text-sm font-semibold text-[#0B1F33] hover:border-[#C8A96A] hover:text-[#C8A96A]">
-                Building operations <ArrowRight className="h-4 w-4" />
+              <Link to="/admin/buildings" className="inline-flex h-8 min-h-8 items-center gap-1.5 border border-[rgba(11,31,51,0.12)] bg-white px-2.5 text-[10px] font-semibold text-[#0B1F33] hover:border-[#C8A96A] hover:text-[#C8A96A]">
+                Buildings <ArrowRight className="h-3.5 w-3.5" />
               </Link>
             </div>
           </div>

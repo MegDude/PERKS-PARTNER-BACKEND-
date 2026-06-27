@@ -256,16 +256,16 @@ export default function BackendWorkspace() {
           </div>
         </article>
 
-        <article className="rounded-xl border border-[rgba(11,31,51,0.08)] bg-white p-5">
-          <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-[#C8A96A]">Active directory</p>
-          <h2 className="mt-2 text-xl font-semibold">Partners, businesses, and places.</h2>
-          <div className="mt-5 grid gap-3">
+        <article className="bg-white p-0">
+          <p className="text-[9px] font-semibold uppercase text-[#C8A96A]">Active directory</p>
+          <h2 className="mt-1 text-[15px] font-semibold leading-tight">Partners, businesses, and places.</h2>
+          <div className="mt-3 grid gap-0">
             {activeDirectory.length === 0 ? (
-              <p className="text-sm text-[rgba(11,31,51,0.58)]">No active partners or places yet.</p>
+              <p className="text-[12px] text-[rgba(11,31,51,0.58)]">No active partners or places yet.</p>
             ) : activeDirectory.map((item: any) => (
-              <Link key={`${item.id}-${item.name}`} to={item.href} className="grid gap-1 border-t border-[rgba(11,31,51,0.08)] pt-3 text-sm hover:text-[#C8A96A]">
-                <span className="font-semibold">{item.name}</span>
-                <span className="text-xs font-semibold uppercase text-[rgba(11,31,51,0.52)]">{item.type} · {item.status}</span>
+              <Link key={`${item.id}-${item.name}`} to={item.href} className="grid gap-x-3 gap-y-0.5 border-b border-[rgba(11,31,51,0.035)] py-1.5 text-[12px] leading-tight hover:text-[#C8A96A] sm:grid-cols-[minmax(0,1fr)_112px] sm:items-baseline">
+                <span className="truncate font-semibold">{item.name}</span>
+                <span className="truncate text-[9.5px] font-semibold uppercase text-[rgba(11,31,51,0.5)]">{item.type} · {item.status}</span>
               </Link>
             ))}
           </div>

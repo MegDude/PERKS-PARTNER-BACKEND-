@@ -149,7 +149,7 @@ function downloadFile(fileName: string, body: string, type = 'text/csv') {
 
 function BuildingTabRail({ activeTab }: { activeTab: string }) {
   return (
-    <nav aria-label="Building workspace areas" className="mb-5 max-w-full overflow-x-auto border-b border-[#11182B]/10 bg-white [scrollbar-width:thin]">
+    <nav aria-label="Building workspace areas" className="mb-4 max-w-full overflow-x-auto border-b border-[#11182B]/10 bg-white [scrollbar-width:thin]">
       <div className="flex min-w-max gap-1">
         {buildingTabs.map((item) => {
           const active = activeTab === item.value;
@@ -158,12 +158,12 @@ function BuildingTabRail({ activeTab }: { activeTab: string }) {
               key={item.value}
               to={`/admin/buildings/${item.value}`}
               aria-current={active ? 'page' : undefined}
-              className={`grid min-h-14 shrink-0 border-b-2 px-3 pb-2 pt-2 text-left transition-colors hover:text-[#0B1F33] focus:outline-none focus:ring-2 focus:ring-[#11182B] focus:ring-offset-2 ${
+              className={`grid min-h-10 shrink-0 border-b-2 px-2.5 pb-2 pt-2 text-left transition-colors hover:text-[#0B1F33] focus:outline-none focus:ring-2 focus:ring-[#11182B] focus:ring-offset-2 ${
                 active ? 'border-[#C8A96A] text-[#0B1F33]' : 'border-transparent text-[rgba(11,31,51,0.58)]'
               }`}
             >
-              <span className="text-[12px] font-semibold leading-none">{item.label}</span>
-              <span className="mt-1 text-[10px] font-medium leading-none text-[rgba(11,31,51,0.46)]">{buildingTabDescriptions[item.value]}</span>
+              <span className="text-[11px] font-semibold leading-none">{item.label}</span>
+              <span className="mt-1 hidden text-[10px] font-medium leading-none text-[rgba(11,31,51,0.46)] sm:block">{buildingTabDescriptions[item.value]}</span>
             </Link>
           );
         })}
@@ -497,14 +497,14 @@ export default function BuildingsManagement() {
 
   return (
     <div className="min-h-screen bg-white text-[#11182B]">
-      <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-        <header className="mb-6 border-b border-[#11182B]/10 pb-6">
-          <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-end">
+      <div className="mx-auto max-w-7xl px-4 py-5 sm:px-6 lg:px-8">
+        <header className="mb-5 pb-2">
+          <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-end">
             <div>
               <p className="text-[11px] font-bold uppercase text-[#C5A028]">Buildings</p>
-              <h1 className="mt-2 text-3xl font-semibold tracking-normal text-[#11182B]">Everything the building needs</h1>
+              <h1 className="mt-2 text-2xl font-semibold tracking-normal text-[#11182B] sm:text-3xl">Building workspace</h1>
               <p className="mt-2 max-w-3xl text-sm leading-6 text-[#5f6b7a]">
-                Keep units, residents, access, amenities, surveys, documents, and reports in one steady place.
+                Open a building, then manage the people, spaces, access, notes, surveys, files, and reporting tied to that address.
               </p>
             </div>
             <div className="grid gap-2">
@@ -522,14 +522,11 @@ export default function BuildingsManagement() {
             </div>
           </div>
 
-          <div className="dp-summary-matrix mt-5">
-            <div className="dp-summary-matrix__grid">
-            <Metric label="Units" value={buildingUnits.length} detail={`${occupiedUnits} occupied`} />
-            <Metric label="Occupancy" value={`${occupancy}%`} detail="Based on active units" />
-            <Metric label="Residents" value={activeResidents} detail={`${activeAccess} with active access`} />
-            <Metric label="Surveys" value={buildingSurveys.length} detail={`${buildingSurveyResponses.length} responses`} />
-            <Metric label="Resident actions" value={buildingRedemptions.length + buildingBroadcasts.length} detail="Redemptions + broadcasts" />
-            </div>
+          <div className="mt-4 grid gap-x-5 gap-y-3 border-t border-[#11182B]/10 pt-4 text-left sm:grid-cols-2 lg:grid-cols-4">
+            <ModuleBrief label="Building record" detail="Address, property details, notes, contacts, and the core profile." />
+            <ModuleBrief label="Residents and access" detail="Units, resident records, invitations, cards, and access status." />
+            <ModuleBrief label="Amenities and files" detail="Shared spaces, rules, documents, guides, and building resources." />
+            <ModuleBrief label="Surveys and reports" detail="Feedback, exports, activity history, and building-ready reporting." />
           </div>
         </header>
 
@@ -796,17 +793,26 @@ export default function BuildingsManagement() {
 
 function SectionShell({ eyebrow, title, description, action, children }: any) {
   return (
-    <section className="py-2">
-      <div className="mb-5 grid gap-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
+    <section className="py-1">
+      <div className="mb-4 grid gap-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
         <div>
           <p className="text-[11px] font-bold uppercase text-[#C5A028]">{eyebrow}</p>
-          <h2 className="mt-1 text-2xl font-semibold tracking-normal text-[#11182B]">{title}</h2>
+          <h2 className="mt-1 text-xl font-semibold tracking-normal text-[#11182B] sm:text-2xl">{title}</h2>
           <p className="mt-2 max-w-3xl text-sm leading-6 text-[#5f6b7a]">{description}</p>
         </div>
         {action ? <div className="flex flex-wrap gap-2">{action}</div> : null}
       </div>
       {children}
     </section>
+  );
+}
+
+function ModuleBrief({ label, detail }: any) {
+  return (
+    <div className="min-w-0">
+      <div className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[#C5A028]">{label}</div>
+      <p className="mt-1 text-[12px] leading-5 text-[#5f6b7a]">{detail}</p>
+    </div>
   );
 }
 
