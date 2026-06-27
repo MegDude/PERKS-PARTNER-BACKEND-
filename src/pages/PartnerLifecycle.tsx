@@ -492,13 +492,15 @@ export default function PartnerLifecycle() {
             <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-[#C8A96A]">Be where plans are made</p>
             <h2 className="mt-2 text-2xl font-semibold leading-tight">Start with the plan that fits.</h2>
             <p className="mt-3 text-sm leading-6 text-[rgba(11,31,51,0.64)]">
-              Downtown Perks is the digital layer for downtown Austin. People scan a code, find what is nearby, save what looks good, and partners see what worked.
+              Downtown Perks is the digital layer for downtown Austin. Residents scan a code, open the map, find what is nearby, save what looks good, and partners see what worked.
             </p>
             <div className="mt-5 grid gap-3">
               {[
-                ['No app to download', 'Residents open the guide from a simple QR or link.'],
-                ['Real signal', 'See saves, scans, directions, joins, and redemptions.'],
-                ['Local by design', 'Built for the places, properties, brands, and civic teams that make downtown useful.'],
+                ['For properties', 'Offer residents a useful neighborhood amenity with perks, events, QR access, and simple reports.'],
+                ['For local partners', 'Show up while nearby residents, guests, and workers are deciding where to go.'],
+                ['For civic and real estate teams', 'Connect programs, buildings, listings, inquiries, and follow-up to one map-based workflow.'],
+                ['No app to download', 'Residents open the guide from a QR code, link, or resident card prompt.'],
+                ['Real signal', 'See saves, scans, directions, RSVPs, redemptions, and the next action worth taking.'],
               ].map(([title, copy]) => (
                 <div key={title} className="border-t border-[rgba(11,31,51,0.06)] pt-3">
                   <p className="text-sm font-semibold">{title}</p>

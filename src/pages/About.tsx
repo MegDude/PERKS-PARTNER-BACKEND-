@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Building2, Globe2, Handshake, LineChart, MapPin, ShieldCheck } from 'lucide-react';
+import { ArrowRight, Building2, Globe2, Handshake, LineChart, MapPin, QrCode, ShieldCheck, Users } from 'lucide-react';
 
 const storySections = [
   {
@@ -25,30 +25,53 @@ const networkRoles = [
   {
     icon: Building2,
     title: 'Properties',
-    body: 'Connect resident access, building context, amenities, surveys, and retention notes to the wider local network.',
+    body: 'Give residents a useful neighborhood amenity: nearby perks, events, building notes, and simple reports that show what people used.',
   },
   {
     icon: Handshake,
-    title: 'Partners',
-    body: 'Keep offers, events, messages, locations, reports, and partner access in good order.',
+    title: 'Local partners',
+    body: 'Put restaurants, coffee shops, wellness studios, hotels, venues, brands, and services where nearby residents are already deciding what to do.',
   },
   {
     icon: MapPin,
     title: 'Civic and Neighborhood Programs',
-    body: 'Coordinate public events, local participation, surveys, programming, and useful reporting.',
+    body: 'Make neighborhood updates, public events, surveys, and community programs easier to find and easier to measure.',
   },
   {
     icon: LineChart,
-    title: 'Downtown Perks Team',
-    body: 'See participation, setup, reports, follow-ups, and support needs before they get messy.',
+    title: 'Real estate teams',
+    body: 'Add a “want to live here?” path to the map so interested walkers, residents, and newcomers can reach the right property contact.',
   },
 ];
 
 const operatingPrinciples = [
-  'Every public place should have a clear owner and a clear report.',
-  'Every area should be easy to open, edit, save, archive, and review.',
-  'Every action should leave something useful behind: join, view, save, RSVP, use, respond, export, or report.',
-  'Every partner and property should understand what happened, what is happening, and what to do next.',
+  'Residents scan a QR code or open a link. No app download is required.',
+  'The map shows nearby places, perks, events, buildings, and useful neighborhood context.',
+  'Residents can save a place, RSVP to an event, redeem an offer, or open a property inquiry.',
+  'Partners and properties can see simple signals: views, saves, scans, RSVPs, redemptions, and reports.',
+];
+
+const simpleFlow = [
+  {
+    icon: QrCode,
+    title: 'Scan',
+    body: 'A resident scans a building sign, venue code, email link, or resident card prompt.',
+  },
+  {
+    icon: MapPin,
+    title: 'Discover',
+    body: 'They land on a mobile map with nearby places, perks, events, and property context.',
+  },
+  {
+    icon: Users,
+    title: 'Take part',
+    body: 'They save a place, join an event, use a perk, answer a survey, or ask about a building.',
+  },
+  {
+    icon: LineChart,
+    title: 'See what worked',
+    body: 'The workspace turns those actions into reports partners can understand and use.',
+  },
 ];
 
 export default function About() {
@@ -59,7 +82,7 @@ export default function About() {
           <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-[#C8A96A]">About Downtown Perks</p>
           <h1 className="mt-3 max-w-4xl text-3xl font-semibold tracking-normal md:text-5xl">A better downtown starts close to home.</h1>
           <p className="mt-4 max-w-4xl text-base leading-7 text-[rgba(11,31,51,0.68)]">
-            Downtown Perks connects buildings, residents, local partners, events, and reports so the neighborhood feels easier to use and easier to care for.
+            Downtown Perks is a web-based neighborhood layer for downtown Austin. It connects residents, local businesses, buildings, civic programs, events, and reports through a simple map and QR-powered resident card.
           </p>
           <div className="mt-6 flex flex-wrap gap-3">
             <Link to="/admin/home" className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-[#0B1F33] bg-[#0B1F33] px-4 text-xs font-semibold text-white">
@@ -84,7 +107,23 @@ export default function About() {
         </section>
 
         <section className="py-12">
-          <SectionHeader eyebrow="Partner network" title="Who comes along." body="Each group adds something useful: a place, a perk, an event, a resident moment, or a clearer next step." />
+          <SectionHeader eyebrow="How it works" title="Scan, see what is nearby, and act." body="The resident experience stays light. The operating system behind it keeps the records, reports, and partner follow-up in order." />
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            {simpleFlow.map((step) => {
+              const Icon = step.icon;
+              return (
+                <article key={step.title} className="rounded-xl border border-[rgba(11,31,51,0.08)] bg-white p-5">
+                  <Icon className="h-5 w-5 text-[#C8A96A]" />
+                  <h2 className="mt-4 text-lg font-semibold">{step.title}</h2>
+                  <p className="mt-3 text-sm leading-6 text-[rgba(11,31,51,0.64)]">{step.body}</p>
+                </article>
+              );
+            })}
+          </div>
+        </section>
+
+        <section className="py-12">
+          <SectionHeader eyebrow="Partner network" title="Who uses it." body="Each group gets a different value from the same system: residents get a simpler downtown, partners get useful attention, and operators get clear reporting." />
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             {networkRoles.map((role) => {
               const Icon = role.icon;
