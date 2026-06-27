@@ -1,6 +1,6 @@
 import React, { Suspense, lazy } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider } from './components/context/AuthContext';
+import { AuthProvider, useAuth } from './components/context/AuthContext';
 
 const MapOS = lazy(() => import('./pages/MapOS'));
 const PartnerDashboardLayout = lazy(() => import('./components/layout/PartnerDashboardLayout'));
@@ -39,9 +39,28 @@ function RouteFallback() {
   );
 }
 
+function AuthAction() {
+  const { user, configured, loading, signInWithGoogle, logout } = useAuth();
+  const label = !configured ? 'Firebase pending' : user ? 'Sign out' : 'Sign in with Google';
+  return (
+    <button
+      type="button"
+      onClick={() => {
+        if (!configured) return;
+        void (user ? logout() : signInWithGoogle());
+      }}
+      className="fixed right-3 top-3 z-50 border border-[rgba(11,31,51,0.12)] bg-white px-2.5 py-1.5 text-[10px] font-semibold uppercase text-[#0B1F33]"
+      aria-label={label}
+    >
+      {loading ? 'Checking session' : label}
+    </button>
+  );
+}
+
 export default function App() {
   return (
     <AuthProvider>
+      <AuthAction />
       <Suspense fallback={<RouteFallback />}>
         <Routes>
         <Route path="/" element={<PartnerDashboardLayout />}>
