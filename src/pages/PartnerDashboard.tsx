@@ -6,7 +6,7 @@ import { H1, Body } from '@/components/ui/Typography';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/Button';
 import { motion } from 'framer-motion';
-import { Mail, TrendingUp, MessageSquare, Building2, Download, Activity, CheckCircle2, Clock3 } from 'lucide-react';
+import { Mail, TrendingUp, MessageSquare, Building2, Download, Activity, CheckCircle2, Clock3, ArrowUpRight } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { slugify } from '@/data/partnerWorkspaceCatalog';
 
@@ -114,6 +114,7 @@ export default function PartnerDashboard() {
         timestamp: message.created_date || message.created_at || message.updated_at || 'Recent',
         status: message.status || 'open',
         action: 'Open message',
+        href: '/admin/engagement',
       };
     });
 
@@ -128,6 +129,7 @@ export default function PartnerDashboard() {
         timestamp: redemption.created_date || redemption.created_at || redemption.redeemed_at || 'Recent',
         status: redemption.status || 'redeemed',
         action: 'View redemption',
+        href: '/admin/perks',
       };
     });
 
@@ -141,6 +143,7 @@ export default function PartnerDashboard() {
         timestamp: perk.updated_at || perk.updated_date || perk.created_at || perk.created_date || 'Recent',
         status: perk.is_active === false ? 'paused' : 'active',
         action: 'Review perk',
+        href: '/admin/perks',
       };
     });
 
@@ -156,24 +159,37 @@ export default function PartnerDashboard() {
     return new Intl.DateTimeFormat('en', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }).format(date);
   };
 
+  const partnerWorkspacePath = (partner: any) => `/admin/workspaces/${slugify(
+    partner.workspace_slug ||
+    partner.slug ||
+    partner.workspacePath?.replace('/tenant/', '') ||
+    partner.tenant_id?.replace(/^tenant_/, '') ||
+    partner.workspace_id?.replace(/^workspace_/, '') ||
+    partner.business_name ||
+    partner.name ||
+    partner.id
+  )}`;
+
   return (
-    <div className="min-h-screen bg-[#F5F7FA] p-6 lg:p-8">
-      <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
-        <H1 className="text-3xl font-bold text-[#11182B] mb-2">Partner reports</H1>
-        <Body className="text-slate-500 font-medium">See what partners offered, residents used, and what needs a follow-up.</Body>
+    <div className="w-full max-w-none bg-white p-4 text-left text-[#0B1F33] sm:p-5 lg:p-6">
+      <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="mb-4">
+        <H1 className="mb-1 text-xl font-semibold leading-tight text-[#11182B] sm:text-2xl">Partner workspaces</H1>
+        <Body className="max-w-3xl text-[12px] font-medium leading-5 text-[rgba(11,31,51,0.58)]">
+          Open partner pages, review current activity, and export the monthly summary.
+        </Body>
       </motion.div>
 
-      <div className="flex items-center justify-between gap-4 mb-8 bg-white border border-[#EFEFEF] rounded-none p-6 shadow-none">
+      <div className="mb-5 flex flex-wrap items-end justify-between gap-3 bg-white py-1">
         <div>
-          <label className="text-[10px] font-bold text-[#11182B] uppercase tracking-widest mb-2 block">Report month</label>
+          <label className="mb-1 block text-[9px] font-bold uppercase tracking-normal text-[#C5A028]">Report month</label>
           <input
             type="month"
             value={selectedMonth}
             onChange={(e) => setSelectedMonth(e.target.value)}
-            className="px-4 py-2 border border-[#EFEFEF] rounded-none font-medium text-[#11182B] focus:outline-none focus:ring-2 focus:ring-[#11182B]"
+            className="min-h-8 border-0 border-b border-[rgba(11,31,51,0.18)] bg-white px-0 py-1 text-[12px] font-semibold text-[#11182B] outline-none focus:border-[#C5A028]"
           />
         </div>
-        <div className="text-right">
+        <div>
           <Button
             onClick={() => {
               const rows = activePartners.map((partner: any) => {
@@ -188,19 +204,24 @@ export default function PartnerDashboard() {
               link.click();
               URL.revokeObjectURL(url);
             }}
-            className="bg-[#11182B] text-white hover:bg-[#11182B] text-white/90 font-bold tracking-widest uppercase text-xs"
+            className="min-h-8 max-w-full text-[9.5px] font-semibold uppercase"
           >
-             <Download className="w-4 h-4 mr-2" /> Export summary
+             <Download className="w-3.5 h-3.5" /> Export
           </Button>
         </div>
       </div>
 
-      <div className="mb-8 overflow-x-auto [scrollbar-width:thin]">
+      <div className="mb-5 overflow-x-auto [scrollbar-width:thin]">
         <table className="w-full min-w-[520px] table-fixed text-left">
+          <colgroup>
+            <col className="w-[38%]" />
+            <col className="w-[68px]" />
+            <col />
+          </colgroup>
           <thead>
             <tr className="text-[9px] font-bold uppercase text-[rgba(11,31,51,0.46)]">
-              <th className="py-2 pr-4">Area</th>
-              <th className="py-2 pr-4 text-right">Total</th>
+              <th className="py-1.5 pr-3">Area</th>
+              <th className="py-1.5 pr-3 text-right">Total</th>
               <th className="py-2">Use this for</th>
             </tr>
           </thead>
@@ -212,9 +233,9 @@ export default function PartnerDashboard() {
               { label: 'Unread notes', value: (messages as any[]).filter((m: any) => m.status === 'unread').length, detail: 'Items that still need a look.' },
             ].map((stat) => (
               <tr key={stat.label} className="align-middle">
-                <td className="py-2 pr-4 text-[12px] font-semibold leading-5 text-[#0B1F33]">{stat.label}</td>
-                <td className="py-2 pr-4 text-right text-[14px] font-semibold leading-none text-[#0B1F33]">{Number(stat.value || 0).toLocaleString()}</td>
-                <td className="py-2 text-[11px] leading-5 text-[rgba(11,31,51,0.58)]">{stat.detail}</td>
+                <td className="py-1.5 pr-3 text-[11px] font-semibold leading-4 text-[#0B1F33]">{stat.label}</td>
+                <td className="py-1.5 pr-3 text-right text-[12px] font-semibold leading-none text-[#0B1F33]">{Number(stat.value || 0).toLocaleString()}</td>
+                <td className="py-1.5 text-[10px] leading-4 text-[rgba(11,31,51,0.56)]">{stat.detail}</td>
               </tr>
             ))}
           </tbody>
@@ -222,16 +243,18 @@ export default function PartnerDashboard() {
       </div>
 
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }}>
-        <Card className="  ">
-          <CardHeader>
-            <CardTitle className="text-[#11182B] font-bold">Active Partners</CardTitle>
-            <CardDescription className="font-medium text-slate-500">View partner performance and recent activity</CardDescription>
+        <Card className="border-0 p-0">
+          <CardHeader className="mb-2 border-0 p-0 pb-2">
+            <CardTitle className="text-[15px] font-semibold leading-5 text-[#11182B]">Active partners</CardTitle>
+            <CardDescription className="mt-0 text-[11px] font-medium leading-4 text-[rgba(11,31,51,0.54)]">
+              Open the workspace or scan the latest partner signals.
+            </CardDescription>
           </CardHeader>
           <CardContent>
             {activePartners.length === 0 ? (
-              <p className="text-center py-12 text-slate-500 font-medium">No active partners yet</p>
+              <p className="py-8 text-[12px] font-medium text-[rgba(11,31,51,0.54)]">No active partners yet.</p>
             ) : (
-              <div className="space-y-4">
+              <div className="divide-y divide-[rgba(11,31,51,0.05)]">
                 {activePartners.map((partner) => {
                   const stats = getPartnerStats(partner.id);
                   return (
@@ -239,36 +262,34 @@ export default function PartnerDashboard() {
                       key={partner.id}
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}
-                      className="bg-white p-4 transition-all"
+                      className="grid gap-2 bg-white py-2.5 transition-all lg:grid-cols-[minmax(180px,1.2fr)_minmax(260px,1.4fr)_110px] lg:items-center"
                     >
-                      <div className="mb-3 flex items-start justify-between gap-3">
-                        <div>
-                          <h3 className="text-[14px] font-semibold leading-5 text-[#11182B]">{partner.business_name}</h3>
-                          <p className="text-[11px] font-medium leading-4 text-slate-500">{partner.contact_person}</p>
-                        </div>
-                        <Badge variant="outline" className="px-2 py-1 text-[9px] font-bold uppercase tracking-normal text-slate-500">
-                          {partner.category}
+                      <div className="min-w-0">
+                        <h3 className="truncate text-[12px] font-semibold leading-4 text-[#11182B]">{partner.business_name || partner.name || 'Partner'}</h3>
+                        <p className="truncate text-[10px] font-medium leading-4 text-[rgba(11,31,51,0.48)]">{partner.contact_person || partner.email || partner.category || 'Workspace contact pending'}</p>
+                        <Badge variant="outline" className="mt-1 max-w-full px-1.5 py-0.5 text-[8.5px] font-semibold uppercase tracking-normal text-[rgba(11,31,51,0.52)]">
+                          <span className="truncate">{partner.category || partner.type || 'Partner'}</span>
                         </Badge>
                       </div>
 
-                      <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 sm:grid-cols-4">
+                      <div className="grid grid-cols-4 gap-x-2 gap-y-1">
                         {[
                           ['Perks', stats.perks],
                           ['Redemptions', stats.redemptions],
                           ['Messages', stats.messages],
                           ['Unread', stats.unread],
                         ].map(([label, value]) => (
-                          <div key={label} className="flex min-h-7 items-baseline justify-between gap-2 sm:block">
-                            <span className="text-[9.5px] font-semibold uppercase leading-3 text-[rgba(11,31,51,0.42)]">{label}</span>
-                            <strong className="text-[12px] font-semibold leading-none text-[#11182B]">{Number(value || 0).toLocaleString()}</strong>
+                          <div key={label} className="min-w-0">
+                            <span className="block truncate text-[8.5px] font-semibold uppercase leading-3 text-[rgba(11,31,51,0.4)]">{label}</span>
+                            <strong className="block text-[11px] font-semibold leading-4 text-[#11182B]">{Number(value || 0).toLocaleString()}</strong>
                           </div>
                         ))}
                       </div>
                       <Link
-                        to={`/admin/workspaces/${slugify(partner.slug || partner.workspace_slug || partner.tenant_id?.replace(/^tenant_/, '') || partner.workspace_id?.replace(/^workspace_/, '') || partner.business_name || partner.name || partner.id)}`}
-                        className="mt-4 inline-flex min-h-9 items-center border border-[rgba(11,31,51,0.12)] bg-white px-3 text-[11px] font-semibold text-[#0B1F33] hover:border-[#C8A96A] hover:text-[#C8A96A]"
+                        to={partnerWorkspacePath(partner)}
+                        className="inline-flex min-h-8 max-w-full items-center justify-center gap-1 border border-[rgba(11,31,51,0.12)] bg-white px-2 text-[9.5px] font-semibold uppercase leading-none text-[#0B1F33] hover:border-[#C8A96A] hover:text-[#C8A96A]"
                       >
-                        Open workspace
+                        Open <ArrowUpRight className="h-3 w-3 shrink-0" />
                       </Link>
                     </motion.div>
                   );
@@ -283,29 +304,29 @@ export default function PartnerDashboard() {
         initial={{ opacity: 0, y: 18 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.5 }}
-        className="mt-8 rounded-2xl border border-[rgba(11,31,51,0.08)] bg-white p-6"
+        className="mt-6 bg-white"
       >
-        <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="mb-2 text-[11px] font-semibold uppercase text-[#C8A96A]">Partner operations</p>
-            <h2 className="text-[28px] font-semibold leading-tight text-[#0B1F33]">Recent Partner Activity</h2>
-            <p className="mt-2 max-w-2xl text-[15px] leading-6 text-[rgba(11,31,51,0.62)]">
-              Track the latest partner messages, redemptions, perk updates, and follow-up items without relying on decorative map previews.
+            <p className="mb-1 text-[9px] font-semibold uppercase text-[#C8A96A]">Partner operations</p>
+            <h2 className="text-[15px] font-semibold leading-5 text-[#0B1F33]">Recent partner activity</h2>
+            <p className="mt-1 max-w-2xl text-[11px] leading-4 text-[rgba(11,31,51,0.56)]">
+              Messages, redemptions, perk updates, and follow-up items ready to open.
             </p>
           </div>
-          <Link to="/admin/engagement" className="inline-flex min-h-9 items-center gap-2 border border-[rgba(11,31,51,0.12)] bg-white px-3 text-[11px] font-semibold text-[#0B1F33] hover:border-[#C8A96A] hover:text-[#C8A96A]">
-            <Activity className="w-4 h-4" /> View all activity
+          <Link to="/admin/engagement" className="inline-flex min-h-8 max-w-full items-center gap-1.5 border border-[rgba(11,31,51,0.12)] bg-white px-2 text-[9.5px] font-semibold uppercase leading-none text-[#0B1F33] hover:border-[#C8A96A] hover:text-[#C8A96A]">
+            <Activity className="w-3.5 h-3.5 shrink-0" /> Activity
           </Link>
         </div>
 
         {recentPartnerActivity.length === 0 ? (
-          <div className="border border-dashed border-[rgba(11,31,51,0.14)] bg-white p-6 text-[15px] leading-6 text-[rgba(11,31,51,0.62)]">
+          <div className="bg-white py-4 text-[11px] leading-5 text-[rgba(11,31,51,0.58)]">
             No partner activity has been recorded yet. Messages, perk redemptions, campaign changes, and workspace updates will appear here once partners start using the platform.
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <div className="min-w-[760px] divide-y divide-[rgba(11,31,51,0.08)]">
-              <div className="grid grid-cols-[1.1fr_.9fr_1.2fr_.7fr_.7fr_.65fr] gap-4 px-1 pb-3 text-[11px] font-semibold uppercase text-[rgba(11,31,51,0.52)]">
+            <div className="min-w-[690px] divide-y divide-[rgba(11,31,51,0.055)]">
+              <div className="grid grid-cols-[1.1fr_.9fr_1.15fr_.78fr_.58fr_72px] gap-2 px-1 pb-2 text-[8.5px] font-semibold uppercase text-[rgba(11,31,51,0.48)]">
                 <span>Partner</span>
                 <span>Activity type</span>
                 <span>Related item</span>
@@ -314,24 +335,24 @@ export default function PartnerDashboard() {
                 <span>Action</span>
               </div>
               {recentPartnerActivity.map((item) => (
-                <div key={item.id} className="grid grid-cols-[1.1fr_.9fr_1.2fr_.7fr_.7fr_.65fr] items-center gap-4 px-1 py-4 text-[14px] text-[#0B1F33]">
-                  <div className="font-semibold">{item.partnerName}</div>
-                  <div className="text-[rgba(11,31,51,0.68)]">{item.type}</div>
-                  <div className="text-[rgba(11,31,51,0.68)]">{item.related}</div>
-                  <div className="flex items-center gap-2 text-[rgba(11,31,51,0.58)]">
-                    <Clock3 className="h-4 w-4 text-[#C8A96A]" />
+                <div key={item.id} className="grid grid-cols-[1.1fr_.9fr_1.15fr_.78fr_.58fr_72px] items-center gap-2 px-1 py-2.5 text-[10px] leading-4 text-[#0B1F33]">
+                  <div className="truncate font-semibold">{item.partnerName}</div>
+                  <div className="truncate text-[rgba(11,31,51,0.66)]">{item.type}</div>
+                  <div className="truncate text-[rgba(11,31,51,0.66)]">{item.related}</div>
+                  <div className="flex items-center gap-1 text-[rgba(11,31,51,0.56)]">
+                    <Clock3 className="h-3 w-3 shrink-0 text-[#C8A96A]" />
                     {formatActivityTime(item.timestamp)}
                   </div>
                   <div>
-                    <span className="inline-flex min-h-7 items-center gap-1.5 rounded-full border border-[rgba(11,31,51,0.10)] bg-white px-2.5 text-[12px] font-semibold text-[#0B1F33]">
-                      <CheckCircle2 className="h-3.5 w-3.5 text-[#C8A96A]" />
+                    <span className="inline-flex min-h-6 max-w-full items-center gap-1 border border-[rgba(11,31,51,0.10)] bg-white px-1.5 text-[8.5px] font-semibold uppercase leading-none text-[#0B1F33]">
+                      <CheckCircle2 className="h-3 w-3 shrink-0 text-[#C8A96A]" />
                       {item.status}
                     </span>
                   </div>
                   <div>
-                    <Button variant="ghost" className="min-h-10 px-2">
+                    <Link to={item.href} className="inline-flex min-h-7 max-w-full items-center justify-center border border-transparent px-1.5 text-[8.5px] font-semibold uppercase leading-none text-[#0B1F33] hover:border-[#C8A96A]">
                       {item.action}
-                    </Button>
+                    </Link>
                   </div>
                 </div>
               ))}

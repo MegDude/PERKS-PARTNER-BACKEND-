@@ -69,6 +69,11 @@ export default function PartnerWorkspaceRoute() {
           item.tenant_id === property?.tenant_id ||
           item.workspace_id === tenant?.workspace_id ||
           item.workspace_id === property?.workspace_id ||
+          slugify(item.slug || '') === normalizedSlug ||
+          slugify(item.workspace_slug || '') === normalizedSlug ||
+          slugify(item.workspacePath?.replace('/tenant/', '') || '') === normalizedSlug ||
+          slugify(item.workspace_id?.replace(/^workspace_/, '') || '') === normalizedSlug ||
+          slugify(item.tenant_id?.replace(/^tenant_/, '') || '') === normalizedSlug ||
           slugify(item.business_name || item.name || item.id) === normalizedSlug
         ));
         const tenantId = tenant?.id || property?.tenant_id || partner?.tenant_id;
