@@ -151,8 +151,8 @@ export default function BackendWorkspace() {
   ];
 
   const recentActivity = [...data.auditLogs, ...data.notifications]
-    .sort((a: any, b: any) => new Date(b.created_at || b.sent_at || 0).getTime() - new Date(a.created_at || a.sent_at || 0).getTime())
-    .slice(0, 8);
+    .sort((a: any, b: any) => new Date(b.created_at || b.sent_at || 0).getTime() - new Date(a.created_at || a.sent_at || 0).getTime());
+  const recentActivityPreview = recentActivity.slice(0, 2);
 
   const groupedModules = [
     {
@@ -296,21 +296,6 @@ export default function BackendWorkspace() {
         </article>
       </section>
 
-      <section className="bg-white p-0">
-        <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-[#C8A96A]">Recent activity</p>
-        <h2 className="mt-2 text-xl font-semibold">Latest updates and messages.</h2>
-        <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-          {recentActivity.length === 0 ? (
-            <p className="text-sm text-[rgba(11,31,51,0.58)]">No recent updates or messages yet.</p>
-          ) : recentActivity.map((item: any) => (
-            <div key={item.id} className="border-t border-[rgba(11,31,51,0.08)] pt-3">
-              <p className="text-sm font-semibold">{item.action ? String(item.action).replace(/_/g, ' ') : item.message || item.type || 'Recent activity'}</p>
-              <p className="mt-1 text-xs text-[rgba(11,31,51,0.52)]">{item.actor_email || item.recipient_email || 'Downtown Perks'} · {new Date(item.created_at || item.sent_at || Date.now()).toLocaleString()}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
       <section className="grid gap-5">
         <article className="bg-white p-0">
           <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-[#C8A96A]">How the work flows</p>
@@ -326,10 +311,10 @@ export default function BackendWorkspace() {
               { label: 'Share the result', detail: 'Open reports for partner-ready summaries.', to: '/admin/reports' },
               { label: 'Make it better', detail: 'Adjust offers, notes, and follow-ups.', to: '/admin/perks' },
             ].map((item) => (
-              <Link key={item.label} to={item.to} className="grid min-h-9 gap-1 border-t border-[rgba(11,31,51,0.045)] py-1.5 text-left text-[12px] hover:text-[#C8A96A] first:border-t-0 sm:grid-cols-[130px_1fr_auto] sm:items-center sm:gap-3">
+              <Link key={item.label} to={item.to} className="grid min-h-9 grid-cols-[minmax(0,1fr)_auto] gap-x-3 gap-y-0.5 border-t border-[rgba(11,31,51,0.045)] py-1.5 text-left text-[12px] hover:text-[#C8A96A] first:border-t-0 sm:grid-cols-[130px_minmax(0,1fr)_auto] sm:items-center sm:gap-3">
                 <span className="font-semibold text-[#0B1F33]">{item.label}</span>
-                <span className="text-[11px] leading-4 text-[rgba(11,31,51,0.58)]">{item.detail}</span>
-                <ArrowRight className="h-3.5 w-3.5 text-[#C8A96A]" />
+                <span className="text-[11px] leading-4 text-[rgba(11,31,51,0.58)] sm:col-start-2 sm:row-start-1">{item.detail}</span>
+                <ArrowRight className="row-span-2 h-3.5 w-3.5 self-center text-[#C8A96A] sm:col-start-3 sm:row-span-1 sm:row-start-1" />
               </Link>
             ))}
           </div>
@@ -342,6 +327,24 @@ export default function BackendWorkspace() {
             </Link>
           </div>
         </article>
+      </section>
+
+      <section className="bg-white p-0">
+        <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-[#C8A96A]">Activity roll-up</p>
+        <h2 className="mt-2 text-xl font-semibold">Latest updates, kept short.</h2>
+        <p className="mt-2 max-w-3xl text-sm leading-6 text-[rgba(11,31,51,0.62)]">
+          Showing the two newest updates from {recentActivity.length} recent records. Open the related area when you need the full trail.
+        </p>
+        <div className="mt-4 grid gap-0 md:grid-cols-2 md:gap-x-8">
+          {recentActivityPreview.length === 0 ? (
+            <p className="text-sm text-[rgba(11,31,51,0.58)]">No recent updates or messages yet.</p>
+          ) : recentActivityPreview.map((item: any) => (
+            <div key={item.id} className="border-t border-[rgba(11,31,51,0.06)] py-3 first:border-t-0 md:first:border-t">
+              <p className="text-[12px] font-semibold leading-4">{item.action ? String(item.action).replace(/_/g, ' ') : item.message || item.type || 'Recent activity'}</p>
+              <p className="mt-1 text-[10.5px] leading-4 text-[rgba(11,31,51,0.52)]">{item.actor_email || item.recipient_email || 'Downtown Perks'} · {new Date(item.created_at || item.sent_at || Date.now()).toLocaleString()}</p>
+            </div>
+          ))}
+        </div>
       </section>
     </div>
   );
