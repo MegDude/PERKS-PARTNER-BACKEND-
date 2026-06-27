@@ -845,15 +845,14 @@ export function PartnerWorkspaceTemplate(props: Props) {
               ))}
             </div>
             <div className="mt-4 border-t border-[rgba(11,31,51,0.06)] pt-3">
-              <div className="text-[10px] font-bold uppercase text-[#C8A96A]">Resident picks to feature</div>
-              <div className="mt-2 grid gap-2 sm:grid-cols-2">
+              <div className="text-[10px] font-semibold uppercase text-[#C8A96A]">My favorites</div>
+              <p className="mt-1 text-[11px] leading-4 text-[rgba(11,31,51,0.58)]">A short list worth keeping for residents to see first.</p>
+              <div className="mt-2 grid gap-0">
                 {favorites.slice(0, 4).map((item) => (
-                  <button key={item.id} type="button" onClick={() => toggleFavorite(item.id)} className="group grid min-h-9 grid-cols-[1fr_auto] gap-2 text-left text-xs">
-                    <span className="min-w-0">
-                      <span className="block truncate font-semibold text-[#0B1F33] group-hover:text-[#C8A96A]">{item.name}</span>
-                      <span className="block truncate text-[10px] text-[rgba(11,31,51,0.54)]">{item.type} · {item.saved ? 'featured' : 'not featured'}</span>
-                    </span>
-                    <Heart className={`mt-0.5 h-3.5 w-3.5 ${item.saved ? 'fill-[#C8A96A] text-[#C8A96A]' : 'text-[rgba(11,31,51,0.32)]'}`} />
+                  <button key={item.id} type="button" onClick={() => toggleFavorite(item.id)} className="group grid min-h-9 grid-cols-[0.82fr_1fr_auto] items-baseline gap-2 border-t border-[rgba(11,31,51,0.045)] py-1.5 text-left first:border-t-0">
+                    <span className="min-w-0 truncate text-[11.5px] font-semibold leading-4 text-[#0B1F33] group-hover:text-[#C8A96A]">{item.name}</span>
+                    <span className="min-w-0 truncate text-[9.5px] font-semibold uppercase leading-3 text-[rgba(11,31,51,0.46)]">{item.type} · {item.saved ? 'featured' : 'not featured'}</span>
+                    <Heart className={`h-3.5 w-3.5 ${item.saved ? 'fill-[#C8A96A] text-[#C8A96A]' : 'text-[rgba(11,31,51,0.32)]'}`} />
                   </button>
                 ))}
               </div>
@@ -865,31 +864,44 @@ export function PartnerWorkspaceTemplate(props: Props) {
           <div className="shore-read">
             <div className="flex items-center gap-2 text-[11px] font-bold uppercase text-[#C8A96A]">
               <MapPin className="h-4 w-4" />
-              Nearby read
+              Buzz nearby
             </div>
-            <h2 className="mt-2 text-2xl leading-tight text-[#0B1F33] sm:text-[28px]">What nearby attention should do next</h2>
-            <p className="mt-2 text-sm leading-6 text-[rgba(11,31,51,0.64)]">A compact read on the anchors, offers, plans, and follow-ups that make this workspace useful.</p>
-            <div className="mt-4 grid gap-2">
+            <h2 className="mt-2 text-xl font-semibold leading-tight text-[#0B1F33]">Nearby spots residents are already choosing</h2>
+            <p className="mt-1 text-[12px] leading-5 text-[rgba(11,31,51,0.6)]">Use these signals to decide what deserves a resident nudge.</p>
+            <div className="mt-3 overflow-x-auto [scrollbar-width:thin]">
+              <table className="w-full min-w-[680px] table-fixed text-left">
+                <thead>
+                  <tr className="text-[9px] font-semibold uppercase leading-3 text-[rgba(11,31,51,0.42)]">
+                    <th className="w-[26%] py-1.5 pr-3 font-semibold">Place</th>
+                    <th className="w-[25%] py-1.5 pr-3 font-semibold">Context</th>
+                    <th className="w-[18%] py-1.5 pr-3 font-semibold">Status</th>
+                    <th className="py-1.5 pr-3 font-semibold">Note</th>
+                    <th className="w-[86px] py-1.5 font-semibold">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[rgba(11,31,51,0.045)]">
               {buzzInsights.map((place) => (
-                <div key={place.id} className="grid gap-2 border-b border-[rgba(11,31,51,0.055)] py-2 last:border-b-0 sm:grid-cols-[0.8fr_1.15fr_0.9fr_auto] sm:items-start">
-                  <div className="min-w-0">
-                    <div className="truncate text-sm font-semibold text-[#0B1F33]">{place.name}</div>
-                    <div className="mt-0.5 text-[10px] font-semibold uppercase text-[rgba(11,31,51,0.48)]">{place.role} · {place.distance}</div>
-                  </div>
-                  <p className="text-xs leading-5 text-[rgba(11,31,51,0.64)]">{place.why}</p>
-                  <p className="text-xs font-semibold leading-5 text-[#0B1F33]">{place.next}</p>
-                  <button type="button" onClick={() => toggleFavorite(place.favoriteId)} className="shore-button min-h-8 px-2 text-[10px] sm:justify-self-end">
-                    <Heart className="h-3.5 w-3.5" /> Keep
-                  </button>
-                </div>
+                <tr key={place.id} className="align-top">
+                  <td className="py-2 pr-3 text-[12px] font-semibold leading-4 text-[#0B1F33]">{place.name}</td>
+                  <td className="py-2 pr-3 text-[10px] font-semibold uppercase leading-4 text-[rgba(11,31,51,0.48)]">{place.role} · {place.distance}</td>
+                  <td className="py-2 pr-3 text-[11px] font-semibold leading-4 text-[#0B1F33]">{place.next}</td>
+                  <td className="py-2 pr-3 text-[11px] leading-5 text-[rgba(11,31,51,0.62)]">{place.why}</td>
+                  <td className="py-2">
+                    <button type="button" onClick={() => toggleFavorite(place.favoriteId)} className="shore-button min-h-8 px-2 text-[10px]">
+                      <Heart className="h-3.5 w-3.5" /> Keep
+                    </button>
+                  </td>
+                </tr>
               ))}
+                </tbody>
+              </table>
             </div>
           </div>
         </section>
 
-        <Section id="setup" eyebrow="Setup" title={`The details that make ${workspaceName} feel ready`} description="Start with the basics people notice first: the place, the neighborhood, the right contact, and the first note worth sending.">
-          <div className="grid gap-10 lg:grid-cols-[1fr_0.8fr]">
-            <form onSubmit={handleSubmit} className="shore-builder grid gap-4 sm:grid-cols-2">
+        <Section id="setup" eyebrow="Partner profile" title="Partner profile info" description="Keep the basics in one place: the partner, neighborhood, contact, address, plan, and the first note worth sending.">
+          <div className="shore-builder grid gap-6 lg:grid-cols-[1fr_0.82fr]">
+            <form onSubmit={handleSubmit} className="grid gap-4 sm:grid-cols-2">
               <Field label="Organization name" value={lead.organizationName} onChange={(value) => updateLead('organizationName', value)} />
               <Field label="Partner type" value={lead.partnerType} onChange={(value) => updateLead('partnerType', value)} />
               <Field label="Contact name" value={lead.contactName} placeholder="Add the property contact" onChange={(value) => updateLead('contactName', value)} />
@@ -905,12 +917,12 @@ export function PartnerWorkspaceTemplate(props: Props) {
                 <span className="text-[11px] font-bold uppercase text-[rgba(11,31,51,0.58)]">Helpful note</span>
                 <textarea className="shore-input mt-2 min-h-24" value={lead.notes || ''} onChange={(event) => updateLead('notes', event.target.value)} />
               </label>
-              <div className="sm:col-span-2 flex flex-wrap items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2 sm:col-span-2">
                 <button type="submit" className="shore-button shore-button-primary"><Send className="h-4 w-4" /> Save setup</button>
                 <span className="text-xs font-semibold text-[rgba(11,31,51,0.58)]">{leadNotice}</span>
               </div>
             </form>
-            <div className="shore-read">
+            <div className="border-t border-[rgba(11,31,51,0.06)] pt-5 lg:border-l lg:border-t-0 lg:pl-6 lg:pt-0">
               <div className="text-[11px] font-bold uppercase text-[#C8A96A]">Building note</div>
               <h3 className="mt-2 text-xl font-semibold text-[#0B1F33]">{props.profile.propertyName}</h3>
               <p className="mt-2 text-sm leading-6 text-[rgba(11,31,51,0.66)]">{props.profile.description}</p>
@@ -924,20 +936,27 @@ export function PartnerWorkspaceTemplate(props: Props) {
           </div>
         </Section>
 
-        <Section id="resident-preview" eyebrow="Resident view" title="What residents see" description={`A quick look at the ${workspaceName} view: useful places, resident perks, plans worth joining, and the building signs that point people there.`}>
-          <div className="shore-read grid gap-8 lg:grid-cols-[0.85fr_1.15fr]">
+        <Section id="resident-preview" eyebrow="Resident view" title="What residents see" description={`A quick look at the ${workspaceName} experience: useful places, perks, plans, and the signs that point residents there.`}>
+          <div className="shore-read grid gap-5 lg:grid-cols-[1fr_0.72fr]">
             <div>
-              <div className="text-[11px] font-bold uppercase text-[#C8A96A]">{workspaceName} resident guide</div>
-              <h3 className="mt-2 text-xl font-semibold">{props.profile.propertyName}</h3>
-              <p className="mt-2 text-sm leading-6 text-[rgba(11,31,51,0.66)]">{props.profile.residentFacingCopy}</p>
-              <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
-                <span>Good first stop: {previewAnchors || props.profile.district}</span>
-                <span>Resident perk: {previewPerk ? `${previewPerk.partner} · ${previewPerk.offerTitle}` : 'Add the first resident perk'}</span>
-                <span>Plan to join: {previewEvent ? previewEvent.title : 'Add the next resident plan'}</span>
-                <span>How residents find it: {previewCode ? previewCode.name : 'Add a building code'}</span>
+              <div className="text-[10px] font-semibold uppercase text-[#C8A96A]">{workspaceName} resident guide</div>
+              <h3 className="mt-1 text-[18px] font-semibold leading-6 text-[#0B1F33]">{props.profile.propertyName}</h3>
+              <p className="mt-2 text-[12px] leading-5 text-[rgba(11,31,51,0.64)]">{props.profile.residentFacingCopy}</p>
+              <div className="mt-4 grid gap-0">
+                {[
+                  ['Good first stop', previewAnchors || props.profile.district],
+                  ['Resident perk', previewPerk ? `${previewPerk.partner} · ${previewPerk.offerTitle}` : 'Add the first resident perk'],
+                  ['Plan to join', previewEvent ? previewEvent.title : 'Add the next resident plan'],
+                  ['How residents find it', previewCode ? previewCode.name : 'Add a building code'],
+                ].map(([label, value]) => (
+                  <div key={label} className="grid grid-cols-[130px_1fr] gap-3 border-t border-[rgba(11,31,51,0.045)] py-1.5 first:border-t-0">
+                    <span className="text-[9.5px] font-semibold uppercase leading-4 text-[rgba(11,31,51,0.44)]">{label}</span>
+                    <span className="text-[11.5px] font-semibold leading-4 text-[#0B1F33]">{value}</span>
+                  </div>
+                ))}
               </div>
             </div>
-            <div className="grid gap-2 sm:grid-cols-2">
+            <div className="grid content-start gap-2">
               <button type="button" className="shore-button justify-start" onClick={() => toggleFavorite('fav-van-zandt')}>
                 <Heart className="h-4 w-4" /> Save this for later
               </button>
@@ -1318,7 +1337,7 @@ export function PartnerWorkspaceTemplate(props: Props) {
           </div>
         </Section>
 
-        <Section id="billing" eyebrow="Plan" title="Keep the building connected" description="See the current plan, add help when it is useful, and keep billing simple.">
+        <Section id="billing" eyebrow="Partner plan" title="Package selection and billing" description="Review the selected package, add support when the partner needs it, save a quote, or send an invoice request without leaving the workspace.">
           <div className="shore-builder grid gap-8 lg:grid-cols-[0.8fr_1.2fr]">
             <div>
               <div className="flex items-center gap-2 text-[11px] font-bold uppercase text-[#C8A96A]"><CreditCard className="h-4 w-4" /> {props.billing.conversionState}</div>

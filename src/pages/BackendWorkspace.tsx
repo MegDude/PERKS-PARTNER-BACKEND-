@@ -341,24 +341,24 @@ function SummaryTable({ eyebrow, title, description, rows }: any) {
 
   return (
     <section className="overflow-hidden rounded-xl border border-[rgba(11,31,51,0.08)] bg-white">
-      <div className="border-b border-[rgba(11,31,51,0.08)] px-5 py-4">
+      <div className="px-0 py-3">
         <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-[#C8A96A]">{eyebrow}</p>
-        <div className="mt-1 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+        <div className="mt-1 grid gap-1">
           <h2 className="text-xl font-semibold text-[#0B1F33]">{title}</h2>
-          <p className="max-w-2xl text-sm leading-6 text-[rgba(11,31,51,0.62)]">{description}</p>
+          <p className="max-w-4xl text-sm leading-6 text-[rgba(11,31,51,0.62)]">{description}</p>
         </div>
       </div>
       <div className="overflow-x-auto [scrollbar-width:thin]">
-        <table className="w-full min-w-[760px] text-left text-sm">
-          <thead className="border-b border-[rgba(11,31,51,0.08)] text-[11px] font-bold uppercase text-[rgba(11,31,51,0.52)]">
+        <table className="w-full min-w-[760px] table-fixed text-left text-sm">
+          <thead className="text-[10px] font-bold uppercase text-[rgba(11,31,51,0.52)]">
             <tr>
-              <th className="px-4 py-3">Area</th>
-              <th className="px-4 py-3">Total</th>
-              <th className="px-4 py-3">Why it matters</th>
-              <th className="px-4 py-3">Action</th>
+              <th className="w-[26%] py-2 pr-4">Area</th>
+              <th className="w-[12%] py-2 pr-4 text-right">Total</th>
+              <th className="py-2 pr-4">Why it matters</th>
+              <th className="w-[86px] py-2">Action</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-[rgba(11,31,51,0.08)]">
+          <tbody className="divide-y divide-[rgba(11,31,51,0.045)]">
             {rows.map((row: any) => (
               <tr
                 key={row.label}
@@ -373,16 +373,16 @@ function SummaryTable({ eyebrow, title, description, rows }: any) {
                   }
                 }}
               >
-                <td className="px-4 py-3">
-                  <p className="font-semibold text-[#0B1F33] group-hover:text-[#C8A96A]">{row.label}</p>
-                  <p className="mt-1 text-xs font-semibold uppercase text-[rgba(11,31,51,0.46)]">{row.area}</p>
+                <td className="py-2 pr-4">
+                  <p className="text-[13px] font-semibold leading-5 text-[#0B1F33] group-hover:text-[#C8A96A]">{row.label}</p>
+                  {row.area && row.area !== row.label && <p className="mt-0.5 text-[9.5px] font-semibold uppercase text-[rgba(11,31,51,0.42)]">{row.area}</p>}
                 </td>
-                <td className="px-4 py-3 text-2xl font-semibold text-[#0B1F33]">{Number(row.value || 0).toLocaleString()}</td>
-                <td className="px-4 py-3 text-[rgba(11,31,51,0.62)]">{row.detail}</td>
-                <td className="px-4 py-3">
+                <td className="py-2 pr-4 text-right text-[14px] font-semibold text-[#0B1F33]">{Number(row.value || 0).toLocaleString()}</td>
+                <td className="py-2 pr-4 text-[12px] leading-5 text-[rgba(11,31,51,0.62)]">{row.detail}</td>
+                <td className="py-2">
                   <Link
                     to={row.to}
-                    className="inline-flex min-h-9 items-center gap-2 border border-[rgba(11,31,51,0.12)] bg-white px-3 text-xs font-semibold text-[#0B1F33] hover:border-[#C8A96A] hover:text-[#C8A96A]"
+                    className="inline-flex min-h-8 items-center gap-1.5 bg-white px-0 text-[10.5px] font-semibold text-[#0B1F33] hover:text-[#C8A96A]"
                     onClick={(event) => event.stopPropagation()}
                   >
                     Open <ArrowRight className="h-3.5 w-3.5" />

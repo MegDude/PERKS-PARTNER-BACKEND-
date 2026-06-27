@@ -30,7 +30,8 @@
 .dp-admin-shell :where(main > div:not([class*="fixed"]):not([class*="absolute"]), main > section:not([class*="fixed"]):not([class*="absolute"])) {
   width: 100%;
   max-width: calc(var(--dp-admin-max) + (var(--dp-admin-gutter) * 2));
-  margin-inline: auto;
+  margin-left: 0 !important;
+  margin-right: auto !important;
 }
 
 .dp-admin-shell :where(main > [class*="p-6"], main > [class*="p-8"], main > [class*="px-"], main > [class*="py-"]) {
@@ -40,7 +41,8 @@
 .dp-admin-shell :where(.max-w-7xl, .max-w-6xl, .max-w-5xl, .max-w-4xl, .max-w-3xl, .max-w-2xl) {
   width: 100%;
   max-width: var(--dp-admin-max) !important;
-  margin-inline: auto !important;
+  margin-left: 0 !important;
+  margin-right: auto !important;
 }
 
 .dp-admin-shell :where(.max-w-7xl, .max-w-6xl, .max-w-5xl, .max-w-4xl, .max-w-3xl, .max-w-2xl)[class*="px-"] {
@@ -569,7 +571,7 @@
     max-width: 100%;
   }
 
-  .dp-admin-shell :where(.flex:not(nav):not([class*="overflow-x-auto"]):not([class*="flex-col"])) {
+  .dp-admin-shell :where(.flex:not(nav):not([class*="overflow-x-auto"]):not([class*="flex-col"]):not(.flex-nowrap):not([class*="flex-nowrap"])) {
     flex-wrap: wrap;
   }
 

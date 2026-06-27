@@ -377,17 +377,17 @@ export default function DowntownPerks() {
         </summary>
 
         <div className="overflow-x-auto [scrollbar-width:thin]" aria-label="Perk inventory table. Scroll horizontally to view all columns.">
-        <table className="w-full min-w-[1080px] table-fixed border-collapse text-left text-[11px]">
+        <table className="w-full min-w-[1260px] table-fixed border-collapse text-left text-[11px]">
           <colgroup>
-            <col className="w-[220px]" />
-            <col className="w-[100px]" />
-            <col className="w-[140px]" />
-            <col className="w-[110px]" />
-            <col className="w-[82px]" />
-            <col className="w-[116px]" />
-            <col className="w-[190px]" />
+            <col className="w-[230px]" />
+            <col className="w-[128px]" />
             <col className="w-[150px]" />
-            <col className="w-[104px]" />
+            <col className="w-[124px]" />
+            <col className="w-[94px]" />
+            <col className="w-[132px]" />
+            <col className="w-[214px]" />
+            <col className="w-[184px]" />
+            <col className="w-[120px]" />
           </colgroup>
           <thead className="border-b border-[rgba(11,31,51,0.05)] bg-white text-[9px] font-semibold uppercase text-[rgba(11,31,51,0.48)]">
               <tr>
@@ -416,10 +416,10 @@ export default function DowntownPerks() {
               <tr key={perk.id} className="align-top transition-colors hover:bg-white">
                 <td className="bg-white px-0 py-2.5 pr-3 lg:sticky lg:left-0 lg:z-10">
                   <p className="text-[12px] font-semibold leading-4 text-[#0B1F33]">{perk.title || 'Untitled perk'}</p>
-                  <p className="mt-1 max-w-[205px] text-[10.5px] leading-4 text-[rgba(11,31,51,0.62)]">{perk.description || 'No description added.'}</p>
+                  <p className="mt-1 max-w-[218px] text-[10.5px] leading-4 text-[rgba(11,31,51,0.62)]">{perk.description || 'No description added.'}</p>
                 </td>
                 <td className="px-0 py-2.5 pr-3">
-                  <p className="max-w-[92px] text-[10.5px] font-semibold leading-4 text-[#0B1F33]">{perk.cta_label || perk.cta || 'Redeem perk'}</p>
+                  <p className="max-w-[116px] text-[10.5px] font-semibold leading-4 text-[#0B1F33]">{perk.cta_label || perk.cta || 'Redeem perk'}</p>
                   <p className="mt-1 text-[9px] font-semibold uppercase text-[rgba(11,31,51,0.42)]">{perk.redemption_type || 'QR scan'}</p>
                 </td>
                 <td className="px-0 py-2.5 pr-3">

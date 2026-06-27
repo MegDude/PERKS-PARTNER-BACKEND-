@@ -195,25 +195,30 @@ export default function PartnerDashboard() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        {[
-          { label: 'Active partners', value: activePartners.length, icon: Building2 },
-          { label: 'Perks used', value: (redemptions as any[]).length, icon: TrendingUp },
-          { label: 'Messages', value: (messages as any[]).length, icon: Mail },
-          { label: 'Unread notes', value: (messages as any[]).filter((m: any) => m.status === 'unread').length, icon: MessageSquare },
-        ].map((stat, i) => {
-          const Icon = stat.icon;
-          return (
-            <motion.div key={i} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}>
-              <div className="bg-transparent border-t border-b border-[#EFEFEF] py-4 flex flex-col justify-center transition-colors hover:border-[#C5A028]">
-                <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 flex items-center gap-2">
-                  <Icon className="w-3.5 h-3.5 text-[#C5A028]" /> {stat.label}
-                </div>
-                <div className="text-base font-medium tracking-tight text-[#11182B]">{stat.value}</div>
-              </div>
-            </motion.div>
-          );
-        })}
+      <div className="mb-8 overflow-x-auto [scrollbar-width:thin]">
+        <table className="w-full min-w-[520px] table-fixed text-left">
+          <thead>
+            <tr className="text-[9px] font-bold uppercase text-[rgba(11,31,51,0.46)]">
+              <th className="py-2 pr-4">Area</th>
+              <th className="py-2 pr-4 text-right">Total</th>
+              <th className="py-2">Use this for</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-[rgba(11,31,51,0.045)]">
+            {[
+              { label: 'Active partners', value: activePartners.length, detail: 'Partner profiles ready to review.' },
+              { label: 'Perks used', value: (redemptions as any[]).length, detail: 'Offers residents have used.' },
+              { label: 'Messages', value: (messages as any[]).length, detail: 'Partner notes and replies on file.' },
+              { label: 'Unread notes', value: (messages as any[]).filter((m: any) => m.status === 'unread').length, detail: 'Items that still need a look.' },
+            ].map((stat) => (
+              <tr key={stat.label} className="align-middle">
+                <td className="py-2 pr-4 text-[12px] font-semibold leading-5 text-[#0B1F33]">{stat.label}</td>
+                <td className="py-2 pr-4 text-right text-[14px] font-semibold leading-none text-[#0B1F33]">{Number(stat.value || 0).toLocaleString()}</td>
+                <td className="py-2 text-[11px] leading-5 text-[rgba(11,31,51,0.58)]">{stat.detail}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
 
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }}>
@@ -234,35 +239,30 @@ export default function PartnerDashboard() {
                       key={partner.id}
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}
-                      className="p-6 border border-[#EFEFEF] rounded-none hover:shadow-none transition-all cursor-pointer bg-white"
+                      className="bg-white p-4 transition-all"
                     >
-                      <div className="flex items-start justify-between mb-4">
+                      <div className="mb-3 flex items-start justify-between gap-3">
                         <div>
-                          <h3 className="font-bold text-lg text-[#11182B] ">{partner.business_name}</h3>
-                          <p className="text-sm font-medium text-slate-500">{partner.contact_person}</p>
+                          <h3 className="text-[14px] font-semibold leading-5 text-[#11182B]">{partner.business_name}</h3>
+                          <p className="text-[11px] font-medium leading-4 text-slate-500">{partner.contact_person}</p>
                         </div>
-                        <Badge variant="outline" className="text-xs font-bold uppercase tracking-widest border-[#EFEFEF] text-slate-500 bg-slate-50 px-3 py-1">
+                        <Badge variant="outline" className="px-2 py-1 text-[9px] font-bold uppercase tracking-normal text-slate-500">
                           {partner.category}
                         </Badge>
                       </div>
 
-                      <div className="grid grid-cols-4 gap-4">
-                        <div>
-                          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1">Perks</p>
-                          <p className="text-xl font-bold text-[#11182B] ">{stats.perks}</p>
-                        </div>
-                        <div>
-                          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1">Redemptions</p>
-                          <p className="text-xl font-bold text-[#11182B] ">{stats.redemptions}</p>
-                        </div>
-                        <div>
-                          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1">Messages</p>
-                          <p className="text-xl font-bold text-[#11182B] ">{stats.messages}</p>
-                        </div>
-                        <div>
-                          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1">Unread</p>
-                          <p className="text-xl font-bold text-[#11182B] ">{stats.unread}</p>
-                        </div>
+                      <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 sm:grid-cols-4">
+                        {[
+                          ['Perks', stats.perks],
+                          ['Redemptions', stats.redemptions],
+                          ['Messages', stats.messages],
+                          ['Unread', stats.unread],
+                        ].map(([label, value]) => (
+                          <div key={label} className="flex min-h-7 items-baseline justify-between gap-2 sm:block">
+                            <span className="text-[9.5px] font-semibold uppercase leading-3 text-[rgba(11,31,51,0.42)]">{label}</span>
+                            <strong className="text-[12px] font-semibold leading-none text-[#11182B]">{Number(value || 0).toLocaleString()}</strong>
+                          </div>
+                        ))}
                       </div>
                       <Link
                         to={`/admin/workspaces/${slugify(partner.slug || partner.workspace_slug || partner.tenant_id?.replace(/^tenant_/, '') || partner.workspace_id?.replace(/^workspace_/, '') || partner.business_name || partner.name || partner.id)}`}

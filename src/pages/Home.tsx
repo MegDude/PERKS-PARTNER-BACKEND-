@@ -278,12 +278,12 @@ export default function Home() {
 
         <section className="my-5 grid gap-5 xl:grid-cols-[minmax(0,1.08fr)_minmax(360px,0.92fr)]">
           <div className="overflow-hidden bg-white">
-            <div className="grid gap-1.5 px-0 py-2.5 md:grid-cols-[minmax(0,1fr)_minmax(260px,0.62fr)] md:items-end">
-              <div className="min-w-0">
-                <p className="text-[9px] font-semibold uppercase text-[#C8A96A]">Quick read</p>
-                <h2 className="text-[13px] font-semibold leading-tight">What is ready to open</h2>
-              </div>
-              <p className="max-w-md text-[10px] leading-4 text-[rgba(11,31,51,0.52)] md:text-left">A quick index for the areas people ask to open most.</p>
+            <div className="px-0 py-2.5">
+              <p className="text-[9px] font-semibold uppercase text-[#C8A96A]">Quick read</p>
+              <h2 className="mt-0.5 text-[13px] font-semibold leading-tight">What is ready to open</h2>
+              <p className="mt-1 max-w-full text-[10px] leading-4 text-[rgba(11,31,51,0.52)]">
+                Live counts from partners, places, residents, perks, events, notes, invoices, and plans.
+              </p>
             </div>
             <div className="overflow-x-auto py-1 [scrollbar-width:thin]">
               <table className="w-full min-w-[560px] table-fixed text-left">
@@ -323,7 +323,7 @@ export default function Home() {
                   <h2 className="text-[13px] font-semibold leading-tight">Open a partner, brand, civic, or property page</h2>
                 </div>
               </div>
-              <label className="flex min-h-8 items-center gap-2 border-b border-[rgba(11,31,51,0.1)]">
+              <label className="flex min-h-8 flex-nowrap items-center gap-2 border-b border-[rgba(11,31,51,0.1)]">
                 <Search className="h-3.5 w-3.5 text-[rgba(11,31,51,0.42)]" />
                 <input
                   value={search}
@@ -335,11 +335,13 @@ export default function Home() {
             </div>
             <div className="max-h-[286px] overflow-y-auto pr-1 [scrollbar-width:thin]">
               {workspaceLaunchRows.map((row) => (
-                <Link key={`${row.id}-${row.href}`} to={row.href} className="grid min-w-0 gap-x-3 gap-y-0.5 border-b border-[rgba(11,31,51,0.035)] px-0 py-1.5 text-[12px] leading-tight transition-colors hover:text-[#C8A96A] sm:grid-cols-[minmax(0,1fr)_92px_44px] sm:items-baseline">
-                  <span className="min-w-0 truncate font-semibold">{row.title}</span>
-                  <span className="truncate text-[9.5px] font-semibold uppercase leading-4 text-[rgba(11,31,51,0.48)]">{row.type}</span>
-                  <span className="text-[9.5px] font-semibold uppercase leading-4 text-[#9A7A2F]">{row.featured ? 'Built' : row.status}</span>
-                </Link>
+                <div key={`${row.id}-${row.href}`} className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-baseline gap-x-3 gap-y-0.5 border-b border-[rgba(11,31,51,0.035)] px-0 py-1.5 text-[11px] leading-tight sm:grid-cols-[minmax(0,1fr)_116px_54px]">
+                  <Link to={row.href} className="min-w-0 truncate font-semibold text-[#0B1F33] transition-colors hover:text-[#C8A96A]">
+                    {row.title}
+                  </Link>
+                  <span className="col-start-1 min-w-0 truncate text-[9.5px] font-semibold uppercase leading-4 text-[rgba(11,31,51,0.48)] sm:col-start-auto">{row.type}</span>
+                  <span className="row-start-1 text-[9.5px] font-semibold uppercase leading-4 text-[#9A7A2F] sm:row-start-auto">{row.featured ? 'Built' : row.status}</span>
+                </div>
               ))}
               {workspaceLaunchRows.length === 0 && <p className="py-6 text-[12px] text-[rgba(11,31,51,0.58)]">Nothing matched. Try a partner, brand, civic group, or property name.</p>}
               <Link to="/admin/partner" className="inline-flex min-h-7 items-center gap-1 px-0 pt-2 text-[10.5px] font-semibold text-[#0B1F33] hover:text-[#C8A96A]">
