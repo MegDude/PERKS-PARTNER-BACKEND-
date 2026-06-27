@@ -30,10 +30,10 @@
   --space-12: 48px;
   --space-16: 64px;
 
-  --type-display: 48px;
-  --type-h1: 36px;
-  --type-h2: 28px;
-  --type-h3: 22px;
-  --type-body: 16px;
-  --type-caption: 14px;
+  --type-display: 40px;
+  --type-h1: 30px;
+  --type-h2: 23px;
+  --type-h3: 18px;
+  --type-body: 14px;
+  --type-caption: 12px;
 }
