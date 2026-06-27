@@ -50,7 +50,7 @@ function AuthAction() {
         if (!configured) return;
         void (user ? logout() : signInWithGoogle());
       }}
-      className="fixed right-3 top-3 z-50 border border-[rgba(11,31,51,0.12)] bg-white px-2.5 py-1.5 text-[10px] font-semibold uppercase text-[#0B1F33]"
+      className="fixed right-3 top-16 z-50 border border-[rgba(11,31,51,0.12)] bg-white px-2.5 py-1.5 text-[10px] font-semibold uppercase text-[#0B1F33] sm:top-20"
       aria-label={label}
     >
       {loading ? 'Checking session' : label}

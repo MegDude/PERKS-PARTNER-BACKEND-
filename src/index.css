@@ -169,7 +169,7 @@
   overflow-wrap: anywhere !important;
   word-break: normal !important;
   hyphens: auto;
-  padding: 0.36rem 0.38rem !important;
+  padding: 0.32rem 0.3rem !important;
   vertical-align: top !important;
 }
 
@@ -342,10 +342,56 @@
   overflow-x: auto !important;
   overflow-y: visible;
   border-bottom: 1px solid rgba(11, 31, 51, 0.06);
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(11, 31, 51, 0.3) rgba(11, 31, 51, 0.04);
 }
 
 .dp-admin-shell .dp-crm-table-scroll table {
-  width: max-content;
+  width: 2040px !important;
+  min-width: 2040px !important;
+  max-width: none !important;
+  table-layout: fixed !important;
+}
+
+.dp-admin-shell .dp-crm-table-scroll::-webkit-scrollbar {
+  height: 9px;
+}
+
+.dp-admin-shell .dp-crm-table-scroll::-webkit-scrollbar-track {
+  background: rgba(11, 31, 51, 0.04);
+}
+
+.dp-admin-shell .dp-crm-table-scroll::-webkit-scrollbar-thumb {
+  background: rgba(11, 31, 51, 0.28);
+  border-radius: 999px;
+}
+
+.dp-admin-shell .dp-outreach-crm-table :where(thead th) {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  background: #ffffff;
+}
+
+.dp-admin-shell .dp-outreach-crm-table :where(th:nth-child(1), td:nth-child(1)) {
+  position: sticky;
+  left: 0;
+  z-index: 4;
+  background: inherit;
+}
+
+.dp-admin-shell .dp-outreach-crm-table :where(th:nth-child(2), td:nth-child(2)) {
+  position: sticky;
+  left: 48px;
+  z-index: 4;
+  background: inherit;
+  box-shadow: 10px 0 16px -16px rgba(11, 31, 51, 0.35);
+}
+
+.dp-admin-shell .dp-outreach-crm-table :where(thead th:nth-child(1), thead th:nth-child(2)) {
+  z-index: 6;
+  background: #ffffff;
 }
 
 .dp-admin-shell .dp-outreach-crm-table :where(input[type="checkbox"]) {

@@ -337,7 +337,7 @@ export default function PartnerOutreachCRM() {
   }
 
   return (
-    <div className="mx-auto max-w-[1500px] space-y-3 p-4 text-[#0B1F33] sm:p-5">
+    <div className="mx-auto w-full max-w-[1840px] space-y-3 p-4 text-[#0B1F33] sm:p-5">
       <section className="grid gap-3 xl:grid-cols-[1fr_520px] xl:items-end">
         <div>
           <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-[#C8A96A]">Partner growth</p>
@@ -459,19 +459,19 @@ export default function PartnerOutreachCRM() {
               </div>
             </div>
           )}
-          <div className="dp-crm-table-scroll overflow-x-auto">
-            <table className="dp-outreach-crm-table w-full min-w-[1980px] table-fixed text-left">
+          <div className="dp-crm-table-scroll overflow-x-auto" role="region" aria-label="Scrollable partner directory table" tabIndex={0}>
+            <table className="dp-outreach-crm-table w-full min-w-[2040px] table-fixed text-left">
               <colgroup>
                 <col className="w-[48px]" />
-                <col className="w-[230px]" />
-                <col className="w-[150px]" />
-                <col className="w-[170px]" />
-                <col className="w-[230px]" />
-                <col className="w-[360px]" />
-                <col className="w-[360px]" />
-                <col className="w-[88px]" />
-                <col className="w-[180px]" />
-                <col className="w-[170px]" />
+                <col className="w-[250px]" />
+                <col className="w-[155px]" />
+                <col className="w-[155px]" />
+                <col className="w-[235px]" />
+                <col className="w-[410px]" />
+                <col className="w-[410px]" />
+                <col className="w-[82px]" />
+                <col className="w-[175px]" />
+                <col className="w-[120px]" />
               </colgroup>
               <thead>
                 <tr>
