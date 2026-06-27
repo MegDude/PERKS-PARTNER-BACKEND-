@@ -838,7 +838,7 @@ export function PartnerWorkspaceTemplate(props: Props) {
               <div className="mt-4 space-y-3 text-sm">
                 <div><strong>Who it helps:</strong> {props.profile.residentAudience}</div>
                 <div><strong>Amenities:</strong> {props.profile.buildingAmenities.join(', ')}</div>
-                <div><strong>Nearby:</strong> {props.profile.nearbyAnchors.join(', ')}</div>
+                <div><strong>Close by:</strong> {props.profile.nearbyAnchors.join(', ')}</div>
                 <div><strong>Best first move:</strong> {props.profile.managerNotes}</div>
               </div>
             </div>
@@ -1217,7 +1217,7 @@ export function PartnerWorkspaceTemplate(props: Props) {
           </div>
         </Section>
 
-        <Section id="reports" eyebrow="Reports" title="What residents found, saved, joined, and used" description="A quick read from the current workspace: codes, perks, events, broadcasts, residents, and anonymous map activity around downtown Austin.">
+        <Section id="reports" eyebrow="Reports" title="What residents found, saved, joined, and used" description="A quick read on what is working: signs, perks, events, broadcasts, resident activity, and the places around downtown that people are actually opening.">
           <div className="shore-card">
             <div className="grid gap-x-8 gap-y-6 sm:grid-cols-2 lg:grid-cols-4">
               {reportSnapshot.metrics.map((metric) => (
@@ -1232,7 +1232,7 @@ export function PartnerWorkspaceTemplate(props: Props) {
             <div className="mt-5 border-l-2 border-[#C8A96A] bg-[#F7F8FB] p-4">
               <div className="text-sm font-semibold">What we would do next</div>
               <p className="mt-1 text-sm leading-6 text-[rgba(11,31,51,0.66)]">{reportSnapshot.recommendation}</p>
-              <p className="mt-2 text-xs leading-5 text-[rgba(11,31,51,0.58)]">Built from the live workspace data on this page, plus anonymous map activity for nearby downtown places.</p>
+              <p className="mt-2 text-xs leading-5 text-[rgba(11,31,51,0.58)]">No names here. Just enough signal to know what residents are using and what deserves another push.</p>
             </div>
           </div>
         </Section>
