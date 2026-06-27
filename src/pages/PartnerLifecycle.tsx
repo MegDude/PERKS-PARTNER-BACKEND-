@@ -28,6 +28,7 @@ type LifecycleState = {
   contact: Record<string, any>;
   location: Record<string, any>;
   plan: Record<string, any>;
+  addOns: Record<string, number>;
   checkout: Record<string, any>;
   provision?: Record<string, any>;
 };
@@ -46,9 +47,31 @@ const partnerTypes = [
 ];
 
 const plans = [
-  { key: 'starter', label: 'Starter', amount: 99, cadence: 'annual', summary: 'Launch the workspace with profile, map presence, offers, events, QR, and reporting basics.', limits: 'Single location or starter program', modules: ['Workspace', 'Map presence', 'Offers', 'Events', 'QR', 'Reports'] },
-  { key: 'growth', label: 'Growth', amount: 149, cadence: 'annual', summary: 'Add notes, clearer reports, exports, team access, and stronger follow-up loops.', limits: 'Active partner operations', modules: ['Everything in Starter', 'Notes', 'Reports', 'Team', 'Exports', 'Helpful suggestions'] },
-  { key: 'enterprise', label: 'Enterprise', amount: 0, cadence: 'custom', summary: 'Multi-location, sponsorship, integrations, custom reporting, and managed onboarding.', limits: 'Portfolio or district programs', modules: ['Multi-location', 'API', 'Custom research', 'Billing support', 'Advanced permissions'] },
+  { key: 'property_basic', vertical: 'Properties', partnerType: 'property', label: 'Basic Building', amount: 49, cadence: 'month', summary: 'Get the building on the map with a clean resident entry point.', limits: 'Best for a single building getting started', modules: ['Property profile', 'Map presence', 'Building QR', 'Basic reports'] },
+  { key: 'property_resident_plus', vertical: 'Properties', partnerType: 'property', label: 'Resident Plus', amount: 99, cadence: 'month', summary: 'Add resident perks, community notes, and stronger building follow-up.', limits: 'Best for active resident programming', modules: ['Everything in Basic', 'Resident perks', 'Broadcasts', 'Monthly readout'] },
+  { key: 'property_pro', vertical: 'Properties', partnerType: 'property', label: 'Property Pro', amount: 199, cadence: 'month', summary: 'Run the full resident layer with campaigns, reporting, and deeper support.', limits: 'Best for high-touch property teams', modules: ['Everything in Plus', 'Campaigns', 'Priority setup', 'Advanced reports'] },
+  { key: 'venue_basic', vertical: 'Venues', partnerType: 'venue', label: 'Basic', amount: 30, cadence: 'month', summary: 'Show up on the map and give locals one clear reason to stop in.', limits: 'Best for getting discovered', modules: ['Venue profile', 'Map listing', 'One starter perk', 'Basic signals'] },
+  { key: 'venue_growth', vertical: 'Venues', partnerType: 'venue', label: 'Growth', amount: 79, cadence: 'month', summary: 'Keep offers and events in the rotation with cleaner performance readouts.', limits: 'Best for steady local activity', modules: ['Everything in Basic', 'Events', 'Campaign notes', 'Readouts'] },
+  { key: 'venue_pro', vertical: 'Venues', partnerType: 'venue', label: 'Pro', amount: 199, cadence: 'month', summary: 'Stay visible all year with stronger placement, reporting, and support.', limits: 'Best for go-to downtown spots', modules: ['Everything in Growth', 'Priority moments', 'Advanced reports', 'Support'] },
+  { key: 'hotel_starter', vertical: 'Hotels', partnerType: 'hotel', label: 'Hotel Starter', amount: 99, cadence: 'month', summary: 'Give guests a simple local guide tied to lobby, room, and concierge moments.', limits: 'Best for one hotel property', modules: ['Hotel profile', 'Guest guide', 'Lobby QR', 'Local perks'] },
+  { key: 'hotel_pro', vertical: 'Hotels', partnerType: 'hotel', label: 'Hotel Pro', amount: 199, cadence: 'month', summary: 'Turn guest discovery into measurable campaigns and partner reports.', limits: 'Best for active hospitality teams', modules: ['Everything in Starter', 'Campaigns', 'Guest reporting', 'Concierge support'] },
+  { key: 'brand_access', vertical: 'Brands', partnerType: 'brand', label: 'Brand Access', amount: 99, cadence: 'month', summary: 'Create a local brand presence tied to real downtown behavior.', limits: 'Best for light sponsorship presence', modules: ['Brand profile', 'Map presence', 'Campaign access', 'Basic reporting'] },
+  { key: 'brand_campaigns', vertical: 'Brands', partnerType: 'brand', label: 'Brand Campaigns', amount: 199, cadence: 'month', summary: 'Run campaigns, sponsored moments, and reporting from one partner workspace.', limits: 'Best for active brand programs', modules: ['Everything in Access', 'Campaign workspace', 'Sponsored moments', 'Reports'] },
+  { key: 'civic_plus', vertical: 'Civic', partnerType: 'civic', label: 'Civic Plus', amount: 30, cadence: 'month', summary: 'Give residents a clear path to public programs, notes, and events.', limits: 'Best for local associations and programs', modules: ['Civic profile', 'Events', 'Surveys', 'Public notes'] },
+  { key: 'civic_pro', vertical: 'Civic', partnerType: 'civic', label: 'Civic Pro', amount: 99, cadence: 'month', summary: 'Add richer programming, feedback, and reporting for community work.', limits: 'Best for active civic teams', modules: ['Everything in Plus', 'Campaigns', 'Feedback', 'Reports'] },
+];
+
+const addOns = [
+  { key: 'perk_campaign', category: 'Campaigns', label: 'Perk Campaign', amount: 30, cadence: 'one_time', summary: 'Put one useful offer in front of people while they are deciding where to go.' },
+  { key: 'featured_campaign', category: 'Campaigns', label: 'Featured Campaign', amount: 49, cadence: 'one_time', summary: 'Give a campaign better placement when timing matters.' },
+  { key: 'sponsored_campaign', category: 'Campaigns', label: 'Sponsored Campaign', amount: 99, cadence: 'one_time', summary: 'Push a strong offer across a bigger downtown moment.' },
+  { key: 'event_boost', category: 'Events', label: 'Event Boost', amount: 20, cadence: 'one_time', summary: 'Help people notice an event before they make other plans.' },
+  { key: 'featured_event', category: 'Events', label: 'Featured Event', amount: 49, cadence: 'one_time', summary: 'Keep an event visible while people are still planning.' },
+  { key: 'sponsored_event', category: 'Events', label: 'Sponsored Event', amount: 99, cadence: 'one_time', summary: 'Give a bigger event a broader downtown push.' },
+  { key: 'single_survey', category: 'Surveys', label: 'Single Survey', amount: 30, cadence: 'one_time', summary: 'Ask one clean question and get a usable answer.' },
+  { key: 'survey_series', category: 'Surveys', label: 'Survey Series', amount: 79, cadence: 'month', summary: 'Ask over time and see what changes.' },
+  { key: 'broadcast_5m', category: 'Broadcast', label: 'Nearby Broadcast (5-min)', amount: 20, cadence: 'one_time', summary: 'Send a nudge to people close enough to walk over.' },
+  { key: 'sms_500', category: 'Broadcast', label: 'SMS Broadcast (up to 500)', amount: 30, cadence: 'one_time', summary: 'Send one direct note to a smaller list.' },
 ];
 
 const workspaceGroups = [
@@ -66,7 +89,8 @@ const initialState: LifecycleState = {
   organization: { name: '', website: '', industry: 'Venue' },
   contact: { name: '', email: '', phone: '', manager: '', owner: '' },
   location: { address: '', city: 'Austin', state: 'TX', socials: '', google_business: '', hours: '', amenities: '', description: '', categories: '' },
-  plan: plans[0],
+  plan: plans[3],
+  addOns: {},
   checkout: { billing_email: '', business_name: '', coupon: '', tax: 0, provider: 'local_checkout_ready_for_stripe', status: 'active' },
 };
 
@@ -108,6 +132,30 @@ function ActionLink({ to, children }: { to: string; children: React.ReactNode })
 
 function slugFor(label: string) {
   return label.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+}
+
+function money(value: number) {
+  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(value || 0);
+}
+
+function annualCost(plan: Record<string, any>) {
+  return Number(plan.amount || 0) * 12;
+}
+
+function selectedAddOnItems(selected: Record<string, number>) {
+  return addOns
+    .map((item) => ({ ...item, quantity: Number(selected[item.key] || 0) }))
+    .filter((item) => item.quantity > 0);
+}
+
+function pricingTotals(plan: Record<string, any>, selected: Record<string, number>, tax = 0) {
+  const selectedAddOns = selectedAddOnItems(selected);
+  const monthlyAddOns = selectedAddOns.filter((item) => item.cadence === 'month').reduce((sum, item) => sum + item.amount * item.quantity, 0);
+  const oneTimeAddOns = selectedAddOns.filter((item) => item.cadence !== 'month').reduce((sum, item) => sum + item.amount * item.quantity, 0);
+  const monthlyDue = Number(plan.amount || 0) + monthlyAddOns;
+  const annualCommitment = monthlyDue * 12;
+  const firstPayment = monthlyDue + oneTimeAddOns + Number(tax || 0);
+  return { selectedAddOns, monthlyAddOns, oneTimeAddOns, monthlyDue, annualCommitment, firstPayment };
 }
 
 export default function PartnerLifecycle() {
@@ -194,9 +242,20 @@ export default function PartnerLifecycle() {
       activity: filter(data.activity),
     };
   }, [data, selectedTenantId]);
+  const totals = useMemo(() => pricingTotals(state.plan, state.addOns || {}, Number(state.checkout.tax || 0)), [state.plan, state.addOns, state.checkout.tax]);
 
   const updateGroup = (group: keyof LifecycleState, key: string, value: any) => {
     setState((current) => ({ ...current, [group]: { ...(current[group] as Record<string, any>), [key]: value } }));
+  };
+
+  const setAddOnQuantity = (key: string, quantity: number) => {
+    setState((current) => ({
+      ...current,
+      addOns: {
+        ...(current.addOns || {}),
+        [key]: Math.max(0, quantity),
+      },
+    }));
   };
 
   const provisionWorkspace = async () => {
@@ -208,8 +267,10 @@ export default function PartnerLifecycle() {
           ...state.checkout,
           billing_email: state.checkout.billing_email || state.contact.email,
           business_name: state.checkout.business_name || state.organization.name,
-          subtotal: state.plan.amount,
-          total: state.plan.amount,
+          subtotal: totals.firstPayment,
+          total: totals.firstPayment,
+          annual_commitment: totals.annualCommitment,
+          selected_add_ons: totals.selectedAddOns,
         },
       };
       await fetch('/api/partner-leads', {
@@ -224,10 +285,50 @@ export default function PartnerLifecycle() {
           name: payload.contact.name,
           phone: payload.contact.phone,
           plan: payload.plan,
+          products: totals.selectedAddOns,
           checkout: payload.checkout,
           source_type: 'partner_registration',
+          metadata: {
+            annual_commitment: totals.annualCommitment,
+            first_payment: totals.firstPayment,
+            selected_add_ons: totals.selectedAddOns,
+          },
         }),
       });
+      await fetch('/api/google-sheets/append', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'partner_pricing_signup',
+          lead: {
+            organizationName: payload.organization.name,
+            name: payload.contact.name,
+            email: payload.contact.email,
+            partner_name: payload.organization.name,
+            partner_type: payload.organizationType,
+            status: 'pricing_selected',
+            plan: payload.plan.label,
+            summary: `${payload.plan.label} at ${money(payload.plan.amount)}/mo; annual commitment ${money(totals.annualCommitment)}; first payment ${money(totals.firstPayment)}.`,
+            selected_add_ons: totals.selectedAddOns,
+          },
+        }),
+      }).catch(() => null);
+      const checkoutLineItems = [
+        {
+          name: payload.plan.label,
+          amount: Number(payload.plan.amount || 0),
+          interval: 'month',
+          cadence: 'month',
+          quantity: 1,
+        },
+        ...totals.selectedAddOns.map((item) => ({
+          name: item.label,
+          amount: item.amount,
+          interval: item.cadence === 'month' ? 'month' : 'one_time',
+          cadence: item.cadence,
+          quantity: item.quantity,
+        })),
+      ];
       const checkoutResponse = await fetch('/api/checkout/session', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -238,14 +339,9 @@ export default function PartnerLifecycle() {
           billing_email: payload.checkout.billing_email,
           partner_type: payload.organizationType,
           plan: payload.plan,
-          plan_amount: payload.plan.amount,
+          plan_amount: totals.firstPayment,
           coupon: payload.checkout.coupon,
-          line_items: [{
-            name: payload.plan.label,
-            amount: Number(payload.plan.amount || 0),
-            cadence: payload.plan.cadence,
-            quantity: 1,
-          }],
+          line_items: checkoutLineItems,
           success_url: `${window.location.origin}/partners/provision?checkout=success`,
           cancel_url: `${window.location.origin}/partners/checkout?checkout=cancelled`,
         }),
@@ -292,7 +388,7 @@ export default function PartnerLifecycle() {
                   ...current,
                   organizationType: type.key,
                   organization: { ...current.organization, industry: type.label },
-                  plan: type.key === 'property' || type.key === 'hotel' ? plans[0] : current.plan,
+                  plan: plans.find((plan) => plan.partnerType === type.key) || current.plan,
                 }));
                 navigate('/partners/register');
               }}

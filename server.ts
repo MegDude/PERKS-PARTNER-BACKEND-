@@ -4679,10 +4679,39 @@ export async function createApp() {
       submitted_at: now(),
       metadata: body.metadata || {},
     });
+    const sheetsExport = await appendRowsToGoogleSheet({
+      type: "partner_lead",
+      lead: {
+        ...lead,
+        name: lead.contact_name || organizationName,
+        email: contactEmail,
+        organizationName,
+        partner_name: organizationName,
+        summary: [
+          `Partner type: ${lead.partner_type || "not selected"}`,
+          `Plan: ${lead.plan?.label || lead.plan?.name || lead.plan?.key || "not selected"}`,
+          `Source: ${lead.source_type}`,
+        ].join(" | "),
+      },
+    });
+    lead.google_sheets_status = sheetsExport.status === "success" ? "success" : sheetsExport.status === "pending_configuration" ? "pending_credentials" : "failed";
+    lead.google_sheets_export_status = lead.google_sheets_status;
+    lead.google_sheets_row_id = googleSheetExportRowId(sheetsExport);
+    lead.google_sheets_error = sheetsExport.error || "";
+    ensureRecord(db.entities.SurveyExportLog, makeId("lead_export"), {
+      partner_registration_id: lead.id,
+      status: lead.google_sheets_status === "success" ? "success" : lead.google_sheets_status === "pending_credentials" ? "pending" : "failed",
+      destination: "google-sheets",
+      attempted_at: now(),
+      completed_at: lead.google_sheets_status === "success" ? now() : "",
+      row_id: lead.google_sheets_row_id,
+      error: lead.google_sheets_error,
+      payload_type: "partner_lead",
+    });
     writeAuditEvent(db, req, { action: "partner_lead_captured", entity_type: "partner_registration", entity_id: lead.id, after: lead });
     writeAnalyticsEvent(db, req, { event: "partner_lead_captured", entity_type: "partner_registration", entity_id: lead.id, metadata: { partner_type: lead.partner_type, interest: lead.interest } });
     await saveDatabase(db);
-    res.status(201).json({ success: true, lead, export_csv_url: "/api/partner-leads/export.csv" });
+    res.status(201).json({ success: true, lead, google_sheets: sheetsExport, export_csv_url: "/api/partner-leads/export.csv" });
   });
 
   app.get("/api/partner-leads/export.csv", (req, res) => {
@@ -4828,13 +4857,13 @@ export async function createApp() {
     }
 
     const hasStripePriceIds = selectedPriceIds.length > 0 && matchedProducts.length > 0;
-    if (!process.env.STRIPE_SECRET_KEY || !hasStripePriceIds) {
+    if (!process.env.STRIPE_SECRET_KEY) {
       ensureRecord(db.entities.PartnerInvoice, `invoice_${checkoutRecord.id}`, {
         tenant_id: checkoutRecord.tenant_id,
         workspace_id: checkoutRecord.workspace_id,
         billing_email: billingEmail,
         status: "pending_payment",
-        provider: process.env.STRIPE_SECRET_KEY && !hasStripePriceIds ? "local_plan_ready_for_stripe_price" : "local_checkout_ready_for_stripe",
+        provider: "local_checkout_ready_for_stripe",
         checkout_session_id: checkoutRecord.id,
         subtotal,
         discount: promotionValidation?.discount || 0,
@@ -4845,12 +4874,10 @@ export async function createApp() {
       await saveDatabase(db);
       return res.status(202).json({
         success: true,
-        status: process.env.STRIPE_SECRET_KEY && !hasStripePriceIds ? "pending_price_mapping" : "pending_credentials",
+        status: "pending_credentials",
         checkout_session: checkoutRecord,
         checkout_url: `/partners/checkout?session_id=${checkoutRecord.id}&status=pending_credentials`,
-        message: process.env.STRIPE_SECRET_KEY && !hasStripePriceIds
-          ? "Local checkout record created. Add Stripe price IDs to collect payment for this plan."
-          : "Stripe credentials are not configured. Local checkout record created and ready for Stripe activation.",
+        message: "Stripe credentials are not configured. Local checkout record created and ready for Stripe activation.",
       });
     }
 
@@ -4859,9 +4886,24 @@ export async function createApp() {
     params.set("success_url", checkoutRecord.success_url);
     params.set("cancel_url", checkoutRecord.cancel_url);
     if (billingEmail) params.set("customer_email", billingEmail);
-    selectedPriceIds.forEach((priceId: string, index: number) => {
-      params.set(`line_items[${index}][price]`, priceId);
-      params.set(`line_items[${index}][quantity]`, String(lineItems[index]?.quantity || 1));
+    products.forEach((product, index) => {
+      const sourceLine = lineItems[index] || {};
+      const quantity = Math.max(1, Number(sourceLine.quantity || 1));
+      const matchedPriceId = sourceLine.price || sourceLine.stripe_price_id || product.stripe_price_id;
+      if (hasStripePriceIds && matchedPriceId && !String(matchedPriceId).startsWith("local_")) {
+        params.set(`line_items[${index}][price]`, matchedPriceId);
+        params.set(`line_items[${index}][quantity]`, String(quantity));
+        return;
+      }
+      params.set(`line_items[${index}][price_data][currency]`, product.currency || "usd");
+      params.set(`line_items[${index}][price_data][product_data][name]`, product.display_name || product.name || "Downtown Perks plan");
+      if (product.description) params.set(`line_items[${index}][price_data][product_data][description]`, String(product.description).slice(0, 400));
+      params.set(`line_items[${index}][price_data][unit_amount]`, String(Math.round(Number(product.amount || 0) * 100)));
+      const interval = String(product.interval || sourceLine.interval || sourceLine.cadence || "one_time").toLowerCase();
+      if (interval && interval !== "one_time" && interval !== "one-time") {
+        params.set(`line_items[${index}][price_data][recurring][interval]`, interval === "annual" ? "year" : interval);
+      }
+      params.set(`line_items[${index}][quantity]`, String(quantity));
     });
     params.set("metadata[organization_name]", organizationName);
     params.set("metadata[tenant_id]", checkoutRecord.tenant_id);

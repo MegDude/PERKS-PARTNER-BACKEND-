@@ -124,6 +124,16 @@ function addOnPrice(label: string) {
   return 49;
 }
 
+function workspaceSubjectForCopy(type = '', name = '') {
+  const normalized = `${type} ${name}`.toLowerCase();
+  if (normalized.includes('property') || normalized.includes('residential') || normalized.includes('building') || normalized.includes('condo') || normalized.includes('apartment')) return 'building';
+  if (normalized.includes('hotel')) return 'guest program';
+  if (normalized.includes('civic') || normalized.includes('parks') || normalized.includes('greenway') || normalized.includes('district')) return 'program';
+  if (normalized.includes('brand') || normalized.includes('app') || normalized.includes('sponsor')) return 'partner program';
+  if (normalized.includes('restaurant') || normalized.includes('dining') || normalized.includes('coffee') || normalized.includes('venue') || normalized.includes('bar')) return 'venue program';
+  return 'workspace';
+}
+
 function escapeXml(value: string) {
   return value.replace(/[<>&'"]/g, (character) => ({
     '<': '&lt;',
@@ -170,12 +180,13 @@ export function PartnerWorkspaceTemplate(props: Props) {
     workspace_slug: workspaceRecordSlug,
     workspace_name: workspaceName,
   };
+  const workspaceSubject = workspaceSubjectForCopy(props.partner.type, workspaceName);
   const [lead, setLead] = useState<PartnerLead>(() => loadPartnerLead(props.lead, workspaceSlug));
   const [favorites, setFavorites] = useState(() => loadFavoriteState(props.favorites, workspaceSlug));
   const [leadNotice, setLeadNotice] = useState(`${workspaceName} is ready for a quick review.`);
   const [coupon, setCoupon] = useState('');
   const [couponResult, setCouponResult] = useState<{ discount: number; totalDue: number; accepted: boolean } | null>(null);
-  const [billingNotice, setBillingNotice] = useState(`${workspaceName} is on ${props.billing.name}. Add support when the building needs a little more lift.`);
+  const [billingNotice, setBillingNotice] = useState(`${workspaceName} is on ${props.billing.name}. Add support when the ${workspaceSubject} needs a little more lift.`);
   const [selectedBillingAddOns, setSelectedBillingAddOns] = useState<string[]>([]);
   const [billingStatus, setBillingStatus] = useState<'pending' | 'active' | 'promotional'>(() => (
     props.billing.conversionState === 'Active' ? 'active' : props.billing.conversionState === 'Founding Partner' ? 'promotional' : 'pending'
@@ -230,11 +241,11 @@ export function PartnerWorkspaceTemplate(props: Props) {
   }, [props.qrs]);
 
   const workspaceMatrix = [
-    { label: 'Setup', value: `${setupProgress}%`, note: setupProgress >= 80 ? 'Ready for final review.' : 'Still needs real contacts, activity, residents, and reporting.', href: '#setup' },
-    { label: 'Resident reach', value: campaigns.some((campaign) => Number(campaign.opensViews || 0) > 0) ? 'Started' : 'Not sent', note: 'Send the first useful note before calling this live.', href: '#campaigns' },
-    { label: 'Residents', value: residents.some((resident) => !String(resident.email || '').endsWith('@downtownperks.local')) ? 'Added' : 'Needed', note: 'Import or add the real resident list.', href: '#residents' },
-    { label: 'Tools', value: 'Draft', note: 'Perks, events, and codes are editable from here.', href: '#perks' },
-    { label: 'Next move', value: 'Choose', note: 'Pick one sign, one perk, and one note to launch first.', href: '#qr' },
+    { label: 'Setup', value: `${setupProgress}%`, note: setupProgress >= 80 ? 'Ready for review.' : 'Add real contacts, activity, and reporting.', href: '#setup' },
+    { label: 'Reach', value: campaigns.some((campaign) => Number(campaign.opensViews || 0) > 0) ? 'Started' : 'Not sent', note: 'Send one useful note first.', href: '#campaigns' },
+    { label: 'People', value: residents.some((resident) => !String(resident.email || '').endsWith('@downtownperks.local')) ? 'Added' : 'Needed', note: 'Add or import the real list.', href: '#residents' },
+    { label: 'Tools', value: 'Draft', note: 'Perks, events, and codes are editable.', href: '#perks' },
+    { label: 'Next', value: 'Choose', note: 'Pick one sign, perk, and note.', href: '#qr' },
     { label: 'Plan', value: props.billing.conversionState, note: props.billing.name, href: '#billing' },
   ];
 
@@ -251,7 +262,7 @@ export function PartnerWorkspaceTemplate(props: Props) {
           ? `Use this to connect ${workspaceName} to the surrounding partner network.`
           : 'Use this as the next report or broadcast angle.';
     const next = index === 0
-      ? code ? `Tie it to ${code.name}.` : 'Add the first building code.'
+      ? code ? `Tie it to ${code.name}.` : `Add the first ${workspaceSubject} code.`
       : index === 1
         ? perk ? `Pair it with ${perk.offerTitle}.` : 'Add a nearby perk.'
         : index === 2
@@ -629,7 +640,7 @@ export function PartnerWorkspaceTemplate(props: Props) {
       id,
       name: `${workspaceName} resident broadcast`,
       audience: 'All residents',
-      channel: 'Email + building code',
+      channel: `Email + ${workspaceSubject} code`,
       linkedItems: [],
       sendStatus: 'Draft' as const,
       opensViews: 0,
@@ -961,7 +972,7 @@ export function PartnerWorkspaceTemplate(props: Props) {
             <div className="shore-progress-track mt-4">
               <div className="h-full bg-[#C8A96A]" style={{ width: `${setupProgress}%` }} />
             </div>
-            <div className="shore-workspace-matrix">
+            <div className="shore-workspace-matrix" aria-label={`${workspaceName} quick view`}>
               {workspaceMatrix.map((item) => (
                 <a key={item.label} href={item.href} className="shore-matrix-item">
                   <span>{item.label}</span>
@@ -970,9 +981,10 @@ export function PartnerWorkspaceTemplate(props: Props) {
                 </a>
               ))}
             </div>
-            <div className="mt-4 border-t border-[rgba(11,31,51,0.06)] pt-3">
-              <div className="text-[10px] font-semibold uppercase text-[#C8A96A]">My favorites</div>
-              <p className="mt-1 text-[11px] leading-4 text-[rgba(11,31,51,0.58)]">
+            <div className="mt-4 pt-3">
+              <div className="text-[11px] font-bold uppercase text-[#C8A96A]">Keep close</div>
+              <h2 className="mt-1 text-xl font-semibold leading-tight text-[#0B1F33]">Favorites</h2>
+              <p className="mt-2 text-[11px] leading-4 text-[rgba(11,31,51,0.58)]">
                 Choose the places, perks, and plans residents should see first. Tapping a row saves the featured list to this partner workspace and feeds the resident guide.
               </p>
               <div className="mt-2 grid gap-0">
@@ -1079,7 +1091,7 @@ export function PartnerWorkspaceTemplate(props: Props) {
               </div>
             </form>
             <div className="border-t border-[rgba(11,31,51,0.06)] pt-5 lg:border-l lg:border-t-0 lg:pl-6 lg:pt-0">
-              <div className="text-[11px] font-bold uppercase text-[#C8A96A]">Building note</div>
+              <div className="text-[11px] font-bold uppercase text-[#C8A96A]">{workspaceSubject} note</div>
               <h3 className="mt-2 text-xl font-semibold text-[#0B1F33]">{props.profile.propertyName}</h3>
               <p className="mt-2 text-sm leading-6 text-[rgba(11,31,51,0.66)]">{props.profile.description}</p>
               <div className="mt-4 space-y-3 text-sm">
@@ -1103,7 +1115,7 @@ export function PartnerWorkspaceTemplate(props: Props) {
                   ['Start here', previewAnchors || props.profile.district],
                   ['Perk to show', previewPerk ? `${previewPerk.partner} · ${previewPerk.offerTitle}` : 'Add the first resident perk'],
                   ['Plan to join', previewEvent ? previewEvent.title : 'Add the next resident plan'],
-                  ['Entry point', previewCode ? previewCode.name : 'Add a building code'],
+                  ['Entry point', previewCode ? previewCode.name : `Add a ${workspaceSubject} code`],
                 ].map(([label, value]) => (
                   <div key={label} className="grid grid-cols-[112px_1fr] gap-3 py-1.5 sm:grid-cols-[132px_1fr]">
                     <span className="text-[9.5px] font-semibold uppercase leading-4 text-[rgba(11,31,51,0.44)]">{label}</span>
@@ -1474,14 +1486,14 @@ export function PartnerWorkspaceTemplate(props: Props) {
 
         <Section id="reports" eyebrow="Reports" title="What residents found, saved, joined, and used" description="A quick read on what is working: signs, perks, events, broadcasts, resident activity, and the places around downtown that people are actually opening.">
           <div className="shore-read">
-            <div className="grid gap-0">
+            <div className="shore-report-matrix" aria-label={`${workspaceName} report quick view`}>
               {reportSnapshot.metrics.map((metric) => (
-                <div key={metric.id} className="grid gap-1 border-b border-[rgba(11,31,51,0.055)] py-2 last:border-b-0 sm:grid-cols-[0.72fr_0.8fr_0.48fr_1.3fr] sm:items-baseline sm:gap-4">
-                  <div className="text-[10px] font-bold uppercase text-[rgba(11,31,51,0.52)]">{metric.label}</div>
-                  <div className="text-sm font-semibold text-[#0B1F33]">{metric.value}</div>
-                  <div className="text-[10px] font-bold uppercase text-[#C8A96A]">{metric.change}</div>
-                  <p className="text-xs leading-5 text-[rgba(11,31,51,0.62)]">{metric.explanation}</p>
-                </div>
+                <article key={metric.id} className="shore-report-metric">
+                  <span>{metric.label}</span>
+                  <strong>{metric.value}</strong>
+                  <em>{metric.change}</em>
+                  <p>{metric.explanation}</p>
+                </article>
               ))}
             </div>
             <div className="mt-4 grid gap-1 border-t border-[rgba(11,31,51,0.08)] pt-3 sm:grid-cols-[0.72fr_0.8fr_0.48fr_1.3fr] sm:gap-4">
