@@ -874,6 +874,186 @@ function partnerAngle(type: string) {
   return "a resident perk or local discovery feature";
 }
 
+function districtInsight(district: string) {
+  const raw = String(district || "").toLowerCase();
+  if (raw.includes("rainey")) return "Rainey has dense residential towers, hotel traffic, trail access, and quick dinner/drink decisions.";
+  if (raw.includes("red river")) return "Red River is event-led, music-driven, and strongest when visitors can connect venues with nearby food and drinks.";
+  if (raw.includes("congress")) return "Congress works well for civic, hotel, office, and visitor discovery because it sits in the downtown decision path.";
+  if (raw.includes("2nd") || raw.includes("second")) return "Second Street is a retail and dining corridor where resident offers and featured campaigns can feel timely.";
+  if (raw.includes("warehouse")) return "The Warehouse District is strongest for after-work, dining, nightlife, and group plans.";
+  if (raw.includes("east")) return "East downtown discovery benefits from simple map context because residents often move between food, wellness, and events.";
+  return district ? `${district} benefits from practical local discovery at the moment people are choosing where to go.` : "Downtown discovery works best when the ask is practical and close to a real resident or visitor decision.";
+}
+
+function partnerStrategicLens(type: string) {
+  const raw = String(type || "").toLowerCase();
+  if (raw.includes("hotel")) {
+    return {
+      audience: "hotel guests and concierge/front desk teams",
+      benefit: "make nearby recommendations easier without asking guests to download another app",
+      ask: "review a guest-friendly listing and a simple local guide placement",
+    };
+  }
+  if (raw.includes("property") || raw.includes("residential") || raw.includes("building")) {
+    return {
+      audience: "residents, leasing teams, and property managers",
+      benefit: "turn local discovery into a useful resident amenity",
+      ask: "review a building welcome route and confirm the right contact for setup",
+    };
+  }
+  if (raw.includes("civic") || raw.includes("community")) {
+    return {
+      audience: "downtown residents, visitors, and nearby workers looking for local resources",
+      benefit: "make civic programs, events, and resources easier to find in context",
+      ask: "review the listing angle and identify the best program or event to feature first",
+    };
+  }
+  if (raw.includes("brand") || raw.includes("campaign")) {
+    return {
+      audience: "downtown residents and guests who are close to a purchase or visit decision",
+      benefit: "test a focused neighborhood campaign instead of broad untargeted awareness",
+      ask: "look at one lightweight campaign concept and decide if it is worth piloting",
+    };
+  }
+  if (raw.includes("event")) {
+    return {
+      audience: "eventgoers planning what to do before or after the event",
+      benefit: "connect event interest to nearby food, drink, parking, and service decisions",
+      ask: "review one event route or featured listing idea",
+    };
+  }
+  if (raw.includes("retail")) {
+    return {
+      audience: "residents, hotel guests, and downtown workers shopping nearby",
+      benefit: "surface the shop when people are already close enough to visit",
+      ask: "review a simple resident offer or featured local campaign",
+    };
+  }
+  if (raw.includes("coffee")) {
+    return {
+      audience: "morning residents, hybrid workers, and hotel guests",
+      benefit: "capture repeat nearby routines without making the offer complicated",
+      ask: "review a morning perk or workday listing idea",
+    };
+  }
+  if (raw.includes("bar") || raw.includes("restaurant") || raw.includes("venue")) {
+    return {
+      audience: "residents, guests, and nearby workers choosing where to eat or meet",
+      benefit: "show up during the decision moment for dining, happy hour, or group plans",
+      ask: "review one resident dining perk or featured route idea",
+    };
+  }
+  return {
+    audience: "downtown residents, guests, and nearby workers",
+    benefit: "make the partner easier to discover when people are deciding what to do nearby",
+    ask: "review one simple listing and perk idea",
+  };
+}
+
+function buildOutreachStrategyBrief(partner: Record<string, any>, contact: Record<string, any> = {}) {
+  const partnerName = displayCrmValue(partner.name || partner.business_name);
+  const type = displayCrmValue(partner.type || partner.partner_type || partner.category || "Partner");
+  const district = cleanCrmValue(partner.district);
+  const perk = cleanCrmValue(partner.suggested_perk || partner.recommended_perk) || "a simple resident-friendly perk";
+  const campaign = cleanCrmValue(partner.suggested_campaign || partner.recommended_campaign) || "a focused local discovery campaign";
+  const residentValue = cleanCrmValue(partner.resident_value || partner.description);
+  const businessValue = cleanCrmValue(partner.business_value || partner.partner_fit);
+  const notes = cleanCrmValue(partner.notes || partner.partner_fit);
+  const contactRole = cleanCrmValue(contact.role || partner.contact_role || partner.best_contact_role);
+  const lens = partnerStrategicLens(type);
+  const insight = districtInsight(district);
+  const priority = cleanCrmValue(partner.priority || String(partner.priority_score || ""));
+  const recommendedAngle = `${partnerName} can use Downtown Perks to reach ${lens.audience}; the practical first step is ${perk}.`;
+  const proofPoint = businessValue || residentValue || notes || `${type} in ${district || "downtown"} has a natural discovery moment.`;
+  return {
+    partner_name: partnerName,
+    partner_type: type,
+    district: district || "Downtown Austin",
+    contact_role: contactRole || "partner decision maker",
+    contact_name: cleanCrmValue(contact.name || contact.contact_name),
+    suggested_perk: perk,
+    suggested_campaign: campaign,
+    resident_value: residentValue || lens.audience,
+    business_value: businessValue || lens.benefit,
+    existing_notes: notes,
+    priority,
+    district_insight: insight,
+    audience: lens.audience,
+    strategic_benefit: lens.benefit,
+    recommended_angle: recommendedAngle,
+    practical_ask: lens.ask,
+    proof_point: proofPoint,
+    quality_rules: [
+      "Use the partner name naturally, not as a mail-merge token.",
+      "Reference the partner type, district, perk, campaign, or notes in a specific way.",
+      "Write like a thoughtful local operator, not a SaaS sales sequence.",
+      "Keep the text message under 70 words and the email under 170 words.",
+      "Do not claim results, traffic, exclusivity, guaranteed revenue, or formal partnership status.",
+      "End with a low-pressure quick-chat ask.",
+    ],
+  };
+}
+
+function stripTemplateArtifacts(value: string) {
+  return String(value || "")
+    .replace(/\[[^\]]+\]/g, "")
+    .replace(/\s+\n/g, "\n")
+    .replace(/[ \t]{2,}/g, " ")
+    .trim();
+}
+
+function outreachCopyLooksGeneric(copy: { shortText?: string; subject?: string; body?: string }, brief: ReturnType<typeof buildOutreachStrategyBrief>) {
+  const combined = `${copy.shortText || ""} ${copy.subject || ""} ${copy.body || ""}`.toLowerCase();
+  const partnerName = brief.partner_name.toLowerCase();
+  const partnerPieces = partnerName.split(/\s+/).filter((piece) => piece.length > 2);
+  const namesPartner = combined.includes(partnerName) || partnerPieces.some((piece) => combined.includes(piece));
+  const hasSpecificSignal = [brief.district, brief.suggested_perk, brief.suggested_campaign, brief.contact_role, brief.partner_type]
+    .map((item) => String(item || "").toLowerCase())
+    .some((item) => item.length > 4 && combined.includes(item.split(/\s+/)[0]));
+  const badPhrases = ["dear valued partner", "game changer", "revolutionize", "synergy", "unlock growth", "ai-powered outreach", "as a language model"];
+  const hasBadPhrase = badPhrases.some((phrase) => combined.includes(phrase));
+  return !namesPartner || !hasSpecificSignal || hasBadPhrase;
+}
+
+function curatedStrategistOutreachCopy(partner: Record<string, any>, contact: Record<string, any> = {}, brief = buildOutreachStrategyBrief(partner, contact)) {
+  const firstName = contactFirstName(brief.contact_name);
+  const reason = String(brief.proof_point || brief.district_insight).replace(/[.。]+$/, "");
+  const subject = `Quick Downtown Perks idea for ${brief.partner_name}`;
+  const shortText = `Hey ${firstName} - I’m building Downtown Perks for people already downtown and nearby. ${brief.partner_name} stood out for ${brief.suggested_perk}. I think it could be a useful fit for ${brief.audience}. Open to a quick chat sometime next week? No pressure.`;
+  const body = `Hi ${firstName},
+
+I’m building Downtown Perks, a simple local discovery map for people who live, work, and stay downtown.
+
+${brief.partner_name} stood out because ${reason}.
+
+For a first pass, I’d suggest ${brief.suggested_perk}. It pairs naturally with ${brief.suggested_campaign}, and it gives ${brief.audience} a clear reason to notice ${brief.partner_name} at the right moment.
+
+Would you be open to a quick 15-minute chat next week? No pressure either way.
+
+Best,
+Meg`;
+  const html = buildDowntownPerksEmailTemplate({
+    partnerName: brief.partner_name,
+    subject,
+    body,
+    previewText: `${brief.suggested_perk} for ${brief.partner_name}.`,
+  });
+  return {
+    shortText,
+    subject,
+    body,
+    html,
+    strategy: {
+      angle: brief.recommended_angle,
+      audience: brief.audience,
+      benefit: brief.strategic_benefit,
+      proof_point: brief.proof_point,
+      ask: brief.practical_ask,
+      quality: "curated_local_strategy",
+    },
+  };
+}
+
 function escapeHtml(value: any) {
   return String(value || "")
     .replace(/&/g, "&amp;")
@@ -950,86 +1130,51 @@ function buildOutreachEmailHtml(partner: Record<string, any>, message: Record<st
 }
 
 function generateOutreachCopy(partner: Record<string, any>, contact: Record<string, any> = {}) {
-  const name = displayCrmValue(partner.name || partner.business_name);
-  const type = partner.type || partner.category || "Partner";
-  const firstName = contactFirstName(contact.name || partner.contact_name);
-  const perk = displayCrmValue(partner.suggested_perk || partner.recommended_perk);
-  const campaign = displayCrmValue(partner.suggested_campaign || partner.recommended_campaign);
-  const reason = cleanCrmValue(partner.partner_fit || partner.resident_value || partner.notes) || `${type} presence in ${displayCrmValue(partner.district)}`;
-  const reasonSentence = reason.replace(/[.。]+$/, "");
-  const angle = partnerAngle(type);
-  const subject = `Quick Downtown Perks idea for ${name}`;
-  const shortText = `Hey ${firstName} - I’m building Downtown Perks, a simple local discovery map for downtown residents, guests, and nearby workers. I thought ${name} could be a strong fit for ${angle}. I’d love to set up a quick time to chat. No pressure.`;
-  const body = `Hi ${firstName},
-
-I’m building Downtown Perks, a simple local discovery map for people who live, work, and stay downtown.
-
-I came across ${name} and thought it could be a strong fit because ${reasonSentence}.
-
-The idea is simple: help the right people nearby discover you at the moment they’re deciding where to go, what to do, or what to try next.
-
-For ${name}, I’d suggest starting with:
-
-${perk}
-
-That could work well with ${campaign}.
-
-Would you be open to a quick 15-minute chat next week?
-
-Best,
-Meg`;
-  const html = buildDowntownPerksEmailTemplate({
-    partnerName: name,
-    subject,
-    body,
-    previewText: `A simple Downtown Perks partnership idea for ${name}.`,
-  });
-  return { shortText, subject, body, html };
+  const brief = buildOutreachStrategyBrief(partner, contact);
+  return curatedStrategistOutreachCopy(partner, contact, brief);
 }
 
 async function generatePersonalizedOutreachCopy(partner: Record<string, any>, contact: Record<string, any> = {}) {
+  const brief = buildOutreachStrategyBrief(partner, contact);
   const fallback = generateOutreachCopy(partner, contact);
   const provider = getProviderManager().primary;
-  if (!provider.configured) return { ...fallback, provider: "local" };
+  if (!provider.configured) return { ...fallback, provider: "local_strategy", intelligence: brief };
   try {
-    const prompt = {
-      partner_type: partner.type || partner.partner_type || partner.category,
-      partner_name: partner.name || partner.business_name,
-      district: partner.district,
-      suggested_perk: partner.suggested_perk,
-      suggested_campaign: partner.suggested_campaign,
-      resident_value: partner.resident_value,
-      business_value: partner.business_value,
-      notes: partner.notes || partner.partner_fit,
-      contact_role: contact.role,
-      contact_name: contact.name || contact.contact_name,
-    };
     const response = await provider.chat([
       {
         role: "system",
         content:
-          "You write Downtown Perks partner outreach. Keep it short, calm, human, local, and low-pressure. Avoid hype, automation tells, exaggerated claims, and generic SaaS language. Return strict JSON with shortText, subject, body. The body should be plain text email copy signed Best, Meg.",
+          "You are the Downtown Perks outreach intelligence layer: a world-class digital marketing strategist, data analyst, content strategist, brand strategist, and media strategist. You do not blanket-dump copy. You first choose the strongest partner-specific angle, then write concise human outreach. Return strict JSON only with keys: shortText, subject, body, strategy. strategy must include angle, audience, benefit, proof_point, ask, and quality_notes. The body must be plain text signed Best, Meg.",
       },
       {
         role: "user",
-        content: `Create unique outreach copy from this partner context. Mention why the partner makes sense, include the suggested perk or campaign, name a practical benefit, and ask for a quick chat without pressure.\n\n${JSON.stringify(prompt, null, 2)}`,
+        content: `Craft one tailored short text and one email from this strategy brief. Follow every quality rule. Use only the supplied facts. If contact_name is missing, write "Hi there," and "Hey there". Do not sound automated.\n\n${JSON.stringify(brief, null, 2)}`,
       },
     ]);
     const parsed = JSON.parse(response);
     const generated = {
-      shortText: cleanCrmValue(parsed.shortText) || fallback.shortText,
-      subject: cleanCrmValue(parsed.subject) || fallback.subject,
-      body: cleanCrmValue(parsed.body) || fallback.body,
+      shortText: stripTemplateArtifacts(cleanCrmValue(parsed.shortText)) || fallback.shortText,
+      subject: stripTemplateArtifacts(cleanCrmValue(parsed.subject)) || fallback.subject,
+      body: stripTemplateArtifacts(cleanCrmValue(parsed.body)) || fallback.body,
+      strategy: parsed.strategy && typeof parsed.strategy === "object" ? parsed.strategy : fallback.strategy,
     };
+    if (outreachCopyLooksGeneric(generated, brief)) {
+      return {
+        ...fallback,
+        provider: "local_strategy_guardrail",
+        intelligence: brief,
+        guardrail: "OpenAI output was missing partner-specific signals or contained generic language.",
+      };
+    }
     const html = buildDowntownPerksEmailTemplate({
       partnerName: partner.name || partner.business_name,
       subject: generated.subject,
       body: generated.body,
       previewText: `A simple Downtown Perks partnership idea for ${partner.name || partner.business_name}.`,
     });
-    return { ...generated, html, provider: "openai" };
+    return { ...generated, html, provider: "openai_strategy", intelligence: brief };
   } catch (error) {
-    return { ...fallback, provider: "local_fallback", error: error instanceof Error ? error.message : "AI generation failed" };
+    return { ...fallback, provider: "local_strategy_fallback", intelligence: brief, error: error instanceof Error ? error.message : "AI generation failed" };
   }
 }
 
