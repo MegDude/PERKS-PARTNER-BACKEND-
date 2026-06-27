@@ -15,6 +15,7 @@ import {
   Trash2,
   X,
 } from 'lucide-react';
+import { useAuth } from '../components/context/AuthContext';
 
 type CrmPartner = {
   id: string;
@@ -92,6 +93,7 @@ function sortValue(partner: any, key: string) {
 }
 
 export default function PartnerOutreachCRM() {
+  const { user, configured, loading: authLoading, signInWithGoogle, logout } = useAuth();
   const [partners, setPartners] = useState<CrmPartner[]>([]);
   const [statuses, setStatuses] = useState<string[]>([]);
   const [filters, setFilters] = useState<string[]>(['All']);
@@ -332,6 +334,9 @@ export default function PartnerOutreachCRM() {
     navigator.clipboard?.writeText(text || '');
   }
 
+  const authLabel = !configured ? 'Firebase pending' : user ? 'Sign out' : 'Google login';
+  const authValue = authLoading ? 'Checking' : user ? 'Connected' : configured ? 'Ready' : 'Setup';
+
   if (loading) {
     return <div className="p-8 text-sm font-semibold text-[#0B1F33]">Loading outreach CRM.</div>;
   }
@@ -370,13 +375,25 @@ export default function PartnerOutreachCRM() {
       </section>
 
       <section className="dp-crm-quick-view border border-[rgba(11,31,51,0.07)] bg-white">
-        <div className="grid grid-cols-2 divide-x divide-y divide-[rgba(11,31,51,0.06)] sm:grid-cols-4 sm:divide-y-0">
+        <div className="grid grid-cols-2 divide-x divide-y divide-[rgba(11,31,51,0.06)] sm:grid-cols-5 sm:divide-y-0">
         {stats.map((stat) => (
           <div key={stat.label} className="grid min-h-8 grid-cols-[1fr_auto] items-center gap-1.5 px-2.5 py-1.5">
             <p className="text-[8px] font-semibold uppercase leading-none text-[rgba(11,31,51,0.48)]">{stat.label}</p>
             <p className="text-[13px] font-semibold leading-none tabular-nums">{stat.value.toLocaleString()}</p>
           </div>
         ))}
+          <button
+            type="button"
+            onClick={() => {
+              if (!configured) return;
+              void (user ? logout() : signInWithGoogle());
+            }}
+            className="grid min-h-8 grid-cols-[1fr_auto] items-center gap-1.5 px-2.5 py-1.5 text-left transition-colors hover:bg-[#FBFAF6]"
+            aria-label={authLabel}
+          >
+            <span className="text-[8px] font-semibold uppercase leading-none text-[rgba(11,31,51,0.48)]">{authLabel}</span>
+            <span className="text-[11px] font-semibold leading-none text-[#0B1F33]">{authValue}</span>
+          </button>
         </div>
       </section>
 

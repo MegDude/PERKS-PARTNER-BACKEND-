@@ -1364,9 +1364,9 @@ export function PartnerWorkspaceTemplate(props: Props) {
                 </div>
               ))}
             </div>
-            <div className="mt-4 grid gap-2 border-t border-[rgba(11,31,51,0.08)] pt-3 sm:grid-cols-[0.5fr_1.5fr]">
+            <div className="mt-4 border-t border-[rgba(11,31,51,0.08)] pt-3">
               <div className="text-[10px] font-bold uppercase text-[#C8A96A]">Next move</div>
-              <div>
+              <div className="mt-1 max-w-[720px]">
                 <p className="text-sm font-semibold leading-6 text-[#0B1F33]">{reportSnapshot.recommendation}</p>
                 <p className="mt-1 text-xs leading-5 text-[rgba(11,31,51,0.58)]">No names here. Just enough signal to know what residents are using and what deserves another push.</p>
               </div>
