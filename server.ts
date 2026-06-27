@@ -1040,7 +1040,8 @@ function curatedStrategistOutreachCopy(partner: Record<string, any>, contact: Re
   const firstName = contactFirstName(brief.contact_name);
   const reason = String(brief.proof_point || brief.district_insight).replace(/[.。]+$/, "");
   const subject = `${brief.partner_name}: ${brief.suggested_perk}`;
-  const shortText = `Hey ${firstName} - ${brief.partner_name} feels like a natural fit for ${brief.suggested_perk}, especially with ${brief.district} ${brief.partner_type.toLowerCase()} discovery. I’d like to show a quick ${brief.suggested_campaign} concept and see if it is useful. Open to a 15-minute chat?`;
+  const typeContext = `${brief.district} ${brief.partner_type.toLowerCase()}`.replace(/\s+/g, " ").trim();
+  const shortText = `Hey ${firstName} - ${brief.partner_name} feels like a natural fit for ${brief.suggested_perk}, especially for ${typeContext} outreach. I’d like to show a quick ${brief.suggested_campaign} concept and see if it is useful. Open to a 15-minute chat?`;
   const body = `Hi ${firstName},
 
 I’m building Downtown Perks as a practical discovery layer for downtown residents, guests, and nearby workers.
@@ -4427,7 +4428,10 @@ export async function createApp() {
     const partner = findEntityById(db.entities.Partner, req.params.id);
     if (!partner) return res.status(404).json({ error: "Partner not found" });
     const contact = (db.entities.PartnerOutreachContact.find((item) => item.partner_id === partner.id) || {}) as Record<string, any>;
-    const generated = await generatePersonalizedOutreachCopy({ ...partner, ...(req.body || {}) }, contact);
+    const useLocalStrategy = Boolean(req.body?.local_strategy_only);
+    const generated = useLocalStrategy
+      ? { ...generateOutreachCopy({ ...partner, ...(req.body || {}) }, contact), provider: "local_strategy", intelligence: buildOutreachStrategyBrief({ ...partner, ...(req.body || {}) }, contact) }
+      : await generatePersonalizedOutreachCopy({ ...partner, ...(req.body || {}) }, contact);
     const guardrail = "guardrail" in generated ? generated.guardrail || "" : "";
     const email = ensureRecord(db.entities.PartnerOutreachMessage, `outreach_message_${slug(partner.external_entity_id || partner.id)}_email`, {
       partner_id: partner.id,
