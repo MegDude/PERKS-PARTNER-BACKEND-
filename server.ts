@@ -873,6 +873,72 @@ function partnerAngle(type: string) {
   return "a resident perk or local discovery feature";
 }
 
+function escapeHtml(value: any) {
+  return String(value || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+function buildDowntownPerksEmailTemplate(input: {
+  partnerName: string;
+  subject?: string;
+  body: string;
+  ctaLabel?: string;
+  ctaHref?: string;
+  previewText?: string;
+}) {
+  const partnerName = displayCrmValue(input.partnerName);
+  const headline = escapeHtml(input.subject || `A quick local idea for ${partnerName}`);
+  const bodyHtml = escapeHtml(input.body).replace(/\n/g, "<br />");
+  const ctaLabel = escapeHtml(input.ctaLabel || "Set up a quick chat");
+  const ctaHref = escapeHtml(input.ctaHref || "mailto:meg@downtownperks.local?subject=Downtown%20Perks%20chat");
+  const previewText = escapeHtml(input.previewText || `A simple Downtown Perks partnership idea for ${partnerName}.`);
+
+  return `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="x-apple-disable-message-reformatting" />
+    <title>${headline}</title>
+  </head>
+  <body style="margin:0;padding:0;background:#ffffff;color:#0B1F33;font-family:Inter,Arial,sans-serif;-webkit-font-smoothing:antialiased;">
+    <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;">${previewText}</div>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;background:#ffffff;">
+      <tr>
+        <td align="center" style="padding:28px 16px;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:620px;border-collapse:collapse;">
+            <tr>
+              <td style="padding:0 0 14px 0;border-bottom:1px solid rgba(11,31,51,0.10);">
+                <p style="margin:0;color:#C8A96A;font-size:11px;line-height:1.2;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;">Downtown Perks</p>
+                <h1 style="margin:9px 0 0 0;color:#0B1F33;font-size:24px;line-height:1.18;font-weight:650;">${headline}</h1>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:18px 0 0 0;">
+                <div style="margin:0;color:#24384B;font-size:15px;line-height:1.62;font-weight:400;">${bodyHtml}</div>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:22px 0 0 0;">
+                <a href="${ctaHref}" style="display:inline-block;background:#C8A96A;color:#0B1F33;text-decoration:none;padding:11px 16px;border-radius:4px;font-size:13px;line-height:1;font-weight:700;">${ctaLabel}</a>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:24px 0 0 0;">
+                <p style="margin:0;padding-top:14px;border-top:1px solid rgba(11,31,51,0.10);color:rgba(11,31,51,0.56);font-size:12px;line-height:1.5;">Downtown Perks · Local discovery for downtown Austin residents, guests, and nearby workers.</p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>`;
+}
+
 function generateOutreachCopy(partner: Record<string, any>, contact: Record<string, any> = {}) {
   const name = displayCrmValue(partner.name || partner.business_name);
   const type = partner.type || partner.category || "Partner";
@@ -901,7 +967,12 @@ Would you be open to a quick 15-minute chat next week?
 
 Best,
 Meg`;
-  const html = `<div style="margin:0;background:#ffffff;color:#0B1F33;font-family:Inter,Arial,sans-serif"><div style="max-width:620px;margin:0 auto;padding:28px 20px"><p style="margin:0 0 10px;color:#C8A96A;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase">Downtown Perks</p><h1 style="margin:0 0 16px;color:#0B1F33;font-size:26px;line-height:1.15;font-weight:650">A quick local idea for ${name}</h1><div style="font-size:15px;line-height:1.65;color:#24384b;white-space:pre-line">${body.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</div><a href="mailto:" style="display:inline-block;margin-top:22px;background:#C8A96A;color:#0B1F33;text-decoration:none;padding:11px 16px;border-radius:6px;font-size:13px;font-weight:700">Set up a quick chat</a><p style="margin-top:26px;border-top:1px solid rgba(11,31,51,.1);padding-top:14px;color:rgba(11,31,51,.55);font-size:12px">Downtown Perks - local discovery for downtown Austin.</p></div></div>`;
+  const html = buildDowntownPerksEmailTemplate({
+    partnerName: name,
+    subject,
+    body,
+    previewText: `A simple Downtown Perks partnership idea for ${name}.`,
+  });
   return { shortText, subject, body, html };
 }
 
@@ -939,7 +1010,12 @@ async function generatePersonalizedOutreachCopy(partner: Record<string, any>, co
       subject: cleanCrmValue(parsed.subject) || fallback.subject,
       body: cleanCrmValue(parsed.body) || fallback.body,
     };
-    const html = generateOutreachCopy({ ...partner, suggested_perk: partner.suggested_perk }, contact).html.replace(fallback.body.replace(/</g, "&lt;").replace(/>/g, "&gt;"), generated.body.replace(/</g, "&lt;").replace(/>/g, "&gt;"));
+    const html = buildDowntownPerksEmailTemplate({
+      partnerName: partner.name || partner.business_name,
+      subject: generated.subject,
+      body: generated.body,
+      previewText: `A simple Downtown Perks partnership idea for ${partner.name || partner.business_name}.`,
+    });
     return { ...generated, html, provider: "openai" };
   } catch (error) {
     return { ...fallback, provider: "local_fallback", error: error instanceof Error ? error.message : "AI generation failed" };

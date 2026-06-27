@@ -573,7 +573,12 @@ export default function PartnerOutreachCRM() {
               <EditableMessage icon={<Mail className="h-4 w-4" />} title={clean(selected.message?.subject)} body={clean(selected.message?.body)} onCopy={() => copyText(selected.message?.body || '')} onSave={(value) => patchMessage(selected.message?.id, { body: value })} />
               <div className="mt-3 overflow-hidden border border-[rgba(11,31,51,0.08)]">
                 <div className="border-b border-[rgba(11,31,51,0.08)] px-3 py-1.5 text-[9px] font-bold uppercase text-[rgba(11,31,51,0.52)]">Branded email render</div>
-                <div className="bg-white p-3 text-[12px]" dangerouslySetInnerHTML={{ __html: selected.message?.html || '' }} />
+                <iframe
+                  title={`${clean(selected.name)} branded email preview`}
+                  srcDoc={selected.message?.html || ''}
+                  sandbox=""
+                  className="h-[420px] w-full border-0 bg-white"
+                />
               </div>
             </div>
 
