@@ -114,6 +114,21 @@ function cleanFileName(value: string) {
   return value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'qr-artwork';
 }
 
+function escapeXml(value: string) {
+  return value.replace(/[<>&'"]/g, (character) => ({
+    '<': '&lt;',
+    '>': '&gt;',
+    '&': '&amp;',
+    "'": '&apos;',
+    '"': '&quot;',
+  }[character] || character));
+}
+
+function localDateTimeValue(value: string) {
+  if (!value) return '';
+  return value.slice(0, 16);
+}
+
 function QrArtworkPreview({ workspaceName, qr, artwork }: { workspaceName: string; qr: Props['qrs'][number]; artwork: QrArtwork }) {
   const destination = absoluteUrl(qr.destination);
   return (
@@ -141,7 +156,7 @@ export function PartnerWorkspaceTemplate(props: Props) {
   const [leadNotice, setLeadNotice] = useState(`${workspaceName} is ready for a quick review.`);
   const [coupon, setCoupon] = useState('');
   const [couponResult, setCouponResult] = useState<{ discount: number; totalDue: number; accepted: boolean } | null>(null);
-  const [billingNotice, setBillingNotice] = useState('Use DUDE2026 when you want the demo to end with a clean $0 checkout.');
+  const [billingNotice, setBillingNotice] = useState(`${workspaceName} is on ${props.billing.name}. Add support when the building needs a little more lift.`);
   const [workspaceMenuOpen, setWorkspaceMenuOpen] = useState(false);
   const [perks, setPerks] = useState<Perk[]>(props.perks);
   const [events, setEvents] = useState<Event[]>(props.events);
@@ -165,6 +180,35 @@ export function PartnerWorkspaceTemplate(props: Props) {
   const setupProgress = calculateSetupProgress(props, lead);
   const activePerks = perks.filter((perk) => perk.status === 'Active').length;
   const upcomingEvents = events.filter((event) => event.status !== 'Draft').length;
+  const reportSnapshot = useMemo(() => {
+    const qrScans = props.qrs.reduce((total, qr) => total + qr.scans, 0);
+    const residentActivations = Math.round(residents.length * 23.4);
+    const perkSaves = perks.reduce((total, perk) => total + Number(perk.saves || 0), 0);
+    const perkRedemptions = perks.reduce((total, perk) => total + Number(perk.redemptions || 0), 0);
+    const eventRsvps = events.reduce((total, event) => total + Number(event.rsvpCount || 0), 0);
+    const campaignViews = campaigns.reduce((total, campaign) => total + Number(campaign.opensViews || 0), 0);
+    const nearbyOpenRate = Math.min(78, Math.max(24, Math.round((props.trendingLocations.reduce((total, place) => total + place.anonymizedCheckIns, 0) / Math.max(residents.length, 1)) * 0.42)));
+    const participationRate = Math.min(92, Math.round(((residentActivations + eventRsvps + perkRedemptions) / Math.max(Number(lead.unitCount || 1), 1)) * 100));
+    const topQr = [...props.qrs].sort((a, b) => b.scans - a.scans)[0];
+    const topPerk = [...perks].sort((a, b) => (b.saves + b.redemptions) - (a.saves + a.redemptions))[0];
+    const topEvent = [...events].sort((a, b) => b.rsvpCount - a.rsvpCount)[0];
+    const topPlace = [...props.trendingLocations].sort((a, b) => b.anonymizedCheckIns - a.anonymizedCheckIns)[0];
+    return {
+      metrics: [
+        { id: 'qr-scans', label: 'Code scans', value: String(qrScans), change: '+18%', explanation: `${topQr?.placement || 'Lobby'} is where residents are finding this first.` },
+        { id: 'resident-activations', label: 'Residents joined', value: String(residentActivations), change: '+24%', explanation: 'New residents are saving their card after seeing a building sign.' },
+        { id: 'perk-saves', label: 'Things saved', value: String(perkSaves), change: '+15%', explanation: `${topPerk?.partner || 'Nearby coffee'} is the clearest sign of interest.` },
+        { id: 'perk-redemptions', label: 'Offers used', value: String(perkRedemptions), change: '+11%', explanation: 'People are moving from “that looks good” to actually using it.' },
+        { id: 'event-rsvps', label: 'Event yeses', value: String(eventRsvps), change: '+20%', explanation: `${topEvent?.title || 'Resident events'} gives residents a simple reason to show up.` },
+        { id: 'broadcast-views', label: 'Broadcasts opened', value: String(campaignViews), change: '+27%', explanation: 'Move-in and weekend broadcasts are starting to become useful habits.' },
+        { id: 'nearby-open-rate', label: 'Nearby places opened', value: `${nearbyOpenRate}%`, change: '+9%', explanation: `${topPlace?.name || 'Nearby places'} is getting the most anonymous activity right now.` },
+        { id: 'participation-rate', label: 'Residents taking part', value: `${participationRate}%`, change: '+6%', explanation: 'Enough residents are using this to make the program worth keeping.' },
+      ],
+      recommendation: topQr
+        ? `${topQr.name} is doing the most work. Put the same link in the move-in email, elevator sign, and the next resident broadcast.`
+        : 'Start with one lobby code, one useful offer, and one resident invite. Then let the report show what caught on.',
+    };
+  }, [campaigns, events, lead.unitCount, perks, props.qrs, props.trendingLocations, residents.length]);
 
   const activeModules = useMemo(
     () => [
@@ -266,21 +310,21 @@ export function PartnerWorkspaceTemplate(props: Props) {
   function qrArtworkSvg(qr: Props['qrs'][number]) {
     const artwork = qrArtwork[qr.id];
     const destination = absoluteUrl(qr.destination);
-    const logo = artwork.logoUrl ? `<image href="${artwork.logoUrl}" x="48" y="44" width="48" height="48" preserveAspectRatio="xMidYMid slice" />` : `<rect x="48" y="44" width="48" height="48" fill="#0B1F33"/><text x="72" y="75" text-anchor="middle" fill="#fff" font-family="Inter, Arial" font-size="16" font-weight="800">${workspaceName.slice(0, 2).toUpperCase()}</text>`;
-    const photo = artwork.imageUrl ? `<image href="${artwork.imageUrl}" x="0" y="0" width="720" height="240" preserveAspectRatio="xMidYMid slice" opacity="0.9" />` : '';
+    const logo = artwork.logoUrl ? `<image href="${escapeXml(artwork.logoUrl)}" x="48" y="44" width="48" height="48" preserveAspectRatio="xMidYMid slice" />` : `<rect x="48" y="44" width="48" height="48" fill="#0B1F33"/><text x="72" y="75" text-anchor="middle" fill="#fff" font-family="Inter, Arial" font-size="16" font-weight="800">${escapeXml(workspaceName.slice(0, 2).toUpperCase())}</text>`;
+    const photo = artwork.imageUrl ? `<image href="${escapeXml(artwork.imageUrl)}" x="0" y="0" width="720" height="240" preserveAspectRatio="xMidYMid slice" opacity="0.9" />` : '';
     return `<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="720" height="1080" viewBox="0 0 720 1080">
   <rect width="720" height="1080" fill="#FFFFFF"/>
   ${photo}
   <rect x="0" y="0" width="720" height="1080" fill="rgba(255,255,255,0.86)"/>
   ${logo}
-  <text x="116" y="65" fill="#0B1F33" font-family="Inter, Arial" font-size="24" font-weight="800">${workspaceName}</text>
-  <text x="116" y="90" fill="#C8A96A" font-family="Inter, Arial" font-size="14" font-weight="800">${qr.placement}</text>
-  <text x="48" y="184" fill="#0B1F33" font-family="Inter, Arial" font-size="44" font-weight="700">${artwork.headline}</text>
-  <foreignObject x="48" y="214" width="624" height="120"><div xmlns="http://www.w3.org/1999/xhtml" style="font-family:Inter,Arial,sans-serif;font-size:22px;line-height:1.35;color:rgba(11,31,51,.68)">${artwork.bodyCopy}</div></foreignObject>
-  <image href="${qrImageUrl(qr.destination, 520)}" x="100" y="378" width="520" height="520"/>
-  <text x="360" y="952" text-anchor="middle" fill="#0B1F33" font-family="Inter, Arial" font-size="18" font-weight="700">${destination}</text>
-  <text x="360" y="994" text-anchor="middle" fill="#8A6A1F" font-family="Inter, Arial" font-size="15" font-weight="800">Downtown Perks · ${artwork.printSize}</text>
+  <text x="116" y="65" fill="#0B1F33" font-family="Inter, Arial" font-size="24" font-weight="800">${escapeXml(workspaceName)}</text>
+  <text x="116" y="90" fill="#C8A96A" font-family="Inter, Arial" font-size="14" font-weight="800">${escapeXml(qr.placement)}</text>
+  <text x="48" y="184" fill="#0B1F33" font-family="Inter, Arial" font-size="44" font-weight="700">${escapeXml(artwork.headline)}</text>
+  <foreignObject x="48" y="214" width="624" height="120"><div xmlns="http://www.w3.org/1999/xhtml" style="font-family:Inter,Arial,sans-serif;font-size:22px;line-height:1.35;color:rgba(11,31,51,.68)">${escapeXml(artwork.bodyCopy)}</div></foreignObject>
+  <image href="${escapeXml(qrImageUrl(qr.destination, 520))}" x="100" y="378" width="520" height="520"/>
+  <text x="360" y="952" text-anchor="middle" fill="#0B1F33" font-family="Inter, Arial" font-size="18" font-weight="700">${escapeXml(destination)}</text>
+  <text x="360" y="994" text-anchor="middle" fill="#8A6A1F" font-family="Inter, Arial" font-size="15" font-weight="800">Downtown Perks · ${escapeXml(artwork.printSize)}</text>
 </svg>`;
   }
 
@@ -374,6 +418,238 @@ export function PartnerWorkspaceTemplate(props: Props) {
     }
   }
 
+  function updateEvent(eventId: string, key: keyof Event, value: string | number) {
+    setEvents((current) => current.map((item) => (item.id === eventId ? { ...item, [key]: value } : item)));
+  }
+
+  function addEvent() {
+    const id = `event-${Date.now()}`;
+    setEvents((current) => [
+      {
+        id,
+        title: `${workspaceName} resident plan`,
+        dateTime: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 16),
+        location: props.profile.propertyName,
+        description: 'A simple plan residents can say yes to.',
+        rsvpCount: 0,
+        capacity: 50,
+        status: 'Draft',
+        linkedQR: props.qrs[0]?.name || 'Lobby code',
+        linkedCampaign: campaigns[0]?.name || 'Resident broadcast',
+      },
+      ...current,
+    ]);
+    setEventNotice((current) => ({ ...current, [id]: 'New event started. Add the details, then save it.' }));
+  }
+
+  async function saveEventSetup(event: Event, nextStatus: Event['status'] = event.status) {
+    const nextEvent = { ...event, status: nextStatus };
+    setEvents((current) => current.map((item) => (item.id === event.id ? nextEvent : item)));
+    const payload = {
+      id: nextEvent.id,
+      title: nextEvent.title,
+      description: nextEvent.description,
+      date: nextEvent.dateTime,
+      dateTime: nextEvent.dateTime,
+      location: nextEvent.location,
+      capacity: Number(nextEvent.capacity || 0),
+      rsvp_count: Number(nextEvent.rsvpCount || 0),
+      registered_count: Number(nextEvent.rsvpCount || 0),
+      status: nextStatus.toLowerCase(),
+      linked_qr: nextEvent.linkedQR,
+      linked_campaign: nextEvent.linkedCampaign,
+      workspace_name: workspaceName,
+      updated_at: new Date().toISOString(),
+    };
+    try {
+      const patch = await fetch(`/api/events/${encodeURIComponent(nextEvent.id)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (!patch.ok) {
+        await fetch('/api/events', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+      }
+      setEventNotice((current) => ({ ...current, [event.id]: nextStatus === 'Published' ? 'Event published and saved.' : 'Event saved.' }));
+    } catch {
+      setEventNotice((current) => ({ ...current, [event.id]: 'Saved locally. Backend is not reachable from this browser.' }));
+    }
+  }
+
+  async function removeEvent(event: Event) {
+    setEvents((current) => current.filter((item) => item.id !== event.id));
+    try {
+      await fetch(`/api/entities/Event/${encodeURIComponent(event.id)}`, { method: 'DELETE' });
+    } catch {
+      setEventNotice((current) => ({ ...current, [event.id]: 'Removed locally. Backend is not reachable from this browser.' }));
+    }
+  }
+
+  function updateCampaign(campaignId: string, key: keyof Campaign, value: string | number | string[]) {
+    setCampaigns((current) => current.map((item) => (item.id === campaignId ? { ...item, [key]: value } : item)));
+  }
+
+  function addCampaign() {
+    const id = `campaign-${Date.now()}`;
+    setCampaigns((current) => [
+      {
+        id,
+        name: `${workspaceName} resident broadcast`,
+        audience: 'All residents',
+        channel: 'Email + building code',
+        linkedItems: [],
+        sendStatus: 'Draft',
+        opensViews: 0,
+        saves: 0,
+        redemptions: 0,
+        qrScans: 0,
+      },
+      ...current,
+    ]);
+    setCampaignNotice((current) => ({ ...current, [id]: 'Broadcast started. Add the audience, channel, and linked items.' }));
+  }
+
+  async function saveCampaignSetup(campaign: Campaign, nextStatus: Campaign['sendStatus'] = campaign.sendStatus) {
+    const nextCampaign = { ...campaign, sendStatus: nextStatus };
+    setCampaigns((current) => current.map((item) => (item.id === campaign.id ? nextCampaign : item)));
+    const payload = {
+      id: nextCampaign.id,
+      title: nextCampaign.name,
+      name: nextCampaign.name,
+      audience: nextCampaign.audience,
+      channel: nextCampaign.channel,
+      linked_items: nextCampaign.linkedItems,
+      status: nextStatus.toLowerCase(),
+      opens: Number(nextCampaign.opensViews || 0),
+      views: Number(nextCampaign.opensViews || 0),
+      saves: Number(nextCampaign.saves || 0),
+      redemptions: Number(nextCampaign.redemptions || 0),
+      qr_scans: Number(nextCampaign.qrScans || 0),
+      workspace_name: workspaceName,
+      updated_at: new Date().toISOString(),
+    };
+    try {
+      const patch = await fetch(`/api/campaigns/${encodeURIComponent(nextCampaign.id)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (!patch.ok) {
+        await fetch('/api/campaigns', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+      }
+      setCampaignNotice((current) => ({ ...current, [campaign.id]: nextStatus === 'Live' ? 'Broadcast is live and saved.' : 'Broadcast saved.' }));
+    } catch {
+      setCampaignNotice((current) => ({ ...current, [campaign.id]: 'Saved locally. Backend is not reachable from this browser.' }));
+    }
+  }
+
+  async function removeCampaign(campaign: Campaign) {
+    setCampaigns((current) => current.filter((item) => item.id !== campaign.id));
+    try {
+      await fetch(`/api/entities/Campaign/${encodeURIComponent(campaign.id)}`, { method: 'DELETE' });
+    } catch {
+      setCampaignNotice((current) => ({ ...current, [campaign.id]: 'Removed locally. Backend is not reachable from this browser.' }));
+    }
+  }
+
+  function updateResident(residentId: string, key: keyof Resident, value: string | number | string[]) {
+    setResidents((current) => current.map((item) => (item.id === residentId ? { ...item, [key]: value } : item)));
+  }
+
+  function addResident() {
+    const id = `resident-${Date.now()}`;
+    setResidents((current) => [
+      {
+        id,
+        name: 'New resident',
+        unit: '',
+        email: '',
+        moveInDate: new Date().toISOString().slice(0, 10),
+        interests: [],
+        savedPerks: 0,
+        rsvps: 0,
+        engagementStatus: 'New resident',
+      },
+      ...current,
+    ]);
+    setResidentNotice((current) => ({ ...current, [id]: 'Resident started. Add what you know, then save.' }));
+  }
+
+  async function saveResident(resident: Resident) {
+    const payload = {
+      id: resident.id,
+      name: resident.name,
+      unit: resident.unit,
+      email: resident.email,
+      move_in_date: resident.moveInDate,
+      interests: resident.interests,
+      saved_perks: Number(resident.savedPerks || 0),
+      rsvps: Number(resident.rsvps || 0),
+      engagement_status: resident.engagementStatus,
+      workspace_name: workspaceName,
+      updated_at: new Date().toISOString(),
+    };
+    try {
+      const patch = await fetch(`/api/residents/${encodeURIComponent(resident.id)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (!patch.ok) {
+        await fetch('/api/residents', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+      }
+      setResidentNotice((current) => ({ ...current, [resident.id]: 'Resident saved.' }));
+    } catch {
+      setResidentNotice((current) => ({ ...current, [resident.id]: 'Saved locally. Backend is not reachable from this browser.' }));
+    }
+  }
+
+  async function removeResident(resident: Resident) {
+    setResidents((current) => current.filter((item) => item.id !== resident.id));
+    try {
+      await fetch(`/api/entities/Tenant/${encodeURIComponent(resident.id)}`, { method: 'DELETE' });
+    } catch {
+      setResidentNotice((current) => ({ ...current, [resident.id]: 'Removed locally. Backend is not reachable from this browser.' }));
+    }
+  }
+
+  async function importResidentsFromText() {
+    const imported = residentImport
+      .split('\n')
+      .map((line) => line.trim())
+      .filter(Boolean)
+      .map((line, index) => {
+        const [name = 'Resident', unit = '', email = '', interests = ''] = line.split(',').map((part) => part.trim());
+        return {
+          id: `resident-import-${Date.now()}-${index}`,
+          name,
+          unit,
+          email,
+          moveInDate: new Date().toISOString().slice(0, 10),
+          interests: interests ? interests.split('|').map((item) => item.trim()).filter(Boolean) : [],
+          savedPerks: 0,
+          rsvps: 0,
+          engagementStatus: 'New resident' as const,
+        };
+      });
+    if (!imported.length) return;
+    setResidents((current) => [...imported, ...current]);
+    setResidentImport('');
+    await Promise.all(imported.map((resident) => saveResident(resident)));
+  }
+
   function writeBillingSummary(action: 'quote' | 'invoice') {
     const totalDue = couponResult?.accepted ? couponResult.totalDue : props.billing.price;
     const label = action === 'quote' ? 'quote' : 'invoice request';
@@ -440,11 +716,11 @@ export function PartnerWorkspaceTemplate(props: Props) {
                 <div className="shore-partner-kicker">
                   <Building2 className="h-4 w-4" />
                   <span>{props.partner.type}</span>
-                  <span>{props.partner.district}</span>
+                  <span>{workspaceName}</span>
                 </div>
                 <h1 className="mt-2 text-[28px] leading-tight text-[#0B1F33] sm:text-[34px]">{workspaceName} workspace</h1>
                 <p className="mt-3 text-sm leading-6 text-[rgba(11,31,51,0.66)]">
-                  {props.profile.residentFacingCopy} Keep the building’s resident view, signs, perks, events, notes, reports, and plan in one easy place.
+                  {props.profile.residentFacingCopy} Keep the building’s resident view, signs, perks, events, broadcasts, reports, and plan in one easy place.
                 </p>
                 <div className="mt-5 flex flex-wrap gap-2">
                   <a href="#setup" className="shore-button shore-button-primary">Finish setup</a>
@@ -471,7 +747,7 @@ export function PartnerWorkspaceTemplate(props: Props) {
               <div className="h-full bg-[#C8A96A]" style={{ width: `${setupProgress}%` }} />
             </div>
             <div className="mt-5 grid grid-cols-2 gap-6">
-              <MiniStat label="Seen this month" value="867" note="Resident notes opened" />
+              <MiniStat label="Seen this month" value="867" note="Resident broadcasts opened" />
               <MiniStat label="Best next move" value="Ready" note="Add the lobby link to the move-in email" />
             </div>
           </div>
@@ -736,64 +1012,211 @@ export function PartnerWorkspaceTemplate(props: Props) {
           </div>
         </Section>
 
-        <Section id="events" eyebrow="Events" title="Plans residents can say yes to" description="Simple invites with the count, the place, the linked sign, and a calendar tap for anyone who wants the reminder.">
+        <Section id="events" eyebrow="Events" title="Plans residents can say yes to" description="Create the invite, link the sign or broadcast, publish it, and keep the RSVP list close at hand.">
+          <div className="mb-5 flex flex-wrap items-center gap-2">
+            <button type="button" className="shore-button shore-button-primary" onClick={addEvent}>
+              <CalendarPlus className="h-4 w-4" /> Add event
+            </button>
+            <button type="button" className="shore-button" onClick={() => downloadTextFile(`${workspaceSlug}-events.json`, JSON.stringify(events, null, 2))}>
+              <Download className="h-4 w-4" /> Export events
+            </button>
+          </div>
           <div className="grid gap-x-12 gap-y-8 lg:grid-cols-2">
-            {props.events.map((event) => (
+            {events.map((event) => (
               <div key={event.id} className="shore-card">
-                <div className="text-[11px] font-bold uppercase text-[#C8A96A]">{event.status}</div>
-                <h3 className="mt-1 text-lg font-semibold">{event.title}</h3>
-                <p className="mt-2 text-sm leading-6 text-[rgba(11,31,51,0.66)]">{event.description}</p>
-                <div className="mt-3 text-xs text-[rgba(11,31,51,0.62)]">{new Date(event.dateTime).toLocaleString()} · {event.location}</div>
+                <div className="grid gap-3 sm:grid-cols-[1fr_130px]">
+                  <label className="block">
+                    <span className="text-[11px] font-bold uppercase text-[#C8A96A]">Event name</span>
+                    <input className="shore-input mt-1 text-lg font-semibold" value={event.title} onChange={(inputEvent) => updateEvent(event.id, 'title', inputEvent.target.value)} />
+                  </label>
+                  <label className="block">
+                    <span className="text-[10px] font-bold uppercase text-[rgba(11,31,51,0.52)]">Status</span>
+                    <select className="shore-input mt-1" value={event.status} onChange={(inputEvent) => updateEvent(event.id, 'status', inputEvent.target.value as Event['status'])}>
+                      <option>Published</option>
+                      <option>Scheduled</option>
+                      <option>Draft</option>
+                    </select>
+                  </label>
+                </div>
+                <label className="mt-3 block">
+                  <span className="text-[10px] font-bold uppercase text-[rgba(11,31,51,0.52)]">Invite copy</span>
+                  <textarea className="shore-input mt-1 min-h-20" value={event.description} onChange={(inputEvent) => updateEvent(event.id, 'description', inputEvent.target.value)} />
+                </label>
+                <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                  <label className="block">
+                    <span className="text-[10px] font-bold uppercase text-[rgba(11,31,51,0.52)]">Date and time</span>
+                    <input className="shore-input mt-1" type="datetime-local" value={localDateTimeValue(event.dateTime)} onChange={(inputEvent) => updateEvent(event.id, 'dateTime', inputEvent.target.value)} />
+                  </label>
+                  <label className="block">
+                    <span className="text-[10px] font-bold uppercase text-[rgba(11,31,51,0.52)]">Place</span>
+                    <input className="shore-input mt-1" value={event.location} onChange={(inputEvent) => updateEvent(event.id, 'location', inputEvent.target.value)} />
+                  </label>
+                  <label className="block">
+                    <span className="text-[10px] font-bold uppercase text-[rgba(11,31,51,0.52)]">RSVPs</span>
+                    <input className="shore-input mt-1" type="number" value={event.rsvpCount} onChange={(inputEvent) => updateEvent(event.id, 'rsvpCount', Number(inputEvent.target.value))} />
+                  </label>
+                  <label className="block">
+                    <span className="text-[10px] font-bold uppercase text-[rgba(11,31,51,0.52)]">Capacity</span>
+                    <input className="shore-input mt-1" type="number" value={event.capacity} onChange={(inputEvent) => updateEvent(event.id, 'capacity', Number(inputEvent.target.value))} />
+                  </label>
+                  <label className="block">
+                    <span className="text-[10px] font-bold uppercase text-[rgba(11,31,51,0.52)]">Linked code</span>
+                    <input className="shore-input mt-1" value={event.linkedQR} onChange={(inputEvent) => updateEvent(event.id, 'linkedQR', inputEvent.target.value)} />
+                  </label>
+                  <label className="block">
+                    <span className="text-[10px] font-bold uppercase text-[rgba(11,31,51,0.52)]">Linked broadcast</span>
+                    <input className="shore-input mt-1" value={event.linkedCampaign} onChange={(inputEvent) => updateEvent(event.id, 'linkedCampaign', inputEvent.target.value)} />
+                  </label>
+                </div>
                 <div className="shore-progress-track mt-4"><div className="h-full bg-[#C8A96A]" style={{ width: `${Math.min(100, Math.round((event.rsvpCount / event.capacity) * 100))}%` }} /></div>
-                <div className="mt-2 text-xs font-semibold">{event.rsvpCount}/{event.capacity} RSVPs · {event.linkedQR} · {event.linkedCampaign}</div>
+                <div className="mt-2 text-xs font-semibold">{event.rsvpCount}/{event.capacity} people said yes · {event.linkedQR}</div>
                 <div className="mt-4 flex flex-wrap gap-2">
+                  <button type="button" className="shore-button shore-button-primary" onClick={() => saveEventSetup(event)}>
+                    <Check className="h-4 w-4" /> Save event
+                  </button>
+                  <button type="button" className="shore-button" onClick={() => saveEventSetup(event, 'Published')}>
+                    <Sparkles className="h-4 w-4" /> Publish
+                  </button>
                   <button type="button" className="shore-button" onClick={() => downloadTextFile(`${event.id}-attendees.csv`, `event,rsvps,capacity\n"${event.title}",${event.rsvpCount},${event.capacity}\n`)}>
                     <Download className="h-4 w-4" /> Export list
                   </button>
                   <a href={createGoogleCalendarUrl(event, props.profile.propertyName)} target="_blank" rel="noreferrer" className="shore-button">
                     <CalendarPlus className="h-4 w-4" /> Add to Google Calendar
                   </a>
+                  <button type="button" className="shore-button" onClick={() => removeEvent(event)}>
+                    <X className="h-4 w-4" /> Remove
+                  </button>
                 </div>
+                {eventNotice[event.id] && <p className="mt-2 text-xs font-semibold text-[rgba(11,31,51,0.58)]">{eventNotice[event.id]}</p>}
               </div>
             ))}
           </div>
         </Section>
 
-        <Section id="campaigns" eyebrow="Notes" title={`What ${workspaceName} sends out`} description="Short, useful notes for welcome moments, weekends, campaigns, partner updates, and the monthly roundup.">
+        <Section id="campaigns" eyebrow="Broadcasts" title={`What ${workspaceName} sends out`} description="Write the note, choose who should get it, link the right perk or event, and see what people did next.">
+          <div className="mb-5 flex flex-wrap items-center gap-2">
+            <button type="button" className="shore-button shore-button-primary" onClick={addCampaign}>
+              <Send className="h-4 w-4" /> Add broadcast
+            </button>
+            <button type="button" className="shore-button" onClick={() => downloadTextFile(`${workspaceSlug}-broadcasts.json`, JSON.stringify(campaigns, null, 2))}>
+              <Download className="h-4 w-4" /> Export broadcasts
+            </button>
+          </div>
           <div className="grid gap-x-8 gap-y-6 lg:grid-cols-3">
-            {props.campaigns.map((campaign) => (
+            {campaigns.map((campaign) => (
               <div key={campaign.id} className="shore-card">
-                <div className="text-[11px] font-bold uppercase text-[#C8A96A]">{campaign.sendStatus}</div>
-                <h3 className="mt-2 text-sm font-semibold">{campaign.name}</h3>
-                <p className="mt-2 text-xs leading-5 text-[rgba(11,31,51,0.62)]">{campaign.audience} · {campaign.channel}</p>
-                <div className="mt-3 text-xs">Opened {campaign.opensViews} · Saved {campaign.saves} · Used {campaign.redemptions} · Scanned {campaign.qrScans}</div>
-                <a href="#reports" className="shore-button mt-4 w-full"><Eye className="h-4 w-4" /> See the report</a>
+                <label className="block">
+                  <span className="text-[11px] font-bold uppercase text-[#C8A96A]">Broadcast</span>
+                  <input className="shore-input mt-1 text-sm font-semibold" value={campaign.name} onChange={(inputEvent) => updateCampaign(campaign.id, 'name', inputEvent.target.value)} />
+                </label>
+                <div className="mt-3 grid gap-3">
+                  <label className="block">
+                    <span className="text-[10px] font-bold uppercase text-[rgba(11,31,51,0.52)]">Status</span>
+                    <select className="shore-input mt-1" value={campaign.sendStatus} onChange={(inputEvent) => updateCampaign(campaign.id, 'sendStatus', inputEvent.target.value as Campaign['sendStatus'])}>
+                      <option>Live</option>
+                      <option>Scheduled</option>
+                      <option>Sent</option>
+                      <option>Draft</option>
+                    </select>
+                  </label>
+                  <label className="block">
+                    <span className="text-[10px] font-bold uppercase text-[rgba(11,31,51,0.52)]">Audience</span>
+                    <input className="shore-input mt-1" value={campaign.audience} onChange={(inputEvent) => updateCampaign(campaign.id, 'audience', inputEvent.target.value)} />
+                  </label>
+                  <label className="block">
+                    <span className="text-[10px] font-bold uppercase text-[rgba(11,31,51,0.52)]">Channel</span>
+                    <input className="shore-input mt-1" value={campaign.channel} onChange={(inputEvent) => updateCampaign(campaign.id, 'channel', inputEvent.target.value)} />
+                  </label>
+                  <label className="block">
+                    <span className="text-[10px] font-bold uppercase text-[rgba(11,31,51,0.52)]">Linked perks and events</span>
+                    <input className="shore-input mt-1" value={campaign.linkedItems.join(', ')} onChange={(inputEvent) => updateCampaign(campaign.id, 'linkedItems', inputEvent.target.value.split(',').map((item) => item.trim()).filter(Boolean))} />
+                  </label>
+                </div>
+                <div className="mt-4 grid grid-cols-2 gap-3 text-xs">
+                  <label><span className="block text-[10px] font-bold uppercase text-[rgba(11,31,51,0.52)]">Opened</span><input className="shore-input mt-1" type="number" value={campaign.opensViews} onChange={(inputEvent) => updateCampaign(campaign.id, 'opensViews', Number(inputEvent.target.value))} /></label>
+                  <label><span className="block text-[10px] font-bold uppercase text-[rgba(11,31,51,0.52)]">Saved</span><input className="shore-input mt-1" type="number" value={campaign.saves} onChange={(inputEvent) => updateCampaign(campaign.id, 'saves', Number(inputEvent.target.value))} /></label>
+                  <label><span className="block text-[10px] font-bold uppercase text-[rgba(11,31,51,0.52)]">Used</span><input className="shore-input mt-1" type="number" value={campaign.redemptions} onChange={(inputEvent) => updateCampaign(campaign.id, 'redemptions', Number(inputEvent.target.value))} /></label>
+                  <label><span className="block text-[10px] font-bold uppercase text-[rgba(11,31,51,0.52)]">Scanned</span><input className="shore-input mt-1" type="number" value={campaign.qrScans} onChange={(inputEvent) => updateCampaign(campaign.id, 'qrScans', Number(inputEvent.target.value))} /></label>
+                </div>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <button type="button" className="shore-button shore-button-primary" onClick={() => saveCampaignSetup(campaign)}>
+                    <Check className="h-4 w-4" /> Save
+                  </button>
+                  <button type="button" className="shore-button" onClick={() => saveCampaignSetup(campaign, 'Live')}>
+                    <Send className="h-4 w-4" /> Send
+                  </button>
+                  <a href="#reports" className="shore-button"><Eye className="h-4 w-4" /> Report</a>
+                  <button type="button" className="shore-button" onClick={() => removeCampaign(campaign)}>
+                    <X className="h-4 w-4" /> Remove
+                  </button>
+                </div>
+                {campaignNotice[campaign.id] && <p className="mt-2 text-xs font-semibold text-[rgba(11,31,51,0.58)]">{campaignNotice[campaign.id]}</p>}
               </div>
             ))}
           </div>
         </Section>
 
-        <Section id="residents" eyebrow="Residents" title="People, not a spreadsheet" description="A light resident view for the workspace. It keeps the useful signals visible while leaving private details out of the way.">
+        <Section id="residents" eyebrow="Residents" title="People, not a spreadsheet" description="Add residents one at a time or paste a short contact list. Keep the useful signals visible and the private details tidy.">
+          <div className="shore-card mb-5 grid gap-4 lg:grid-cols-[1fr_0.42fr]">
+            <label className="block">
+              <span className="text-[11px] font-bold uppercase text-[#C8A96A]">Import contacts</span>
+              <textarea className="shore-input mt-2 min-h-24" placeholder="Name, unit, email, Coffee|Yoga" value={residentImport} onChange={(event) => setResidentImport(event.target.value)} />
+            </label>
+            <div className="flex flex-wrap items-end gap-2">
+              <button type="button" className="shore-button shore-button-primary" onClick={addResident}>
+                <Users className="h-4 w-4" /> Add resident
+              </button>
+              <button type="button" className="shore-button" onClick={importResidentsFromText}>
+                <Download className="h-4 w-4" /> Import
+              </button>
+              <button type="button" className="shore-button" onClick={() => downloadTextFile(`${workspaceSlug}-residents.csv`, residents.map((resident) => `"${resident.name}","${resident.unit}","${resident.email}","${resident.engagementStatus}"`).join('\n'))}>
+                <Download className="h-4 w-4" /> Export
+              </button>
+            </div>
+          </div>
           <div className="grid gap-x-8 gap-y-6 sm:grid-cols-2 lg:grid-cols-3">
-            {props.residents.map((resident) => (
+            {residents.map((resident) => (
               <div key={resident.id} className="shore-card">
                 <div className="flex items-center justify-between gap-2">
                   <Users className="h-4 w-4 text-[#C8A96A]" />
-                  <span className="text-[10px] font-bold uppercase text-[rgba(11,31,51,0.5)]">{resident.engagementStatus}</span>
+                  <select className="shore-input max-w-[155px]" value={resident.engagementStatus} onChange={(inputEvent) => updateResident(resident.id, 'engagementStatus', inputEvent.target.value as Resident['engagementStatus'])}>
+                    <option>New resident</option>
+                    <option>Active resident</option>
+                    <option>Low engagement</option>
+                    <option>Event attendee</option>
+                    <option>Perk saver</option>
+                  </select>
                 </div>
-                <h3 className="mt-3 text-sm font-semibold">{resident.name}</h3>
-                <p className="text-xs leading-5 text-[rgba(11,31,51,0.62)]">Home {resident.unit} · Since {resident.moveInDate}</p>
-                <p className="mt-2 text-xs leading-5 text-[rgba(11,31,51,0.62)]">{resident.interests.join(', ')}</p>
-                <div className="mt-3 text-xs font-semibold">{resident.savedPerks} saved perks · {resident.rsvps} RSVPs</div>
+                <label className="mt-3 block">
+                  <span className="text-[10px] font-bold uppercase text-[rgba(11,31,51,0.52)]">Name</span>
+                  <input className="shore-input mt-1 text-sm font-semibold" value={resident.name} onChange={(inputEvent) => updateResident(resident.id, 'name', inputEvent.target.value)} />
+                </label>
+                <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                  <label><span className="block text-[10px] font-bold uppercase text-[rgba(11,31,51,0.52)]">Home</span><input className="shore-input mt-1" value={resident.unit} onChange={(inputEvent) => updateResident(resident.id, 'unit', inputEvent.target.value)} /></label>
+                  <label><span className="block text-[10px] font-bold uppercase text-[rgba(11,31,51,0.52)]">Move-in</span><input className="shore-input mt-1" type="date" value={resident.moveInDate} onChange={(inputEvent) => updateResident(resident.id, 'moveInDate', inputEvent.target.value)} /></label>
+                  <label className="sm:col-span-2"><span className="block text-[10px] font-bold uppercase text-[rgba(11,31,51,0.52)]">Email</span><input className="shore-input mt-1" type="email" value={resident.email} onChange={(inputEvent) => updateResident(resident.id, 'email', inputEvent.target.value)} /></label>
+                  <label className="sm:col-span-2"><span className="block text-[10px] font-bold uppercase text-[rgba(11,31,51,0.52)]">Interests</span><input className="shore-input mt-1" value={resident.interests.join(', ')} onChange={(inputEvent) => updateResident(resident.id, 'interests', inputEvent.target.value.split(',').map((item) => item.trim()).filter(Boolean))} /></label>
+                  <label><span className="block text-[10px] font-bold uppercase text-[rgba(11,31,51,0.52)]">Saved perks</span><input className="shore-input mt-1" type="number" value={resident.savedPerks} onChange={(inputEvent) => updateResident(resident.id, 'savedPerks', Number(inputEvent.target.value))} /></label>
+                  <label><span className="block text-[10px] font-bold uppercase text-[rgba(11,31,51,0.52)]">RSVPs</span><input className="shore-input mt-1" type="number" value={resident.rsvps} onChange={(inputEvent) => updateResident(resident.id, 'rsvps', Number(inputEvent.target.value))} /></label>
+                </div>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <button type="button" className="shore-button shore-button-primary" onClick={() => saveResident(resident)}>
+                    <Check className="h-4 w-4" /> Save
+                  </button>
+                  <button type="button" className="shore-button" onClick={() => removeResident(resident)}>
+                    <X className="h-4 w-4" /> Remove
+                  </button>
+                </div>
+                {residentNotice[resident.id] && <p className="mt-2 text-xs font-semibold text-[rgba(11,31,51,0.58)]">{residentNotice[resident.id]}</p>}
               </div>
             ))}
           </div>
         </Section>
 
-        <Section id="reports" eyebrow="Reports" title="What residents found, saved, joined, and used" description="A plain 30-day read on whether the building is helping people use the neighborhood more often.">
+        <Section id="reports" eyebrow="Reports" title="What residents found, saved, joined, and used" description="A quick read from the current workspace: codes, perks, events, broadcasts, residents, and anonymous map activity around downtown Austin.">
           <div className="shore-card">
             <div className="grid gap-x-8 gap-y-6 sm:grid-cols-2 lg:grid-cols-4">
-              {props.reports.map((metric) => (
+              {reportSnapshot.metrics.map((metric) => (
                 <div key={metric.id}>
                   <div className="text-[11px] font-bold uppercase text-[rgba(11,31,51,0.52)]">{metric.label}</div>
                   <div className="mt-2 text-2xl font-semibold">{metric.value}</div>
@@ -804,20 +1227,21 @@ export function PartnerWorkspaceTemplate(props: Props) {
             </div>
             <div className="mt-5 border-l-2 border-[#C8A96A] bg-[#F7F8FB] p-4">
               <div className="text-sm font-semibold">What we would do next</div>
-              <p className="mt-1 text-sm leading-6 text-[rgba(11,31,51,0.66)]">The lobby code is doing the most work. Put the same link in the move-in email and on the elevator sign.</p>
+              <p className="mt-1 text-sm leading-6 text-[rgba(11,31,51,0.66)]">{reportSnapshot.recommendation}</p>
+              <p className="mt-2 text-xs leading-5 text-[rgba(11,31,51,0.58)]">Built from the live workspace data on this page, plus anonymous map activity for nearby downtown places.</p>
             </div>
           </div>
         </Section>
 
-        <Section id="billing" eyebrow="Plan" title="Keep it running for the year" description="One yearly plan, optional help, invoice support, and a demo coupon when it is time to show the close.">
+        <Section id="billing" eyebrow="Plan" title="Keep the building connected" description="See the current plan, add help when it is useful, and keep billing simple.">
           <div className="shore-card grid gap-8 lg:grid-cols-[0.8fr_1.2fr]">
             <div>
               <div className="flex items-center gap-2 text-[11px] font-bold uppercase text-[#C8A96A]"><CreditCard className="h-4 w-4" /> {props.billing.conversionState}</div>
               <h3 className="mt-2 text-2xl font-semibold">{props.billing.name}</h3>
               <div className="mt-2 text-2xl font-semibold">{money(props.billing.price)}<span className="text-sm font-normal text-[rgba(11,31,51,0.56)]">/{props.billing.cadence}</span></div>
               <div className="mt-4 flex gap-2">
-                <input className="shore-input" placeholder="Coupon code" value={coupon} onChange={(event) => setCoupon(event.target.value)} />
-                <button type="button" className="shore-button" onClick={() => setCouponResult(applyCoupon(coupon, props.billing.price, props.billing.couponCodes))}>Apply</button>
+                <input className="shore-input" placeholder="Partner credit" value={coupon} onChange={(event) => setCoupon(event.target.value)} />
+                <button type="button" className="shore-button" onClick={() => setCouponResult(applyCoupon(coupon, props.billing.price, props.billing.couponCodes))}>Apply credit</button>
               </div>
               {couponResult && (
                 <p className="mt-2 text-sm font-semibold text-[#0B1F33]">
@@ -826,18 +1250,30 @@ export function PartnerWorkspaceTemplate(props: Props) {
               )}
             </div>
             <div>
-              <div className="grid gap-2 sm:grid-cols-2">
+              <div className="text-[11px] font-bold uppercase text-[#C8A96A]">Add when useful</div>
+              <div className="mt-3 grid gap-2 sm:grid-cols-2">
                 {props.billing.addOns.map((addOn) => (
-                  <div key={addOn} className="border border-[rgba(11,31,51,0.08)] bg-[#F7F8FB] p-3 text-sm font-semibold">{addOn}</div>
+                  <button type="button" key={addOn} className="shore-plan-option" onClick={() => setBillingNotice(`${addOn} added to the next invoice draft.`)}>
+                    <span>{addOn}</span>
+                    <small>One-time or monthly support</small>
+                  </button>
                 ))}
+              </div>
+              <div className="mt-5 grid gap-2 sm:grid-cols-2">
+                <button type="button" className="shore-plan-option" onClick={() => setBillingNotice('Resident Plus upgrade selected. The next invoice draft will include the higher plan.')}>
+                  <span>Upgrade to Resident Plus</span>
+                  <small>More broadcasts, deeper reporting, and event support</small>
+                </button>
+                <button type="button" className="shore-plan-option" onClick={() => setBillingNotice('Concierge setup added as a one-time service.')}>
+                  <span>Concierge setup</span>
+                  <small>One-time setup for signs, resident imports, and first campaign</small>
+                </button>
               </div>
               <div className="mt-5 flex flex-wrap gap-2">
                 <button type="button" className="shore-button shore-button-primary" onClick={() => {
-                  setCoupon('DUDE2026');
-                  setCouponResult(applyCoupon('DUDE2026', props.billing.price, props.billing.couponCodes));
-                  setBillingNotice(`DUDE2026 applied. ${workspaceName} can stay live for the demo.`);
+                  setBillingNotice(`${workspaceName} is ready for the yearly plan.`);
                 }}>
-                  <Sparkles className="h-4 w-4" /> Keep workspace live
+                  <Sparkles className="h-4 w-4" /> Activate yearly plan
                 </button>
                 <button type="button" className="shore-button" onClick={() => writeBillingSummary('quote')}>Download quote</button>
                 <button type="button" className="shore-button" onClick={() => writeBillingSummary('invoice')}>Request invoice</button>

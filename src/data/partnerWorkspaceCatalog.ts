@@ -28,7 +28,7 @@ type WorkspaceRecords = {
   qr?: any[];
 };
 
-const defaultSteps = ['Start', 'Profile', 'Map', 'Perks', 'Events', 'Notes', 'Codes', 'Reports', 'Plan'];
+const defaultSteps = ['Start', 'Profile', 'Map', 'Perks', 'Events', 'Broadcasts', 'Codes', 'Reports', 'Plan'];
 const heroImage = '/workspace-media/images/the-shore-building.jpg';
 
 export function slugify(value: string) {
@@ -46,10 +46,10 @@ const seeds: WorkspaceSeed[] = [
     type: 'Civic Partner',
     district: 'Downtown Austin',
     address: 'Downtown Austin Neighborhood Association',
-    description: 'DANA has a dedicated civic workspace for resident updates, neighborhood programs, meetings, advocacy notes, and downtown reporting.',
+    description: 'DANA has a dedicated civic workspace for resident updates, neighborhood programs, meetings, advocacy follow-up, and downtown reporting.',
     audience: 'Downtown residents, neighborhood advocates, property teams, and civic partners who need a clear read on what is happening nearby.',
     managerNotes: 'Keep the civic calendar, resident-facing updates, district alerts, and meeting follow-up in one place.',
-    amenities: ['Civic updates', 'Resident surveys', 'District notes', 'Meeting reminders', 'Partner reports'],
+    amenities: ['Civic updates', 'Resident surveys', 'District broadcasts', 'Meeting reminders', 'Partner reports'],
     anchors: ['Downtown Austin', 'Rainey', 'Waterloo Greenway', '2nd Street District', 'Congress Avenue'],
     plan: 'Civic Partner Workspace',
   },

@@ -31,7 +31,7 @@ const moduleRoutes = [
   { label: 'Civic', to: '/admin/partner', icon: ShieldCheck },
   { label: 'Events', to: '/admin/events', icon: CalendarDays },
   { label: 'Perks', to: '/admin/perks', icon: Ticket },
-  { label: 'Notes to send', to: '/admin/engagement', icon: Megaphone },
+  { label: 'Broadcasts', to: '/admin/engagement', icon: Megaphone },
   { label: 'Reports', to: '/admin/reports', icon: FileText },
   { label: 'Plans & billing', to: '/admin/promotions', icon: CreditCard },
   { label: 'People with access', to: '/admin/settings', icon: Users },
@@ -139,7 +139,7 @@ export default function BackendWorkspace() {
     { label: 'Venues', value: tenantTypeCounts.venue || tenantTypeCounts.venue_group || 0, detail: 'Places ready for offers and events', area: 'Venues', to: '/admin/partner' },
     { label: 'Perks', value: activePerks, detail: 'Offers residents can see or use soon', area: 'Perks', to: '/admin/perks' },
     { label: 'Events', value: upcomingEvents, detail: 'Plans coming up downtown', area: 'Events', to: '/admin/events' },
-    { label: 'Notes', value: runningCampaigns, detail: 'Messages and building notes in motion', area: 'Notes', to: '/admin/engagement' },
+    { label: 'Broadcasts', value: runningCampaigns, detail: 'Messages and building broadcasts in motion', area: 'Broadcasts', to: '/admin/engagement' },
     { label: 'Residents', value: data.residents.length, detail: 'Resident profiles ready for support', area: 'Residents', to: '/admin/residents' },
     { label: 'Saved perks', value: perkSaves, detail: 'What residents wanted to keep', area: 'Perks', to: '/admin/perks' },
     { label: 'Perks used', value: data.redemptions.length, detail: 'Offers people actually used', area: 'Perks', to: '/admin/perks' },
@@ -158,7 +158,7 @@ export default function BackendWorkspace() {
     },
     {
       title: 'Activate',
-      routes: moduleRoutes.filter((route) => ['Events', 'Perks', 'Notes to send'].includes(route.label)),
+      routes: moduleRoutes.filter((route) => ['Events', 'Perks', 'Broadcasts'].includes(route.label)),
     },
     {
       title: 'Measure',
@@ -210,7 +210,7 @@ export default function BackendWorkspace() {
             <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-[#C8A96A]">Start here</p>
             <h1 className="mt-2 text-3xl font-semibold tracking-normal">Downtown Perks, ready to run</h1>
             <p className="mt-3 max-w-4xl text-sm leading-6 text-[rgba(11,31,51,0.66)]">
-              Open the people, places, perks, events, notes, reports, and plans that keep downtown moving.
+              Open the people, places, perks, events, broadcasts, reports, and plans that keep downtown moving.
             </p>
           </div>
           <div className="rounded-xl border border-[rgba(11,31,51,0.08)] bg-white p-4">
@@ -225,7 +225,7 @@ export default function BackendWorkspace() {
       <SummaryTable
         eyebrow="Quick read"
         title="What is active right now"
-        description="A compact view of the partners, properties, notes, resident activity, and reports ready to review."
+        description="A compact view of the partners, properties, broadcasts, resident activity, and reports ready to review."
         rows={kpis}
       />
 
@@ -234,7 +234,7 @@ export default function BackendWorkspace() {
           <div className="mb-5">
             <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-[#C8A96A]">Quick navigation</p>
             <h2 className="mt-2 text-xl font-semibold">Find the right area fast.</h2>
-            <p className="mt-2 text-sm leading-6 text-[rgba(11,31,51,0.62)]">Use these groups to move through partners, properties, notes, reports, billing, and support without hunting through the sidebar.</p>
+            <p className="mt-2 text-sm leading-6 text-[rgba(11,31,51,0.62)]">Use these groups to move through partners, properties, broadcasts, reports, billing, and support without hunting through the sidebar.</p>
           </div>
           <div className="grid gap-4 lg:grid-cols-2">
             {groupedModules.map((group) => (

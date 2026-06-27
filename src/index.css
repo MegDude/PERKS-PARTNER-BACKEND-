@@ -717,3 +717,70 @@ body :where(section.bg-white[class*="border"], article.bg-white[class*="border"]
   border-color: transparent !important;
   box-shadow: none !important;
 }
+
+/* Premium white surface pass: sections carry the hierarchy; rows and inner controls stay quiet. */
+.dp-admin-shell :where(main > div > section, main > section, .dp-admin-page-header, .dp-summary-matrix, .dp-admin-toolbar),
+.shore-workspace :where(.shore-hero, .shore-status-strip, .shore-card, section[id]) {
+  border-color: rgba(11, 31, 51, 0.035) !important;
+  background: #ffffff !important;
+  box-shadow: 0 18px 54px rgba(11, 31, 51, 0.035) !important;
+  transition: box-shadow 180ms ease, transform 180ms ease, border-color 180ms ease;
+}
+
+.dp-admin-shell :where(main > div > section:hover, main > section:hover, .dp-summary-matrix:hover),
+.shore-workspace :where(.shore-hero:hover, section[id]:hover) {
+  box-shadow: 0 22px 64px rgba(11, 31, 51, 0.052), 0 0 0 1px rgba(200, 169, 106, 0.08) !important;
+}
+
+.dp-admin-shell :where(table, thead, tbody, tr, th, td),
+.dp-admin-shell :where(.divide-y > :not([hidden]) ~ :not([hidden])) {
+  border-color: transparent !important;
+}
+
+.dp-admin-shell :where(tbody tr) {
+  transition: background-color 160ms ease, color 160ms ease;
+}
+
+.dp-admin-shell :where(tbody tr:hover) {
+  background: rgba(200, 169, 106, 0.045) !important;
+}
+
+.dp-admin-shell :where(button, a[role="button"], a[class*="inline-flex"], input, select, textarea) {
+  transition: border-color 160ms ease, color 160ms ease, background-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+}
+
+.dp-admin-shell :where(button:hover, a[role="button"]:hover, a[class*="inline-flex"]:hover) {
+  box-shadow: 0 8px 24px rgba(200, 169, 106, 0.08) !important;
+  transform: translateY(-1px);
+}
+
+.dp-admin-shell :where(input:focus, select:focus, textarea:focus, button:focus-visible, a:focus-visible) {
+  outline: 0 !important;
+  box-shadow: 0 0 0 2px rgba(200, 169, 106, 0.18) !important;
+}
+
+@media (max-width: 430px) {
+  .dp-admin-shell :where(h1) {
+    font-size: 1.72rem !important;
+    line-height: 1.12 !important;
+  }
+
+  .dp-admin-shell :where(h2) {
+    font-size: 1.2rem !important;
+    line-height: 1.2 !important;
+  }
+
+  .dp-admin-shell :where(h3) {
+    font-size: 1rem !important;
+    line-height: 1.25 !important;
+  }
+
+  .dp-admin-shell :where(p, li, td, input, select, textarea) {
+    font-size: 12.5px !important;
+    line-height: 1.42 !important;
+  }
+
+  .dp-admin-shell :where(main > div > section, main > section, .dp-summary-matrix) {
+    box-shadow: 0 12px 36px rgba(11, 31, 51, 0.032) !important;
+  }
+}

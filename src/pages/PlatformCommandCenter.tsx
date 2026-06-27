@@ -8,7 +8,7 @@ const platformRoutes = [
   { label: 'Buildings', to: '/admin/buildings', icon: Building2, description: 'See properties, residents, amenities, and building activity in one place.' },
   { label: 'Events', to: '/admin/events', icon: CalendarDays, description: 'Review what is coming up, who said yes, and what needs a follow-up.' },
   { label: 'Perks', to: '/admin/perks', icon: Ticket, description: 'Create offers residents can understand, save, scan, and use.' },
-  { label: 'Notes', to: '/admin/engagement', icon: Megaphone, description: 'Plan the short messages that help people know what is happening nearby.' },
+  { label: 'Broadcasts', to: '/admin/engagement', icon: Megaphone, description: 'Plan the short messages that help people know what is happening nearby.' },
   { label: 'Residents', to: '/admin/residents', icon: Users, description: 'Find resident profiles, building links, saved perks, and event activity.' },
   { label: 'Reports', to: '/admin/reports', icon: FileText, description: 'See what people found, saved, joined, and used.' },
   { label: 'Settings', to: '/admin/settings', icon: BarChart3, description: 'Adjust access, messages, and connected tools.' },
@@ -65,9 +65,9 @@ export default function PlatformCommandCenter() {
     { label: 'Residents', value: data.residents.length, detail: 'People with profiles, access status, building links, or saved activity.', area: 'Residents', to: '/admin/residents' },
     { label: 'Events', value: data.events.length, detail: 'Programming that can be shared, followed up on, and reviewed.', area: 'Events', to: '/admin/events' },
     { label: 'Perks', value: data.perks.length, detail: 'Offers residents can find, save, scan, and use.', area: 'Perks', to: '/admin/perks' },
-    { label: 'Notes', value: data.campaigns.length, detail: 'Short messages that connect residents to offers and events.', area: 'Notes', to: '/admin/engagement' },
+    { label: 'Broadcasts', value: data.campaigns.length, detail: 'Short messages that connect residents to offers and events.', area: 'Broadcasts', to: '/admin/engagement' },
     { label: 'Surveys', value: data.surveys.length, detail: 'Feedback forms used to learn what residents and partners need.', area: 'Surveys', to: '/admin/surveys' },
-    { label: 'Reports', value: data.reports.length, detail: 'Clear summaries for partners, properties, notes, and activity.', area: 'Reports', to: '/admin/reports' },
+    { label: 'Reports', value: data.reports.length, detail: 'Clear summaries for partners, properties, broadcasts, and activity.', area: 'Reports', to: '/admin/reports' },
     { label: 'Connected tools', value: data.integrations.length, detail: 'Forms, messages, and reports that can talk to each other.', area: 'Tools', to: '/admin/settings' },
     { label: 'Follow-ups', value: data.automations.length, detail: 'Reminders and handoffs that keep people from missing the next step.', area: 'Follow-ups', to: '/admin/home' },
     { label: 'Message paths', value: data.journeys.length, detail: 'Resident, event, passport, and partner follow-up messages.', area: 'Messages', to: '/admin/engagement' },
@@ -89,7 +89,7 @@ export default function PlatformCommandCenter() {
           <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-[#C8A96A]">Today downtown</p>
           <h1 className="mt-3 text-3xl font-semibold md:text-5xl">A clear read on what is moving</h1>
           <p className="mt-4 max-w-4xl text-base leading-7 text-[rgba(11,31,51,0.68)]">
-            Start here to open partners, buildings, residents, events, perks, notes, surveys, reports, and the tools that keep the day moving.
+            Start here to open partners, buildings, residents, events, perks, broadcasts, surveys, reports, and the tools that keep the day moving.
           </p>
         </section>
 
@@ -128,7 +128,7 @@ export default function PlatformCommandCenter() {
           <summary>
             <span>
               Places with momentum
-              <span className="dp-admin-collapsible__meta">Quick access to the partners, places, events, and notes worth opening first.</span>
+              <span className="dp-admin-collapsible__meta">Quick access to the partners, places, events, and broadcasts worth opening first.</span>
             </span>
           </summary>
           <div className="mt-5 overflow-x-auto border border-[rgba(11,31,51,0.08)] bg-white">
