@@ -653,17 +653,17 @@ function InsightLine({ label, value }: any) {
 
 function MetricPair({ label, value }: any) {
   return (
-    <div className="bg-white px-3 py-2">
-      <span className="block text-[10px] font-semibold uppercase text-[rgba(11,31,51,0.42)]">{label}</span>
-      <strong className="mt-0.5 block text-[13px] font-semibold text-[#0B1F33]">{Number(value || 0).toLocaleString()}</strong>
+    <div className="bg-white">
+      <span className="block text-[9px] font-semibold uppercase text-[rgba(11,31,51,0.42)]">{label}</span>
+      <strong className="mt-0.5 block text-[11px] font-semibold text-[#0B1F33]">{Number(value || 0).toLocaleString()}</strong>
     </div>
   );
 }
 
 function DateLine({ label, value }: any) {
   return (
-    <div className="grid grid-cols-[44px_1fr] gap-2 text-[12px] leading-5">
-      <span className="font-semibold uppercase text-[10px] text-[rgba(11,31,51,0.42)]">{label}</span>
+    <div className="grid grid-cols-[34px_1fr] gap-1.5 text-[10.5px] leading-4">
+      <span className="font-semibold uppercase text-[9px] text-[rgba(11,31,51,0.42)]">{label}</span>
       <span className="font-medium text-[#0B1F33]">{value}</span>
     </div>
   );
@@ -671,8 +671,8 @@ function DateLine({ label, value }: any) {
 
 function RelationshipLine({ label, value }: any) {
   return (
-    <p className="grid grid-cols-[70px_1fr] gap-2 border-b border-[rgba(11,31,51,0.06)] py-1.5 last:border-b-0">
-      <span className="w-16 shrink-0 text-[rgba(11,31,51,0.42)]">{label}</span>
+    <p className="grid grid-cols-[54px_1fr] gap-1.5 py-0.5">
+      <span className="shrink-0 text-[rgba(11,31,51,0.42)]">{label}</span>
       <span className="min-w-0 font-medium text-[#0B1F33]">{value}</span>
     </p>
   );
@@ -689,7 +689,7 @@ function StatusPill({ status }: { status: string }) {
         : 'border-[rgba(11,31,51,0.10)] bg-white text-[#0B1F33]';
 
   return (
-    <span className={`inline-flex min-h-7 items-center border px-2.5 text-[10px] font-semibold uppercase ${tone}`}>
+    <span className={`inline-flex min-h-6 items-center px-1.5 text-[9px] font-semibold uppercase ${tone}`}>
       {normalized}
     </span>
   );
