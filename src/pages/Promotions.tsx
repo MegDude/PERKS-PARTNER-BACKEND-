@@ -311,7 +311,12 @@ export default function Promotions() {
             line_items: [{ name: plan.label, display_name: plan.label, amount: plan.amount, currency: 'usd', interval: 'year' }],
           }),
         }).then((res) => res.json());
-        setNotice(result.checkout_url ? 'Checkout record created.' : result.message || 'Checkout saved.');
+        if (result.checkout_url && /^https?:\/\//.test(result.checkout_url)) {
+          window.open(result.checkout_url, '_blank', 'noopener,noreferrer');
+          setNotice('Stripe checkout opened.');
+        } else {
+          setNotice(result.message || 'Checkout saved.');
+        }
       }
 
       await load();

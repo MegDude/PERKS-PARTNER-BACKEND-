@@ -4916,7 +4916,9 @@ export async function createApp() {
     const body = req.body || {};
     const lineItems = Array.isArray(body.line_items) ? body.line_items : [];
     const selectedPriceIds = lineItems.map((item: any) => item.price || item.stripe_price_id).filter(Boolean);
-    const matchedProducts = db.entities.ProductOffering.filter((product) => selectedPriceIds.includes(product.stripe_price_id) || selectedPriceIds.some((priceId: string) => product.prices?.some((price: any) => price.stripe_price_id === priceId)));
+    const matchedProducts = lineItems
+      .map((item: any) => findCatalogProduct(db.entities, { ...item, plan_key: body.plan?.key || body.plan_key || body.plan }))
+      .filter(Boolean) as EntityRecord[];
     const products = (matchedProducts.length ? matchedProducts : lineItems.map((item: any, index: number) => ({
       id: item.product_id || `local_plan_${slug(item.name || body.plan?.label || body.plan || `plan_${index + 1}`)}`,
       name: item.name || body.plan?.label || body.plan || "Partner plan",
@@ -5043,6 +5045,47 @@ export async function createApp() {
         redemption,
         checkout_url: "/partners/provision?checkout=promotional",
         message: "Your first year is complimentary. No payment is required today.",
+      });
+    }
+
+    const paymentLinkProduct = products.length === 1 && !promotionValidation?.discount ? products.find((product) => product.stripe_payment_link_url) : null;
+    if (paymentLinkProduct?.stripe_payment_link_url) {
+      checkoutRecord.provider = "stripe_payment_link";
+      checkoutRecord.payment_provider = "stripe_payment_link";
+      checkoutRecord.status = "payment_link_ready";
+      checkoutRecord.billing_status = "pending_payment";
+      checkoutRecord.checkout_url = paymentLinkProduct.stripe_payment_link_url;
+      checkoutRecord.stripe_payment_link_id = paymentLinkProduct.stripe_payment_link_id;
+      checkoutRecord.stripe_payment_link_url = paymentLinkProduct.stripe_payment_link_url;
+      ensureRecord(db.entities.PartnerInvoice, `invoice_${checkoutRecord.id}`, {
+        tenant_id: checkoutRecord.tenant_id,
+        workspace_id: checkoutRecord.workspace_id,
+        billing_email: billingEmail,
+        status: "pending_payment",
+        provider: "stripe_payment_link",
+        checkout_session_id: checkoutRecord.id,
+        stripe_payment_link_id: paymentLinkProduct.stripe_payment_link_id,
+        hosted_invoice_url: paymentLinkProduct.stripe_payment_link_url,
+        subtotal,
+        discount: 0,
+        total: checkoutRecord.total,
+        currency: products[0]?.currency || "usd",
+      });
+      writeAuditEvent(db, req, { action: "stripe_payment_link_checkout_created", entity_type: "checkout", entity_id: checkoutRecord.id, after: checkoutRecord });
+      writeAnalyticsEvent(db, req, { event: "stripe_payment_link_checkout_created", entity_type: "checkout", entity_id: checkoutRecord.id, metadata: { product: paymentLinkProduct.name, url: paymentLinkProduct.stripe_payment_link_url } });
+      await saveDatabase(db);
+      return res.status(201).json({
+        success: true,
+        status: "payment_link_ready",
+        checkout_session: checkoutRecord,
+        checkout_url: paymentLinkProduct.stripe_payment_link_url,
+        payment_link: {
+          id: paymentLinkProduct.stripe_payment_link_id,
+          url: paymentLinkProduct.stripe_payment_link_url,
+          product_id: paymentLinkProduct.stripe_product_id,
+          price_id: paymentLinkProduct.stripe_price_id,
+        },
+        message: "Stripe payment link ready.",
       });
     }
 
