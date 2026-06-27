@@ -287,20 +287,22 @@ export function PartnerWorkspaceTemplate(props: Props) {
   const billingDiscount = Math.round(billingSubtotal * (appliedCreditPercent / 100));
   const billingTotalDue = Math.max(0, billingSubtotal - billingDiscount);
   const workspaceIsActive = billingStatus === 'active' || billingStatus === 'promotional';
+  const reportAudience = workspaceSubject === 'building' ? 'residents' : 'people';
   const reportSnapshot = useMemo(() => {
     const topQr = [...props.qrs].sort((a, b) => b.scans - a.scans)[0];
+    const firstChannel = workspaceSubject === 'building' ? 'move-in email' : 'next partner note';
     return {
       metrics: [
-        { id: 'qr-scans', label: 'Code scans', value: 'Not tracked yet', change: 'Ready', explanation: 'Scans will appear after a printed sign, flyer, or email code is used.' },
-        { id: 'resident-activations', label: 'Residents joined', value: 'Not tracked yet', change: 'Ready', explanation: 'Resident joins will appear once real residents start using the guide.' },
-        { id: 'perk-saves', label: 'Things saved', value: 'Not tracked yet', change: 'Ready', explanation: 'Saves will appear after residents keep a perk, place, or event.' },
-        { id: 'perk-redemptions', label: 'Offers used', value: 'Not tracked yet', change: 'Ready', explanation: 'Offer use will appear after partner redemptions are recorded.' },
+        { id: 'qr-scans', label: 'Entry codes', value: 'Waiting', change: 'Ready to track', explanation: 'Scans appear after a sign, flyer, table card, or email link is used.' },
+        { id: 'resident-activations', label: `${reportAudience[0].toUpperCase()}${reportAudience.slice(1)} joined`, value: 'Waiting', change: 'Ready to track', explanation: `${reportAudience[0].toUpperCase()}${reportAudience.slice(1)} appear after the guide is opened from a live entry point.` },
+        { id: 'perk-saves', label: 'Saved items', value: 'Waiting', change: 'Ready to track', explanation: `Saves appear after ${reportAudience} keep a perk, place, or plan for later.` },
+        { id: 'perk-redemptions', label: 'Offers used', value: 'Waiting', change: 'Ready to track', explanation: 'Use appears after a redemption is recorded by the partner or the workspace.' },
       ],
       recommendation: topQr
-        ? `Start with ${topQr.name}. Print it, add it to the move-in email, and let the next report show what residents actually used.`
-        : 'Start with one lobby code, one useful offer, and one resident invite. Then let the report show what caught on.',
+        ? `Start with ${topQr.name}. Print it, add it to the ${firstChannel}, and let the next report show what people actually used.`
+        : `Start with one clear code, one useful offer, and one short note. Then let the report show what ${reportAudience} actually used.`,
     };
-  }, [props.qrs]);
+  }, [props.qrs, reportAudience, workspaceSubject]);
 
   const workspaceMatrix = [
     { label: 'Setup', value: `${setupProgress}%`, note: setupProgress >= 80 ? 'Ready for review.' : 'Add real contacts, activity, and reporting.', href: '#setup' },
@@ -1551,7 +1553,7 @@ export function PartnerWorkspaceTemplate(props: Props) {
           </div>
         </Section>
 
-        <Section id="reports" eyebrow="Reports" title="What residents found, saved, joined, and used" description="A quick read on what is working: signs, perks, events, broadcasts, resident activity, and the places around downtown that people are actually opening.">
+        <Section id="reports" eyebrow="Reports" title="What people used, and what to try next" description="A simple read on the entry points, offers, notes, and nearby places that are starting to work. If nothing is live yet, this shows exactly where tracking will begin.">
           <div className="shore-read">
             <div className="shore-report-matrix" aria-label={`${workspaceName} report quick view`}>
               {reportSnapshot.metrics.map((metric) => (
@@ -1567,7 +1569,7 @@ export function PartnerWorkspaceTemplate(props: Props) {
               <div className="text-[10px] font-bold uppercase text-[#C8A96A]">Next move</div>
               <div className="mt-1 max-w-[720px] sm:col-span-3 sm:col-start-2 sm:mt-0">
                 <p className="text-sm font-semibold leading-6 text-[#0B1F33]">{reportSnapshot.recommendation}</p>
-                <p className="mt-1 text-xs leading-5 text-[rgba(11,31,51,0.58)]">No names here. Just enough activity to know what residents are using and what deserves another push.</p>
+                <p className="mt-1 text-xs leading-5 text-[rgba(11,31,51,0.58)]">No names here. Just enough activity to see what is useful, what needs a better nudge, and what deserves another push.</p>
               </div>
             </div>
           </div>
@@ -1592,7 +1594,7 @@ export function PartnerWorkspaceTemplate(props: Props) {
             <div>
               <div className="text-[11px] font-bold uppercase text-[#C8A96A]">Add-ons and modules</div>
               <p className="mt-2 text-sm leading-6 text-[rgba(11,31,51,0.64)]">
-                Add-ons are one-time help. Modules become part of the workspace and show up in the plan, invoice, and the relevant tool area.
+                Choose any add-on or module below to add it to the plan. The calculator updates the total as you select items, then you can save a quote or request an invoice.
               </p>
               <div className="mt-3 grid gap-2 sm:grid-cols-2">
                 {props.billing.addOns.map((addOn) => (
@@ -1605,11 +1607,11 @@ export function PartnerWorkspaceTemplate(props: Props) {
               <div className="mt-5 grid gap-2 sm:grid-cols-2">
                 <button type="button" className={`shore-plan-option ${selectedBillingAddOns.includes('Resident Plus upgrade') ? 'is-selected' : ''}`} onClick={() => toggleBillingAddOn('Resident Plus upgrade')}>
                   <span>Upgrade to Resident Plus</span>
-                  <small>{money(addOnPrice('Resident Plus upgrade'))} one-time · more notes, reporting, and event support</small>
+                  <small>{money(addOnPrice('Resident Plus upgrade'))} one-time · more audience notes, reporting, and event support</small>
                 </button>
                 <button type="button" className={`shore-plan-option ${selectedBillingAddOns.includes('Concierge setup') ? 'is-selected' : ''}`} onClick={() => toggleBillingAddOn('Concierge setup')}>
                   <span>Concierge setup</span>
-                  <small>{money(addOnPrice('Concierge setup'))} one-time · signs, resident imports, and the first note</small>
+                  <small>{money(addOnPrice('Concierge setup'))} one-time · signs, partner list imports, and the first note</small>
                 </button>
               </div>
               <div className="shore-billing-matrix mt-5" aria-label={`${workspaceName} billing summary`}>
