@@ -139,11 +139,10 @@ export default function PartnerDashboardLayout() {
               aria-label="Close navigation overlay"
               onClick={() => setMobileOpen(false)}
             />
-            <div className="absolute right-0 top-0 flex h-full w-[min(92vw,390px)] flex-col bg-white shadow-none">
+            <div className="absolute left-0 top-0 flex h-full w-[min(92vw,390px)] flex-col bg-white shadow-none">
               <div className="flex items-center justify-between p-4">
                 <div>
                   <div className="text-[10px] font-semibold uppercase text-slate-400">Downtown Perks</div>
-                  <div className="text-sm font-bold text-[#11182B]">Where do you want to go?</div>
                 </div>
                 <Button
                   onClick={() => setMobileOpen(false)}

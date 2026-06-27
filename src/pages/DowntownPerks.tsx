@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/Button';
 import {
   Archive,
@@ -330,8 +331,8 @@ export default function DowntownPerks() {
       <section className="bg-white">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[#C8A96A]">Perks</p>
-            <h1 className="mt-1.5 text-2xl font-semibold tracking-normal sm:text-3xl">Perks</h1>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[#C8A96A]">Partner offers</p>
+            <h1 className="mt-1.5 text-2xl font-semibold tracking-normal sm:text-3xl">Offers partners can manage</h1>
             <p className="mt-2 max-w-3xl text-[13px] leading-5 text-[rgba(11,31,51,0.64)]">
               Create offers residents can understand, save, scan, and use. Keep the partner, dates, results, and next move close at hand.
             </p>
@@ -347,18 +348,6 @@ export default function DowntownPerks() {
               <Plus className="h-3.5 w-3.5" /> Add perk
             </Button>
           </div>
-        </div>
-      </section>
-
-      <section className="bg-white">
-        <div className="grid grid-cols-2 gap-x-5 gap-y-3 sm:grid-cols-4 lg:grid-cols-7">
-          <Metric label="Total perks" value={metrics.total} />
-          <Metric label="Active" value={metrics.active} />
-          <Metric label="Views" value={metrics.views} />
-          <Metric label="Saves" value={metrics.saves} />
-          <Metric label="Directions" value={metrics.directions} />
-          <Metric label="Scans" value={metrics.scans} />
-          <Metric label="Redemptions" value={metrics.redemptions} />
         </div>
       </section>
 
@@ -484,11 +473,11 @@ export default function DowntownPerks() {
         <Panel title="Perk analytics" eyebrow="Reporting relationships">
           <RelationshipMatrix
             rows={[
-              { label: 'Partner links', value: relationshipSummary.partnerLinks, detail: 'Perks tied to partner records.' },
-              { label: 'Campaign links', value: relationshipSummary.campaignLinks, detail: 'Perks connected to campaign records.' },
-              { label: 'Event links', value: relationshipSummary.eventLinks, detail: 'Perks connected to event records.' },
-              { label: 'Place links', value: relationshipSummary.placeLinks, detail: 'Perks tied to a property, hotel, venue, or brand.' },
-              { label: 'Measured records', value: relationshipSummary.measured, detail: 'Perks with at least one tracked action.' },
+              { label: 'Partner links', value: relationshipSummary.partnerLinks, detail: 'Perks tied to partner records.', to: '/admin/partner' },
+              { label: 'Campaign links', value: relationshipSummary.campaignLinks, detail: 'Perks connected to campaign records.', to: '/admin/engagement' },
+              { label: 'Event links', value: relationshipSummary.eventLinks, detail: 'Perks connected to event records.', to: '/admin/events' },
+              { label: 'Place links', value: relationshipSummary.placeLinks, detail: 'Perks tied to a property, hotel, venue, or brand.', to: '/admin/properties' },
+              { label: 'Measured records', value: relationshipSummary.measured, detail: 'Perks with at least one tracked action.', to: '/admin/analytics' },
             ]}
           />
         </Panel>
@@ -628,16 +617,35 @@ function Panel({ eyebrow, title, children }: any) {
   );
 }
 
-function RelationshipMatrix({ rows }: { rows: Array<{ label: string; value: number; detail: string }> }) {
+function RelationshipMatrix({ rows }: { rows: Array<{ label: string; value: number; detail: string; to: string }> }) {
   return (
-    <div className="grid grid-cols-2 gap-x-5 gap-y-3 lg:grid-cols-5">
-      {rows.map((row) => (
-        <article key={row.label} className="min-w-0">
-          <p className="text-[9px] font-semibold uppercase leading-3 text-[rgba(11,31,51,0.48)]">{row.label}</p>
-          <strong className="mt-1 block text-[16px] font-semibold leading-none text-[#0B1F33]">{row.value.toLocaleString()}</strong>
-          <p className="mt-1 text-[10px] leading-4 text-[rgba(11,31,51,0.54)]">{row.detail}</p>
-        </article>
-      ))}
+    <div className="overflow-x-auto [scrollbar-width:thin]">
+      <table className="w-full min-w-[540px] table-fixed text-left">
+        <thead>
+          <tr className="text-[8.5px] font-semibold uppercase leading-3 text-[rgba(11,31,51,0.42)]">
+            <th className="w-[34%] py-1.5 pr-3 font-semibold">Connection</th>
+            <th className="w-[16%] py-1.5 pr-3 text-right font-semibold">Total</th>
+            <th className="py-1.5 pr-2 font-semibold">What it tells you</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row) => (
+            <tr key={row.label} className="border-t border-[rgba(11,31,51,0.045)] align-middle">
+              <td className="py-1.5 pr-3">
+                <Link to={row.to} className="inline-flex min-h-7 items-center text-[10.5px] font-semibold leading-none text-[#0B1F33] transition-colors hover:text-[#C8A96A]">
+                  {row.label}
+                </Link>
+              </td>
+              <td className="py-1.5 pr-3 text-right text-[12px] font-semibold leading-none text-[#0B1F33]">
+                {row.value.toLocaleString()}
+              </td>
+              <td className="py-1.5 pr-2 text-[9.5px] leading-4 text-[rgba(11,31,51,0.56)]">
+                {row.detail}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }

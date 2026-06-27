@@ -278,23 +278,40 @@ export default function Home() {
 
         <section className="my-5 grid gap-5 xl:grid-cols-[minmax(0,1.08fr)_minmax(360px,0.92fr)]">
           <div className="overflow-hidden bg-white">
-            <div className="grid gap-1.5 px-0 py-2.5 md:grid-cols-[minmax(0,1fr)_minmax(220px,0.58fr)] md:items-end">
+            <div className="grid gap-1.5 px-0 py-2.5 md:grid-cols-[minmax(0,1fr)_minmax(260px,0.62fr)] md:items-end">
               <div className="min-w-0">
                 <p className="text-[9px] font-semibold uppercase text-[#C8A96A]">Quick read</p>
                 <h2 className="text-[13px] font-semibold leading-tight">What is ready to open</h2>
               </div>
-              <p className="max-w-md text-[10px] leading-4 text-[rgba(11,31,51,0.52)] md:text-left">Live counts from partners, places, residents, perks, events, notes, invoices, and plans.</p>
+              <p className="max-w-md text-[10px] leading-4 text-[rgba(11,31,51,0.52)] md:text-left">A quick index for the areas people ask to open most.</p>
             </div>
-            <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 py-1 md:grid-cols-5">
-              {stats.map((stat) => (
-                <Link key={stat.label} to={statHref(stat.label)} className="group min-w-0 py-0.5 transition-colors hover:text-[#C8A96A]">
-                  <div className="flex min-w-0 items-baseline gap-1.5">
-                    <p className="min-w-0 text-[8px] font-semibold uppercase leading-3 text-[rgba(11,31,51,0.46)]">{stat.label}</p>
-                    <p className="shrink-0 text-[12.5px] font-semibold leading-none tracking-normal">{Number(stat.value || 0).toLocaleString()}</p>
-                  </div>
-                  <p className="mt-0.5 text-[8.5px] leading-3 text-[rgba(11,31,51,0.52)] group-hover:text-[#8A6A1F]">{stat.note}</p>
-                </Link>
-              ))}
+            <div className="overflow-x-auto py-1 [scrollbar-width:thin]">
+              <table className="w-full min-w-[560px] table-fixed text-left">
+                <thead>
+                  <tr className="text-[8px] font-semibold uppercase leading-3 text-[rgba(11,31,51,0.42)]">
+                    <th className="w-[34%] py-1.5 pr-3 font-semibold">Area</th>
+                    <th className="w-[16%] py-1.5 pr-3 text-right font-semibold">Total</th>
+                    <th className="py-1.5 pr-1 font-semibold">Use this for</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {stats.map((stat) => (
+                    <tr key={stat.label} className="border-t border-[rgba(11,31,51,0.045)] align-middle">
+                      <td className="py-1.5 pr-3">
+                        <Link to={statHref(stat.label)} className="inline-flex min-h-7 items-center text-[10.5px] font-semibold leading-none text-[#0B1F33] transition-colors hover:text-[#C8A96A]">
+                          {stat.label}
+                        </Link>
+                      </td>
+                      <td className="py-1.5 pr-3 text-right text-[12px] font-semibold leading-none text-[#0B1F33]">
+                        {Number(stat.value || 0).toLocaleString()}
+                      </td>
+                      <td className="py-1.5 pr-1 text-[9.5px] leading-4 text-[rgba(11,31,51,0.56)]">
+                        {stat.note}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </div>
 
