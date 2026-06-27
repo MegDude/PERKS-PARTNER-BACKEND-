@@ -208,8 +208,16 @@ function QrArtworkPreview({ workspaceName, qr, artwork }: { workspaceName: strin
     <div className="shore-qr-artwork" aria-label={`${qr.name} QR artwork preview`}>
       {artwork.imageUrl && <img className="shore-qr-artwork-image" src={artwork.imageUrl} alt="" />}
       <div className="shore-qr-artwork-top">
-        {artwork.logoUrl ? <img className="shore-qr-logo" src={artwork.logoUrl} alt={`${workspaceName} logo`} /> : <span className="shore-qr-logo-text">{workspaceName.slice(0, 2).toUpperCase()}</span>}
-        <span>{workspaceName}</span>
+        <span className="shore-qr-dp-lockup">
+          <span className="shore-qr-dp-mark">DP</span>
+          <span>Downtown Perks</span>
+        </span>
+        <span className="shore-qr-lockup-divider" aria-hidden="true" />
+        {artwork.logoUrl ? (
+          <img className="shore-qr-partner-logo" src={artwork.logoUrl} alt={`${workspaceName} logo`} />
+        ) : (
+          <span className="shore-qr-partner-wordmark">{workspaceName}</span>
+        )}
       </div>
       <img className="shore-qr-code-image" src={qrImageUrl(qr.destination)} alt="Scan code" />
       <div className="shore-qr-artwork-copy">
@@ -529,16 +537,21 @@ export function PartnerWorkspaceTemplate(props: Props) {
   function qrArtworkSvg(qr: Props['qrs'][number]) {
     const artwork = qrArtwork[qr.id];
     const destination = absoluteUrl(qr.destination);
-    const logo = artwork.logoUrl ? `<image href="${escapeXml(artwork.logoUrl)}" x="48" y="44" width="48" height="48" preserveAspectRatio="xMidYMid slice" />` : `<rect x="48" y="44" width="48" height="48" fill="#0B1F33"/><text x="72" y="75" text-anchor="middle" fill="#fff" font-family="Inter, Arial" font-size="16" font-weight="800">${escapeXml(workspaceName.slice(0, 2).toUpperCase())}</text>`;
+    const partnerLogo = artwork.logoUrl
+      ? `<image href="${escapeXml(artwork.logoUrl)}" x="286" y="44" width="120" height="42" preserveAspectRatio="xMidYMid meet" />`
+      : `<text x="286" y="72" fill="#0B1F33" font-family="Inter, Arial" font-size="24" font-weight="800">${escapeXml(workspaceName)}</text>`;
     const photo = artwork.imageUrl ? `<image href="${escapeXml(artwork.imageUrl)}" x="0" y="0" width="720" height="240" preserveAspectRatio="xMidYMid slice" opacity="0.9" />` : '';
     return `<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="720" height="1080" viewBox="0 0 720 1080">
   <rect width="720" height="1080" fill="#FFFFFF"/>
   ${photo}
   <rect x="0" y="0" width="720" height="1080" fill="rgba(255,255,255,0.86)"/>
-  ${logo}
-  <text x="116" y="65" fill="#0B1F33" font-family="Inter, Arial" font-size="24" font-weight="800">${escapeXml(workspaceName)}</text>
-  <text x="116" y="90" fill="#C8A96A" font-family="Inter, Arial" font-size="14" font-weight="800">${escapeXml(qr.placement)}</text>
+  <rect x="48" y="44" width="42" height="42" fill="#0B1F33"/>
+  <text x="69" y="71" text-anchor="middle" fill="#fff" font-family="Inter, Arial" font-size="13" font-weight="800">DP</text>
+  <text x="102" y="62" fill="#0B1F33" font-family="Inter, Arial" font-size="20" font-weight="800">Downtown Perks</text>
+  <text x="102" y="83" fill="#C8A96A" font-family="Inter, Arial" font-size="12" font-weight="800">${escapeXml(qr.placement)}</text>
+  <line x1="258" y1="46" x2="258" y2="86" stroke="rgba(11,31,51,0.16)" stroke-width="2"/>
+  ${partnerLogo}
   <text x="48" y="184" fill="#0B1F33" font-family="Inter, Arial" font-size="44" font-weight="700">${escapeXml(artwork.headline)}</text>
   <foreignObject x="48" y="214" width="624" height="120"><div xmlns="http://www.w3.org/1999/xhtml" style="font-family:Inter,Arial,sans-serif;font-size:22px;line-height:1.35;color:rgba(11,31,51,.68)">${escapeXml(artwork.bodyCopy)}</div></foreignObject>
   <image href="${escapeXml(qrImageUrl(qr.destination, 520))}" x="100" y="378" width="520" height="520"/>
@@ -1091,14 +1104,14 @@ export function PartnerWorkspaceTemplate(props: Props) {
               This shows the nearby anchors, partners, perks, and plans that can shape what residents see next. Save an item to feature it in the resident guide, or remove it when it is no longer useful.
             </p>
             <div className="mt-3 overflow-x-auto [scrollbar-width:thin]">
-              <table className="w-full min-w-[680px] table-fixed text-left">
+              <table className="w-full min-w-[760px] table-fixed text-left">
                 <thead>
                   <tr className="text-[9px] font-semibold uppercase leading-3 text-[rgba(11,31,51,0.42)]">
-                    <th className="w-[26%] py-1.5 pr-3 font-semibold">Place</th>
-                    <th className="w-[25%] py-1.5 pr-3 font-semibold">Context</th>
-                    <th className="w-[18%] py-1.5 pr-3 font-semibold">Status</th>
-                    <th className="py-1.5 pr-3 font-semibold">Note</th>
-                    <th className="w-[86px] py-1.5 font-semibold">Action</th>
+                    <th className="w-[20%] py-1.5 pr-3 font-semibold">Place</th>
+                    <th className="w-[16%] py-1.5 pr-3 font-semibold">Context</th>
+                    <th className="w-[22%] py-1.5 pr-3 font-semibold">Status</th>
+                    <th className="w-[32%] py-1.5 pr-3 font-semibold">Note</th>
+                    <th className="w-[76px] py-1.5 font-semibold">Action</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[rgba(11,31,51,0.045)]">
@@ -1226,7 +1239,7 @@ export function PartnerWorkspaceTemplate(props: Props) {
                         <input className="shore-input mt-1" value={qrArtwork[qr.id].bodyCopy} onChange={(event) => updateQrArtwork(qr.id, 'bodyCopy', event.target.value)} />
                       </label>
                       <label className="block">
-                        <span className="text-[10px] font-bold uppercase text-[rgba(11,31,51,0.52)]">Logo URL</span>
+                        <span className="text-[10px] font-bold uppercase text-[rgba(11,31,51,0.52)]">Partner logo URL</span>
                         <input className="shore-input mt-1" placeholder="Add a logo image URL" value={qrArtwork[qr.id].logoUrl} onChange={(event) => updateQrArtwork(qr.id, 'logoUrl', event.target.value)} />
                       </label>
                       <label className="block">

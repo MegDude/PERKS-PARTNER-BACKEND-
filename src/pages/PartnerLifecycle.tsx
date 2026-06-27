@@ -47,18 +47,18 @@ const partnerTypes = [
 ];
 
 const plans = [
-  { key: 'property_basic', vertical: 'Properties', partnerType: 'property', label: 'Basic Building', amount: 49, cadence: 'month', summary: 'Get the building on the map with a clean resident entry point.', limits: 'Best for a single building getting started', modules: ['Property profile', 'Map presence', 'Building QR', 'Basic reports'] },
-  { key: 'property_resident_plus', vertical: 'Properties', partnerType: 'property', label: 'Resident Plus', amount: 99, cadence: 'month', summary: 'Add resident perks, community notes, and stronger building follow-up.', limits: 'Best for active resident programming', modules: ['Everything in Basic', 'Resident perks', 'Broadcasts', 'Monthly readout'] },
-  { key: 'property_pro', vertical: 'Properties', partnerType: 'property', label: 'Property Pro', amount: 199, cadence: 'month', summary: 'Run the full resident layer with campaigns, reporting, and deeper support.', limits: 'Best for high-touch property teams', modules: ['Everything in Plus', 'Campaigns', 'Priority setup', 'Advanced reports'] },
-  { key: 'venue_basic', vertical: 'Venues', partnerType: 'venue', label: 'Basic', amount: 30, cadence: 'month', summary: 'Show up on the map and give locals one clear reason to stop in.', limits: 'Best for getting discovered', modules: ['Venue profile', 'Map listing', 'One starter perk', 'Basic signals'] },
-  { key: 'venue_growth', vertical: 'Venues', partnerType: 'venue', label: 'Growth', amount: 79, cadence: 'month', summary: 'Keep offers and events in the rotation with cleaner performance readouts.', limits: 'Best for steady local activity', modules: ['Everything in Basic', 'Events', 'Campaign notes', 'Readouts'] },
-  { key: 'venue_pro', vertical: 'Venues', partnerType: 'venue', label: 'Pro', amount: 199, cadence: 'month', summary: 'Stay visible all year with stronger placement, reporting, and support.', limits: 'Best for go-to downtown spots', modules: ['Everything in Growth', 'Priority moments', 'Advanced reports', 'Support'] },
-  { key: 'hotel_starter', vertical: 'Hotels', partnerType: 'hotel', label: 'Hotel Starter', amount: 99, cadence: 'month', summary: 'Give guests a simple local guide tied to lobby, room, and concierge moments.', limits: 'Best for one hotel property', modules: ['Hotel profile', 'Guest guide', 'Lobby QR', 'Local perks'] },
-  { key: 'hotel_pro', vertical: 'Hotels', partnerType: 'hotel', label: 'Hotel Pro', amount: 199, cadence: 'month', summary: 'Turn guest discovery into measurable campaigns and partner reports.', limits: 'Best for active hospitality teams', modules: ['Everything in Starter', 'Campaigns', 'Guest reporting', 'Concierge support'] },
-  { key: 'brand_access', vertical: 'Brands', partnerType: 'brand', label: 'Brand Access', amount: 99, cadence: 'month', summary: 'Create a local brand presence tied to real downtown behavior.', limits: 'Best for light sponsorship presence', modules: ['Brand profile', 'Map presence', 'Campaign access', 'Basic reporting'] },
-  { key: 'brand_campaigns', vertical: 'Brands', partnerType: 'brand', label: 'Brand Campaigns', amount: 199, cadence: 'month', summary: 'Run campaigns, sponsored moments, and reporting from one partner workspace.', limits: 'Best for active brand programs', modules: ['Everything in Access', 'Campaign workspace', 'Sponsored moments', 'Reports'] },
-  { key: 'civic_plus', vertical: 'Civic', partnerType: 'civic', label: 'Civic Plus', amount: 30, cadence: 'month', summary: 'Give residents a clear path to public programs, notes, and events.', limits: 'Best for local associations and programs', modules: ['Civic profile', 'Events', 'Surveys', 'Public notes'] },
-  { key: 'civic_pro', vertical: 'Civic', partnerType: 'civic', label: 'Civic Pro', amount: 99, cadence: 'month', summary: 'Add richer programming, feedback, and reporting for community work.', limits: 'Best for active civic teams', modules: ['Everything in Plus', 'Campaigns', 'Feedback', 'Reports'] },
+  { key: 'property_basic', vertical: 'Properties', partnerType: 'property', label: 'Basic Building', amount: 49, cadence: 'year', summary: 'Get the building on the map with a clean resident entry point.', limits: 'Best for a single building getting started', modules: ['Property profile', 'Map presence', 'Building QR', 'Basic reports'] },
+  { key: 'property_resident_plus', vertical: 'Properties', partnerType: 'property', label: 'Resident Plus', amount: 99, cadence: 'year', summary: 'Add resident perks, community notes, and stronger building follow-up.', limits: 'Best for active resident programming', modules: ['Everything in Basic', 'Resident perks', 'Broadcasts', 'Annual readout'] },
+  { key: 'property_pro', vertical: 'Properties', partnerType: 'property', label: 'Property Pro', amount: 199, cadence: 'year', summary: 'Run the full resident layer with campaigns, reporting, and deeper support.', limits: 'Best for high-touch property teams', modules: ['Everything in Plus', 'Campaigns', 'Priority setup', 'Advanced reports'] },
+  { key: 'venue_basic', vertical: 'Venues', partnerType: 'venue', label: 'Basic', amount: 30, cadence: 'year', summary: 'Show up on the map and give locals one clear reason to stop in.', limits: 'Best for getting discovered', modules: ['Venue profile', 'Map listing', 'One starter perk', 'Basic signals'] },
+  { key: 'venue_growth', vertical: 'Venues', partnerType: 'venue', label: 'Growth', amount: 79, cadence: 'year', summary: 'Keep offers and events in the rotation with cleaner performance readouts.', limits: 'Best for steady local activity', modules: ['Everything in Basic', 'Events', 'Campaign notes', 'Readouts'] },
+  { key: 'venue_pro', vertical: 'Venues', partnerType: 'venue', label: 'Pro', amount: 199, cadence: 'year', summary: 'Stay visible all year with stronger placement, reporting, and support.', limits: 'Best for go-to downtown spots', modules: ['Everything in Growth', 'Priority moments', 'Advanced reports', 'Support'] },
+  { key: 'hotel_starter', vertical: 'Hotels', partnerType: 'hotel', label: 'Hotel Starter', amount: 99, cadence: 'year', summary: 'Give guests a simple local guide tied to lobby, room, and concierge moments.', limits: 'Best for one hotel property', modules: ['Hotel profile', 'Guest guide', 'Lobby QR', 'Local perks'] },
+  { key: 'hotel_pro', vertical: 'Hotels', partnerType: 'hotel', label: 'Hotel Pro', amount: 199, cadence: 'year', summary: 'Turn guest discovery into measurable campaigns and partner reports.', limits: 'Best for active hospitality teams', modules: ['Everything in Starter', 'Campaigns', 'Guest reporting', 'Concierge support'] },
+  { key: 'brand_access', vertical: 'Brands', partnerType: 'brand', label: 'Brand Access', amount: 99, cadence: 'year', summary: 'Create a local brand presence tied to real downtown behavior.', limits: 'Best for light sponsorship presence', modules: ['Brand profile', 'Map presence', 'Campaign access', 'Basic reporting'] },
+  { key: 'brand_campaigns', vertical: 'Brands', partnerType: 'brand', label: 'Brand Campaigns', amount: 199, cadence: 'year', summary: 'Run campaigns, sponsored moments, and reporting from one partner workspace.', limits: 'Best for active brand programs', modules: ['Everything in Access', 'Campaign workspace', 'Sponsored moments', 'Reports'] },
+  { key: 'civic_plus', vertical: 'Civic', partnerType: 'civic', label: 'Civic Plus', amount: 30, cadence: 'year', summary: 'Give residents a clear path to public programs, notes, and events.', limits: 'Best for local associations and programs', modules: ['Civic profile', 'Events', 'Surveys', 'Public notes'] },
+  { key: 'civic_pro', vertical: 'Civic', partnerType: 'civic', label: 'Civic Pro', amount: 99, cadence: 'year', summary: 'Add richer programming, feedback, and reporting for community work.', limits: 'Best for active civic teams', modules: ['Everything in Plus', 'Campaigns', 'Feedback', 'Reports'] },
 ];
 
 const addOns = [
@@ -69,7 +69,7 @@ const addOns = [
   { key: 'featured_event', category: 'Events', label: 'Featured Event', amount: 49, cadence: 'one_time', summary: 'Keep an event visible while people are still planning.' },
   { key: 'sponsored_event', category: 'Events', label: 'Sponsored Event', amount: 99, cadence: 'one_time', summary: 'Give a bigger event a broader downtown push.' },
   { key: 'single_survey', category: 'Surveys', label: 'Single Survey', amount: 30, cadence: 'one_time', summary: 'Ask one clean question and get a usable answer.' },
-  { key: 'survey_series', category: 'Surveys', label: 'Survey Series', amount: 79, cadence: 'month', summary: 'Ask over time and see what changes.' },
+  { key: 'survey_series', category: 'Surveys', label: 'Survey Series', amount: 79, cadence: 'one_time', summary: 'Ask over time and see what changes.' },
   { key: 'broadcast_5m', category: 'Broadcast', label: 'Nearby Broadcast (5-min)', amount: 20, cadence: 'one_time', summary: 'Send a nudge to people close enough to walk over.' },
   { key: 'sms_500', category: 'Broadcast', label: 'SMS Broadcast (up to 500)', amount: 30, cadence: 'one_time', summary: 'Send one direct note to a smaller list.' },
 ];
@@ -139,7 +139,7 @@ function money(value: number) {
 }
 
 function annualCost(plan: Record<string, any>) {
-  return Number(plan.amount || 0) * 12;
+  return Number(plan.amount || 0);
 }
 
 function selectedAddOnItems(selected: Record<string, number>) {
@@ -150,12 +150,10 @@ function selectedAddOnItems(selected: Record<string, number>) {
 
 function pricingTotals(plan: Record<string, any>, selected: Record<string, number>, tax = 0) {
   const selectedAddOns = selectedAddOnItems(selected);
-  const monthlyAddOns = selectedAddOns.filter((item) => item.cadence === 'month').reduce((sum, item) => sum + item.amount * item.quantity, 0);
-  const oneTimeAddOns = selectedAddOns.filter((item) => item.cadence !== 'month').reduce((sum, item) => sum + item.amount * item.quantity, 0);
-  const monthlyDue = Number(plan.amount || 0) + monthlyAddOns;
-  const annualCommitment = monthlyDue * 12;
-  const firstPayment = monthlyDue + oneTimeAddOns + Number(tax || 0);
-  return { selectedAddOns, monthlyAddOns, oneTimeAddOns, monthlyDue, annualCommitment, firstPayment };
+  const oneTimeAddOns = selectedAddOns.reduce((sum, item) => sum + item.amount * item.quantity, 0);
+  const annualTotal = annualCost(plan);
+  const firstPayment = annualTotal + oneTimeAddOns + Number(tax || 0);
+  return { selectedAddOns, oneTimeAddOns, annualTotal, annualCommitment: annualTotal, firstPayment };
 }
 
 export default function PartnerLifecycle() {
@@ -261,6 +259,8 @@ export default function PartnerLifecycle() {
   const provisionWorkspace = async () => {
     setLoading(true);
     try {
+      const portfolioCount = Number(state.organization.portfolioCount || 0);
+      const needsConcierge = portfolioCount >= 3;
       const payload = {
         ...state,
           checkout: {
@@ -269,10 +269,11 @@ export default function PartnerLifecycle() {
             business_name: state.checkout.business_name || state.organization.name,
             subtotal: totals.firstPayment,
             total: totals.firstPayment,
-            monthly_due: totals.monthlyDue,
+            annual_total: totals.annualTotal,
             one_time_add_ons: totals.oneTimeAddOns,
             annual_commitment: totals.annualCommitment,
             selected_add_ons: totals.selectedAddOns,
+            concierge_required: needsConcierge,
           },
       };
       await fetch('/api/partner-leads', {
@@ -291,9 +292,11 @@ export default function PartnerLifecycle() {
           checkout: payload.checkout,
           source_type: 'partner_registration',
           metadata: {
+            route: needsConcierge ? 'dana_partnership_concierge' : 'automated_checkout',
             annual_commitment: totals.annualCommitment,
             first_payment: totals.firstPayment,
             selected_add_ons: totals.selectedAddOns,
+            portfolio_count: portfolioCount,
           },
         }),
       });
@@ -308,26 +311,38 @@ export default function PartnerLifecycle() {
             email: payload.contact.email,
             partner_name: payload.organization.name,
             partner_type: payload.organizationType,
-            status: 'pricing_selected',
+            status: needsConcierge ? 'concierge_required' : 'pricing_selected',
             plan: payload.plan.label,
-            summary: `${payload.plan.label} at ${money(payload.plan.amount)}/mo; annual commitment ${money(totals.annualCommitment)}; first payment ${money(totals.firstPayment)}.`,
+            summary: `${payload.plan.label} annual commitment ${money(totals.annualCommitment)}; first checkout total ${money(totals.firstPayment)}.`,
             selected_add_ons: totals.selectedAddOns,
+            portfolio_count: portfolioCount,
           },
         }),
       }).catch(() => null);
+      if (needsConcierge) {
+        const nextCheckout = {
+          ...payload.checkout,
+          checkout_status: 'concierge_required',
+          billing_status: 'concierge',
+          provider: 'dana_partnership_concierge',
+        };
+        setState((current) => ({ ...current, checkout: nextCheckout, provision: { success: false, concierge: true } }));
+        navigate('/partners/concierge');
+        return;
+      }
       const checkoutLineItems = [
         {
-          name: payload.plan.label,
+          name: `${payload.plan.label} Annual`,
           amount: Number(payload.plan.amount || 0),
-          interval: 'month',
-          cadence: 'month',
+          interval: 'year',
+          cadence: 'year',
           quantity: 1,
         },
         ...totals.selectedAddOns.map((item) => ({
           name: item.label,
           amount: item.amount,
-          interval: item.cadence === 'month' ? 'month' : 'one_time',
-          cadence: item.cadence,
+          interval: 'one_time',
+          cadence: 'one_time',
           quantity: item.quantity,
         })),
       ];
@@ -342,7 +357,9 @@ export default function PartnerLifecycle() {
           partner_type: payload.organizationType,
           plan: payload.plan,
           plan_amount: totals.firstPayment,
+          annual_commitment: totals.annualCommitment,
           coupon: payload.checkout.coupon,
+          checkout: payload.checkout,
           line_items: checkoutLineItems,
           success_url: `${window.location.origin}/partners/provision?checkout=success`,
           cancel_url: `${window.location.origin}/partners/checkout?checkout=cancelled`,
@@ -468,7 +485,7 @@ export default function PartnerLifecycle() {
       return groups;
     }, {} as Record<string, typeof addOns>);
     return (
-      <Shell eyebrow="Pricing" title="Partner with the neighborhood." body="Choose your annual plan, add what helps right now, capture the signup details, and move straight into checkout and workspace access.">
+      <Shell eyebrow="Pricing" title="Be where the people are." body="Start with the annual plan that fits. Add what helps. See your total before you begin.">
         <Progress active={4} />
         <section className="grid gap-6 text-left xl:grid-cols-[0.86fr_1.14fr]">
           <SectionCard className="xl:sticky xl:top-6 xl:self-start">
@@ -496,18 +513,17 @@ export default function PartnerLifecycle() {
               <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
                 <div>
                   <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-[#C8A96A]">Annual subscription tiers</p>
-                  <h2 className="mt-2 text-xl font-semibold">Monthly rate, annual commitment.</h2>
+                  <h2 className="mt-2 text-xl font-semibold">Annual plans.</h2>
                 </div>
-                <p className="max-w-xl text-xs leading-5 text-[rgba(11,31,51,0.58)]">The monthly rate is used for billing. The annual cost shows the full twelve-month commitment.</p>
+                <p className="max-w-xl text-xs leading-5 text-[rgba(11,31,51,0.58)]">Each plan is a single annual commitment. Add-ons are one-time modules you can include when they help.</p>
               </div>
               <div className="mt-5 overflow-x-auto [scrollbar-width:thin]">
-                <table className="w-full min-w-[720px] table-fixed text-left text-[12px]">
+                <table className="w-full min-w-[620px] table-fixed text-left text-[12px]">
                   <thead className="text-[10px] font-bold uppercase tracking-[0.08em] text-[rgba(11,31,51,0.48)]">
                     <tr>
-                      <th className="w-[22%] py-2 pr-4">Vertical</th>
-                      <th className="w-[28%] py-2 pr-4">Tier</th>
-                      <th className="w-[18%] py-2 pr-4 text-left">Monthly</th>
-                      <th className="w-[20%] py-2 pr-4 text-left">Annual</th>
+                      <th className="w-[26%] py-2 pr-4">Vertical</th>
+                      <th className="w-[36%] py-2 pr-4">Tier</th>
+                      <th className="w-[22%] py-2 pr-4 text-left">Annual cost</th>
                       <th className="py-2 text-left">Choose</th>
                     </tr>
                   </thead>
@@ -520,7 +536,6 @@ export default function PartnerLifecycle() {
                             {plan.label}
                           </button>
                         </td>
-                        <td className="py-2.5 pr-4 text-left font-semibold">{money(plan.amount)}</td>
                         <td className="py-2.5 pr-4 text-left font-semibold">{money(annualCost(plan))}</td>
                         <td className="py-2.5 text-left">
                           <button type="button" onClick={() => setState((current) => ({ ...current, organizationType: plan.partnerType, plan }))} className={`min-h-7 px-0 text-left text-[10px] font-semibold uppercase ${state.plan.key === plan.key ? 'text-[#C8A96A]' : 'text-[#0B1F33]'}`}>
@@ -543,7 +558,7 @@ export default function PartnerLifecycle() {
                     <button key={plan.key} type="button" onClick={() => setState((current) => ({ ...current, plan }))} className={`border-t border-[rgba(11,31,51,0.06)] py-3 text-left ${state.plan.key === plan.key ? 'text-[#0B1F33]' : 'text-[rgba(11,31,51,0.66)]'}`}>
                       <span className="grid gap-1">
                         <strong className="text-sm">{plan.label}</strong>
-                        <span className="text-xs font-semibold">{money(plan.amount)}/mo</span>
+                        <span className="text-xs font-semibold">{money(plan.amount)} annual commitment</span>
                       </span>
                       <span className="mt-1 block text-xs leading-5">{plan.summary}</span>
                     </button>
@@ -564,7 +579,7 @@ export default function PartnerLifecycle() {
                           return (
                             <div key={item.key} className="grid grid-cols-[1fr_auto] gap-3 border-t border-[rgba(11,31,51,0.05)] py-2">
                               <div>
-                                <p className="text-[12px] font-semibold">{item.label} <span className="text-[rgba(11,31,51,0.48)]">· {money(item.amount)}{item.cadence === 'month' ? '/mo' : ''}</span></p>
+                                <p className="text-[12px] font-semibold">{item.label} <span className="text-[rgba(11,31,51,0.48)]">· {money(item.amount)} one-time</span></p>
                                 <p className="mt-0.5 text-[11px] leading-4 text-[rgba(11,31,51,0.56)]">{item.summary}</p>
                               </div>
                               <div className="flex items-center gap-2">
@@ -594,22 +609,26 @@ export default function PartnerLifecycle() {
                   <Field label="Email" required value={state.contact.email} onChange={(value) => updateGroup('contact', 'email', value)} />
                   <Field label="Phone" value={state.contact.phone} onChange={(value) => updateGroup('contact', 'phone', value)} />
                   <Field label="Address" value={state.location.address} onChange={(value) => updateGroup('location', 'address', value)} />
+                  <Field label="Properties or districts" value={String(state.organization.portfolioCount || '')} onChange={(value) => updateGroup('organization', 'portfolioCount', value)} placeholder="1" />
                   <Field label="Promotion code" value={state.checkout.coupon} onChange={(value) => updateGroup('checkout', 'coupon', value.toUpperCase())} placeholder="DUDE2026" />
                   <Field label="Billing email" value={state.checkout.billing_email || state.contact.email} onChange={(value) => updateGroup('checkout', 'billing_email', value)} />
                 </div>
                 <button disabled={loading || !state.organization.name || !state.contact.email} onClick={provisionWorkspace} className="mt-6 inline-flex min-h-9 items-center gap-2 bg-[#0B1F33] px-3 text-[11px] font-semibold uppercase text-white disabled:opacity-50">
                   {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <CreditCard className="h-4 w-4" />}
-                  {state.checkout.coupon === 'DUDE2026' ? 'Create workspace' : 'Continue to checkout'}
+                  {Number(state.organization.portfolioCount || 0) >= 3 ? 'Send to concierge' : state.checkout.coupon === 'DUDE2026' ? 'Create workspace' : 'Continue to checkout'}
                 </button>
               </SectionCard>
 
               <SectionCard>
                 <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-[#C8A96A]">Your setup</p>
                 <h2 className="mt-2 text-xl font-semibold">{state.plan.label}</h2>
-                <Line label="Monthly plan" value={`${money(state.plan.amount)} / month`} />
-                <Line label="Annual commitment" value={money(totals.annualCommitment)} />
+                <Line label="Plan" value={`${state.plan.label} (Annual Commitment)`} />
+                <Line label="Annual total" value={money(totals.annualTotal)} />
                 <Line label="One-time add-ons" value={money(totals.oneTimeAddOns)} />
-                <Line label="First checkout" value={money(totals.firstPayment)} strong />
+                <Line label="First checkout total" value={money(totals.firstPayment)} strong />
+                {Number(state.organization.portfolioCount || 0) >= 3 && (
+                  <p className="mt-4 text-xs leading-5 text-[#0B1F33]">Portfolio setup is routed to the DANA Partnership Concierge so the team can confirm locations, access, and launch timing before checkout.</p>
+                )}
                 {state.checkout.coupon === 'DUDE2026' && (
                   <p className="mt-4 text-xs leading-5 text-[#0B1F33]">DUDE2026 gives eligible partners a complimentary first year. No payment is required today, and the workspace opens immediately.</p>
                 )}
@@ -644,13 +663,26 @@ export default function PartnerLifecycle() {
           <SectionCard>
             <p className="text-sm font-semibold">Invoice summary</p>
             <Line label="Plan" value={state.plan.label || 'Starter'} />
-            <Line label="Monthly plan" value={`${money(state.plan.amount)} / month`} />
-            <Line label="Annual commitment" value={money(totals.annualCommitment)} />
+            <Line label="Annual total" value={money(totals.annualTotal)} />
             <Line label="One-time add-ons" value={money(totals.oneTimeAddOns)} />
             <Line label="Tax" value={money(Number(state.checkout.tax || 0))} />
-            <Line label="First checkout" value={money(totals.firstPayment)} strong />
+            <Line label="First checkout total" value={money(totals.firstPayment)} strong />
           </SectionCard>
         </div>
+      </Shell>
+    );
+  }
+
+  if (location.pathname === '/partners/concierge') {
+    return (
+      <Shell eyebrow="DANA Partnership Concierge" title="Your portfolio setup is ready for review." body="Three or more properties or districts need a guided setup so locations, access, billing, QR kits, and launch timing are correct before checkout.">
+        <SectionCard>
+          <p className="text-sm leading-6 text-[rgba(11,31,51,0.66)]">We saved the signup details and routed the request to the DANA Partnership Concierge. The next step is a quick review of the portfolio, then the team can activate the right annual plan, add-ons, workspace access, map records, and QR package.</p>
+          <div className="mt-6 flex flex-wrap gap-3">
+            <ActionLink to="/admin/outreach-crm">Open concierge intake</ActionLink>
+            <ActionLink to="/partners/pricing">Adjust setup</ActionLink>
+          </div>
+        </SectionCard>
       </Shell>
     );
   }

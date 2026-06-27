@@ -986,7 +986,10 @@ function buildOutreachStrategyBrief(partner: Record<string, any>, contact: Recor
     quality_rules: [
       "Use the partner name naturally, not as a mail-merge token.",
       "Reference the partner type, district, perk, campaign, or notes in a specific way.",
-      "Write like a thoughtful local operator, not a SaaS sales sequence.",
+      "Write in the Downtown Perks brand voice: clean, calm, direct, local, premium, and easy to understand.",
+      "Use everyday language people actually say. Prefer short words and simple sentences.",
+      "Sound like a thoughtful local operator, not a SaaS sales sequence or marketing deck.",
+      "Avoid jargon like optimize, leverage, unlock, synergy, ecosystem, frictionless, maximize, seamless, hyperlocal, and omnichannel.",
       "Keep the text message under 70 words and the email under 170 words.",
       "Do not claim results, traffic, exclusivity, guaranteed revenue, or formal partnership status.",
       "End with a low-pressure quick-chat ask.",
@@ -1028,7 +1031,7 @@ function outreachSpecificityScore(copy: { shortText?: string; subject?: string; 
 
 function outreachCopyLooksGeneric(copy: { shortText?: string; subject?: string; body?: string }, brief: ReturnType<typeof buildOutreachStrategyBrief>) {
   const combined = `${copy.shortText || ""} ${copy.subject || ""} ${copy.body || ""}`.toLowerCase();
-  const badPhrases = ["dear valued partner", "game changer", "revolutionize", "synergy", "unlock growth", "ai-powered outreach", "as a language model", "i hope this message finds you well", "transform your business", "maximize exposure"];
+  const badPhrases = ["dear valued partner", "game changer", "revolutionize", "synergy", "unlock growth", "ai-powered outreach", "as a language model", "i hope this message finds you well", "transform your business", "maximize exposure", "optimize", "leverage", "ecosystem", "frictionless", "seamless", "omnichannel", "hyperlocal", "robust solution", "drive engagement", "conversion funnel"];
   const hasBadPhrase = badPhrases.some((phrase) => combined.includes(phrase));
   const score = outreachSpecificityScore(copy, brief);
   const bodyWords = String(copy.body || "").split(/\s+/).filter(Boolean).length;
@@ -1041,16 +1044,16 @@ function curatedStrategistOutreachCopy(partner: Record<string, any>, contact: Re
   const reason = String(brief.proof_point || brief.district_insight).replace(/[.。]+$/, "");
   const subject = `${brief.partner_name}: ${brief.suggested_perk}`;
   const typeContext = `${brief.district} ${brief.partner_type.toLowerCase()}`.replace(/\s+/g, " ").trim();
-  const shortText = `Hey ${firstName} - ${brief.partner_name} feels like a natural fit for ${brief.suggested_perk}, especially for ${typeContext} outreach. I’d like to show a quick ${brief.suggested_campaign} concept and see if it is useful. Open to a 15-minute chat?`;
+  const shortText = `Hey ${firstName} - I’m building Downtown Perks for people who are already nearby. ${brief.partner_name} feels like a good fit for ${brief.suggested_perk}, especially around ${typeContext}. I’d love to show you the idea and see if it feels useful. Open to a quick chat?`;
   const body = `Hi ${firstName},
 
-I’m building Downtown Perks as a practical discovery layer for downtown residents, guests, and nearby workers.
+I’m building Downtown Perks, a simple local map for people who live, work, and stay downtown.
 
-${brief.partner_name} stood out because ${reason}. In ${brief.district}, the opportunity is not broad awareness; it is showing up when ${brief.audience} are deciding what to visit, try, recommend, or share next.
+${brief.partner_name} stood out because ${reason}.
 
-For the first touch, I would not overbuild it. I’d start with ${brief.suggested_perk}, then frame it through ${brief.suggested_campaign}. That gives ${brief.partner_name} a specific, easy-to-understand reason to be on the map.
+For a first step, I’d keep it simple: ${brief.suggested_perk}. That could pair well with ${brief.suggested_campaign} and give people nearby a clear reason to notice ${brief.partner_name}.
 
-Would you be open to a quick 15-minute chat next week to see if this angle is worth testing? No pressure either way.
+Would you be open to a quick 15-minute chat next week? No pressure either way.
 
 Best,
 Meg`;
@@ -1072,6 +1075,7 @@ Meg`;
       proof_point: brief.proof_point,
       ask: brief.practical_ask,
       quality: "curated_local_strategy",
+      voice: "downtown_perks_plainspoken",
       specificity_score: outreachSpecificityScore({ shortText, subject, body }, brief),
     },
   };
@@ -1085,6 +1089,24 @@ function escapeHtml(value: any) {
     .replace(/"/g, "&quot;");
 }
 
+function absoluteAppUrl(pathOrUrl: string) {
+  const value = cleanCrmValue(pathOrUrl);
+  if (!value) return "";
+  if (/^https?:\/\//i.test(value)) return value;
+  const base = process.env.PUBLIC_APP_URL || process.env.VITE_PUBLIC_APP_URL || "https://downtown-perks-backend.vercel.app";
+  return `${base.replace(/\/$/, "")}/${value.replace(/^\//, "")}`;
+}
+
+function emailImageForPartner(partnerName: string, type = "") {
+  const raw = `${partnerName} ${type}`.toLowerCase();
+  if (raw.includes("hotel")) return "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1200&q=80";
+  if (raw.includes("coffee")) return "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=1200&q=80";
+  if (raw.includes("restaurant") || raw.includes("bar") || raw.includes("venue")) return "https://images.unsplash.com/photo-1514933651103-005eec06c04b?auto=format&fit=crop&w=1200&q=80";
+  if (raw.includes("retail") || raw.includes("brand")) return "https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=1200&q=80";
+  if (raw.includes("civic") || raw.includes("event")) return "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=1200&q=80";
+  return "https://images.unsplash.com/photo-1531218150217-54595bc2b934?auto=format&fit=crop&w=1200&q=80";
+}
+
 function buildDowntownPerksEmailTemplate(input: {
   partnerName: string;
   subject?: string;
@@ -1092,13 +1114,33 @@ function buildDowntownPerksEmailTemplate(input: {
   ctaLabel?: string;
   ctaHref?: string;
   previewText?: string;
+  eyebrow?: string;
+  headline?: string;
+  subheadline?: string;
+  bannerImageUrl?: string;
+  partnerImageUrl?: string;
+  logoUrl?: string;
+  secondaryCtaLabel?: string;
+  secondaryCtaHref?: string;
+  footerNote?: string;
 }) {
   const partnerName = displayCrmValue(input.partnerName);
-  const headline = escapeHtml(input.subject || `A quick local idea for ${partnerName}`);
+  const subject = escapeHtml(input.subject || `Quick Downtown Perks idea for ${partnerName}`);
+  const headline = escapeHtml(input.headline || `A local idea for ${partnerName}`);
+  const eyebrow = escapeHtml(input.eyebrow || "Downtown Perks");
+  const subheadline = escapeHtml(input.subheadline || "A simple partnership concept for downtown discovery.");
   const bodyHtml = escapeHtml(input.body).replace(/\n/g, "<br />");
-  const ctaLabel = escapeHtml(input.ctaLabel || "Set up a quick chat");
-  const ctaHref = escapeHtml(input.ctaHref || `mailto:${process.env.OUTREACH_REPLY_TO_EMAIL || "meg@downtownperks.com"}?subject=${encodeURIComponent(`Downtown Perks chat: ${partnerName}`)}`);
+  const ctaLabel = escapeHtml(input.ctaLabel || "Review partner setup");
+  const ctaHref = escapeHtml(input.ctaHref || absoluteAppUrl("/partners/register"));
+  const secondaryCtaLabel = escapeHtml(input.secondaryCtaLabel || "View map idea");
+  const secondaryCtaHref = escapeHtml(input.secondaryCtaHref || absoluteAppUrl("/map"));
+  const bannerImageUrl = escapeHtml(input.bannerImageUrl || input.partnerImageUrl || emailImageForPartner(partnerName));
+  const logoUrl = cleanCrmValue(input.logoUrl);
+  const logoHtml = logoUrl
+    ? `<img src="${escapeHtml(logoUrl)}" width="132" alt="Downtown Perks" style="display:block;max-width:132px;height:auto;border:0;" />`
+    : `<p style="margin:0;color:#0B1F33;font-size:14px;line-height:1;font-weight:750;">Downtown Perks</p>`;
   const previewText = escapeHtml(input.previewText || `A simple Downtown Perks partnership idea for ${partnerName}.`);
+  const footerNote = escapeHtml(input.footerNote || "Local discovery for downtown Austin residents, guests, and nearby workers.");
 
   return `<!doctype html>
 <html lang="en">
@@ -1106,33 +1148,54 @@ function buildDowntownPerksEmailTemplate(input: {
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="x-apple-disable-message-reformatting" />
-    <title>${headline}</title>
+    <title>${subject}</title>
   </head>
   <body style="margin:0;padding:0;background:#ffffff;color:#0B1F33;font-family:Inter,Arial,sans-serif;-webkit-font-smoothing:antialiased;">
     <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;">${previewText}</div>
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;background:#ffffff;">
       <tr>
-        <td align="center" style="padding:28px 16px;">
-          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:620px;border-collapse:collapse;">
+        <td align="center" style="padding:24px 14px;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:640px;border-collapse:collapse;border:1px solid rgba(11,31,51,0.10);">
             <tr>
-              <td style="padding:0 0 14px 0;border-bottom:1px solid rgba(11,31,51,0.10);">
-                <p style="margin:0;color:#C8A96A;font-size:11px;line-height:1.2;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;">Downtown Perks</p>
-                <h1 style="margin:9px 0 0 0;color:#0B1F33;font-size:24px;line-height:1.18;font-weight:650;">${headline}</h1>
+              <td style="padding:18px 20px;border-bottom:1px solid rgba(11,31,51,0.08);">
+                ${logoHtml}
               </td>
             </tr>
             <tr>
-              <td style="padding:18px 0 0 0;">
-                <div style="margin:0;color:#24384B;font-size:15px;line-height:1.62;font-weight:400;">${bodyHtml}</div>
+              <td>
+                <img src="${bannerImageUrl}" width="640" alt="${partnerName} local discovery" style="display:block;width:100%;max-width:640px;height:auto;max-height:250px;object-fit:cover;border:0;" />
               </td>
             </tr>
             <tr>
-              <td style="padding:22px 0 0 0;">
-                <a href="${ctaHref}" style="display:inline-block;background:#C8A96A;color:#0B1F33;text-decoration:none;padding:11px 16px;border-radius:4px;font-size:13px;line-height:1;font-weight:700;">${ctaLabel}</a>
+              <td style="padding:22px 22px 6px 22px;">
+                <p style="margin:0;color:#C8A96A;font-size:10px;line-height:1.2;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;">${eyebrow}</p>
+                <h1 style="margin:8px 0 0 0;color:#0B1F33;font-size:20px;line-height:1.2;font-weight:650;">${headline}</h1>
+                <p style="margin:9px 0 0 0;color:rgba(11,31,51,0.64);font-size:13px;line-height:1.45;font-weight:400;">${subheadline}</p>
               </td>
             </tr>
             <tr>
-              <td style="padding:24px 0 0 0;">
-                <p style="margin:0;padding-top:14px;border-top:1px solid rgba(11,31,51,0.10);color:rgba(11,31,51,0.56);font-size:12px;line-height:1.5;">Downtown Perks · Local discovery for downtown Austin residents, guests, and nearby workers.</p>
+              <td style="padding:12px 22px 0 22px;">
+                <div style="margin:0;color:#24384B;font-size:14px;line-height:1.58;font-weight:400;">${bodyHtml}</div>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:20px 22px 24px 22px;">
+                <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
+                  <tr>
+                    <td style="padding:0 10px 8px 0;">
+                      <a href="${ctaHref}" style="display:inline-block;background:#C8A96A;color:#0B1F33;text-decoration:none;padding:11px 15px;border-radius:4px;font-size:12px;line-height:1;font-weight:700;">${ctaLabel}</a>
+                    </td>
+                    <td style="padding:0 0 8px 0;">
+                      <a href="${secondaryCtaHref}" style="display:inline-block;color:#0B1F33;text-decoration:none;padding:10px 0;border-bottom:1px solid #C8A96A;font-size:12px;line-height:1;font-weight:700;">${secondaryCtaLabel}</a>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:15px 22px;background:#0B1F33;">
+                <p style="margin:0;color:#ffffff;font-size:12px;line-height:1.45;font-weight:700;">Downtown Perks</p>
+                <p style="margin:4px 0 0 0;color:rgba(255,255,255,0.72);font-size:11px;line-height:1.45;">${footerNote}</p>
               </td>
             </tr>
           </table>
@@ -1144,11 +1207,21 @@ function buildDowntownPerksEmailTemplate(input: {
 }
 
 function buildOutreachEmailHtml(partner: Record<string, any>, message: Record<string, any>) {
+  const partnerName = partner.name || partner.business_name;
   return buildDowntownPerksEmailTemplate({
-    partnerName: partner.name || partner.business_name,
+    partnerName,
     subject: message.subject,
     body: message.body,
-    previewText: `A simple Downtown Perks partnership idea for ${partner.name || partner.business_name}.`,
+    headline: message.email_headline || `A local idea for ${partnerName}`,
+    subheadline: message.email_subheadline || cleanCrmValue(partner.suggested_perk || partner.recommended_perk || message.strategy?.angle) || "A practical way to connect with people already nearby.",
+    bannerImageUrl: message.banner_image_url || message.partner_image_url || emailImageForPartner(partnerName, partner.partner_type || partner.type),
+    logoUrl: message.logo_url,
+    ctaLabel: message.cta_label || "Review partner setup",
+    ctaHref: message.cta_href || absoluteAppUrl("/partners/register"),
+    secondaryCtaLabel: message.secondary_cta_label || "View map idea",
+    secondaryCtaHref: message.secondary_cta_href || absoluteAppUrl(partner.downtown_perks_map_url || partner.google_maps_url || "/map"),
+    footerNote: message.footer_note,
+    previewText: `A simple Downtown Perks partnership idea for ${partnerName}.`,
   });
 }
 
@@ -1167,11 +1240,11 @@ async function generatePersonalizedOutreachCopy(partner: Record<string, any>, co
       {
         role: "system",
         content:
-          "You are the Downtown Perks outreach intelligence layer: a world-class digital marketing strategist, data analyst, content strategist, brand strategist, and media strategist. You do not blanket-dump copy. Every line must be traceable to this partner's type, district, perk, campaign, resident value, business value, notes, or contact role. Generic copy will be rejected. First decide the strongest partner-specific angle, then write concise human outreach. Return strict JSON only with keys: shortText, subject, body, strategy. strategy must include angle, audience, benefit, proof_point, ask, quality_notes, and specificity_signals_used. The body must be plain text signed Best, Meg.",
+          "You are the Downtown Perks outreach intelligence layer. Think like a sharp local growth strategist, but write only in the Downtown Perks brand voice: clean, calm, direct, local, premium, human, and easy to understand. Use everyday language. No hype. No jargon. No SaaS language. No words like optimize, leverage, unlock, ecosystem, seamless, hyperlocal, omnichannel, synergy, maximize, or drive engagement. Every line must be traceable to this partner's type, district, perk, campaign, resident value, business value, notes, or contact role. Generic copy will be rejected. Return strict JSON only with keys: shortText, subject, body, strategy. strategy must include angle, audience, benefit, proof_point, ask, quality_notes, brand_voice_notes, and specificity_signals_used. The body must be plain text signed Best, Meg.",
       },
       {
         role: "user",
-        content: `Craft one tailored short text and one email from this strategy brief. Follow every quality rule. Use only the supplied facts. Required: mention the partner by name, use the specific suggested perk or campaign, reference the district/type/audience context, and explain one practical business or resident benefit. If contact_name is missing, write "Hi there," and "Hey there". Do not sound automated.\n\n${JSON.stringify(brief, null, 2)}`,
+        content: `Craft one tailored short text and one email from this strategy brief. Follow every quality rule and the Downtown Perks voice. Use plain language a normal person would understand on first read. Use only the supplied facts. Required: mention the partner by name, use the specific suggested perk or campaign, reference the district/type/audience context, and explain one practical benefit. If contact_name is missing, write "Hi there," and "Hey there". Do not sound automated.\n\n${JSON.stringify(brief, null, 2)}`,
       },
     ]);
     const parsed = JSON.parse(response);
@@ -4737,7 +4810,7 @@ export async function createApp() {
     const lineItems = Array.isArray(body.line_items) ? body.line_items : [];
     const selectedPriceIds = lineItems.map((item: any) => item.price || item.stripe_price_id).filter(Boolean);
     const matchedProducts = db.entities.ProductOffering.filter((product) => selectedPriceIds.includes(product.stripe_price_id) || selectedPriceIds.some((priceId: string) => product.prices?.some((price: any) => price.stripe_price_id === priceId)));
-    const products = matchedProducts.length ? matchedProducts : lineItems.map((item: any, index: number) => ({
+    const products = (matchedProducts.length ? matchedProducts : lineItems.map((item: any, index: number) => ({
       id: item.product_id || `local_plan_${slug(item.name || body.plan?.label || body.plan || `plan_${index + 1}`)}`,
       name: item.name || body.plan?.label || body.plan || "Partner plan",
       display_name: item.display_name || item.name || body.plan?.label || "Partner plan",
@@ -4745,17 +4818,18 @@ export async function createApp() {
       stripe_price_id: item.price || item.stripe_price_id || `local_price_${slug(item.name || body.plan?.key || body.plan || `plan_${index + 1}`)}`,
       amount: Number(item.amount ?? body.plan_amount ?? body.plan?.amount ?? 0),
       interval: item.interval || item.cadence || body.plan?.cadence || "annual",
+      quantity: Math.max(1, Number(item.quantity || 1)),
       currency: item.currency || "usd",
-    }));
+    }))).map((product: any, index: number) => ({ ...product, quantity: Math.max(1, Number(lineItems[index]?.quantity || product.quantity || 1)) }));
     const billingEmail = body.customer_email || body.billing_email || body.email || "";
     const organizationName = body.organization_name || body.business_name || "Downtown Perks Partner";
-    const subtotal = products.reduce((sum, product) => sum + Number(product.amount || 0), 0);
+    const subtotal = products.reduce((sum, product) => sum + Number(product.amount || 0) * Math.max(1, Number(product.quantity || 1)), 0);
     const recurringSubtotal = products
       .filter((product) => {
         const interval = String(product.interval || "").toLowerCase();
         return interval && interval !== "one_time" && interval !== "one-time";
       })
-      .reduce((sum, product) => sum + Number(product.amount || 0), 0);
+      .reduce((sum, product) => sum + Number(product.amount || 0) * Math.max(1, Number(product.quantity || 1)), 0);
     const promotionCode = normalizePromotionCode(body.promotion_code || body.coupon || body.checkout?.coupon);
 
     if (!products.length) return res.status(400).json({ error: "At least one plan or price is required." });
@@ -4782,7 +4856,7 @@ export async function createApp() {
         billing_email: billingEmail,
         organization_name: organizationName,
         selected_price_ids: selectedPriceIds,
-        products: products.map((product) => ({ id: product.id, name: product.name, stripe_product_id: product.stripe_product_id, stripe_price_id: product.stripe_price_id, amount: product.amount, interval: product.interval })),
+        products: products.map((product) => ({ id: product.id, name: product.name, stripe_product_id: product.stripe_product_id, stripe_price_id: product.stripe_price_id, amount: product.amount, interval: product.interval, quantity: product.quantity || 1 })),
         subtotal,
         discount: promotionValidation?.discount || 0,
         total: promotionValidation ? promotionValidation.total : subtotal,
@@ -4821,7 +4895,7 @@ export async function createApp() {
         cadence: products[0]?.interval || "annual",
         amount: recurringSubtotal || subtotal,
         first_payment_amount: subtotal,
-        annual_commitment: Number(body.checkout?.annual_commitment || body.annual_commitment || (recurringSubtotal || subtotal) * 12),
+        annual_commitment: Number(body.checkout?.annual_commitment || body.annual_commitment || recurringSubtotal || subtotal),
         selected_add_ons: body.checkout?.selected_add_ons || body.selected_add_ons || [],
         status: "active",
         billing_status: "promotional",
@@ -5167,7 +5241,7 @@ export async function createApp() {
           "settings",
         ];
         const planSubtotal = Number(checkout.subtotal ?? selectedPlan.amount ?? selectedPlan.price ?? 0);
-        const monthlyDue = Number(checkout.monthly_due ?? selectedPlan.amount ?? selectedPlan.price ?? 0);
+        const annualDue = Number(checkout.annual_total ?? checkout.annual_commitment ?? selectedPlan.amount ?? selectedPlan.price ?? 0);
         const promotionCode = normalizePromotionCode(checkout.promotion_code || checkout.coupon || body.promotion_code || body.coupon);
         const promotionValidation = promotionCode ? validatePromotion(db.entities, {
           code: promotionCode,
@@ -5302,9 +5376,9 @@ export async function createApp() {
           plan: selectedPlan.key || selectedPlan.name || "starter",
           plan_label: selectedPlan.label || selectedPlan.name || "Starter",
           cadence: selectedPlan.cadence || "annual",
-          amount: monthlyDue,
+          amount: annualDue,
           first_payment_amount: planSubtotal,
-          annual_commitment: Number(checkout.annual_commitment || monthlyDue * 12),
+          annual_commitment: Number(checkout.annual_commitment || annualDue),
           selected_add_ons: checkout.selected_add_ons || [],
           status: "active",
           billing_status: isPromotional ? "promotional" : checkout.billing_status || "paid",
