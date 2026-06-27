@@ -150,6 +150,16 @@ function QrArtworkPreview({ workspaceName, qr, artwork }: { workspaceName: strin
 export function PartnerWorkspaceTemplate(props: Props) {
   const workspaceName = props.partner.name || props.profile.propertyName || 'Partner';
   const workspaceSlug = props.partner.id || workspaceName.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+  const workspaceRecordSlug = workspaceSlug.replace(/^partner-/, '').replace(/^tenant_/, '').replace(/^workspace_/, '');
+  const entityWorkspaceId = `workspace_${workspaceRecordSlug}`;
+  const entityTenantId = `tenant_${workspaceRecordSlug}`;
+  const entityScope = {
+    tenant_id: entityTenantId,
+    workspace_id: entityWorkspaceId,
+    partner_id: props.partner.id,
+    workspace_slug: workspaceRecordSlug,
+    workspace_name: workspaceName,
+  };
   const [lead, setLead] = useState<PartnerLead>(() => loadPartnerLead(props.lead, workspaceSlug));
   const [favorites, setFavorites] = useState(() => loadFavoriteState(props.favorites, workspaceSlug));
   const [leadNotice, setLeadNotice] = useState(`${workspaceName} is ready for a quick review.`);
@@ -199,13 +209,41 @@ export function PartnerWorkspaceTemplate(props: Props) {
   }, [props.qrs]);
 
   const workspaceMatrix = [
-    { label: 'Setup', value: `${setupProgress}%`, note: 'Profile, signs, perks, and plan are almost there.', href: '#setup' },
-    { label: 'Resident reach', value: 'Ready', note: 'Broadcast tracking starts after the next send.', href: '#campaigns' },
-    { label: 'Residents', value: 'Manage', note: 'Add or import the real resident list.', href: '#residents' },
-    { label: 'Live tools', value: 'Open', note: 'Perks, events, and broadcasts are ready to edit.', href: '#perks' },
-    { label: 'Next move', value: 'Lobby link', note: 'Add it to the move-in email and elevator sign.', href: '#qr' },
-    { label: 'Plan', value: props.partner.status, note: props.billing.name, href: '#billing' },
+    { label: 'Setup', value: `${setupProgress}%`, note: setupProgress >= 80 ? 'Ready for final review.' : 'Still needs real contacts, activity, residents, and reporting.', href: '#setup' },
+    { label: 'Resident reach', value: campaigns.some((campaign) => Number(campaign.opensViews || 0) > 0) ? 'Started' : 'Not sent', note: 'Send the first useful note before calling this live.', href: '#campaigns' },
+    { label: 'Residents', value: residents.some((resident) => !String(resident.email || '').endsWith('@downtownperks.local')) ? 'Added' : 'Needed', note: 'Import or add the real resident list.', href: '#residents' },
+    { label: 'Tools', value: 'Draft', note: 'Perks, events, and codes are editable from here.', href: '#perks' },
+    { label: 'Next move', value: 'Choose', note: 'Pick one sign, one perk, and one note to launch first.', href: '#qr' },
+    { label: 'Plan', value: props.billing.conversionState, note: props.billing.name, href: '#billing' },
   ];
+
+  const buzzInsights = props.trendingLocations.slice(0, 4).map((place, index) => {
+    const perk = perks[index % Math.max(perks.length, 1)];
+    const event = events[index % Math.max(events.length, 1)];
+    const code = props.qrs[index % Math.max(props.qrs.length, 1)];
+    const role = index === 0 ? 'Home base' : index === 1 ? 'Nearby pull' : index === 2 ? 'Partner path' : 'Follow-up';
+    const why = index === 0
+      ? `${workspaceName} needs one clear starting point for residents.`
+      : index === 1
+        ? `${place.name} helps frame what is useful nearby.`
+        : index === 2
+          ? `Use this to connect ${workspaceName} to the surrounding partner network.`
+          : 'Use this as the next report or broadcast angle.';
+    const next = index === 0
+      ? code ? `Tie it to ${code.name}.` : 'Add the first building code.'
+      : index === 1
+        ? perk ? `Pair it with ${perk.offerTitle}.` : 'Add a nearby perk.'
+        : index === 2
+          ? event ? `Point residents to ${event.title}.` : 'Add one resident plan.'
+          : 'Review after the next send.';
+    return {
+      ...place,
+      role,
+      why,
+      next,
+      favoriteId: `fav-${place.id.replace('trend-', '')}`,
+    };
+  });
 
   function updateLead(key: keyof PartnerLead, value: string) {
     setLead((current) => ({
@@ -290,6 +328,23 @@ export function PartnerWorkspaceTemplate(props: Props) {
     URL.revokeObjectURL(url);
   }
 
+  async function upsertEntity(entity: string, id: string, payload: Record<string, any>) {
+    const body = { ...payload, id };
+    const patch = await fetch(`/api/entities/${entity}/${encodeURIComponent(id)}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    if (patch.ok) return patch.json();
+    const post = await fetch(`/api/entities/${entity}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    if (!post.ok) throw new Error(`${entity} save failed`);
+    return post.json();
+  }
+
   function qrArtworkSvg(qr: Props['qrs'][number]) {
     const artwork = qrArtwork[qr.id];
     const destination = absoluteUrl(qr.destination);
@@ -325,25 +380,14 @@ export function PartnerWorkspaceTemplate(props: Props) {
       status: qr.status.toLowerCase(),
       scans: qr.scans,
       artwork,
-      workspace_name: workspaceName,
+      ...entityScope,
       updated_at: new Date().toISOString(),
     };
     try {
-      const patch = await fetch(`/api/entities/PartnerQrExperience/${encodeURIComponent(qr.id)}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-      if (!patch.ok) {
-        await fetch('/api/entities/PartnerQrExperience', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-        });
-      }
+      await upsertEntity('PartnerQrExperience', qr.id, payload);
       setQrNotice((current) => ({ ...current, [qr.id]: 'Artwork saved to the workspace.' }));
     } catch {
-      setQrNotice((current) => ({ ...current, [qr.id]: 'Saved locally. Backend is not reachable from this browser.' }));
+      setQrNotice((current) => ({ ...current, [qr.id]: 'Could not save this code. Try again in a moment.' }));
     }
   }
 
@@ -379,25 +423,21 @@ export function PartnerWorkspaceTemplate(props: Props) {
       scans: nextPerk.qrScans,
       location: nextPerk.location,
       address: nextPerk.location,
-      workspace_name: workspaceName,
+      ...entityScope,
       updated_at: new Date().toISOString(),
     };
     try {
-      const patch = await fetch(`/api/perks/${encodeURIComponent(nextPerk.id)}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+      await upsertEntity('PerkLocation', nextPerk.id, payload);
+      await upsertEntity('PartnerOffer', `offer-${nextPerk.id}`, {
+        ...payload,
+        id: `offer-${nextPerk.id}`,
+        offer_id: nextPerk.id,
+        partner_name: nextPerk.partner,
+        source_type: 'partner_workspace',
       });
-      if (!patch.ok) {
-        await fetch('/api/perks', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-        });
-      }
       setPerkNotice((current) => ({ ...current, [perk.id]: nextStatus === 'Active' ? 'Perk published and saved.' : 'Perk saved.' }));
     } catch {
-      setPerkNotice((current) => ({ ...current, [perk.id]: 'Saved locally. Backend is not reachable from this browser.' }));
+      setPerkNotice((current) => ({ ...current, [perk.id]: 'Could not save this perk. Try again in a moment.' }));
     }
   }
 
@@ -405,24 +445,26 @@ export function PartnerWorkspaceTemplate(props: Props) {
     setEvents((current) => current.map((item) => (item.id === eventId ? { ...item, [key]: value } : item)));
   }
 
-  function addEvent() {
+  async function addEvent() {
     const id = `event-${Date.now()}`;
+    const event = {
+      id,
+      title: `${workspaceName} resident plan`,
+      dateTime: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 16),
+      location: props.profile.propertyName,
+      description: 'A simple plan residents can say yes to.',
+      rsvpCount: 0,
+      capacity: 50,
+      status: 'Draft' as const,
+      linkedQR: props.qrs[0]?.name || 'Lobby code',
+      linkedCampaign: campaigns[0]?.name || 'Resident broadcast',
+    };
     setEvents((current) => [
-      {
-        id,
-        title: `${workspaceName} resident plan`,
-        dateTime: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 16),
-        location: props.profile.propertyName,
-        description: 'A simple plan residents can say yes to.',
-        rsvpCount: 0,
-        capacity: 50,
-        status: 'Draft',
-        linkedQR: props.qrs[0]?.name || 'Lobby code',
-        linkedCampaign: campaigns[0]?.name || 'Resident broadcast',
-      },
+      event,
       ...current,
     ]);
-    setEventNotice((current) => ({ ...current, [id]: 'New event started. Add the details, then save it.' }));
+    setEventNotice((current) => ({ ...current, [id]: 'Event started and saved. Add the details when you are ready.' }));
+    await saveEventSetup(event);
   }
 
   async function saveEventSetup(event: Event, nextStatus: Event['status'] = event.status) {
@@ -441,25 +483,14 @@ export function PartnerWorkspaceTemplate(props: Props) {
       status: nextStatus.toLowerCase(),
       linked_qr: nextEvent.linkedQR,
       linked_campaign: nextEvent.linkedCampaign,
-      workspace_name: workspaceName,
+      ...entityScope,
       updated_at: new Date().toISOString(),
     };
     try {
-      const patch = await fetch(`/api/events/${encodeURIComponent(nextEvent.id)}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-      if (!patch.ok) {
-        await fetch('/api/events', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-        });
-      }
+      await upsertEntity('Event', nextEvent.id, payload);
       setEventNotice((current) => ({ ...current, [event.id]: nextStatus === 'Published' ? 'Event published and saved.' : 'Event saved.' }));
     } catch {
-      setEventNotice((current) => ({ ...current, [event.id]: 'Saved locally. Backend is not reachable from this browser.' }));
+      setEventNotice((current) => ({ ...current, [event.id]: 'Could not save this event. Try again in a moment.' }));
     }
   }
 
@@ -476,24 +507,26 @@ export function PartnerWorkspaceTemplate(props: Props) {
     setCampaigns((current) => current.map((item) => (item.id === campaignId ? { ...item, [key]: value } : item)));
   }
 
-  function addCampaign() {
+  async function addCampaign() {
     const id = `campaign-${Date.now()}`;
+    const campaign = {
+      id,
+      name: `${workspaceName} resident broadcast`,
+      audience: 'All residents',
+      channel: 'Email + building code',
+      linkedItems: [],
+      sendStatus: 'Draft' as const,
+      opensViews: 0,
+      saves: 0,
+      redemptions: 0,
+      qrScans: 0,
+    };
     setCampaigns((current) => [
-      {
-        id,
-        name: `${workspaceName} resident broadcast`,
-        audience: 'All residents',
-        channel: 'Email + building code',
-        linkedItems: [],
-        sendStatus: 'Draft',
-        opensViews: 0,
-        saves: 0,
-        redemptions: 0,
-        qrScans: 0,
-      },
+      campaign,
       ...current,
     ]);
-    setCampaignNotice((current) => ({ ...current, [id]: 'Broadcast started. Add the audience, channel, and linked items.' }));
+    setCampaignNotice((current) => ({ ...current, [id]: 'Broadcast started and saved. Add the audience, channel, and linked items.' }));
+    await saveCampaignSetup(campaign);
   }
 
   async function saveCampaignSetup(campaign: Campaign, nextStatus: Campaign['sendStatus'] = campaign.sendStatus) {
@@ -503,34 +536,55 @@ export function PartnerWorkspaceTemplate(props: Props) {
       id: nextCampaign.id,
       title: nextCampaign.name,
       name: nextCampaign.name,
+      type: 'broadcast',
       audience: nextCampaign.audience,
       channel: nextCampaign.channel,
       linked_items: nextCampaign.linkedItems,
       status: nextStatus.toLowerCase(),
+      send_status: nextStatus.toLowerCase(),
       opens: Number(nextCampaign.opensViews || 0),
       views: Number(nextCampaign.opensViews || 0),
       saves: Number(nextCampaign.saves || 0),
       redemptions: Number(nextCampaign.redemptions || 0),
       qr_scans: Number(nextCampaign.qrScans || 0),
-      workspace_name: workspaceName,
+      ...entityScope,
+      sent_at: nextStatus === 'Live' || nextStatus === 'Sent' ? new Date().toISOString() : '',
       updated_at: new Date().toISOString(),
     };
     try {
-      const patch = await fetch(`/api/campaigns/${encodeURIComponent(nextCampaign.id)}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-      if (!patch.ok) {
-        await fetch('/api/campaigns', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-        });
-      }
+      await upsertEntity('Campaign', nextCampaign.id, payload);
       setCampaignNotice((current) => ({ ...current, [campaign.id]: nextStatus === 'Live' ? 'Broadcast is live and saved.' : 'Broadcast saved.' }));
     } catch {
-      setCampaignNotice((current) => ({ ...current, [campaign.id]: 'Saved locally. Backend is not reachable from this browser.' }));
+      setCampaignNotice((current) => ({ ...current, [campaign.id]: 'Could not save this broadcast. Try again in a moment.' }));
+    }
+  }
+
+  async function saveCampaignReport(campaign: Campaign) {
+    try {
+      await saveCampaignSetup(campaign);
+      const id = `report-${workspaceSlug}-${campaign.id}`;
+      await upsertEntity('PartnerReport', id, {
+        id,
+        partner_id: props.partner.id,
+        ...entityScope,
+        title: `${campaign.name} report`,
+        report_type: 'broadcast',
+        status: 'ready',
+        summary: `${campaign.name} is ready to review from this workspace.`,
+        metrics: {
+          opens: campaign.opensViews,
+          saves: campaign.saves,
+          redemptions: campaign.redemptions,
+          qr_scans: campaign.qrScans,
+        },
+        recommended_action: reportSnapshot.recommendation,
+        created_from: campaign.id,
+        updated_at: new Date().toISOString(),
+      });
+      setCampaignNotice((current) => ({ ...current, [campaign.id]: 'Report saved. Open Reports to review it.' }));
+      window.location.hash = 'reports';
+    } catch {
+      setCampaignNotice((current) => ({ ...current, [campaign.id]: 'Could not create the report. Try again in a moment.' }));
     }
   }
 
@@ -547,23 +601,22 @@ export function PartnerWorkspaceTemplate(props: Props) {
     setResidents((current) => current.map((item) => (item.id === residentId ? { ...item, [key]: value } : item)));
   }
 
-  function addResident() {
+  async function addResident() {
     const id = `resident-${Date.now()}`;
-    setResidents((current) => [
-      {
-        id,
-        name: 'New resident',
-        unit: '',
-        email: '',
-        moveInDate: new Date().toISOString().slice(0, 10),
-        interests: [],
-        savedPerks: 0,
-        rsvps: 0,
-        engagementStatus: 'New resident',
-      },
-      ...current,
-    ]);
+    const resident = {
+      id,
+      name: 'New resident',
+      unit: '',
+      email: '',
+      moveInDate: new Date().toISOString().slice(0, 10),
+      interests: [],
+      savedPerks: 0,
+      rsvps: 0,
+      engagementStatus: 'New resident' as const,
+    };
+    setResidents((current) => [resident, ...current]);
     setResidentNotice((current) => ({ ...current, [id]: 'Resident started. Add what you know, then save.' }));
+    await saveResident(resident);
   }
 
   async function saveResident(resident: Resident) {
@@ -577,25 +630,18 @@ export function PartnerWorkspaceTemplate(props: Props) {
       saved_perks: Number(resident.savedPerks || 0),
       rsvps: Number(resident.rsvps || 0),
       engagement_status: resident.engagementStatus,
-      workspace_name: workspaceName,
+      ...entityScope,
       updated_at: new Date().toISOString(),
     };
     try {
-      const patch = await fetch(`/api/residents/${encodeURIComponent(resident.id)}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+      await upsertEntity('Tenant', resident.id, {
+        ...payload,
+        tenant_type: 'resident',
+        resident_status: resident.engagementStatus,
       });
-      if (!patch.ok) {
-        await fetch('/api/residents', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-        });
-      }
       setResidentNotice((current) => ({ ...current, [resident.id]: 'Resident saved.' }));
     } catch {
-      setResidentNotice((current) => ({ ...current, [resident.id]: 'Saved locally. Backend is not reachable from this browser.' }));
+      setResidentNotice((current) => ({ ...current, [resident.id]: 'Could not save this resident. Try again in a moment.' }));
     }
   }
 
@@ -633,20 +679,88 @@ export function PartnerWorkspaceTemplate(props: Props) {
     await Promise.all(imported.map((resident) => saveResident(resident)));
   }
 
-  function writeBillingSummary(action: 'quote' | 'invoice') {
+  async function saveBillingRecord(action: 'quote' | 'invoice' | 'subscription', addOn?: string) {
     const totalDue = couponResult?.accepted ? couponResult.totalDue : props.billing.price;
-    const label = action === 'quote' ? 'quote' : 'invoice request';
-    downloadTextFile(
-      `${workspaceSlug.replace(/^partner-/, '')}-${label.replace(' ', '-')}.txt`,
-      [
-        `${workspaceName} Downtown Perks plan`,
-        `${props.billing.name}: ${money(props.billing.price)}/${props.billing.cadence}`,
-        `Coupon: ${couponResult?.accepted ? coupon.toUpperCase() : 'none'}`,
-        `Total due today: ${money(totalDue)}`,
-        `Add-ons: ${props.billing.addOns.join(', ')}`,
-      ].join('\n'),
-    );
-    setBillingNotice(action === 'quote' ? 'Quote file downloaded.' : 'Invoice request file downloaded.');
+    const timestamp = Date.now();
+    const basePayload = {
+      tenant_id: props.partner.id,
+      ...entityScope,
+      partner_name: workspaceName,
+      billing_email: lead.email,
+      plan: props.billing.id,
+      plan_label: props.billing.name,
+      cadence: props.billing.cadence,
+      subtotal: props.billing.price,
+      discount: couponResult?.accepted ? couponResult.discount : 0,
+      total: totalDue,
+      coupon: couponResult?.accepted ? coupon.toUpperCase() : '',
+      selected_module: addOn || '',
+      currency: 'usd',
+      source: 'partner_workspace',
+    };
+    try {
+      if (action === 'subscription') {
+        const subscriptionId = `subscription_${workspaceSlug}`;
+        const response = await fetch(`/api/entities/PartnerSubscription/${encodeURIComponent(subscriptionId)}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            ...basePayload,
+            id: subscriptionId,
+            status: 'active',
+            billing_status: totalDue === 0 ? 'promotional' : 'invoice_ready',
+            amount: props.billing.price,
+            amount_paid: totalDue === 0 ? 0 : undefined,
+          }),
+        });
+        if (!response.ok) {
+          await fetch('/api/entities/PartnerSubscription', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              ...basePayload,
+              id: subscriptionId,
+              status: 'active',
+              billing_status: totalDue === 0 ? 'promotional' : 'invoice_ready',
+              amount: props.billing.price,
+            }),
+          });
+        }
+        setBillingNotice(`${props.billing.name} is active for ${workspaceName}. Modules can now be added to the plan or billed once.`);
+        return;
+      }
+      const invoiceId = `${action}_${workspaceSlug}_${timestamp}`;
+      await fetch('/api/entities/PartnerInvoice', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...basePayload,
+          id: invoiceId,
+          invoice_number: `DP-${workspaceSlug.toUpperCase().slice(0, 12)}-${timestamp}`,
+          status: action === 'quote' ? 'quote_ready' : 'invoice_requested',
+          billing_status: action === 'quote' ? 'quote' : 'requested',
+          line_items: [
+            { label: props.billing.name, amount: props.billing.price, cadence: props.billing.cadence },
+            ...(addOn ? [{ label: addOn, amount: 0, cadence: 'module' }] : []),
+          ],
+        }),
+      });
+      if (action === 'quote') {
+        downloadTextFile(
+          `${workspaceSlug.replace(/^partner-/, '')}-quote.txt`,
+          [
+            `${workspaceName} Downtown Perks quote`,
+            `${props.billing.name}: ${money(props.billing.price)}/${props.billing.cadence}`,
+            `Credit: ${couponResult?.accepted ? coupon.toUpperCase() : 'none'}`,
+            `Total: ${money(totalDue)}`,
+            `Modules: ${props.billing.addOns.join(', ')}`,
+          ].join('\n'),
+        );
+      }
+      setBillingNotice(action === 'quote' ? 'Quote saved and downloaded.' : 'Invoice request saved for billing review.');
+    } catch {
+      setBillingNotice('Could not save this billing update. Please try again.');
+    }
   }
 
   return (
@@ -730,44 +844,42 @@ export function PartnerWorkspaceTemplate(props: Props) {
                 </a>
               ))}
             </div>
+            <div className="mt-4 border-t border-[rgba(11,31,51,0.06)] pt-3">
+              <div className="text-[10px] font-bold uppercase text-[#C8A96A]">Resident picks to feature</div>
+              <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                {favorites.slice(0, 4).map((item) => (
+                  <button key={item.id} type="button" onClick={() => toggleFavorite(item.id)} className="group grid min-h-9 grid-cols-[1fr_auto] gap-2 text-left text-xs">
+                    <span className="min-w-0">
+                      <span className="block truncate font-semibold text-[#0B1F33] group-hover:text-[#C8A96A]">{item.name}</span>
+                      <span className="block truncate text-[10px] text-[rgba(11,31,51,0.54)]">{item.type} · {item.saved ? 'featured' : 'not featured'}</span>
+                    </span>
+                    <Heart className={`mt-0.5 h-3.5 w-3.5 ${item.saved ? 'fill-[#C8A96A] text-[#C8A96A]' : 'text-[rgba(11,31,51,0.32)]'}`} />
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
         </section>
 
-        <section className="grid gap-10 lg:grid-cols-[0.8fr_1.2fr]">
-          <div className="shore-card">
-            <div className="flex items-center gap-2 text-[11px] font-bold uppercase text-[#C8A96A]">
-              <Star className="h-4 w-4" />
-              My favorites
-            </div>
-            <h2 className="mt-2 text-2xl leading-tight text-[#0B1F33] sm:text-[28px]">A short list worth keeping</h2>
-            <p className="mt-2 text-sm leading-6 text-[rgba(11,31,51,0.64)]">Save the places, perks, and plans residents should see first. Tap once to keep something, tap again to clear it.</p>
-            <div className="mt-4 space-y-2">
-              {favorites.map((item) => (
-                <div key={item.id}>
-                  <ToggleFavorite item={item} onToggle={toggleFavorite} />
-                </div>
-              ))}
-            </div>
-          </div>
+        <section>
           <div className="shore-card">
             <div className="flex items-center gap-2 text-[11px] font-bold uppercase text-[#C8A96A]">
               <MapPin className="h-4 w-4" />
-              Buzz nearby
+              Nearby read
             </div>
-            <h2 className="mt-2 text-2xl leading-tight text-[#0B1F33] sm:text-[28px]">Nearby spots residents are already choosing</h2>
-            <div className="mt-4 grid gap-x-8 gap-y-5 sm:grid-cols-2">
-              {props.trendingLocations.map((place) => (
-                <div key={place.id} className="py-2">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <div className="text-sm font-semibold text-[#0B1F33]">{place.name}</div>
-                      <div className="text-xs text-[rgba(11,31,51,0.58)]">{place.category} · {place.distance}</div>
-                    </div>
-                    <span className="text-[11px] font-bold uppercase text-[#C8A96A]">{place.trend}</span>
+            <h2 className="mt-2 text-2xl leading-tight text-[#0B1F33] sm:text-[28px]">What nearby attention should do next</h2>
+            <p className="mt-2 text-sm leading-6 text-[rgba(11,31,51,0.64)]">A compact read on the anchors, offers, plans, and follow-ups that make this workspace useful.</p>
+            <div className="mt-4 grid gap-2">
+              {buzzInsights.map((place) => (
+                <div key={place.id} className="grid gap-2 border-b border-[rgba(11,31,51,0.055)] py-2 last:border-b-0 sm:grid-cols-[0.8fr_1.15fr_0.9fr_auto] sm:items-start">
+                  <div className="min-w-0">
+                    <div className="truncate text-sm font-semibold text-[#0B1F33]">{place.name}</div>
+                    <div className="mt-0.5 text-[10px] font-semibold uppercase text-[rgba(11,31,51,0.48)]">{place.role} · {place.distance}</div>
                   </div>
-                    <p className="mt-3 text-xs leading-5 text-[rgba(11,31,51,0.66)]">Anonymous activity will show here once residents start checking in.</p>
-                  <button type="button" onClick={() => toggleFavorite(`fav-${place.id.replace('trend-', '')}`)} className="shore-button mt-3 w-full">
-                    <Heart className="h-4 w-4" /> Save or remove
+                  <p className="text-xs leading-5 text-[rgba(11,31,51,0.64)]">{place.why}</p>
+                  <p className="text-xs font-semibold leading-5 text-[#0B1F33]">{place.next}</p>
+                  <button type="button" onClick={() => toggleFavorite(place.favoriteId)} className="shore-button min-h-8 px-2 text-[10px] sm:justify-self-end">
+                    <Heart className="h-3.5 w-3.5" /> Keep
                   </button>
                 </div>
               ))}
@@ -1116,7 +1228,7 @@ export function PartnerWorkspaceTemplate(props: Props) {
                   <button type="button" className="shore-button" onClick={() => saveCampaignSetup(campaign, 'Live')}>
                     <Send className="h-4 w-4" /> Send
                   </button>
-                  <a href="#reports" className="shore-button"><Eye className="h-4 w-4" /> Report</a>
+                  <button type="button" className="shore-button" onClick={() => saveCampaignReport(campaign)}><Eye className="h-4 w-4" /> Report</button>
                   <button type="button" className="shore-button" onClick={() => removeCampaign(campaign)}>
                     <X className="h-4 w-4" /> Remove
                   </button>
@@ -1186,20 +1298,22 @@ export function PartnerWorkspaceTemplate(props: Props) {
 
         <Section id="reports" eyebrow="Reports" title="What residents found, saved, joined, and used" description="A quick read on what is working: signs, perks, events, broadcasts, resident activity, and the places around downtown that people are actually opening.">
           <div className="shore-card">
-            <div className="grid gap-x-8 gap-y-6 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-0">
               {reportSnapshot.metrics.map((metric) => (
-                <div key={metric.id}>
-                  <div className="text-[11px] font-bold uppercase text-[rgba(11,31,51,0.52)]">{metric.label}</div>
-                  <div className="mt-2 text-2xl font-semibold">{metric.value}</div>
-                  <div className="text-xs font-bold text-[#C8A96A]">{metric.change}</div>
-                  <p className="mt-2 text-xs leading-5 text-[rgba(11,31,51,0.62)]">{metric.explanation}</p>
+                <div key={metric.id} className="grid gap-1 border-b border-[rgba(11,31,51,0.055)] py-2 last:border-b-0 sm:grid-cols-[0.72fr_0.8fr_0.48fr_1.3fr] sm:items-baseline sm:gap-4">
+                  <div className="text-[10px] font-bold uppercase text-[rgba(11,31,51,0.52)]">{metric.label}</div>
+                  <div className="text-sm font-semibold text-[#0B1F33]">{metric.value}</div>
+                  <div className="text-[10px] font-bold uppercase text-[#C8A96A]">{metric.change}</div>
+                  <p className="text-xs leading-5 text-[rgba(11,31,51,0.62)]">{metric.explanation}</p>
                 </div>
               ))}
             </div>
-            <div className="mt-5 border-l-2 border-[#C8A96A] bg-[#F7F8FB] p-4">
-              <div className="text-sm font-semibold">What we would do next</div>
-              <p className="mt-1 text-sm leading-6 text-[rgba(11,31,51,0.66)]">{reportSnapshot.recommendation}</p>
-              <p className="mt-2 text-xs leading-5 text-[rgba(11,31,51,0.58)]">No names here. Just enough signal to know what residents are using and what deserves another push.</p>
+            <div className="mt-4 grid gap-2 border-t border-[rgba(11,31,51,0.08)] pt-3 sm:grid-cols-[0.5fr_1.5fr]">
+              <div className="text-[10px] font-bold uppercase text-[#C8A96A]">Next move</div>
+              <div>
+                <p className="text-sm font-semibold leading-6 text-[#0B1F33]">{reportSnapshot.recommendation}</p>
+                <p className="mt-1 text-xs leading-5 text-[rgba(11,31,51,0.58)]">No names here. Just enough signal to know what residents are using and what deserves another push.</p>
+              </div>
             </div>
           </div>
         </Section>
@@ -1221,33 +1335,34 @@ export function PartnerWorkspaceTemplate(props: Props) {
               )}
             </div>
             <div>
-              <div className="text-[11px] font-bold uppercase text-[#C8A96A]">Add when useful</div>
+              <div className="text-[11px] font-bold uppercase text-[#C8A96A]">Add-ons and modules</div>
+              <p className="mt-2 text-sm leading-6 text-[rgba(11,31,51,0.64)]">
+                Add-ons are one-time help. Modules become part of the workspace and show up in the plan, invoice, and the relevant tool area.
+              </p>
               <div className="mt-3 grid gap-2 sm:grid-cols-2">
                 {props.billing.addOns.map((addOn) => (
-                  <button type="button" key={addOn} className="shore-plan-option" onClick={() => setBillingNotice(`${addOn} added to the next invoice draft.`)}>
+                  <button type="button" key={addOn} className="shore-plan-option" onClick={() => saveBillingRecord('invoice', addOn)}>
                     <span>{addOn}</span>
-                    <small>One-time or monthly support</small>
+                    <small>Add to the next invoice and connect it to this workspace</small>
                   </button>
                 ))}
               </div>
               <div className="mt-5 grid gap-2 sm:grid-cols-2">
-                <button type="button" className="shore-plan-option" onClick={() => setBillingNotice('Resident Plus upgrade selected. The next invoice draft will include the higher plan.')}>
+                <button type="button" className="shore-plan-option" onClick={() => saveBillingRecord('invoice', 'Resident Plus upgrade')}>
                   <span>Upgrade to Resident Plus</span>
-                  <small>More broadcasts, deeper reporting, and event support</small>
+                  <small>Add more notes, reporting, and event support</small>
                 </button>
-                <button type="button" className="shore-plan-option" onClick={() => setBillingNotice('Concierge setup added as a one-time service.')}>
+                <button type="button" className="shore-plan-option" onClick={() => saveBillingRecord('invoice', 'Concierge setup')}>
                   <span>Concierge setup</span>
-                  <small>One-time setup for signs, resident imports, and first campaign</small>
+                  <small>One-time help for signs, resident imports, and the first note</small>
                 </button>
               </div>
               <div className="mt-5 flex flex-wrap gap-2">
-                <button type="button" className="shore-button shore-button-primary" onClick={() => {
-                  setBillingNotice(`${workspaceName} is ready for the yearly plan.`);
-                }}>
+                <button type="button" className="shore-button shore-button-primary" onClick={() => saveBillingRecord('subscription')}>
                   <Sparkles className="h-4 w-4" /> Activate yearly plan
                 </button>
-                <button type="button" className="shore-button" onClick={() => writeBillingSummary('quote')}>Download quote</button>
-                <button type="button" className="shore-button" onClick={() => writeBillingSummary('invoice')}>Request invoice</button>
+                <button type="button" className="shore-button" onClick={() => saveBillingRecord('quote')}>Download quote</button>
+                <button type="button" className="shore-button" onClick={() => saveBillingRecord('invoice')}>Request invoice</button>
               </div>
               <p className="mt-3 text-sm leading-6 text-[rgba(11,31,51,0.64)]">{billingNotice}</p>
             </div>

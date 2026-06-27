@@ -175,11 +175,11 @@ export default function PropertiesManagement() {
     const locations = properties.reduce((sum, p) => sum + Number(p.locations || 0), 0);
     const campaigns = properties.reduce((sum, p) => sum + Number(p.campaigns || 0), 0);
     return [
-      { label: 'Properties', value: properties.length, detail: 'Places, buildings, and listings available to review', to: '/admin/properties' },
-      { label: 'Workspaces', value: workspaces, detail: 'Partner workspaces connected to property records', to: '/admin' },
-      { label: 'Map linked', value: mapLinked, detail: 'Properties visible through map or location data', to: '/map' },
-      { label: 'Locations', value: locations, detail: 'Managed places attached to property groups', to: '/admin/buildings' },
-      { label: 'Campaigns', value: campaigns, detail: 'Campaign activity connected to properties', to: '/admin/engagement' },
+      { label: 'Properties', value: properties.length, detail: 'Places and listings ready to review', to: '/admin/properties' },
+      { label: 'Workspaces', value: workspaces, detail: 'Property pages ready to open', to: '/admin' },
+      { label: 'Map linked', value: mapLinked, detail: 'Properties with map details', to: '/map' },
+      { label: 'Locations', value: locations, detail: 'Places tied to property groups', to: '/admin/buildings' },
+      { label: 'Notes', value: campaigns, detail: 'Property notes and sends', to: '/admin/engagement' },
     ];
   }, [properties]);
 
@@ -219,14 +219,14 @@ export default function PropertiesManagement() {
 
   return (
     <div className="min-h-screen bg-white">
-      <div className="mx-auto max-w-[1320px] px-4 py-8 sm:px-6 lg:px-8">
-        <section className="mb-5 border border-[rgba(11,31,51,0.08)] bg-white p-5">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+      <div className="mx-auto max-w-[1320px] px-4 py-6 sm:px-6 lg:px-8">
+        <section className="mb-4 bg-white py-2">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
             <div>
-              <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--dp-gold)]">Property directory</p>
-              <h1 className="mt-2 text-2xl font-semibold text-[#11182B] sm:text-3xl">Properties</h1>
-              <p className="mt-2 max-w-3xl text-sm leading-6 text-textMuted">
-                Find every property, residential listing, building, and real estate space connected to Downtown Perks. Open the record, map source, or building view from one place.
+              <p className="text-[10px] font-semibold uppercase text-[var(--dp-gold)]">Property directory</p>
+              <h1 className="mt-1 text-xl font-semibold text-[#11182B] sm:text-2xl">Properties</h1>
+              <p className="mt-1.5 max-w-3xl text-[12px] leading-5 text-textMuted">
+                Find every property, building, and listing connected to Downtown Perks. Open the workspace, map record, or building view from here.
               </p>
             </div>
             <div className="flex flex-row flex-wrap items-center gap-2">
@@ -250,18 +250,18 @@ export default function PropertiesManagement() {
 
         {isIngesting && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-            <div className="relative w-full max-w-xl border border-[var(--border-subtle)] bg-white p-6 shadow-lg">
-              <h2 className="mb-4 flex items-center gap-2 text-xl font-bold text-[#11182B]">
+            <div className="relative w-full max-w-xl border border-[var(--border-subtle)] bg-white p-5 shadow-lg">
+              <h2 className="mb-3 flex items-center gap-2 text-lg font-semibold text-[#11182B]">
                 <Sparkles className="h-5 w-5 text-[#C5A028]" /> Review property notes
               </h2>
-              <p className="mb-4 text-sm leading-6 text-textMuted">
-                Paste notes from an email, broker listing, or asset report. Downtown Perks will turn them into a clean property draft for review.
+              <p className="mb-3 text-[12px] leading-5 text-textMuted">
+                Paste notes from an email, broker listing, or asset report. We will turn them into a clean property draft for review.
               </p>
               <textarea
                 value={ingestText}
                 onChange={(e) => setIngestText(e.target.value)}
                 placeholder="The Quincy is at 91 Red River St with 220 units, a resident lounge, pool deck, coworking space, and active leasing."
-                className="mb-4 h-40 w-full resize-none border border-[var(--border-subtle)] bg-white p-3 text-sm"
+                className="mb-4 h-36 w-full resize-none border border-[var(--border-subtle)] bg-white p-2.5 text-[12px]"
               />
               <div className="flex justify-end gap-3">
                 <Button variant="ghost" onClick={() => setIsIngesting(false)} disabled={ingestMut.isPending}>Cancel</Button>
@@ -276,14 +276,14 @@ export default function PropertiesManagement() {
 
         {(isAdding || isEditing) && (
           <Card className="mb-8">
-            <CardContent className="p-6">
-              <h2 className="mb-2 text-lg font-bold text-[#11182B]">{isEditing ? 'Edit property' : 'Add property'}</h2>
+            <CardContent className="p-5">
+              <h2 className="mb-2 text-base font-semibold text-[#11182B]">{isEditing ? 'Edit property' : 'Add property'}</h2>
               {isEditing?.source_type !== 'building' && (
-                <p className="mb-6 text-sm leading-6 text-textMuted">
-                  Imported profiles stay connected to their partner space. Saving here creates a separate property profile for your admin directory.
+                <p className="mb-5 text-[12px] leading-5 text-textMuted">
+                  Imported profiles stay connected to their partner space. Saving here adds a property profile to the directory.
                 </p>
               )}
-              <form onSubmit={handleSave} className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <form onSubmit={handleSave} className="grid grid-cols-1 gap-3 md:grid-cols-2">
                 <div className="space-y-2">
                   <label className="text-xs font-bold uppercase tracking-wider text-textSecondary">Name</label>
                   <input name="name" defaultValue={isEditing?.name} required className="w-full border border-[var(--border-subtle)] bg-white p-3 text-sm" />
@@ -325,16 +325,16 @@ export default function PropertiesManagement() {
           </Card>
         )}
 
-        <section className="mb-5 border border-[rgba(11,31,51,0.08)] bg-white p-3 sm:p-4">
-          <div className="grid gap-3 lg:grid-cols-[1fr_auto] lg:items-center">
-            <label className="flex min-h-11 items-center gap-2 border-b border-[rgba(11,31,51,0.12)] px-1">
-              <Search className="h-4 w-4 text-[#C8A96A]" />
+        <section className="mb-4 bg-white py-2">
+          <div className="grid gap-2 lg:grid-cols-[1fr_auto] lg:items-center">
+            <label className="flex min-h-9 items-center gap-2 border-b border-[rgba(11,31,51,0.1)] px-0">
+              <Search className="h-3.5 w-3.5 text-[#C8A96A]" />
               <input
                 type="text"
                 placeholder="Search property, district, source, workspace, or address"
                 value={search}
                 onChange={e => setSearch(e.target.value)}
-                className="w-full bg-transparent px-2 py-2 text-sm outline-none"
+                className="w-full bg-transparent px-1 py-1.5 text-[12px] outline-none"
               />
             </label>
             <div className="flex flex-row flex-wrap items-center gap-2">
@@ -354,37 +354,37 @@ export default function PropertiesManagement() {
             <Loader2 className="h-6 w-6 animate-spin text-textMuted" />
           </div>
         ) : (
-          <section className="overflow-hidden border border-[rgba(11,31,51,0.08)] bg-white">
-            <div className="border-b border-[rgba(11,31,51,0.08)] px-3 py-3 sm:px-5 sm:py-4">
-              <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[#C8A96A]">Properties</p>
-              <h2 className="mt-1 text-lg font-semibold text-[#11182B] sm:text-xl">Directory and workspace links</h2>
+          <section className="overflow-hidden bg-white">
+            <div className="px-0 py-2.5">
+              <p className="text-[10px] font-semibold uppercase text-[#C8A96A]">Properties</p>
+              <h2 className="mt-0.5 text-[15px] font-semibold text-[#11182B]">Directory and workspace links</h2>
             </div>
             <div className="grid gap-0 lg:hidden">
               {filteredProps.map((prop) => {
                 const canEditBuilding = prop.source_type === 'building' && !prop.tenant_id;
                 return (
-                  <article key={prop.id} className="border-b border-[rgba(11,31,51,0.06)] px-3 py-3">
-                    <div className="flex items-start justify-between gap-3">
+                  <article key={prop.id} className="border-b border-[rgba(11,31,51,0.04)] px-0 py-2.5">
+                    <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0">
-                        <p className="text-[10px] font-semibold uppercase leading-4 text-[rgba(11,31,51,0.5)]">{prop.category || prop.type || 'Property'}</p>
-                        <h3 className="mt-0.5 text-[15px] font-semibold leading-5 text-[#11182B]">{prop.name}</h3>
+                        <p className="text-[9px] font-semibold uppercase leading-3 text-[rgba(11,31,51,0.5)]">{prop.category || prop.type || 'Property'}</p>
+                        <h3 className="mt-0.5 text-[13px] font-semibold leading-4 text-[#11182B]">{prop.name}</h3>
                       </div>
-                      <span className="shrink-0 border border-[rgba(11,31,51,0.10)] px-2 py-1 text-[10px] font-semibold uppercase text-[#0B1F33]">{prop.status || 'active'}</span>
+                      <span className="shrink-0 text-[9px] font-semibold uppercase text-[#0B1F33]">{prop.status || 'active'}</span>
                     </div>
-                    <p className="mt-2 flex gap-2 text-xs leading-5 text-textMuted">
+                    <p className="mt-1.5 flex gap-1.5 text-[11px] leading-4 text-textMuted">
                       <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#C8A96A]" />
                       <span>{prop.address || prop.district || 'No address listed'}</span>
                     </p>
-                    <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-1 border-y border-[rgba(11,31,51,0.06)] py-2">
+                    <div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-0.5 py-1.5">
                       <MiniLine label="Units" value={prop.totalUnits || prop.listings || 0} />
                       <MiniLine label="Map" value={prop.mapLinks || 0} />
                       <MiniLine label="Campaigns" value={prop.campaigns || 0} />
                       <MiniLine label="Photos" value={prop.photos?.length || 0} />
                     </div>
-                    <p className="mt-2 text-xs leading-5 text-textMuted">
+                    <p className="mt-1.5 text-[11px] leading-4 text-textMuted">
                       <span className="font-semibold text-[#11182B]">Workspace:</span> {prop.workspacePath ? prop.workspacePath.replace('/tenant/', '') : prop.workspace_id || 'Not linked'}
                     </p>
-                    <div className="mt-3 grid grid-cols-2 gap-2">
+                    <div className="mt-2 grid grid-cols-2 gap-1.5">
                       <Button variant="outline" onClick={() => openWorkspace(prop)} className="min-h-10 justify-center gap-2 text-[#0B1F33]">
                         <ExternalLink className="h-4 w-4" />
                         Workspace
@@ -413,63 +413,63 @@ export default function PropertiesManagement() {
               })}
             </div>
             <div className="hidden overflow-x-auto [scrollbar-width:thin] lg:block">
-              <table className="w-full min-w-[1180px] table-fixed text-left text-sm">
+              <table className="w-full min-w-[1080px] table-fixed text-left text-[12px]">
                 <colgroup>
-                  <col className="w-[290px]" />
-                  <col className="w-[190px]" />
+                  <col className="w-[270px]" />
+                  <col className="w-[150px]" />
+                  <col className="w-[150px]" />
+                  <col className="w-[245px]" />
+                  <col className="w-[160px]" />
                   <col className="w-[170px]" />
-                  <col className="w-[260px]" />
-                  <col className="w-[190px]" />
-                  <col className="w-[210px]" />
                 </colgroup>
-                <thead className="border-b border-[rgba(11,31,51,0.08)] bg-[#FBFCFD] text-[10px] font-bold uppercase tracking-[0.08em] text-textMuted">
+                <thead className="border-b border-[rgba(11,31,51,0.05)] bg-white text-[9px] font-semibold uppercase text-textMuted">
                   <tr>
-                    <th className="px-5 py-3">Property</th>
-                    <th className="border-l border-[rgba(11,31,51,0.06)] px-5 py-3">Status</th>
-                    <th className="border-l border-[rgba(11,31,51,0.06)] px-5 py-3">Coverage</th>
-                    <th className="border-l border-[rgba(11,31,51,0.06)] px-5 py-3">Workspace</th>
-                    <th className="border-l border-[rgba(11,31,51,0.06)] px-5 py-3">Activity</th>
-                    <th className="border-l border-[rgba(11,31,51,0.06)] px-5 py-3">Actions</th>
+                    <th className="px-0 py-2.5 pr-4">Property</th>
+                    <th className="px-0 py-2.5 pr-4">Status</th>
+                    <th className="px-0 py-2.5 pr-4">Coverage</th>
+                    <th className="px-0 py-2.5 pr-4">Workspace</th>
+                    <th className="px-0 py-2.5 pr-4">Activity</th>
+                    <th className="px-0 py-2.5">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[rgba(11,31,51,0.08)]">
+                <tbody className="divide-y divide-[rgba(11,31,51,0.04)]">
                   {filteredProps.map(prop => {
                     const canEditBuilding = prop.source_type === 'building' && !prop.tenant_id;
                     return (
-                      <tr key={prop.id} className="align-top hover:bg-[#F7F8FB]">
-                        <td className="px-5 py-5">
-                          <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-textMuted">{prop.category || prop.type || 'Property'}</p>
-                          <h3 className="mt-1 text-base font-semibold leading-5 text-[#11182B]">{prop.name}</h3>
-                          <p className="mt-2 flex gap-2 text-xs leading-5 text-textMuted">
+                      <tr key={prop.id} className="align-top hover:bg-white">
+                        <td className="px-0 py-2.5 pr-4">
+                          <p className="text-[9px] font-semibold uppercase leading-3 text-textMuted">{prop.category || prop.type || 'Property'}</p>
+                          <h3 className="mt-0.5 text-[13px] font-semibold leading-4 text-[#11182B]">{prop.name}</h3>
+                          <p className="mt-1.5 flex gap-1.5 text-[11px] leading-4 text-textMuted">
                             <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#C8A96A]" />
                             <span>{prop.address || prop.district || 'No address listed'}</span>
                           </p>
                         </td>
-                        <td className="border-l border-[rgba(11,31,51,0.06)] px-5 py-5">
-                          <span className="inline-flex border border-[rgba(11,31,51,0.10)] px-2 py-1 text-[10px] font-bold uppercase text-[#0B1F33]">{prop.status || 'active'}</span>
-                          <p className="mt-3 text-xs text-textMuted">{prop.source_type || 'platform'} source</p>
+                        <td className="px-0 py-2.5 pr-4">
+                          <span className="inline-flex text-[9px] font-semibold uppercase text-[#0B1F33]">{prop.status || 'active'}</span>
+                          <p className="mt-1 text-[10px] text-textMuted">{prop.source_type || 'platform'} source</p>
                         </td>
-                        <td className="border-l border-[rgba(11,31,51,0.06)] px-5 py-5">
+                        <td className="px-0 py-2.5 pr-4">
                           <MiniLine label="Units" value={prop.totalUnits || prop.listings || 0} />
                           <MiniLine label="Locations" value={prop.locations || 0} />
                           <MiniLine label="Map links" value={prop.mapLinks || 0} />
                         </td>
-                        <td className="border-l border-[rgba(11,31,51,0.06)] px-5 py-5">
-                          <p className="text-sm font-semibold text-[#11182B]">{prop.workspacePath ? prop.workspacePath.replace('/tenant/', '') : prop.workspace_id || 'Not linked'}</p>
-                          <p className="mt-2 text-xs text-textMuted">{prop.map_presence || 'map pending'}</p>
+                        <td className="px-0 py-2.5 pr-4">
+                          <p className="truncate text-[12px] font-semibold text-[#11182B]">{prop.workspacePath ? prop.workspacePath.replace('/tenant/', '') : prop.workspace_id || 'Not linked'}</p>
+                          <p className="mt-1 text-[10px] text-textMuted">{prop.map_presence || 'map pending'}</p>
                         </td>
-                        <td className="border-l border-[rgba(11,31,51,0.06)] px-5 py-5">
-                          <MiniLine label="Campaigns" value={prop.campaigns || 0} />
+                        <td className="px-0 py-2.5 pr-4">
+                          <MiniLine label="Notes" value={prop.campaigns || 0} />
                           <MiniLine label="Amenities" value={prop.amenities?.length || 0} />
                           <MiniLine label="Photos" value={prop.photos?.length || 0} />
                         </td>
-                        <td className="border-l border-[rgba(11,31,51,0.06)] px-5 py-5">
-                          <div className="grid gap-2">
-                            <Button variant="outline" onClick={() => openWorkspace(prop)} className="min-h-10 justify-start gap-2 text-[#0B1F33]">
+                        <td className="px-0 py-2.5">
+                          <div className="grid gap-1.5">
+                            <Button variant="outline" onClick={() => openWorkspace(prop)} className="min-h-8 justify-start gap-1.5 px-2 text-[10px] text-[#0B1F33]">
                               <ExternalLink className="h-4 w-4" />
                               Workspace
                             </Button>
-                            <Link to={buildingHref(prop)} className="inline-flex min-h-10 items-center justify-start gap-2 border border-[rgba(11,31,51,0.12)] bg-white px-3 text-xs font-semibold text-[#0B1F33] hover:border-[#C8A96A] hover:text-[#C8A96A]">
+                            <Link to={buildingHref(prop)} className="inline-flex min-h-8 items-center justify-start gap-1.5 bg-white px-0 text-[10px] font-semibold text-[#0B1F33] hover:text-[#C8A96A]">
                               <Building2 className="h-4 w-4" />
                               Building ops
                             </Link>

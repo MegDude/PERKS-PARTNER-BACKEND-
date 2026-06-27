@@ -42,16 +42,27 @@ export function loadFavoriteState(fallback: PartnerWorkspaceData['favorites'], w
 }
 
 export function calculateSetupProgress(data: PartnerWorkspaceData, lead: PartnerLead) {
+  const hasRealResidentList = data.residents.some((resident) => !String(resident.email || '').endsWith('@downtownperks.local'));
+  const hasRealReportData = data.reports.some((metric) => {
+    const value = String(metric.value || '').toLowerCase();
+    return value && value !== '0' && !value.includes('not tracked');
+  });
+  const hasCodeActivity = data.qrs.some((qr) => qr.status === 'Active' && Number(qr.scans || 0) > 0);
+  const hasBroadcastResults = data.campaigns.some((campaign) => (
+    (campaign.sendStatus === 'Live' || campaign.sendStatus === 'Sent') &&
+    (Number(campaign.opensViews || 0) > 0 || Number(campaign.qrScans || 0) > 0)
+  ));
   const checks = [
-    lead.status === 'Submitted' || lead.status === 'Workspace created' || lead.status === 'Converted to paid',
+    lead.status === 'Submitted' || lead.status === 'Converted to paid',
+    Boolean(lead.contactName && lead.email && lead.phone),
     Boolean(data.profile.propertyName && data.profile.description),
-    data.qrs.some((qr) => qr.status === 'Active'),
+    hasCodeActivity,
     data.perks.some((perk) => perk.status === 'Active'),
     data.events.some((event) => event.status === 'Published'),
-    data.campaigns.some((campaign) => campaign.sendStatus === 'Live' || campaign.sendStatus === 'Sent'),
-    data.residents.length > 0,
-    data.reports.length > 0,
-    data.billing.conversionState === 'Founding Partner' || data.billing.conversionState === 'Active' || lead.status === 'Converted to paid',
+    hasBroadcastResults,
+    hasRealResidentList,
+    hasRealReportData,
+    data.billing.conversionState === 'Active' || lead.status === 'Converted to paid',
   ];
   const completed = checks.filter(Boolean).length;
   return Math.round((completed / checks.length) * 100);

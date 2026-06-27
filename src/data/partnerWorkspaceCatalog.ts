@@ -7,6 +7,7 @@ type WorkspaceSeed = {
   type: string;
   district?: string;
   address?: string;
+  heroImage?: string;
   description: string;
   audience: string;
   managerNotes: string;
@@ -37,13 +38,71 @@ type WorkspaceRecords = {
   offers?: any[];
   events?: any[];
   campaigns?: any[];
+  residents?: any[];
   reports?: any[];
   analytics?: any;
   qr?: any[];
+  property?: any;
 };
 
 const defaultSteps = ['Start', 'Profile', 'Map', 'Perks', 'Events', 'Broadcasts', 'Codes', 'Reports', 'Plan'];
-const heroImage = '/workspace-media/images/the-shore-building.jpg';
+const heroImages = {
+  property: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1200&q=82',
+  hotel: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1200&q=82',
+  dining: 'https://images.unsplash.com/photo-1514933651103-005eec06c04b?auto=format&fit=crop&w=1200&q=82',
+  coffee: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=1200&q=82',
+  civic: 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1200&q=82',
+  brand: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=1200&q=82',
+  venue: 'https://images.unsplash.com/photo-1501386761578-eac5c94b800a?auto=format&fit=crop&w=1200&q=82',
+  default: 'https://images.unsplash.com/photo-1518005020951-eccb494ad742?auto=format&fit=crop&w=1200&q=82',
+};
+
+function firstImageFrom(...sources: any[]) {
+  for (const source of sources) {
+    if (!source) continue;
+    if (typeof source === 'string' && source.trim()) return source.trim();
+    if (Array.isArray(source)) {
+      const found = source.find((item) => typeof item === 'string' && item.trim());
+      if (found) return found.trim();
+    }
+  }
+  return '';
+}
+
+function heroImageFor(seed: WorkspaceSeed) {
+  const type = `${seed.type} ${seed.name}`.toLowerCase();
+  const explicit = firstImageFrom(seed.heroImage);
+  if (explicit) return explicit;
+  if (type.includes('property') || type.includes('residential') || type.includes('building') || type.includes('condo') || type.includes('apartment')) return heroImages.property;
+  if (type.includes('hotel')) return heroImages.hotel;
+  if (type.includes('coffee')) return heroImages.coffee;
+  if (type.includes('dining') || type.includes('restaurant') || type.includes('bar') || type.includes('culinary')) return heroImages.dining;
+  if (type.includes('civic') || type.includes('parks') || type.includes('greenway') || type.includes('district')) return heroImages.civic;
+  if (type.includes('venue') || type.includes('entertainment') || type.includes('live')) return heroImages.venue;
+  if (type.includes('brand') || type.includes('retail') || type.includes('fitness')) return heroImages.brand;
+  return heroImages.default;
+}
+
+function titleStatus(value: any, fallback: string) {
+  const raw = String(value || fallback || '').trim();
+  if (!raw) return fallback;
+  return raw.charAt(0).toUpperCase() + raw.slice(1).toLowerCase();
+}
+
+function uniqueById<T extends { id: string }>(items: T[]) {
+  const seen = new Set<string>();
+  return items.filter((item) => {
+    if (!item.id || seen.has(item.id)) return false;
+    seen.add(item.id);
+    return true;
+  });
+}
+
+function compactDate(value: any) {
+  const raw = String(value || '').trim();
+  if (!raw) return '2026-07-01T18:00:00';
+  return raw.length === 10 ? `${raw}T18:00:00` : raw;
+}
 
 export function slugify(value: string) {
   return String(value || '')
@@ -290,7 +349,7 @@ export function buildPartnerWorkspaceFromSeed(seed: WorkspaceSeed): PartnerWorks
       propertyName: seed.name,
       address: seed.address || 'Downtown Austin',
       district: seed.district || 'Downtown Austin',
-      heroImage,
+      heroImage: heroImageFor(seed),
       description: seed.description,
       residentAudience: seed.audience,
       buildingAmenities: seed.amenities,
@@ -360,27 +419,144 @@ export function buildWorkspaceFromRecords(slug: string, records: WorkspaceRecord
   if (requestedSlug === 'the-shore') return theShoreWorkspace;
 
   const name =
+    records.property?.name ||
     records.profile?.display_name ||
     records.partner?.business_name ||
     records.tenant?.name ||
     records.locations?.[0]?.name ||
     slug.split('-').map((part) => part.charAt(0).toUpperCase() + part.slice(1)).join(' ');
-  const type = records.profile?.type || records.partner?.category || records.tenant?.type || records.locations?.[0]?.category || 'Partner';
-  const address = records.profile?.address || records.partner?.address || records.locations?.[0]?.address || 'Downtown Austin';
+  const type = records.property?.category || records.property?.type || records.property?.source_type || records.profile?.type || records.partner?.category || records.tenant?.type || records.locations?.[0]?.category || 'Partner';
+  const address = records.property?.address || records.profile?.address || records.partner?.address || records.locations?.[0]?.address || 'Downtown Austin';
+  const heroImage = firstImageFrom(
+    records.profile?.hero_image,
+    records.profile?.heroImage,
+    records.profile?.image_url,
+    records.profile?.cover_image,
+    records.property?.hero_image,
+    records.property?.heroImage,
+    records.property?.image_url,
+    records.property?.cover_image,
+    records.property?.photos,
+    records.partner?.image_url,
+    records.partner?.cover_image,
+    records.locations?.map((item) => item.image_url || item.image || item.photo_url),
+  );
 
-  return buildPartnerWorkspaceFromSeed({
+  const seed = {
     slug: requestedSlug,
     name,
     type,
     address,
-    district: records.profile?.district || records.partner?.district || 'Downtown Austin',
+    heroImage,
+    district: records.property?.district || records.profile?.district || records.partner?.district || 'Downtown Austin',
     description: `${name} has a Downtown Perks page for the essentials: profile, map links, building signs, broadcasts, readouts, and what people did next.`,
     audience: `${name} audience, residents, visitors, partner teams, and downtown operators.`,
     managerNotes: 'Use this workspace to keep partner setup, map visibility, outreach, reports, and next actions in good order.',
     amenities: ['Profile', 'Map presence', 'QR codes', 'Campaigns', 'Reports'],
     anchors: [name, 'Downtown Austin', 'Partner network', 'Reports'],
     plan: 'Partner Workspace',
+  };
+  const base = buildPartnerWorkspaceFromSeed(seed);
+
+  const qrs = (records.qr || []).map((item) => ({
+    id: String(item.id || `qr-${requestedSlug}`),
+    name: item.label || item.name || 'Workspace code',
+    placement: item.placement || 'Workspace',
+    destination: item.destination || item.destination_url || item.link_url || `/admin/workspaces/${requestedSlug}`,
+    status: titleStatus(item.status, 'Draft') as PartnerWorkspaceData['qrs'][number]['status'],
+    scans: Number(item.scans || item.scan_count || 0),
+    lastScan: item.last_scan || item.lastScan || 'Not tracked yet',
+    conversionSignal: item.conversion_signal || item.conversionSignal || item.artwork?.bodyCopy || 'Ready to use',
+    headline: item.artwork?.headline || item.headline || item.label || item.name,
+    bodyCopy: item.artwork?.bodyCopy || item.body_copy || '',
+    logoUrl: item.artwork?.logoUrl || item.logo_url || '',
+    imageUrl: item.artwork?.imageUrl || item.image_url || '',
+    printSize: item.artwork?.printSize || item.print_size || '4 x 6 in',
+  }));
+
+  const perks = (records.offers || []).map((item) => ({
+    id: String(item.offer_id || item.id || `perk-${requestedSlug}`),
+    partner: item.partner_name || item.partner || item.name || name,
+    offerTitle: item.offer_title || item.title || item.name || 'Workspace offer',
+    description: item.description || item.details || 'A useful offer for people nearby.',
+    eligibility: item.eligibility || 'Downtown Perks members',
+    startDate: String(item.start_date || item.startDate || '2026-07-01').slice(0, 10),
+    endDate: String(item.end_date || item.endDate || '2026-09-30').slice(0, 10),
+    status: titleStatus(item.status || (item.active || item.is_active ? 'Active' : 'Draft'), 'Draft') as PartnerWorkspaceData['perks'][number]['status'],
+    saves: Number(item.saves || item.saved_count || 0),
+    redemptions: Number(item.redemption_count || item.redemptions || 0),
+    qrScans: Number(item.qr_scans || item.scans || 0),
+    calendarDate: item.calendarDate || item.calendar_date || item.start_time || '',
+    location: item.location || item.address || 'Downtown Austin',
+  }));
+
+  const events = (records.events || []).map((item) => ({
+    id: String(item.id || `event-${requestedSlug}`),
+    title: item.title || item.name || 'Workspace event',
+    dateTime: compactDate(item.dateTime || item.date || item.start_time || item.starts_at),
+    location: item.location || item.address || 'Downtown Austin',
+    description: item.description || item.summary || 'A plan people can say yes to.',
+    rsvpCount: Number(item.rsvp_count || item.registered_count || item.rsvps || 0),
+    capacity: Number(item.capacity || item.max_attendees || 50),
+    status: titleStatus(item.status, 'Draft') as PartnerWorkspaceData['events'][number]['status'],
+    linkedQR: item.linked_qr || item.linkedQR || 'Workspace code',
+    linkedCampaign: item.linked_campaign || item.linkedCampaign || 'Workspace broadcast',
+  }));
+
+  const campaigns = (records.campaigns || []).map((item) => ({
+    id: String(item.id || `campaign-${requestedSlug}`),
+    name: item.name || item.title || 'Workspace broadcast',
+    audience: item.audience || 'Workspace audience',
+    channel: item.channel || 'Email',
+    linkedItems: Array.isArray(item.linked_items) ? item.linked_items : Array.isArray(item.linkedItems) ? item.linkedItems : String(item.linked_items || '').split(',').map((part) => part.trim()).filter(Boolean),
+    sendStatus: titleStatus(item.send_status || item.status, 'Draft') as PartnerWorkspaceData['campaigns'][number]['sendStatus'],
+    opensViews: Number(item.opens || item.views || item.opensViews || 0),
+    saves: Number(item.saves || 0),
+    redemptions: Number(item.redemptions || 0),
+    qrScans: Number(item.qr_scans || item.scans || 0),
+  }));
+
+  const residents = (records.residents || []).map((item) => ({
+    id: String(item.id || `resident-${requestedSlug}`),
+    name: item.name || item.full_name || 'Resident',
+    unit: item.unit || item.unit_number || item.apartment || '',
+    email: item.email || '',
+    moveInDate: String(item.move_in_date || item.moveInDate || item.created_at || '2026-07-01').slice(0, 10),
+    interests: Array.isArray(item.interests) ? item.interests : String(item.interests || '').split(',').map((part) => part.trim()).filter(Boolean),
+    savedPerks: Number(item.saved_perks || item.savedPerks || 0),
+    rsvps: Number(item.rsvps || item.rsvp_count || 0),
+    engagementStatus: titleStatus(item.engagement_status || item.resident_status, 'New resident') as PartnerWorkspaceData['residents'][number]['engagementStatus'],
+  }));
+
+  const reports = (records.reports || []).flatMap((item) => {
+    const metrics = item.metrics && typeof item.metrics === 'object' ? item.metrics : null;
+    if (metrics) {
+      return Object.entries(metrics).map(([metric, value]) => ({
+        id: `${item.id}-${metric}`,
+        label: metric.replace(/_/g, ' '),
+        value: String(value ?? '0'),
+        change: item.status || 'Ready',
+        explanation: item.summary || item.recommended_action || 'Saved from this workspace.',
+      }));
+    }
+    return [{
+      id: String(item.id || `report-${requestedSlug}`),
+      label: item.title || 'Workspace report',
+      value: item.value || item.status || 'Ready',
+      change: item.change || '',
+      explanation: item.summary || item.recommended_action || 'Saved from this workspace.',
+    }];
   });
+
+  return {
+    ...base,
+    qrs: uniqueById([...qrs, ...base.qrs]),
+    perks: uniqueById([...perks, ...base.perks]),
+    events: uniqueById([...events, ...base.events]),
+    campaigns: uniqueById([...campaigns, ...base.campaigns]),
+    residents: uniqueById([...residents, ...base.residents]),
+    reports: reports.length ? reports : base.reports,
+  };
 }
 
 export function getCuratedWorkspace(slug: string) {

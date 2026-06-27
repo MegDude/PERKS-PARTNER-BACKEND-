@@ -1,20 +1,22 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  Activity,
   ArrowRight,
+  BadgePercent,
   BarChart3,
-  Building2,
   CalendarDays,
   CheckCircle2,
-  CreditCard,
+  Compass,
   FileText,
+  House,
+  Landmark,
   Loader2,
-  Megaphone,
+  Presentation,
+  Receipt,
   Search,
-  ShieldCheck,
-  Ticket,
-  Users,
+  Send,
+  Store,
+  UserRound,
 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { curatedPartnerWorkspaces, getFeaturedWorkspaceSlugs, slugify } from '@/data/partnerWorkspaceCatalog';
@@ -56,18 +58,18 @@ const initialData: GatewayData = {
 };
 
 const primaryModules = [
-  { label: 'Partners', to: '/admin/partner', icon: Building2, key: 'partners' },
-  { label: 'Properties', to: '/admin/properties', icon: Building2, key: 'properties' },
-  { label: 'Buildings', to: '/admin/buildings', icon: Users, key: 'properties' },
-  { label: 'Residents', to: '/admin/residents', icon: Users, key: 'residents' },
-  { label: 'Perks', to: '/admin/perks', icon: Ticket, key: 'perks' },
+  { label: 'Partners', to: '/admin/partner', icon: Store, key: 'partners' },
+  { label: 'Properties', to: '/admin/properties', icon: Landmark, key: 'properties' },
+  { label: 'Buildings', to: '/admin/buildings', icon: House, key: 'properties' },
+  { label: 'Residents', to: '/admin/residents', icon: UserRound, key: 'residents' },
+  { label: 'Perks', to: '/admin/perks', icon: BadgePercent, key: 'perks' },
   { label: 'Events', to: '/admin/events', icon: CalendarDays, key: 'events' },
-  { label: 'Notes to send', to: '/admin/engagement', icon: Megaphone, key: 'campaigns' },
+  { label: 'Notes to send', to: '/admin/engagement', icon: Send, key: 'campaigns' },
   { label: 'Reports', to: '/admin/reports', icon: FileText, key: 'reports' },
   { label: 'Perk results', to: '/admin/analytics', icon: BarChart3, key: 'reports' },
-  { label: 'Plans & billing', to: '/admin/promotions', icon: CreditCard, key: 'promotions' },
-  { label: 'Today downtown', to: '/admin/platform', icon: ShieldCheck, key: 'tenants' },
-  { label: 'Partner view', to: '/admin/partner-portal', icon: Activity, key: 'workspaces' },
+  { label: 'Plans & billing', to: '/admin/promotions', icon: Receipt, key: 'promotions' },
+  { label: 'Today downtown', to: '/admin/platform', icon: Compass, key: 'tenants' },
+  { label: 'Partner view', to: '/admin/partner-portal', icon: Presentation, key: 'workspaces' },
 ];
 
 export default function Home() {
@@ -253,7 +255,7 @@ export default function Home() {
                 Find the partners, buildings, perks, events, notes, reports, invoices, and plans you need without wandering around.
               </p>
             </div>
-            <div className="flex max-w-full gap-2 overflow-x-auto pb-1 xl:max-w-[560px] xl:justify-end">
+            <div className="dp-home-module-rail flex max-w-full gap-2 overflow-x-auto pb-1 xl:max-w-[560px] xl:justify-end">
               {primaryModules.map((module) => {
                 const Icon = module.icon;
                 return (
