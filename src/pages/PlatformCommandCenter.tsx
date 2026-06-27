@@ -176,21 +176,21 @@ function SummaryRows({ eyebrow, title, description, rows }: any) {
       <p className="text-[11px] font-semibold uppercase text-[#C8A96A]">{eyebrow}</p>
       <h2 className="mt-2 text-[1.45rem] font-semibold leading-tight">{title}</h2>
       <p className="mt-2 max-w-2xl text-sm leading-6 text-[rgba(11,31,51,0.62)]">{description}</p>
-      <div className="mt-5 grid gap-4">
+      <div className="dp-quick-read-rows mt-5 grid gap-2">
         {rows.map((row: any) => (
           <button
             key={row.label}
             type="button"
-            className="group grid w-full cursor-pointer grid-cols-1 gap-1 bg-white py-1 text-left sm:grid-cols-[1fr_84px_1.45fr_58px] sm:items-start sm:gap-5"
+            className="dp-quick-read-row group grid w-full cursor-pointer grid-cols-1 gap-1 bg-white py-1 text-left sm:grid-cols-[minmax(112px,0.72fr)_64px_minmax(0,1.35fr)_48px] sm:items-baseline sm:gap-3"
             onClick={() => navigate(row.to)}
           >
             <span>
-              <span className="block text-sm font-semibold text-[#0B1F33] group-hover:text-[#C8A96A]">{row.label}</span>
-              <span className="mt-0.5 block text-[11px] font-semibold uppercase text-[rgba(11,31,51,0.46)]">{row.area}</span>
+              <span className="block text-[12px] font-semibold leading-4 text-[#0B1F33] group-hover:text-[#C8A96A]">{row.label}</span>
+              <span className="mt-0.5 block text-[9px] font-semibold uppercase leading-3 text-[rgba(11,31,51,0.46)]">{row.area}</span>
             </span>
-            <span className="text-[1.35rem] font-semibold leading-none text-[#0B1F33]">{Number(row.value || 0).toLocaleString()}</span>
-            <span className="text-sm normal-case leading-6 text-[rgba(11,31,51,0.62)]">{row.detail}</span>
-            <span className="inline-flex items-center gap-1 text-xs font-semibold text-[#0B1F33] group-hover:text-[#C8A96A]">Open <ArrowRight className="h-3.5 w-3.5" /></span>
+            <span className="text-[15px] font-semibold leading-4 text-[#0B1F33]">{Number(row.value || 0).toLocaleString()}</span>
+            <span className="text-[11px] normal-case leading-4 text-[rgba(11,31,51,0.62)]">{row.detail}</span>
+            <span className="dp-row-action inline-flex items-center gap-1 text-[10px] font-semibold leading-none text-[#0B1F33] group-hover:text-[#C8A96A]">Open <ArrowRight className="h-3 w-3" /></span>
           </button>
         ))}
       </div>

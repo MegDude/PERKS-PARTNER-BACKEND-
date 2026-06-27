@@ -42,6 +42,7 @@ const moduleRoutes = [
 ];
 
 export default function BackendWorkspace() {
+  const [directoryExpanded, setDirectoryExpanded] = useState(false);
   const [data, setData] = useState<any>({
     health: null,
     tenantsStatus: null,
@@ -178,7 +179,7 @@ export default function BackendWorkspace() {
       name: partner.business_name || partner.name || 'Partner',
       type: partner.category || partner.partner_type || 'partner',
       status: partner.status || (partner.is_active ? 'active' : 'review'),
-      href: '/admin/partner',
+      href: partner.workspace_path || (partner.slug ? `/admin/workspaces/${partner.slug}` : '/admin/partner'),
     })),
     ...data.platformTenants.map((tenant: any) => ({
       id: tenant.id,
@@ -194,7 +195,8 @@ export default function BackendWorkspace() {
       status: building.active === false ? 'inactive' : 'active',
       href: '/admin/properties',
     })),
-  ].slice(0, 14);
+  ].filter((item) => item.name);
+  const visibleDirectory = directoryExpanded ? activeDirectory : activeDirectory.slice(0, 14);
 
   if (loading) {
     return (
@@ -259,18 +261,38 @@ export default function BackendWorkspace() {
         </article>
 
         <article className="bg-white p-0">
-          <p className="text-[9px] font-semibold uppercase text-[#C8A96A]">Active directory</p>
-          <h2 className="mt-1 text-[15px] font-semibold leading-tight">Partners, businesses, and places.</h2>
+          <div className="flex flex-wrap items-end justify-between gap-2">
+            <div>
+              <p className="text-[9px] font-semibold uppercase text-[#C8A96A]">Directory preview</p>
+              <h2 className="mt-1 text-[15px] font-semibold leading-tight">Partners, businesses, and places.</h2>
+              <p className="mt-1 text-[11px] leading-4 text-[rgba(11,31,51,0.56)]">
+                Showing {visibleDirectory.length} of {activeDirectory.length}. Expand when you need the full loaded list.
+              </p>
+            </div>
+            {activeDirectory.length > 14 && (
+              <button
+                type="button"
+                className="inline-flex min-h-8 items-center gap-1 text-[10px] font-semibold text-[#0B1F33] hover:text-[#C8A96A]"
+                onClick={() => setDirectoryExpanded((expanded) => !expanded)}
+              >
+                {directoryExpanded ? 'Show less' : 'Show full directory'}
+                <ArrowRight className={`h-3 w-3 transition-transform ${directoryExpanded ? '-rotate-90' : 'rotate-90'}`} />
+              </button>
+            )}
+          </div>
           <div className="mt-3 grid gap-0">
             {activeDirectory.length === 0 ? (
               <p className="text-[12px] text-[rgba(11,31,51,0.58)]">No active partners or places yet.</p>
-            ) : activeDirectory.map((item: any) => (
+            ) : visibleDirectory.map((item: any) => (
               <Link key={`${item.id}-${item.name}`} to={item.href} className="grid gap-x-3 gap-y-0.5 border-b border-[rgba(11,31,51,0.035)] py-1.5 text-[12px] leading-tight hover:text-[#C8A96A] sm:grid-cols-[minmax(0,1fr)_112px] sm:items-baseline">
                 <span className="truncate font-semibold">{item.name}</span>
                 <span className="truncate text-[9.5px] font-semibold uppercase text-[rgba(11,31,51,0.5)]">{item.type} · {item.status}</span>
               </Link>
             ))}
           </div>
+          <Link to="/admin/partner" className="mt-3 inline-flex min-h-8 items-center gap-1 text-[10px] font-semibold text-[#0B1F33] hover:text-[#C8A96A]">
+            Open full partner table <ArrowRight className="h-3 w-3" />
+          </Link>
         </article>
       </section>
 
@@ -289,21 +311,7 @@ export default function BackendWorkspace() {
         </div>
       </section>
 
-      <section className="grid gap-6 xl:grid-cols-[1fr_1fr]">
-        <article className="rounded-xl border border-[rgba(11,31,51,0.08)] bg-white p-5">
-          <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-[#C8A96A]">Action readiness</p>
-          <h2 className="mt-2 text-xl font-semibold">Know what is ready to use.</h2>
-          <p className="mt-2 text-sm leading-6 text-[rgba(11,31,51,0.62)]">Before a walkthrough, check that each part can open, save, show activity, and report back clearly.</p>
-          <div className="mt-4 grid gap-2">
-            {['Open', 'Edit', 'Save', 'Give access', 'See changes', 'Share results'].map((step, index) => (
-              <div key={step} className="flex items-center justify-between border-t border-[rgba(11,31,51,0.08)] py-2 text-sm">
-                <span className="font-semibold">{step}</span>
-                <span className="text-xs font-semibold uppercase text-[rgba(11,31,51,0.48)]">{index < 3 ? 'Ready' : 'Next'}</span>
-              </div>
-            ))}
-          </div>
-        </article>
-
+      <section className="grid gap-6">
         <article className="rounded-xl border border-[rgba(11,31,51,0.08)] bg-white p-5">
           <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-[#C8A96A]">How the work flows</p>
           <h2 className="mt-2 text-xl font-semibold">Help people find, use, and improve what is downtown.</h2>

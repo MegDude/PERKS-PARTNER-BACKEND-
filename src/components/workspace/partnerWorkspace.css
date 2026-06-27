@@ -90,7 +90,8 @@
   min-height: 32px;
   flex: 0 1 auto;
   padding-inline: 0;
-  white-space: nowrap;
+  white-space: normal;
+  text-align: left;
 }
 
 .shore-action-rail .shore-input {
@@ -449,6 +450,7 @@
 }
 
 .shore-button {
+  max-width: 100%;
   min-height: 38px;
   border-radius: 0 !important;
   border: 0;
@@ -462,6 +464,8 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
+  text-align: left;
+  white-space: normal;
   transition: border-color 160ms ease, color 160ms ease, background 160ms ease;
 }
 
@@ -480,6 +484,7 @@
 }
 
 .shore-input {
+  max-width: 100%;
   min-height: 42px;
   width: 100%;
   border: 0;
@@ -594,12 +599,23 @@
 
 .shore-plan-option {
   display: block;
+  min-width: 0;
   width: 100%;
   border: 0;
   background: transparent;
   padding: 0;
   color: #0b1f33;
   text-align: left;
+}
+
+.shore-plan-option.is-selected span {
+  color: #8d733c;
+}
+
+.shore-plan-option.is-selected small::before {
+  content: "Selected · ";
+  color: #8d733c;
+  font-weight: 800;
 }
 
 .shore-plan-option span,
@@ -617,6 +633,38 @@
   color: rgba(11, 31, 51, 0.56);
   font-size: 11px;
   line-height: 1.4;
+}
+
+.shore-billing-matrix {
+  display: grid;
+  width: 100%;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 18px;
+}
+
+.shore-billing-matrix div {
+  min-width: 0;
+}
+
+.shore-billing-matrix span,
+.shore-billing-matrix strong {
+  display: block;
+}
+
+.shore-billing-matrix span {
+  color: rgba(11, 31, 51, 0.48);
+  font-size: 9.5px;
+  font-weight: 800;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.shore-billing-matrix strong {
+  margin-top: 4px;
+  color: #0b1f33;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.1;
 }
 
 .shore-plan-option:hover span,

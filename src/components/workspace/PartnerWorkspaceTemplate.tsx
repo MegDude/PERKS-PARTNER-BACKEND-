@@ -114,6 +114,16 @@ function cleanFileName(value: string) {
   return value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'qr-artwork';
 }
 
+function addOnPrice(label: string) {
+  const normalized = label.toLowerCase();
+  if (normalized.includes('report')) return 79;
+  if (normalized.includes('campaign')) return 99;
+  if (normalized.includes('concierge') || normalized.includes('setup')) return 149;
+  if (normalized.includes('resident plus')) return 99;
+  if (normalized.includes('qr')) return 49;
+  return 49;
+}
+
 function escapeXml(value: string) {
   return value.replace(/[<>&'"]/g, (character) => ({
     '<': '&lt;',
@@ -166,6 +176,10 @@ export function PartnerWorkspaceTemplate(props: Props) {
   const [coupon, setCoupon] = useState('');
   const [couponResult, setCouponResult] = useState<{ discount: number; totalDue: number; accepted: boolean } | null>(null);
   const [billingNotice, setBillingNotice] = useState(`${workspaceName} is on ${props.billing.name}. Add support when the building needs a little more lift.`);
+  const [selectedBillingAddOns, setSelectedBillingAddOns] = useState<string[]>([]);
+  const [billingStatus, setBillingStatus] = useState<'pending' | 'active' | 'promotional'>(() => (
+    props.billing.conversionState === 'Active' ? 'active' : props.billing.conversionState === 'Founding Partner' ? 'promotional' : 'pending'
+  ));
   const [workspaceMenuOpen, setWorkspaceMenuOpen] = useState(false);
   const [perks, setPerks] = useState<Perk[]>(props.perks);
   const [events, setEvents] = useState<Event[]>(props.events);
@@ -177,6 +191,7 @@ export function PartnerWorkspaceTemplate(props: Props) {
   const [residentNotice, setResidentNotice] = useState<Record<string, string>>({});
   const [qrNotice, setQrNotice] = useState<Record<string, string>>({});
   const [residentImport, setResidentImport] = useState('');
+  const [residentImportNotice, setResidentImportNotice] = useState('Paste one resident per line, then import. Example: Jane Smith, 1204, jane@email.com, Coffee|Yoga');
   const [qrArtwork, setQrArtwork] = useState<Record<string, QrArtwork>>(() =>
     Object.fromEntries(props.qrs.map((qr) => [qr.id, {
       headline: qr.headline || qr.name,
@@ -193,6 +208,12 @@ export function PartnerWorkspaceTemplate(props: Props) {
   const previewPerk = perks.find((perk) => perk.status === 'Active') || perks[0];
   const previewEvent = events.find((event) => event.status === 'Published' || event.status === 'Scheduled') || events[0];
   const previewCode = props.qrs.find((qr) => qr.status === 'Active') || props.qrs[0];
+  const billingAddOnTotal = selectedBillingAddOns.reduce((sum, addOn) => sum + addOnPrice(addOn), 0);
+  const billingSubtotal = props.billing.price + billingAddOnTotal;
+  const appliedCreditPercent = couponResult?.accepted ? couponResult.discount : 0;
+  const billingDiscount = Math.round(billingSubtotal * (appliedCreditPercent / 100));
+  const billingTotalDue = Math.max(0, billingSubtotal - billingDiscount);
+  const workspaceIsActive = billingStatus === 'active' || billingStatus === 'promotional';
   const reportSnapshot = useMemo(() => {
     const topQr = [...props.qrs].sort((a, b) => b.scans - a.scans)[0];
     return {
@@ -314,7 +335,15 @@ export function PartnerWorkspaceTemplate(props: Props) {
         id: `settings-${workspaceSlug}`,
         ...entityScope,
         favorite_items: next,
+        resident_featured_items: next.filter((favorite) => favorite.saved),
+        resident_guide_priority: next.filter((favorite) => favorite.saved).map((favorite, index) => ({
+          id: favorite.id,
+          name: favorite.name,
+          type: favorite.type,
+          rank: index + 1,
+        })),
         last_favorite_action: id,
+        settings_status: 'saved',
         updated_at: new Date().toISOString(),
       });
       setLeadNotice(existing ? 'Favorite updated.' : 'Saved to this workspace.');
@@ -720,12 +749,18 @@ export function PartnerWorkspaceTemplate(props: Props) {
   }
 
   async function importResidentsFromText() {
-    const imported = residentImport
+    const rows = residentImport
       .split('\n')
       .map((line) => line.trim())
-      .filter(Boolean)
+      .filter(Boolean);
+    if (!rows.length) {
+      setResidentImportNotice('Add at least one resident row before importing.');
+      return;
+    }
+    const imported = rows
+      .filter((line) => !/^name\s*[,;\t|]/i.test(line))
       .map((line, index) => {
-        const [name = 'Resident', unit = '', email = '', interests = ''] = line.split(',').map((part) => part.trim());
+        const [name = 'Resident', unit = '', email = '', interests = ''] = line.split(/[,;\t]/).map((part) => part.trim());
         return {
           id: `resident-import-${Date.now()}-${index}`,
           name,
@@ -737,15 +772,28 @@ export function PartnerWorkspaceTemplate(props: Props) {
           rsvps: 0,
           engagementStatus: 'New resident' as const,
         };
-      });
-    if (!imported.length) return;
+      })
+      .filter((resident) => resident.name && resident.name.toLowerCase() !== 'resident');
+    if (!imported.length) {
+      setResidentImportNotice('Nothing importable found. Use one row per resident: name, home, email, interests.');
+      return;
+    }
     setResidents((current) => [...imported, ...current]);
     setResidentImport('');
+    setResidentImportNotice(`Importing ${imported.length} resident${imported.length === 1 ? '' : 's'}...`);
     await Promise.all(imported.map((resident) => saveResident(resident)));
+    setResidentImportNotice(`${imported.length} resident${imported.length === 1 ? '' : 's'} imported and saved to this workspace.`);
+  }
+
+  function toggleBillingAddOn(addOn: string) {
+    setSelectedBillingAddOns((current) => (
+      current.includes(addOn) ? current.filter((item) => item !== addOn) : [...current, addOn]
+    ));
   }
 
   async function saveBillingRecord(action: 'quote' | 'invoice' | 'subscription', addOn?: string) {
-    const totalDue = couponResult?.accepted ? couponResult.totalDue : props.billing.price;
+    const requestedAddOns = addOn ? [addOn] : selectedBillingAddOns;
+    const totalDue = billingTotalDue;
     const timestamp = Date.now();
     const basePayload = {
       tenant_id: props.partner.id,
@@ -755,11 +803,12 @@ export function PartnerWorkspaceTemplate(props: Props) {
       plan: props.billing.id,
       plan_label: props.billing.name,
       cadence: props.billing.cadence,
-      subtotal: props.billing.price,
-      discount: couponResult?.accepted ? couponResult.discount : 0,
+      subtotal: billingSubtotal,
+      discount: appliedCreditPercent,
       total: totalDue,
       coupon: couponResult?.accepted ? coupon.toUpperCase() : '',
-      selected_module: addOn || '',
+      selected_module: requestedAddOns.join(', '),
+      selected_add_ons: requestedAddOns,
       currency: 'usd',
       source: 'partner_workspace',
     };
@@ -774,13 +823,14 @@ export function PartnerWorkspaceTemplate(props: Props) {
             id: subscriptionId,
             status: 'active',
             billing_status: totalDue === 0 ? 'promotional' : 'invoice_ready',
-            amount: props.billing.price,
+            amount: billingSubtotal,
             amount_paid: totalDue === 0 ? 0 : undefined,
           }),
         });
         if (!response.ok) {
           throw new Error('Subscription save failed');
         }
+        setBillingStatus(totalDue === 0 ? 'promotional' : 'active');
         setBillingNotice(`${props.billing.name} is active for ${workspaceName}. Modules can now be added to the plan or billed once.`);
         return;
       }
@@ -792,11 +842,11 @@ export function PartnerWorkspaceTemplate(props: Props) {
         invoice_number: `DP-${workspaceSlug.toUpperCase().slice(0, 12)}-${timestamp}`,
         status: action === 'quote' ? 'quote_ready' : 'invoice_requested',
         billing_status: action === 'quote' ? 'quote' : 'requested',
-        discount_amount: couponResult?.accepted ? props.billing.price - totalDue : 0,
+        discount_amount: billingDiscount,
         created_at: new Date(timestamp).toISOString(),
         line_items: [
           { label: props.billing.name, amount: props.billing.price, cadence: props.billing.cadence },
-          ...(addOn ? [{ label: addOn, amount: 0, cadence: 'module' }] : []),
+          ...requestedAddOns.map((item) => ({ label: item, amount: addOnPrice(item), cadence: 'one-time' })),
         ],
       };
       const invoiceResponse = await fetch('/api/billing/invoices', {
@@ -900,16 +950,19 @@ export function PartnerWorkspaceTemplate(props: Props) {
             </div>
             <div className="mt-4 border-t border-[rgba(11,31,51,0.06)] pt-3">
               <div className="text-[10px] font-semibold uppercase text-[#C8A96A]">My favorites</div>
-              <p className="mt-1 text-[11px] leading-4 text-[rgba(11,31,51,0.58)]">A short list worth keeping for residents to see first.</p>
+              <p className="mt-1 text-[11px] leading-4 text-[rgba(11,31,51,0.58)]">
+                Choose the places, perks, and plans residents should see first. Tapping a row saves the featured list to this partner workspace and feeds the resident guide.
+              </p>
               <div className="mt-2 grid gap-0">
                 {favorites.slice(0, 4).map((item) => (
                   <button key={item.id} type="button" onClick={() => toggleFavorite(item.id)} className="group grid min-h-9 grid-cols-[0.82fr_1fr_auto] items-baseline gap-2 border-t border-[rgba(11,31,51,0.045)] py-1.5 text-left first:border-t-0">
                     <span className="min-w-0 truncate text-[11.5px] font-semibold leading-4 text-[#0B1F33] group-hover:text-[#C8A96A]">{item.name}</span>
-                    <span className="min-w-0 truncate text-[9.5px] font-semibold uppercase leading-3 text-[rgba(11,31,51,0.46)]">{item.type} · {item.saved ? 'featured' : 'not featured'}</span>
+                    <span className="min-w-0 truncate text-[9.5px] font-semibold uppercase leading-3 text-[rgba(11,31,51,0.46)]">{item.type} · {item.saved ? 'shown first' : 'hidden from first view'}</span>
                     <Heart className={`h-3.5 w-3.5 ${item.saved ? 'fill-[#C8A96A] text-[#C8A96A]' : 'text-[rgba(11,31,51,0.32)]'}`} />
                   </button>
                 ))}
               </div>
+              <p className="mt-2 text-[10.5px] leading-4 text-[rgba(11,31,51,0.5)]">Saved favorites are stored in partner settings and can be reused by the map, resident guide, reports, and broadcasts.</p>
             </div>
           </div>
         </section>
@@ -920,8 +973,10 @@ export function PartnerWorkspaceTemplate(props: Props) {
               <MapPin className="h-4 w-4" />
               Buzz nearby
             </div>
-            <h2 className="mt-2 text-xl font-semibold leading-tight text-[#0B1F33]">Nearby spots residents are already choosing</h2>
-            <p className="mt-1 text-[12px] leading-5 text-[rgba(11,31,51,0.6)]">Use this activity to decide what deserves a resident nudge.</p>
+            <h2 className="mt-2 text-xl font-semibold leading-tight text-[#0B1F33]">Nearby places to watch</h2>
+            <p className="mt-1 text-[12px] leading-5 text-[rgba(11,31,51,0.6)]">
+              This shows the nearby anchors, partners, perks, and plans that can shape what residents see next. Save an item to feature it in the resident guide, or remove it when it is no longer useful.
+            </p>
             <div className="mt-3 overflow-x-auto [scrollbar-width:thin]">
               <table className="w-full min-w-[680px] table-fixed text-left">
                 <thead>
@@ -1317,6 +1372,7 @@ export function PartnerWorkspaceTemplate(props: Props) {
             <label className="block">
               <span className="text-[11px] font-bold uppercase text-[#C8A96A]">Import contacts</span>
               <textarea className="shore-input mt-2 min-h-24" placeholder="Name, unit, email, Coffee|Yoga" value={residentImport} onChange={(event) => setResidentImport(event.target.value)} />
+              <span className="mt-2 block text-[11px] leading-4 text-[rgba(11,31,51,0.54)]">{residentImportNotice}</span>
             </label>
             <div className="shore-action-rail items-end">
               <button type="button" className="shore-button shore-button-primary" onClick={addResident}>
@@ -1414,22 +1470,49 @@ export function PartnerWorkspaceTemplate(props: Props) {
               </p>
               <div className="mt-3 grid gap-2 sm:grid-cols-2">
                 {props.billing.addOns.map((addOn) => (
-                  <button type="button" key={addOn} className="shore-plan-option" onClick={() => saveBillingRecord('invoice', addOn)}>
+                  <button type="button" key={addOn} className={`shore-plan-option ${selectedBillingAddOns.includes(addOn) ? 'is-selected' : ''}`} onClick={() => toggleBillingAddOn(addOn)}>
                     <span>{addOn}</span>
-                    <small>Add to the next invoice and connect it to this workspace</small>
+                    <small>{money(addOnPrice(addOn))} one-time · add to this checkout</small>
                   </button>
                 ))}
               </div>
               <div className="mt-5 grid gap-2 sm:grid-cols-2">
-                <button type="button" className="shore-plan-option" onClick={() => saveBillingRecord('invoice', 'Resident Plus upgrade')}>
+                <button type="button" className={`shore-plan-option ${selectedBillingAddOns.includes('Resident Plus upgrade') ? 'is-selected' : ''}`} onClick={() => toggleBillingAddOn('Resident Plus upgrade')}>
                   <span>Upgrade to Resident Plus</span>
-                  <small>Add more notes, reporting, and event support</small>
+                  <small>{money(addOnPrice('Resident Plus upgrade'))} one-time · more notes, reporting, and event support</small>
                 </button>
-                <button type="button" className="shore-plan-option" onClick={() => saveBillingRecord('invoice', 'Concierge setup')}>
+                <button type="button" className={`shore-plan-option ${selectedBillingAddOns.includes('Concierge setup') ? 'is-selected' : ''}`} onClick={() => toggleBillingAddOn('Concierge setup')}>
                   <span>Concierge setup</span>
-                  <small>One-time help for signs, resident imports, and the first note</small>
+                  <small>{money(addOnPrice('Concierge setup'))} one-time · signs, resident imports, and the first note</small>
                 </button>
               </div>
+              <div className="shore-billing-matrix mt-5" aria-label={`${workspaceName} billing summary`}>
+                <div>
+                  <span>Plan</span>
+                  <strong>{money(props.billing.price)}</strong>
+                </div>
+                <div>
+                  <span>Add-ons</span>
+                  <strong>{money(billingAddOnTotal)}</strong>
+                </div>
+                <div>
+                  <span>Credit</span>
+                  <strong>{billingDiscount ? `-${money(billingDiscount)}` : money(0)}</strong>
+                </div>
+                <div>
+                  <span>Due today</span>
+                  <strong>{money(billingTotalDue)}</strong>
+                </div>
+                <div>
+                  <span>Status</span>
+                  <strong>{workspaceIsActive ? 'Active' : 'Pending'}</strong>
+                </div>
+              </div>
+              {!workspaceIsActive && (
+                <p className="mt-3 text-[12px] leading-5 text-[rgba(11,31,51,0.62)]">
+                  This workspace stays pending until payment is complete, an invoice is approved, or a valid complimentary code is applied.
+                </p>
+              )}
               <div className="shore-action-rail mt-5">
                 <button type="button" className="shore-button shore-button-primary" onClick={() => saveBillingRecord('subscription')}>
                   <Sparkles className="h-4 w-4" /> Activate yearly plan

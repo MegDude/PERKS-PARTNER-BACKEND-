@@ -61,9 +61,25 @@ const buildingTabDescriptions: Record<string, string> = {
 };
 
 const fetchProperties = async () => {
-  const res = await fetch('/api/properties');
-  if (!res.ok) throw new Error('Failed to fetch properties');
-  return res.json();
+  const [propertiesResult, buildingEntitiesResult] = await Promise.allSettled([
+    fetch('/api/properties').then((res) => {
+      if (!res.ok) throw new Error('Failed to fetch properties');
+      return res.json();
+    }),
+    base44.entities.Building.list(),
+  ]);
+  const properties = propertiesResult.status === 'fulfilled' && Array.isArray(propertiesResult.value) ? propertiesResult.value : [];
+  const buildingEntities = buildingEntitiesResult.status === 'fulfilled' && Array.isArray(buildingEntitiesResult.value) ? buildingEntitiesResult.value : [];
+  const seen = new Set<string>();
+  return [...properties, ...buildingEntities]
+    .filter((building: any) => building && (building.id || building.name))
+    .filter((building: any) => {
+      const key = String(building.id || building.name).toLowerCase();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    })
+    .sort((a: any, b: any) => String(a.name || '').localeCompare(String(b.name || '')));
 };
 
 function emptyUnit(buildingId: string) {
@@ -267,6 +283,18 @@ export default function BuildingsManagement() {
     });
   };
 
+  const trackResidentAction = async (event: string, resident: any, metadata: Record<string, any> = {}) => {
+    await base44.entities.AnalyticsEvent.create({
+      event,
+      entity_type: 'resident',
+      entity_id: resident.id,
+      organization_id: selectedBuildingId,
+      building_id: selectedBuildingId,
+      metadata,
+      created_at: new Date().toISOString(),
+    }).catch(() => null);
+  };
+
   const saveUnit = useMutation({
     mutationFn: async (payload: any) => {
       const normalized = {
@@ -300,6 +328,7 @@ export default function BuildingsManagement() {
     },
     onSuccess: async (record) => {
       await logAction(editingRecord?.id ? 'resident.updated' : 'resident.invited', 'Tenant', record.id, record.email);
+      await trackResidentAction(editingRecord?.id ? 'resident_updated' : 'resident_invited', record, { source: 'building_residents_tab' });
       toast.success(editingRecord?.id ? 'Resident updated' : 'Resident invited');
       closeModal();
       invalidateOperations();
@@ -383,10 +412,68 @@ export default function BuildingsManagement() {
       access_status: accessStatus,
       perks_enrolled: accessStatus === 'active',
       card_status: accessStatus === 'active' ? 'active' : resident.card_status || 'not_issued',
+      resident_status: accessStatus === 'active' ? 'active' : resident.resident_status || 'invited',
     });
     await logAction('resident.access_updated', 'Tenant', resident.id, accessStatus);
+    await trackResidentAction('resident_access_updated', resident, { access_status: accessStatus });
     toast.success('Resident access updated');
     invalidateOperations();
+  };
+
+  const sendResidentInvite = async (resident: any) => {
+    await base44.entities.ManagementNotification.create({
+      title: `Resident invite: ${resident.name || resident.email}`,
+      message: `${resident.name || resident.email} has a Downtown Perks building invite ready to send.`,
+      type: 'resident_invite',
+      building_id: selectedBuildingId,
+      resident_id: resident.id,
+      recipient_email: resident.email,
+      status: 'queued',
+      created_at: new Date().toISOString(),
+    });
+    await base44.entities.Tenant.update(resident.id, {
+      resident_status: resident.resident_status === 'active' ? 'active' : 'invited',
+      invite_status: 'queued',
+      invited_at: new Date().toISOString(),
+    });
+    await logAction('resident.invite_queued', 'Tenant', resident.id, resident.email);
+    await trackResidentAction('resident_invite_queued', resident, { recipient_email: resident.email });
+    toast.success('Resident invite queued');
+    invalidateOperations();
+  };
+
+  const archiveResident = async (resident: any) => {
+    if (!window.confirm(`Archive ${resident.name || resident.email}?`)) return;
+    await base44.entities.Tenant.update(resident.id, {
+      resident_status: 'inactive',
+      access_status: 'disabled',
+      card_status: 'disabled',
+      perks_enrolled: false,
+      archived_at: new Date().toISOString(),
+    });
+    await logAction('resident.archived', 'Tenant', resident.id, resident.email);
+    await trackResidentAction('resident_archived', resident);
+    toast.success('Resident archived');
+    invalidateOperations();
+  };
+
+  const exportResidents = () => {
+    downloadFile(
+      `${selectedBuilding?.name || 'building'}-residents.csv`,
+      toCsv(filteredResidents, [
+        { key: 'name', label: 'Name' },
+        { key: 'email', label: 'Email' },
+        { key: 'mobile_number', label: 'Phone' },
+        { key: 'flat_id', label: 'Unit ID' },
+        { key: 'resident_status', label: 'Resident Status' },
+        { key: 'access_status', label: 'Access Status' },
+        { key: 'card_status', label: 'Card Status' },
+        { key: 'move_in_date', label: 'Move In' },
+        { key: 'lease_end_date', label: 'Lease End' },
+      ]),
+    );
+    logAction('residents.exported', 'Tenant', selectedBuildingId, `${filteredResidents.length} residents`);
+    toast.success('Residents exported');
   };
 
   const archiveDocument = async (document: any) => {
@@ -518,7 +605,9 @@ export default function BuildingsManagement() {
                   <option key={building.id} value={building.id}>{building.name}</option>
                 ))}
               </select>
-              <span className="text-xs text-[#6E7785]">{selectedBuilding?.address || 'No address on record'}</span>
+              <span className="text-xs text-[#6E7785]">
+                {buildings.length.toLocaleString()} building{buildings.length === 1 ? '' : 's'} available · {selectedBuilding?.address || 'No address on record'}
+              </span>
             </div>
           </div>
 
@@ -595,11 +684,23 @@ export default function BuildingsManagement() {
                 <Button variant="secondary" onClick={exportUnits}><Download className="h-4 w-4" /> Export</Button>
               </Toolbar>
               {filteredUnits.length ? (
-                <div className="overflow-x-auto border-y border-[#11182B]/10">
-                  <table className="w-full min-w-[920px] text-left text-sm">
-                    <thead className="text-[11px] font-bold uppercase text-[#6E7785]">
+                <div className="overflow-x-auto border-y border-[#11182B]/10 [scrollbar-width:thin]">
+                  <table className="w-full min-w-[880px] table-fixed text-left text-[10px]">
+                    <colgroup>
+                      <col className="w-[82px]" />
+                      <col className="w-[58px]" />
+                      <col className="w-[104px]" />
+                      <col className="w-[76px]" />
+                      <col className="w-[66px]" />
+                      <col className="w-[104px]" />
+                      <col className="w-[128px]" />
+                      <col className="w-[86px]" />
+                      <col className="w-[104px]" />
+                      <col className="w-[104px]" />
+                    </colgroup>
+                    <thead className="text-[9px] font-bold uppercase text-[#6E7785]">
                       <tr>
-                        {['Unit', 'Floor', 'Type', 'Beds/Baths', 'Sqft', 'Occupancy', 'Resident', 'Access', 'Onboarding', 'Actions'].map((head) => <th key={head} className="py-3 pr-4">{head}</th>)}
+                        {['Unit', 'Floor', 'Type', 'Bed/Bath', 'Sqft', 'Occupancy', 'Resident', 'Access', 'Setup', 'Actions'].map((head) => <th key={head} className="py-2 pr-2">{head}</th>)}
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-[#11182B]/8">
@@ -607,17 +708,17 @@ export default function BuildingsManagement() {
                         const resident = buildingResidents.find((item: any) => item.flat_id === unit.id || item.id === unit.resident_id);
                         return (
                           <tr key={unit.id}>
-                            <td className="py-3 pr-4 font-semibold">{unit.flat_number}</td>
-                            <td className="py-3 pr-4">{unit.floor}</td>
-                            <td className="py-3 pr-4">{unit.room_type}</td>
-                            <td className="py-3 pr-4">{unit.beds || 0}/{unit.baths || 0}</td>
-                            <td className="py-3 pr-4">{unit.sqft || '-'}</td>
-                            <td className="py-3 pr-4">{unit.occupancy_status || (unit.is_occupied ? 'occupied' : 'vacant')}</td>
-                            <td className="py-3 pr-4">{resident?.name || 'Unassigned'}</td>
-                            <td className="py-3 pr-4">{unit.access_status || 'pending'}</td>
-                            <td className="py-3 pr-4">{unit.onboarding_status || 'not started'}</td>
-                            <td className="py-3 pr-4">
-                              <div className="flex gap-2">
+                            <td className="py-2 pr-2 font-semibold leading-3">{unit.flat_number}</td>
+                            <td className="py-2 pr-2 leading-3">{unit.floor}</td>
+                            <td className="py-2 pr-2 leading-3">{unit.room_type}</td>
+                            <td className="py-2 pr-2 leading-3">{unit.beds || 0}/{unit.baths || 0}</td>
+                            <td className="py-2 pr-2 leading-3">{unit.sqft || '-'}</td>
+                            <td className="py-2 pr-2 leading-3">{unit.occupancy_status || (unit.is_occupied ? 'occupied' : 'vacant')}</td>
+                            <td className="py-2 pr-2 leading-3">{resident?.name || 'Unassigned'}</td>
+                            <td className="py-2 pr-2 leading-3">{unit.access_status || 'pending'}</td>
+                            <td className="py-2 pr-2 leading-3">{unit.onboarding_status || 'not started'}</td>
+                            <td className="py-2 pr-2">
+                              <div className="flex gap-1">
                                 <IconButton label="Edit unit" onClick={() => openModal('unit', unit)} icon={<Edit3 className="h-4 w-4" />} />
                                 <IconButton label="Archive unit" onClick={() => archiveUnit(unit)} icon={<Archive className="h-4 w-4" />} />
                                 <IconButton label="Delete unit" onClick={() => deleteUnit(unit)} icon={<Trash2 className="h-4 w-4" />} />
@@ -642,7 +743,10 @@ export default function BuildingsManagement() {
               description="Invite residents, assign units, update card access, and review what has changed."
               action={<Button onClick={() => openModal('resident')}><Plus className="h-4 w-4" /> Invite resident</Button>}
             >
-              <Toolbar><SearchBox value={residentSearch} onChange={setResidentSearch} placeholder="Search residents" /></Toolbar>
+              <Toolbar>
+                <SearchBox value={residentSearch} onChange={setResidentSearch} placeholder="Search residents" />
+                <Button variant="secondary" onClick={exportResidents}><Download className="h-4 w-4" /> Export</Button>
+              </Toolbar>
               <div className="grid gap-3">
                 {filteredResidents.map((resident: any) => {
                   const unit = buildingUnits.find((item: any) => item.id === resident.flat_id);
@@ -655,8 +759,10 @@ export default function BuildingsManagement() {
                       </div>
                       <div className="flex flex-wrap gap-2">
                         <Button variant="secondary" onClick={() => openModal('resident', resident)}>Edit</Button>
+                        <Button variant="secondary" onClick={() => sendResidentInvite(resident)}>Invite</Button>
                         <Button variant="secondary" onClick={() => updateResidentAccess(resident, 'active')}>Activate</Button>
                         <Button variant="secondary" onClick={() => updateResidentAccess(resident, 'disabled')}>Disable</Button>
+                        <Button variant="secondary" onClick={() => archiveResident(resident)}>Archive</Button>
                       </div>
                     </article>
                   );
@@ -879,7 +985,7 @@ function Row({ title, detail, actions }: any) {
 
 function IconButton({ label, onClick, icon }: any) {
   return (
-    <button type="button" aria-label={label} onClick={onClick} className="inline-flex h-9 w-9 items-center justify-center bg-white text-[#11182B] shadow-[0_12px_32px_rgba(17,24,43,0.08)] hover:text-[#C5A028]">
+    <button type="button" aria-label={label} title={label} data-tooltip={label} onClick={onClick} className="dp-icon-tooltip inline-flex h-7 w-7 items-center justify-center bg-white text-[#11182B] hover:text-[#C5A028]">
       {icon}
     </button>
   );

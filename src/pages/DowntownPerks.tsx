@@ -377,17 +377,17 @@ export default function DowntownPerks() {
         </summary>
 
         <div className="overflow-x-auto [scrollbar-width:thin]" aria-label="Perk inventory table. Scroll horizontally to view all columns.">
-        <table className="w-full min-w-[1260px] table-fixed border-collapse text-left text-[11px]">
+        <table className="w-full min-w-[1180px] table-fixed border-collapse text-left text-[10px]">
           <colgroup>
-            <col className="w-[230px]" />
-            <col className="w-[128px]" />
-            <col className="w-[150px]" />
-            <col className="w-[124px]" />
-            <col className="w-[94px]" />
+            <col className="w-[210px]" />
+            <col className="w-[112px]" />
             <col className="w-[132px]" />
-            <col className="w-[214px]" />
-            <col className="w-[184px]" />
-            <col className="w-[120px]" />
+            <col className="w-[108px]" />
+            <col className="w-[82px]" />
+            <col className="w-[116px]" />
+            <col className="w-[188px]" />
+            <col className="w-[220px]" />
+            <col className="w-[112px]" />
           </colgroup>
           <thead className="border-b border-[rgba(11,31,51,0.05)] bg-white text-[9px] font-semibold uppercase text-[rgba(11,31,51,0.48)]">
               <tr>
@@ -414,52 +414,52 @@ export default function DowntownPerks() {
               const entityLabel = perk.property_id || perk.hotel_id || perk.venue_id || perk.brand_id || '';
               return (
               <tr key={perk.id} className="align-top transition-colors hover:bg-white">
-                <td className="bg-white px-0 py-2.5 pr-3 lg:sticky lg:left-0 lg:z-10">
-                  <p className="text-[12px] font-semibold leading-4 text-[#0B1F33]">{perk.title || 'Untitled perk'}</p>
-                  <p className="mt-1 max-w-[218px] text-[10.5px] leading-4 text-[rgba(11,31,51,0.62)]">{perk.description || 'No description added.'}</p>
+                <td className="bg-white px-0 py-2 pr-3 lg:sticky lg:left-0 lg:z-10">
+                  <p className="text-[11px] font-semibold leading-4 text-[#0B1F33]">{perk.title || 'Untitled perk'}</p>
+                  <p className="mt-1 max-w-[198px] text-[9.5px] leading-3 text-[rgba(11,31,51,0.62)]">{perk.description || 'No description added.'}</p>
                 </td>
-                <td className="px-0 py-2.5 pr-3">
-                  <p className="max-w-[116px] text-[10.5px] font-semibold leading-4 text-[#0B1F33]">{perk.cta_label || perk.cta || 'Redeem perk'}</p>
-                  <p className="mt-1 text-[9px] font-semibold uppercase text-[rgba(11,31,51,0.42)]">{perk.redemption_type || 'QR scan'}</p>
+                <td className="px-0 py-2 pr-3">
+                  <p className="max-w-[106px] text-[9.5px] font-semibold leading-3 text-[#0B1F33]">{perk.cta_label || perk.cta || 'Redeem perk'}</p>
+                  <p className="mt-1 text-[8.5px] font-semibold uppercase text-[rgba(11,31,51,0.42)]">{perk.redemption_type || 'QR scan'}</p>
                 </td>
-                <td className="px-0 py-2.5 pr-3">
-                  <p className="text-[11px] font-semibold leading-4 text-[#0B1F33]">{perk.partnerName}</p>
+                <td className="px-0 py-2 pr-3">
+                  <p className="text-[10px] font-semibold leading-3 text-[#0B1F33]">{perk.partnerName}</p>
                 </td>
-                <td className="px-0 py-2.5 pr-3">
-                  <p className="text-[11px] font-semibold leading-4 text-[#0B1F33]">{perk.category || 'Uncategorized'}</p>
-                  <p className="mt-1 text-[9px] font-semibold uppercase text-[rgba(11,31,51,0.46)]">{formatDistrict(perk.district)}</p>
+                <td className="px-0 py-2 pr-3">
+                  <p className="text-[10px] font-semibold leading-3 text-[#0B1F33]">{perk.category || 'Uncategorized'}</p>
+                  <p className="mt-1 text-[8.5px] font-semibold uppercase text-[rgba(11,31,51,0.46)]">{formatDistrict(perk.district)}</p>
                 </td>
-                <td className="px-0 py-2.5 pr-3">
+                <td className="px-0 py-2 pr-3">
                   <StatusPill status={status} />
                 </td>
-                <td className="px-0 py-2.5 pr-3">
+                <td className="px-0 py-2 pr-3">
                   <div className="grid gap-1">
                     <DateLine label="Start" value={perk.start_date || 'Not set'} />
                     <DateLine label="End" value={perk.end_date || 'Not set'} />
                   </div>
                 </td>
-                <td className="px-0 py-2.5 pr-3">
-                  <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-[10.5px] leading-4 text-[rgba(11,31,51,0.58)]">
+                <td className="px-0 py-2 pr-3">
+                  <div className="grid grid-cols-2 gap-x-2 gap-y-1 text-[9.5px] leading-3 text-[rgba(11,31,51,0.58)]">
                     <MetricPair label="Views" value={perk.views} />
                     <MetricPair label="Saves" value={perk.saves} />
                     <MetricPair label="Directions" value={perk.directions} />
                     <MetricPair label="Scans" value={perk.scans} />
                   </div>
-                  <p className="mt-2 whitespace-nowrap text-[10.5px] font-semibold leading-4 text-[#0B1F33]">
+                  <p className="mt-1.5 whitespace-nowrap text-[9.5px] font-semibold leading-3 text-[#0B1F33]">
                     {perk.redemptionCount} used · {perk.conversion}% follow-through
                   </p>
                 </td>
-                <td className="px-0 py-2.5 pr-3 text-[10.5px] leading-4 text-[rgba(11,31,51,0.58)]">
-                  <RelationshipLine label="Campaign" value={campaigns.find((campaign) => campaign.id === perk.campaign_id)?.name || perk.campaign_id || 'None'} />
+                <td className="px-0 py-2 pr-3 text-[9.5px] leading-3 text-[rgba(11,31,51,0.58)]">
+                  <RelationshipLine label="Camp." value={campaigns.find((campaign) => campaign.id === perk.campaign_id)?.name || perk.campaign_id || 'None'} />
                   <RelationshipLine label="Event" value={events.find((event) => event.id === perk.event_id)?.title || perk.event_id || 'None'} />
-                  <RelationshipLine label="Entity" value={entityLabel || 'Not linked'} />
+                  <RelationshipLine label="Place" value={entityLabel || 'Not linked'} />
                 </td>
-                <td className="px-0 py-2.5">
+                <td className="px-0 py-2">
                   <div className="flex flex-wrap items-center gap-1">
-                    <Button aria-label={`Edit ${perk.title || 'perk'}`} title="Edit perk" variant="ghost" size="sm" onClick={() => openEdit(perk)} disabled={!canManage} className="h-8 w-8 p-0 text-[#0B1F33]"><Edit2 className="h-3.5 w-3.5" /></Button>
-                    <Button aria-label={`Activate ${perk.title || 'perk'}`} title="Activate perk" variant="ghost" size="sm" onClick={() => setPerkStatus(perk, 'active')} disabled={!canManage || status === 'active'} className="h-8 w-8 p-0 text-[#0B1F33]"><Ticket className="h-3.5 w-3.5" /></Button>
-                    <Button aria-label={`Pause ${perk.title || 'perk'}`} title="Pause perk" variant="ghost" size="sm" onClick={() => setPerkStatus(perk, 'paused')} disabled={!canManage || status === 'paused'} className="h-8 w-8 p-0 text-[#0B1F33]"><Archive className="h-3.5 w-3.5" /></Button>
-                    <Button aria-label={`Archive ${perk.title || 'perk'}`} title="Archive perk" variant="ghost" size="sm" onClick={() => archivePerk(perk)} disabled={!canManage} className="h-8 w-8 p-0 text-rose-600"><Trash2 className="h-3.5 w-3.5" /></Button>
+                    <Button aria-label={`Edit ${perk.title || 'perk'}`} data-tooltip="Edit" title="Edit perk" variant="ghost" size="sm" onClick={() => openEdit(perk)} disabled={!canManage} className="dp-icon-tooltip h-7 w-7 p-0 text-[#0B1F33]"><Edit2 className="h-3.5 w-3.5" /></Button>
+                    <Button aria-label={`Activate ${perk.title || 'perk'}`} data-tooltip="Activate" title="Activate perk" variant="ghost" size="sm" onClick={() => setPerkStatus(perk, 'active')} disabled={!canManage || status === 'active'} className="dp-icon-tooltip h-7 w-7 p-0 text-[#0B1F33]"><Ticket className="h-3.5 w-3.5" /></Button>
+                    <Button aria-label={`Pause ${perk.title || 'perk'}`} data-tooltip="Pause" title="Pause perk" variant="ghost" size="sm" onClick={() => setPerkStatus(perk, 'paused')} disabled={!canManage || status === 'paused'} className="dp-icon-tooltip h-7 w-7 p-0 text-[#0B1F33]"><Archive className="h-3.5 w-3.5" /></Button>
+                    <Button aria-label={`Archive ${perk.title || 'perk'}`} data-tooltip="Archive" title="Archive perk" variant="ghost" size="sm" onClick={() => archivePerk(perk)} disabled={!canManage} className="dp-icon-tooltip h-7 w-7 p-0 text-rose-600"><Trash2 className="h-3.5 w-3.5" /></Button>
                   </div>
                 </td>
               </tr>
@@ -662,16 +662,16 @@ function InsightLine({ label, value }: any) {
 function MetricPair({ label, value }: any) {
   return (
     <div className="bg-white">
-      <span className="block text-[9px] font-semibold uppercase text-[rgba(11,31,51,0.42)]">{label}</span>
-      <strong className="mt-0.5 block text-[11px] font-semibold text-[#0B1F33]">{Number(value || 0).toLocaleString()}</strong>
+      <span className="block text-[8px] font-semibold uppercase text-[rgba(11,31,51,0.42)]">{label}</span>
+      <strong className="mt-0.5 block text-[10px] font-semibold text-[#0B1F33]">{Number(value || 0).toLocaleString()}</strong>
     </div>
   );
 }
 
 function DateLine({ label, value }: any) {
   return (
-    <div className="grid grid-cols-[34px_1fr] gap-1.5 text-[10.5px] leading-4">
-      <span className="font-semibold uppercase text-[9px] text-[rgba(11,31,51,0.42)]">{label}</span>
+    <div className="grid grid-cols-[28px_1fr] gap-1 text-[9.5px] leading-3">
+      <span className="font-semibold uppercase text-[8px] text-[rgba(11,31,51,0.42)]">{label}</span>
       <span className="font-medium text-[#0B1F33]">{value}</span>
     </div>
   );
@@ -679,9 +679,9 @@ function DateLine({ label, value }: any) {
 
 function RelationshipLine({ label, value }: any) {
   return (
-    <p className="grid grid-cols-[54px_1fr] gap-1.5 py-0.5">
+    <p className="grid grid-cols-[36px_1fr] gap-1 py-0.5">
       <span className="shrink-0 text-[rgba(11,31,51,0.42)]">{label}</span>
-      <span className="min-w-0 font-medium text-[#0B1F33]">{value}</span>
+      <span className="min-w-0 font-medium leading-3 text-[#0B1F33]">{value}</span>
     </p>
   );
 }

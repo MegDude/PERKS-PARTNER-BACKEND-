@@ -175,6 +175,9 @@ body {
   min-height: 32px;
   padding-inline: 0.58rem !important;
   padding-block: 0.36rem !important;
+  white-space: nowrap !important;
+  overflow-wrap: normal !important;
+  word-break: keep-all !important;
 }
 
 .dp-admin-shell .dp-outreach-crm-table :where(th, td) {
@@ -1431,8 +1434,44 @@ body :where(section.bg-white[class*="border"], article.bg-white[class*="border"]
 
 .dp-admin-shell :where(h1, h2, h3, h4, p, li, td, th, span, a, button, label),
 .shore-workspace :where(h1, h2, h3, h4, p, li, td, th, span, a, button, label) {
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
   word-break: normal;
+}
+
+.dp-admin-shell :where(button, a, .dp-row-action, .dp-icon-tooltip),
+.shore-workspace :where(button, a, .shore-button) {
+  overflow-wrap: normal !important;
+  word-break: keep-all !important;
+}
+
+.dp-icon-tooltip {
+  position: relative;
+}
+
+.dp-icon-tooltip::after {
+  pointer-events: none;
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  z-index: 40;
+  max-width: 160px;
+  transform: translateX(-50%) translateY(2px);
+  background: #0b1f33;
+  color: #ffffff;
+  content: attr(data-tooltip);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+  opacity: 0;
+  padding: 6px 7px;
+  transition: opacity 140ms ease, transform 140ms ease;
+  white-space: nowrap;
+}
+
+.dp-icon-tooltip:hover::after,
+.dp-icon-tooltip:focus-visible::after {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
 }
 
 .dp-admin-shell :where(pre, code),
