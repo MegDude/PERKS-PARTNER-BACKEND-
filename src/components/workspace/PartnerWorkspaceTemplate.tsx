@@ -1176,7 +1176,7 @@ export function PartnerWorkspaceTemplate(props: Props) {
           </div>
         </Section>
 
-        <Section id="resident-preview" eyebrow="Resident view" title="The resident guide" description={`${workspaceName} as residents experience it: where to start, what to use, what to join, and how they find their way in.`}>
+        <Section id="resident-preview" eyebrow="Resident view" title="The resident guide" description={`A preview of how ${workspaceName} shows up inside Downtown Perks: the right starting point, the offer to try, the plan to consider, and the code that gets people there.`}>
           <div className="shore-read">
             <div className="shore-resident-guide">
               <div className="text-[10px] font-semibold uppercase text-[#C8A96A]">{workspaceName} resident guide</div>

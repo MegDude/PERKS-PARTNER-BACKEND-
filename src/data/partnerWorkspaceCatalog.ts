@@ -19,7 +19,7 @@ type WorkspaceSeed = {
 function residentCopyForSeed(seed: WorkspaceSeed) {
   const anchors = seed.anchors.slice(0, 2).join(' and ') || 'downtown';
   if (seed.slug === 'inkind') {
-    return 'Downtown Perks brings inKind dining moments into the resident guide, so people can find a good table nearby without leaving the neighborhood flow.';
+    return 'inKind gives the resident guide a sharper dining layer: nearby restaurants, simple offers, and timely ideas that help people choose a downtown table with less guessing.';
   }
   if (seed.type.toLowerCase().includes('property') || seed.type.toLowerCase().includes('residential')) {
     return `${seed.name} helps residents turn a regular day into a better one: what to try nearby, what to save for later, and what is worth saying yes to this week.`;
