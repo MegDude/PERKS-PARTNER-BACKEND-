@@ -40,8 +40,8 @@ export default function PlatformModuleAudit() {
   ];
 
   return (
-    <div className="min-h-screen bg-white px-4 py-5 text-[#0B1F33] sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-7xl space-y-6">
+    <div className="min-h-screen bg-white text-[#0B1F33]">
+      <div className="mx-auto max-w-[1180px] space-y-6 px-5 py-7 sm:px-8">
         <header className="bg-white">
           <div className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#C8A96A]">
             <PlugZap className="h-4 w-4" />
