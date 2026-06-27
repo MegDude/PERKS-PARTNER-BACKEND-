@@ -6,8 +6,8 @@ import { fileURLToPath } from "url";
 import fs from "fs/promises";
 import { execFile } from "child_process";
 import { promisify } from "util";
-import { enterpriseComponents, platformArchitecture, platformDomains, serializePlatformDomain } from "./src/platform/registry.js";
-import { createAgentStreamEnvelope, getProviderManager, listAgentTools, logOpenAIStatusOnce, routeAgentQuery } from "./backend/modules/ai/index.js";
+import { enterpriseComponents, platformArchitecture, platformDomains, serializePlatformDomain } from "./src/platform/registry.ts";
+import { createAgentStreamEnvelope, getProviderManager, listAgentTools, logOpenAIStatusOnce, routeAgentQuery } from "./backend/modules/ai/index.ts";
 
 dotenv.config({ path: ".env.local" });
 dotenv.config();
