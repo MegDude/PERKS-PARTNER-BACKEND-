@@ -381,36 +381,36 @@ export default function DowntownPerks() {
 
       <details open className="dp-admin-collapsible bg-white">
         <summary>
-          <span>
+          <span className="text-[12px] font-semibold leading-4">
             Offers, partners, performance, and links
-            <span className="dp-admin-collapsible__meta">Showing {filteredPerks.length} perks.</span>
+            <span className="dp-admin-collapsible__meta text-[10px] font-medium">Showing {filteredPerks.length} perks.</span>
           </span>
         </summary>
 
         <div className="overflow-x-auto [scrollbar-width:thin]" aria-label="Perk inventory table. Scroll horizontally to view all columns.">
-        <table className="w-full min-w-[1080px] table-fixed border-collapse text-left text-[12px]">
+        <table className="w-full min-w-[1080px] table-fixed border-collapse text-left text-[11px]">
           <colgroup>
-            <col className="w-[255px]" />
-            <col className="w-[120px]" />
-            <col className="w-[160px]" />
-            <col className="w-[125px]" />
-            <col className="w-[95px]" />
-            <col className="w-[130px]" />
-            <col className="w-[205px]" />
-            <col className="w-[180px]" />
+            <col className="w-[220px]" />
+            <col className="w-[100px]" />
+            <col className="w-[140px]" />
             <col className="w-[110px]" />
+            <col className="w-[82px]" />
+            <col className="w-[116px]" />
+            <col className="w-[190px]" />
+            <col className="w-[150px]" />
+            <col className="w-[104px]" />
           </colgroup>
           <thead className="border-b border-[rgba(11,31,51,0.05)] bg-white text-[9px] font-semibold uppercase text-[rgba(11,31,51,0.48)]">
               <tr>
-                <th className="bg-white px-0 py-2.5 pr-4 lg:sticky lg:left-0 lg:z-10">Perk</th>
-                <th className="px-0 py-2.5 pr-4">CTA</th>
-                <th className="px-0 py-2.5 pr-4">Partner</th>
-                <th className="px-0 py-2.5 pr-4">Category</th>
-              <th className="px-0 py-2.5 pr-4">Status</th>
-              <th className="px-0 py-2.5 pr-4">Dates</th>
-              <th className="px-0 py-2.5 pr-4">Performance</th>
-              <th className="px-0 py-2.5 pr-4">Links</th>
-              <th className="px-0 py-2.5">Actions</th>
+                <th className="bg-white px-0 py-2 pr-3 lg:sticky lg:left-0 lg:z-10">Perk</th>
+                <th className="px-0 py-2 pr-3">CTA</th>
+                <th className="px-0 py-2 pr-3">Partner</th>
+                <th className="px-0 py-2 pr-3">Category</th>
+                <th className="px-0 py-2 pr-3">Status</th>
+                <th className="px-0 py-2 pr-3">Dates</th>
+                <th className="px-0 py-2 pr-3">Performance</th>
+                <th className="px-0 py-2 pr-3">Links</th>
+                <th className="px-0 py-2.5">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-[rgba(11,31,51,0.04)]">
@@ -425,48 +425,48 @@ export default function DowntownPerks() {
               const entityLabel = perk.property_id || perk.hotel_id || perk.venue_id || perk.brand_id || '';
               return (
               <tr key={perk.id} className="align-top transition-colors hover:bg-white">
-                <td className="bg-white px-0 py-3 pr-4 lg:sticky lg:left-0 lg:z-10">
-                  <p className="text-[13px] font-semibold leading-4 text-[#0B1F33]">{perk.title || 'Untitled perk'}</p>
-                  <p className="mt-1.5 max-w-[245px] text-[11px] leading-4 text-[rgba(11,31,51,0.62)]">{perk.description || 'No description added.'}</p>
+                <td className="bg-white px-0 py-2.5 pr-3 lg:sticky lg:left-0 lg:z-10">
+                  <p className="text-[12px] font-semibold leading-4 text-[#0B1F33]">{perk.title || 'Untitled perk'}</p>
+                  <p className="mt-1 max-w-[205px] text-[10.5px] leading-4 text-[rgba(11,31,51,0.62)]">{perk.description || 'No description added.'}</p>
                 </td>
-                <td className="px-0 py-3 pr-4">
-                  <p className="max-w-[105px] text-[11px] font-semibold leading-4 text-[#0B1F33]">{perk.cta_label || perk.cta || 'Redeem perk'}</p>
+                <td className="px-0 py-2.5 pr-3">
+                  <p className="max-w-[92px] text-[10.5px] font-semibold leading-4 text-[#0B1F33]">{perk.cta_label || perk.cta || 'Redeem perk'}</p>
                   <p className="mt-1 text-[9px] font-semibold uppercase text-[rgba(11,31,51,0.42)]">{perk.redemption_type || 'QR scan'}</p>
                 </td>
-                <td className="px-0 py-3 pr-4">
-                  <p className="text-[12px] font-semibold leading-4 text-[#0B1F33]">{perk.partnerName}</p>
+                <td className="px-0 py-2.5 pr-3">
+                  <p className="text-[11px] font-semibold leading-4 text-[#0B1F33]">{perk.partnerName}</p>
                 </td>
-                <td className="px-0 py-3 pr-4">
-                  <p className="text-[12px] font-semibold leading-4 text-[#0B1F33]">{perk.category || 'Uncategorized'}</p>
+                <td className="px-0 py-2.5 pr-3">
+                  <p className="text-[11px] font-semibold leading-4 text-[#0B1F33]">{perk.category || 'Uncategorized'}</p>
                   <p className="mt-1 text-[9px] font-semibold uppercase text-[rgba(11,31,51,0.46)]">{formatDistrict(perk.district)}</p>
                 </td>
-                <td className="px-0 py-3 pr-4">
+                <td className="px-0 py-2.5 pr-3">
                   <StatusPill status={status} />
                 </td>
-                <td className="px-0 py-3 pr-4">
+                <td className="px-0 py-2.5 pr-3">
                   <div className="grid gap-1">
                     <DateLine label="Start" value={perk.start_date || 'Not set'} />
                     <DateLine label="End" value={perk.end_date || 'Not set'} />
                   </div>
                 </td>
-                <td className="px-0 py-3 pr-4">
-                  <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-[11px] leading-4 text-[rgba(11,31,51,0.58)]">
+                <td className="px-0 py-2.5 pr-3">
+                  <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-[10.5px] leading-4 text-[rgba(11,31,51,0.58)]">
                     <MetricPair label="Views" value={perk.views} />
                     <MetricPair label="Saves" value={perk.saves} />
                     <MetricPair label="Directions" value={perk.directions} />
                     <MetricPair label="Scans" value={perk.scans} />
                   </div>
-                  <p className="mt-2 text-[11px] font-semibold leading-4 text-[#0B1F33]">
+                  <p className="mt-2 whitespace-nowrap text-[10.5px] font-semibold leading-4 text-[#0B1F33]">
                     {perk.redemptionCount} used · {perk.conversion}% follow-through
                   </p>
                 </td>
-                <td className="px-0 py-3 pr-4 text-[11px] leading-4 text-[rgba(11,31,51,0.58)]">
+                <td className="px-0 py-2.5 pr-3 text-[10.5px] leading-4 text-[rgba(11,31,51,0.58)]">
                   <RelationshipLine label="Campaign" value={campaigns.find((campaign) => campaign.id === perk.campaign_id)?.name || perk.campaign_id || 'None'} />
                   <RelationshipLine label="Event" value={events.find((event) => event.id === perk.event_id)?.title || perk.event_id || 'None'} />
                   <RelationshipLine label="Entity" value={entityLabel || 'Not linked'} />
                 </td>
-                <td className="px-0 py-3">
-                  <div className="grid grid-cols-2 gap-1.5">
+                <td className="px-0 py-2.5">
+                  <div className="flex flex-wrap items-center gap-1">
                     <Button aria-label={`Edit ${perk.title || 'perk'}`} title="Edit perk" variant="ghost" size="sm" onClick={() => openEdit(perk)} disabled={!canManage} className="h-8 w-8 p-0 text-[#0B1F33]"><Edit2 className="h-3.5 w-3.5" /></Button>
                     <Button aria-label={`Activate ${perk.title || 'perk'}`} title="Activate perk" variant="ghost" size="sm" onClick={() => setPerkStatus(perk, 'active')} disabled={!canManage || status === 'active'} className="h-8 w-8 p-0 text-[#0B1F33]"><Ticket className="h-3.5 w-3.5" /></Button>
                     <Button aria-label={`Pause ${perk.title || 'perk'}`} title="Pause perk" variant="ghost" size="sm" onClick={() => setPerkStatus(perk, 'paused')} disabled={!canManage || status === 'paused'} className="h-8 w-8 p-0 text-[#0B1F33]"><Archive className="h-3.5 w-3.5" /></Button>
@@ -482,13 +482,15 @@ export default function DowntownPerks() {
 
       <section className="grid gap-5 xl:grid-cols-[1fr_1fr]">
         <Panel title="Perk analytics" eyebrow="Reporting relationships">
-          <div className="grid gap-2">
-            <InsightLine label="Partner links" value={`${relationshipSummary.partnerLinks} perks are tied to partner records.`} />
-            <InsightLine label="Campaign links" value={`${relationshipSummary.campaignLinks} perks are connected to campaign records.`} />
-            <InsightLine label="Event links" value={`${relationshipSummary.eventLinks} perks are connected to event records.`} />
-            <InsightLine label="Place links" value={`${relationshipSummary.placeLinks} perks are tied to a property, hotel, venue, or brand record.`} />
-            <InsightLine label="Measured records" value={`${relationshipSummary.measured} perks have at least one tracked view, save, direction, scan, or redemption.`} />
-          </div>
+          <RelationshipMatrix
+            rows={[
+              { label: 'Partner links', value: relationshipSummary.partnerLinks, detail: 'Perks tied to partner records.' },
+              { label: 'Campaign links', value: relationshipSummary.campaignLinks, detail: 'Perks connected to campaign records.' },
+              { label: 'Event links', value: relationshipSummary.eventLinks, detail: 'Perks connected to event records.' },
+              { label: 'Place links', value: relationshipSummary.placeLinks, detail: 'Perks tied to a property, hotel, venue, or brand.' },
+              { label: 'Measured records', value: relationshipSummary.measured, detail: 'Perks with at least one tracked action.' },
+            ]}
+          />
         </Panel>
 
         <Panel title="Recent audit log" eyebrow="Audit trail">
@@ -623,6 +625,20 @@ function Panel({ eyebrow, title, children }: any) {
       <h2 className="mt-2 flex items-center gap-2 text-xl font-semibold"><BarChart3 className="h-4 w-4 text-[#C8A96A]" /> {title}</h2>
       <div className="mt-5">{children}</div>
     </article>
+  );
+}
+
+function RelationshipMatrix({ rows }: { rows: Array<{ label: string; value: number; detail: string }> }) {
+  return (
+    <div className="grid grid-cols-2 gap-x-5 gap-y-3 lg:grid-cols-5">
+      {rows.map((row) => (
+        <article key={row.label} className="min-w-0">
+          <p className="text-[9px] font-semibold uppercase leading-3 text-[rgba(11,31,51,0.48)]">{row.label}</p>
+          <strong className="mt-1 block text-[16px] font-semibold leading-none text-[#0B1F33]">{row.value.toLocaleString()}</strong>
+          <p className="mt-1 text-[10px] leading-4 text-[rgba(11,31,51,0.54)]">{row.detail}</p>
+        </article>
+      ))}
+    </div>
   );
 }
 

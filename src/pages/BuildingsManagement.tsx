@@ -732,8 +732,6 @@ export default function BuildingsManagement() {
                 <Metric label="Residents active" value={activeResidents} detail="Active resident status" />
                 <Metric label="Perks redemptions" value={buildingRedemptions.length} detail="Verified actions" />
                 <Metric label="Survey responses" value={buildingSurveyResponses.length} detail="Completed feedback" />
-                <Metric label="QR scans" value={activeAccess} detail="Access proxy" />
-                <Metric label="Map opens" value={buildingEvents.length + buildingRedemptions.length} detail="Activity proxy" />
                 <Metric label="Broadcasts" value={buildingBroadcasts.length} detail="Messages sent" />
                 <Metric label="Participation" value={`${activeResidents ? Math.round(((buildingRedemptions.length + buildingSurveyResponses.length) / activeResidents) * 100) : 0}%`} detail="Actions per active resident" />
                 </div>

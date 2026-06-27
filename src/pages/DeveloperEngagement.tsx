@@ -46,45 +46,37 @@ export default function DeveloperEngagement() {
     );
   }
 
-  const totalResidents = (tenants as any[]).length || 487;
-  const enrolledResidents = (tenants as any[]).filter(t => t.perks_enrolled).length || Math.round(487 * 0.68);
-  const overallEngagement = totalResidents > 0 ? Math.round((enrolledResidents / totalResidents) * 100) : 68;
+  const totalResidents = (tenants as any[]).length;
+  const enrolledResidents = (tenants as any[]).filter(t => t.perks_enrolled).length;
+  const overallEngagement = totalResidents > 0 ? Math.round((enrolledResidents / totalResidents) * 100) : 0;
 
-  const buildingStats = (buildings as any[]).length > 0 ? (buildings as any[]).map(building => {
+  const buildingStats = (buildings as any[]).map(building => {
     const buildingTenants = (tenants as any[]).filter(t => t.flat_id?.includes(building.id));
     const enrolled = buildingTenants.filter(t => t.perks_enrolled).length;
     return {
       name: building.name,
-      residents: buildingTenants.length || Math.round(Math.random() * 150 + 50),
-      enrolled: enrolled || Math.round(Math.random() * 100 + 30),
-      engagement: buildingTenants.length > 0 ? Math.round((enrolled / buildingTenants.length) * 100) : Math.round(Math.random() * 20 + 55)
+      residents: buildingTenants.length,
+      enrolled,
+      engagement: buildingTenants.length > 0 ? Math.round((enrolled / buildingTenants.length) * 100) : 0
     };
-  }) : [
-    { name: 'The Metropolitan', residents: 156, enrolled: 102, engagement: 65 },
-    { name: 'Downtown Heights', residents: 98, enrolled: 68, engagement: 69 },
-    { name: 'Tower Residences', residents: 142, enrolled: 98, engagement: 69 },
-    { name: 'Seaholm Luxury', residents: 91, enrolled: 63, engagement: 69 }
-  ];
+  });
 
-  // Demo portfolio trend
-  const portfolioTrend = [
-    { month: 'Jan', adoption: 32, residents: totalResidents },
-    { month: 'Feb', adoption: 42, residents: totalResidents },
-    { month: 'Mar', adoption: 54, residents: totalResidents },
-    { month: 'Apr', adoption: 68, residents: totalResidents }
-  ];
+  const portfolioTrend = totalResidents > 0
+    ? [{ month: 'Current', adoption: overallEngagement, residents: totalResidents }]
+    : [];
 
   return (
     <div className="min-h-screen bg-bgMain p-6">
-      <div className="max-w-7xl mx-auto">
+      <div className="mx-auto max-w-7xl">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-[#11182B] mb-2">Portfolio Engagement</h1>
-          <p className="text-textSecondary">Track perks adoption across your portfolio and identify which buildings are most engaged.</p>
+        <div className="mb-6">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[#C8A96A]">Sponsor view</p>
+          <h1 className="mt-1.5 text-2xl font-semibold text-[#11182B] sm:text-3xl">Portfolio engagement</h1>
+          <p className="mt-2 max-w-3xl text-[13px] leading-5 text-textSecondary">Track real resident enrollment and building participation once those records are connected.</p>
         </div>
 
         {/* Portfolio Metrics */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div className="mb-7 grid grid-cols-2 gap-x-5 gap-y-3 md:grid-cols-4">
           <div className="bg-transparent border-t border-b border-[#EFEFEF] py-4 flex flex-col justify-center transition-colors hover:border-[#C5A028]">
             <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 flex items-center gap-2">
               <Building2 className="w-3.5 h-3.5 text-[#C5A028]" /> Buildings
@@ -118,7 +110,7 @@ export default function DeveloperEngagement() {
         {(tenants as any[]).length === 0 && (
           <Card className="mb-6  ">
             <CardContent className="pt-6">
-              <p className="text-sm text-[#11182B]"><strong>Data setup:</strong> Add buildings and residents to populate portfolio metrics.</p>
+              <p className="text-sm text-[#11182B]"><strong>Data setup:</strong> Add resident records to populate enrollment, adoption, and building-level participation.</p>
             </CardContent>
           </Card>
         )}
@@ -128,20 +120,24 @@ export default function DeveloperEngagement() {
         {/* Portfolio Engagement Trend */}
         <Card className="mb-6">
           <CardHeader>
-            <CardTitle className="text-[#11182B]">Adoption Trend</CardTitle>
-            <CardDescription>See how perks adoption is growing across your entire portfolio month-by-month</CardDescription>
+            <CardTitle className="text-[#11182B]">Adoption trend</CardTitle>
+            <CardDescription>Shows the current adoption snapshot when resident enrollment data is available.</CardDescription>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={portfolioTrend}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Line type="monotone" dataKey="adoption" stroke="#C5A028" name="Adoption Rate (%)" strokeWidth={2} />
-              </LineChart>
-            </ResponsiveContainer>
+            {portfolioTrend.length ? (
+              <ResponsiveContainer width="100%" height={260}>
+                <LineChart data={portfolioTrend}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="month" />
+                  <YAxis />
+                  <Tooltip />
+                  <Legend />
+                  <Line type="monotone" dataKey="adoption" stroke="#C5A028" name="Adoption Rate (%)" strokeWidth={2} />
+                </LineChart>
+              </ResponsiveContainer>
+            ) : (
+              <p className="py-8 text-sm text-[rgba(11,31,51,0.58)]">No adoption trend is available yet. It will appear once residents are enrolled.</p>
+            )}
           </CardContent>
         </Card>
 
@@ -149,20 +145,24 @@ export default function DeveloperEngagement() {
         <Card className="mb-6">
           <CardHeader>
             <CardTitle className="text-[#11182B]">Building Performance</CardTitle>
-            <CardDescription>Compare enrollment rates across properties to identify top performers and improvement opportunities</CardDescription>
+            <CardDescription>Compare enrollment rates across properties when resident-to-building relationships are available.</CardDescription>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={400}>
-              <BarChart data={buildingStats}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Bar dataKey="residents" fill="#0B1F33" name="Total Residents" />
-                <Bar dataKey="enrolled" fill="#C5A028" name="Perks Enrolled" />
-              </BarChart>
-            </ResponsiveContainer>
+            {buildingStats.length ? (
+              <ResponsiveContainer width="100%" height={320}>
+                <BarChart data={buildingStats}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" />
+                  <YAxis />
+                  <Tooltip />
+                  <Legend />
+                  <Bar dataKey="residents" fill="#0B1F33" name="Total Residents" />
+                  <Bar dataKey="enrolled" fill="#C5A028" name="Perks Enrolled" />
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <p className="py-8 text-sm text-[rgba(11,31,51,0.58)]">No building performance chart is available yet. Add building records and resident assignments to populate this view.</p>
+            )}
           </CardContent>
         </Card>
 
@@ -170,11 +170,13 @@ export default function DeveloperEngagement() {
         <Card>
           <CardHeader>
             <CardTitle className="text-[#11182B]">Building Breakdown</CardTitle>
-            <CardDescription>Individual building performance with key metrics</CardDescription>
+            <CardDescription>Building-level participation from connected records.</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {buildingStats.map((stat, idx) => {
+              {buildingStats.length === 0 ? (
+                <p className="text-sm text-[rgba(11,31,51,0.58)]">No building breakdown is available yet.</p>
+              ) : buildingStats.map((stat, idx) => {
                 const isAboveAverage = stat.engagement >= overallEngagement;
                 return (
                   <div key={idx} className={`flex items-center justify-between p-4 border rounded-none transition-all ${
