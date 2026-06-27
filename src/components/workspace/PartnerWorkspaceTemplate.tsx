@@ -1052,7 +1052,7 @@ export function PartnerWorkspaceTemplate(props: Props) {
                         <input className="shore-input mt-1" placeholder="Optional image URL" value={qrArtwork[qr.id].imageUrl} onChange={(event) => updateQrArtwork(qr.id, 'imageUrl', event.target.value)} />
                       </label>
                     </div>
-                    <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
+                <div className="shore-action-rail mt-4">
                       <button type="button" className="shore-button" onClick={() => copyText(absoluteUrl(qr.destination))}>
                         <Copy className="h-3.5 w-3.5" /> Copy
                       </button>
@@ -1123,12 +1123,12 @@ export function PartnerWorkspaceTemplate(props: Props) {
                     <input className="shore-input mt-1" type="date" value={perk.endDate} onChange={(event) => updatePerk(perk.id, 'endDate', event.target.value)} />
                   </label>
                 </div>
-                <div className="mt-4 grid grid-cols-3 gap-2 text-center text-xs">
+                <div className="shore-metric-row mt-4">
                   <MiniStat label="Saved" value={String(perk.saves)} note="People kept it" />
                   <MiniStat label="Used" value={String(perk.redemptions)} note="People showed up" />
                   <MiniStat label="Scans" value={String(perk.qrScans)} note="How they found it" />
                 </div>
-                <div className="mt-4 flex flex-wrap gap-2">
+                <div className="shore-action-rail mt-4">
                   <button type="button" className="shore-button shore-button-primary" onClick={() => savePerkSetup(perk)}>
                     <Check className="h-4 w-4" /> Save perk
                   </button>
@@ -1152,7 +1152,7 @@ export function PartnerWorkspaceTemplate(props: Props) {
         </Section>
 
         <Section id="events" eyebrow="Events" title="Plans residents can say yes to" description="Create the invite, link the sign or broadcast, publish it, and keep the RSVP list close at hand.">
-          <div className="mb-5 flex flex-wrap items-center gap-2">
+          <div className="shore-action-rail mb-5">
             <button type="button" className="shore-button shore-button-primary" onClick={addEvent}>
               <CalendarPlus className="h-4 w-4" /> Add event
             </button>
@@ -1209,7 +1209,7 @@ export function PartnerWorkspaceTemplate(props: Props) {
                 </div>
                 <div className="shore-progress-track mt-4"><div className="h-full bg-[#C8A96A]" style={{ width: `${Math.min(100, Math.round((event.rsvpCount / event.capacity) * 100))}%` }} /></div>
                 <div className="mt-2 text-xs font-semibold">{event.rsvpCount}/{event.capacity} people said yes · {event.linkedQR}</div>
-                <div className="mt-4 flex flex-wrap gap-2">
+                <div className="shore-action-rail mt-4">
                   <button type="button" className="shore-button shore-button-primary" onClick={() => saveEventSetup(event)}>
                     <Check className="h-4 w-4" /> Save event
                   </button>
@@ -1233,7 +1233,7 @@ export function PartnerWorkspaceTemplate(props: Props) {
         </Section>
 
         <Section id="campaigns" eyebrow="Broadcasts" title={`What ${workspaceName} sends out`} description="Write the note, choose who should get it, link the right perk or event, and see what people did next.">
-          <div className="mb-5 flex flex-wrap items-center gap-2">
+          <div className="shore-action-rail mb-5">
             <button type="button" className="shore-button shore-button-primary" onClick={addCampaign}>
               <Send className="h-4 w-4" /> Add broadcast
             </button>
@@ -1277,7 +1277,7 @@ export function PartnerWorkspaceTemplate(props: Props) {
                   <label><span className="block text-[10px] font-bold uppercase text-[rgba(11,31,51,0.52)]">Used</span><input className="shore-input mt-1" type="number" value={campaign.redemptions} onChange={(inputEvent) => updateCampaign(campaign.id, 'redemptions', Number(inputEvent.target.value))} /></label>
                   <label><span className="block text-[10px] font-bold uppercase text-[rgba(11,31,51,0.52)]">Scanned</span><input className="shore-input mt-1" type="number" value={campaign.qrScans} onChange={(inputEvent) => updateCampaign(campaign.id, 'qrScans', Number(inputEvent.target.value))} /></label>
                 </div>
-                <div className="mt-4 flex flex-wrap gap-2">
+                <div className="shore-action-rail mt-4">
                   <button type="button" className="shore-button shore-button-primary" onClick={() => saveCampaignSetup(campaign)}>
                     <Check className="h-4 w-4" /> Save
                   </button>
@@ -1301,7 +1301,7 @@ export function PartnerWorkspaceTemplate(props: Props) {
               <span className="text-[11px] font-bold uppercase text-[#C8A96A]">Import contacts</span>
               <textarea className="shore-input mt-2 min-h-24" placeholder="Name, unit, email, Coffee|Yoga" value={residentImport} onChange={(event) => setResidentImport(event.target.value)} />
             </label>
-            <div className="flex flex-wrap items-end gap-2">
+            <div className="shore-action-rail items-end">
               <button type="button" className="shore-button shore-button-primary" onClick={addResident}>
                 <Users className="h-4 w-4" /> Add resident
               </button>
@@ -1338,7 +1338,7 @@ export function PartnerWorkspaceTemplate(props: Props) {
                   <label><span className="block text-[10px] font-bold uppercase text-[rgba(11,31,51,0.52)]">Saved perks</span><input className="shore-input mt-1" type="number" value={resident.savedPerks} onChange={(inputEvent) => updateResident(resident.id, 'savedPerks', Number(inputEvent.target.value))} /></label>
                   <label><span className="block text-[10px] font-bold uppercase text-[rgba(11,31,51,0.52)]">RSVPs</span><input className="shore-input mt-1" type="number" value={resident.rsvps} onChange={(inputEvent) => updateResident(resident.id, 'rsvps', Number(inputEvent.target.value))} /></label>
                 </div>
-                <div className="mt-4 flex flex-wrap gap-2">
+                <div className="shore-action-rail mt-4">
                   <button type="button" className="shore-button shore-button-primary" onClick={() => saveResident(resident)}>
                     <Check className="h-4 w-4" /> Save
                   </button>
@@ -1380,7 +1380,7 @@ export function PartnerWorkspaceTemplate(props: Props) {
               <div className="flex items-center gap-2 text-[11px] font-bold uppercase text-[#C8A96A]"><CreditCard className="h-4 w-4" /> {props.billing.conversionState}</div>
               <h3 className="mt-2 text-2xl font-semibold">{props.billing.name}</h3>
               <div className="mt-2 text-2xl font-semibold">{money(props.billing.price)}<span className="text-sm font-normal text-[rgba(11,31,51,0.56)]">/{props.billing.cadence}</span></div>
-              <div className="mt-4 flex gap-2">
+              <div className="shore-action-rail mt-4">
                 <input className="shore-input" placeholder="Partner credit" value={coupon} onChange={(event) => setCoupon(event.target.value)} />
                 <button type="button" className="shore-button" onClick={() => setCouponResult(applyCoupon(coupon, props.billing.price, props.billing.couponCodes))}>Apply credit</button>
               </div>
@@ -1413,7 +1413,7 @@ export function PartnerWorkspaceTemplate(props: Props) {
                   <small>One-time help for signs, resident imports, and the first note</small>
                 </button>
               </div>
-              <div className="mt-5 flex flex-wrap gap-2">
+              <div className="shore-action-rail mt-5">
                 <button type="button" className="shore-button shore-button-primary" onClick={() => saveBillingRecord('subscription')}>
                   <Sparkles className="h-4 w-4" /> Activate yearly plan
                 </button>

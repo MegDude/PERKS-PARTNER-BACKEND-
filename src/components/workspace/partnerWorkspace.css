@@ -66,13 +66,36 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 8px;
+  justify-content: flex-start;
 }
 
 .shore-action-rail .shore-button {
   min-height: 32px;
   flex: 0 1 auto;
-  padding-inline: 10px;
+  padding-inline: 0;
   white-space: nowrap;
+}
+
+.shore-action-rail .shore-input {
+  max-width: min(260px, 100%);
+  flex: 1 1 180px;
+}
+
+.shore-metric-row {
+  display: grid;
+  width: 100%;
+  max-width: 100%;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  text-align: left;
+}
+
+.shore-metric-row .shore-mini-stat {
+  text-align: left;
+}
+
+.shore-metric-row .shore-mini-stat :where(div, p) {
+  text-align: left;
 }
 
 .shore-main {
@@ -782,6 +805,20 @@
     gap: 6px;
   }
 
+  .shore-action-rail {
+    gap: 7px;
+  }
+
+  .shore-action-rail .shore-button {
+    min-height: 32px;
+    flex: 0 1 auto;
+  }
+
+  .shore-metric-row {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+  }
+
   .shore-input {
     min-height: 40px;
     font-size: 13px;
@@ -803,6 +840,20 @@
 }
 
 @media (max-width: 430px) {
+  .shore-action-rail {
+    gap: 6px 10px;
+  }
+
+  .shore-action-rail .shore-button {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .shore-metric-row {
+    grid-template-columns: 1fr;
+    gap: 7px;
+  }
+
   .shore-workspace .grid {
     gap: 18px;
   }
