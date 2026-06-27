@@ -46,15 +46,55 @@ type WorkspaceRecords = {
 };
 
 const defaultSteps = ['Start', 'Profile', 'Map', 'Perks', 'Events', 'Broadcasts', 'Codes', 'Reports', 'Plan'];
+const workspaceMediaBase = '/workspace-media/images/workspaces';
+const workspaceHeroImages: Record<string, string> = {
+  'the-shore': `${workspaceMediaBase}/the-shore.webp`,
+  '311-west-5th-street-1005': `${workspaceMediaBase}/311-west-5th-street.jpg`,
+  '311-west-5th-street': `${workspaceMediaBase}/311-west-5th-street.jpg`,
+  '311-w-5th-st-unit-803': `${workspaceMediaBase}/311-west-5th-street.jpg`,
+  'legends': `${workspaceMediaBase}/301-west-ave.jpg`,
+  'legends-property': `${workspaceMediaBase}/301-west-ave.jpg`,
+  '301-west-ave': `${workspaceMediaBase}/301-west-ave.jpg`,
+  '70-rainey': `${workspaceMediaBase}/70-rainey.webp`,
+  'rainey': `${workspaceMediaBase}/rainey.avif`,
+  'the-waterline': `${workspaceMediaBase}/the-waterline.jpg`,
+  'waterline': `${workspaceMediaBase}/the-waterline.jpg`,
+  'the-paseo': `${workspaceMediaBase}/the-paseo.webp`,
+  'paseo': `${workspaceMediaBase}/the-paseo.webp`,
+  'waterloo-greenway': `${workspaceMediaBase}/waterloo-greenway.png`,
+  'waterloo-greenway-conservancy': `${workspaceMediaBase}/waterloo-greenway.png`,
+  'waterloo': `${workspaceMediaBase}/waterloo.webp`,
+  'dana': `${workspaceMediaBase}/civic-downtown.webp`,
+  'daa': `${workspaceMediaBase}/civic-downtown.webp`,
+  'downtown-austin-alliance': `${workspaceMediaBase}/civic-downtown.webp`,
+  'inkind': `${workspaceMediaBase}/perks-campaign.jpeg`,
+  'yeti': `${workspaceMediaBase}/yeti.avif`,
+  'rivian': `${workspaceMediaBase}/rivian.jpg`,
+  'lululemon': `${workspaceMediaBase}/lululemon.webp`,
+  'topo-chico': `${workspaceMediaBase}/topo-chico.webp`,
+  'hotel-van-zandt': `${workspaceMediaBase}/hotel-van-zandt.webp`,
+  'austin-marriott-downtown': `${workspaceMediaBase}/hotel.webp`,
+  'equinox': `${workspaceMediaBase}/equinox.jpg`,
+  'acl-live': `${workspaceMediaBase}/acl-live.png`,
+  'downtown-perks-lifecycle-demo': `${workspaceMediaBase}/perks-campaign.jpeg`,
+  'jo-s-coffee': `${workspaceMediaBase}/coffee.avif`,
+  'houndstooth-coffee': `${workspaceMediaBase}/coffee.avif`,
+  'uchi': `${workspaceMediaBase}/restaurant.avif`,
+  'comedor': `${workspaceMediaBase}/restaurant.avif`,
+  'sweetgreen': `${workspaceMediaBase}/dining.avif`,
+  'garage-bar': `${workspaceMediaBase}/topo-chico.webp`,
+  'congress-ave': `${workspaceMediaBase}/congress.avif`,
+};
 const heroImages = {
-  property: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1200&q=82',
-  hotel: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1200&q=82',
-  dining: 'https://images.unsplash.com/photo-1514933651103-005eec06c04b?auto=format&fit=crop&w=1200&q=82',
-  coffee: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=1200&q=82',
-  civic: 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1200&q=82',
-  brand: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=1200&q=82',
-  venue: 'https://images.unsplash.com/photo-1501386761578-eac5c94b800a?auto=format&fit=crop&w=1200&q=82',
-  default: 'https://images.unsplash.com/photo-1518005020951-eccb494ad742?auto=format&fit=crop&w=1200&q=82',
+  property: `${workspaceMediaBase}/downtown-austin.jpg`,
+  hotel: `${workspaceMediaBase}/hotel.webp`,
+  dining: `${workspaceMediaBase}/dining.avif`,
+  coffee: `${workspaceMediaBase}/coffee.avif`,
+  civic: `${workspaceMediaBase}/civic-downtown.webp`,
+  brand: `${workspaceMediaBase}/brand-austin.avif`,
+  venue: `${workspaceMediaBase}/event.jpg`,
+  campaign: `${workspaceMediaBase}/perks-campaign.jpeg`,
+  default: `${workspaceMediaBase}/downtown-austin.jpg`,
 };
 
 function firstImageFrom(...sources: any[]) {
@@ -73,10 +113,16 @@ function heroImageFor(seed: WorkspaceSeed) {
   const type = `${seed.type} ${seed.name}`.toLowerCase();
   const explicit = firstImageFrom(seed.heroImage);
   if (explicit) return explicit;
+  const direct = workspaceHeroImages[slugify(seed.slug)] || workspaceHeroImages[slugify(seed.name)] || workspaceHeroImages[slugify(seed.address || '')];
+  if (direct) return direct;
+  const searchable = slugify(`${seed.slug} ${seed.name} ${seed.address || ''} ${seed.type}`);
+  const fuzzy = Object.entries(workspaceHeroImages).find(([key]) => searchable.includes(key) || key.includes(searchable));
+  if (fuzzy) return fuzzy[1];
   if (type.includes('property') || type.includes('residential') || type.includes('building') || type.includes('condo') || type.includes('apartment')) return heroImages.property;
   if (type.includes('hotel')) return heroImages.hotel;
   if (type.includes('coffee')) return heroImages.coffee;
   if (type.includes('dining') || type.includes('restaurant') || type.includes('bar') || type.includes('culinary')) return heroImages.dining;
+  if (type.includes('campaign') || type.includes('perk') || type.includes('activation')) return heroImages.campaign;
   if (type.includes('civic') || type.includes('parks') || type.includes('greenway') || type.includes('district')) return heroImages.civic;
   if (type.includes('venue') || type.includes('entertainment') || type.includes('live')) return heroImages.venue;
   if (type.includes('brand') || type.includes('retail') || type.includes('fitness')) return heroImages.brand;

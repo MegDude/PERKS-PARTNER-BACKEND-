@@ -30,7 +30,7 @@ export const theShoreWorkspace: PartnerWorkspaceData = {
     propertyName: 'The Shore',
     address: '603 Davis St, Austin, TX 78701',
     district: 'Rainey / Downtown Austin',
-    heroImage: '/workspace-media/images/the-shore-building.jpg',
+    heroImage: '/workspace-media/images/workspaces/the-shore.webp',
     description: 'The Shore sits close to Rainey Street, Lady Bird Lake, coffee, music, dinner, and the downtown errands residents actually use.',
     residentAudience: 'People who live downtown, just moved in, work from home, walk the lake, go out on Rainey, or want a better answer than “what should we do tonight?”',
     buildingAmenities: ['Lake access', 'Resident lounge', 'Pool deck', 'Fitness studio', 'Pet-friendly community', 'Package room'],

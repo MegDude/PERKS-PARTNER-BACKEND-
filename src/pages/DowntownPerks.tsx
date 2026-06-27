@@ -179,6 +179,21 @@ export default function DowntownPerks() {
     };
   }, [enrichedPerks]);
 
+  const relationshipSummary = useMemo(() => {
+    const campaignLinks = enrichedPerks.filter((perk) => Boolean(perk.campaign_id)).length;
+    const eventLinks = enrichedPerks.filter((perk) => Boolean(perk.event_id)).length;
+    const placeLinks = enrichedPerks.filter((perk) => Boolean(perk.property_id || perk.hotel_id || perk.venue_id || perk.brand_id)).length;
+    const partnerLinks = enrichedPerks.filter((perk) => Boolean(perk.partner_id)).length;
+    const measured = enrichedPerks.filter((perk) => (
+      Number(perk.views || 0) > 0 ||
+      Number(perk.saves || 0) > 0 ||
+      Number(perk.directions || 0) > 0 ||
+      Number(perk.scans || 0) > 0 ||
+      Number(perk.redemptionCount || 0) > 0
+    )).length;
+    return { campaignLinks, eventLinks, placeLinks, partnerLinks, measured };
+  }, [enrichedPerks]);
+
   const openCreate = () => {
     setFormOpen(true);
     setEditingPerk(null);
@@ -311,47 +326,47 @@ export default function DowntownPerks() {
   }
 
   return (
-    <div className="mx-auto max-w-[1440px] space-y-6 p-5 text-[#0B1F33] sm:p-8">
-      <section className="rounded-xl border border-[rgba(11,31,51,0.08)] bg-white p-6">
-        <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+    <div className="mx-auto max-w-[1320px] space-y-5 px-4 py-5 text-left text-[#0B1F33] sm:px-6 lg:px-8">
+      <section className="bg-white">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-[#C8A96A]">Perks</p>
-            <h1 className="mt-2 text-3xl font-semibold tracking-normal">Small reasons to go somewhere nearby</h1>
-            <p className="mt-2 max-w-4xl text-sm leading-6 text-[rgba(11,31,51,0.66)]">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[#C8A96A]">Perks</p>
+            <h1 className="mt-1.5 text-2xl font-semibold tracking-normal sm:text-3xl">Perks</h1>
+            <p className="mt-2 max-w-3xl text-[13px] leading-5 text-[rgba(11,31,51,0.64)]">
               Create offers residents can understand, save, scan, and use. Keep the partner, dates, results, and next move close at hand.
             </p>
           </div>
-          <div className="flex flex-wrap gap-3">
-            <Button variant="outline" onClick={exportReport} className="gap-2 border-[rgba(11,31,51,0.12)] bg-white text-[#0B1F33]">
-              <ArrowDownToLine className="h-4 w-4" /> Export
+          <div className="flex flex-row flex-wrap items-center gap-2">
+            <Button variant="outline" onClick={exportReport} className="h-8 min-h-8 gap-1.5 px-2.5 text-[10px] text-[#0B1F33]">
+              <ArrowDownToLine className="h-3.5 w-3.5" /> Export
             </Button>
-            <Button variant="outline" onClick={syncTenantProvisioning} disabled={syncing} className="gap-2 border-[rgba(11,31,51,0.12)] bg-white text-[#0B1F33]">
-              {syncing ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />} Refresh partners
+            <Button variant="outline" onClick={syncTenantProvisioning} disabled={syncing} className="h-8 min-h-8 gap-1.5 px-2.5 text-[10px] text-[#0B1F33]">
+              {syncing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ShieldCheck className="h-3.5 w-3.5" />} Partners
             </Button>
-            <Button onClick={openCreate} className="gap-1.5 text-[#11182B]" disabled={!canManage}>
+            <Button onClick={openCreate} className="h-8 min-h-8 gap-1.5 px-2.5 text-[10px] text-[#11182B]" disabled={!canManage}>
               <Plus className="h-3.5 w-3.5" /> Add perk
             </Button>
           </div>
         </div>
       </section>
 
-      <section className="dp-summary-matrix">
-        <div className="dp-summary-matrix__grid">
-        <Metric label="Total perks" value={metrics.total} />
-        <Metric label="Active" value={metrics.active} />
-        <Metric label="Views" value={metrics.views} />
-        <Metric label="Saves" value={metrics.saves} />
-        <Metric label="Directions" value={metrics.directions} />
-        <Metric label="Scans" value={metrics.scans} />
-        <Metric label="Redemptions" value={metrics.redemptions} />
+      <section className="bg-white">
+        <div className="grid grid-cols-2 gap-x-5 gap-y-3 sm:grid-cols-4 lg:grid-cols-7">
+          <Metric label="Total perks" value={metrics.total} />
+          <Metric label="Active" value={metrics.active} />
+          <Metric label="Views" value={metrics.views} />
+          <Metric label="Saves" value={metrics.saves} />
+          <Metric label="Directions" value={metrics.directions} />
+          <Metric label="Scans" value={metrics.scans} />
+          <Metric label="Redemptions" value={metrics.redemptions} />
         </div>
       </section>
 
-      <section className="rounded-xl border border-[rgba(11,31,51,0.08)] bg-white p-4">
-        <div className="grid gap-3 lg:grid-cols-[1fr_220px_220px]">
-          <label className="flex min-h-11 items-center gap-2 border-b border-[rgba(11,31,51,0.12)] px-1">
-            <Search className="h-4 w-4 text-[#C8A96A]" />
-            <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search perks, partners, districts, categories" className="w-full bg-transparent text-sm outline-none" />
+      <section className="bg-white">
+        <div className="grid gap-3 lg:grid-cols-[1fr_180px_180px]">
+          <label className="flex min-h-9 items-center gap-2 border-b border-[rgba(11,31,51,0.10)] px-0">
+            <Search className="h-3.5 w-3.5 text-[#C8A96A]" />
+            <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search perks, partners, districts, categories" className="w-full bg-transparent text-[12px] outline-none" />
           </label>
           <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)} className="dp-admin-select">
             <option value="all">All statuses</option>
@@ -373,33 +388,35 @@ export default function DowntownPerks() {
         </summary>
 
         <div className="overflow-x-auto [scrollbar-width:thin]" aria-label="Perk inventory table. Scroll horizontally to view all columns.">
-        <table className="w-full min-w-[1180px] table-fixed border-collapse text-left text-sm lg:min-w-[1340px]">
+        <table className="w-full min-w-[1080px] table-fixed border-collapse text-left text-[12px]">
           <colgroup>
-            <col className="w-[250px] lg:w-[300px]" />
-            <col className="w-[180px]" />
-            <col className="w-[160px]" />
+            <col className="w-[255px]" />
             <col className="w-[120px]" />
-            <col className="w-[170px]" />
-            <col className="w-[270px]" />
-            <col className="w-[230px]" />
-            <col className="w-[150px]" />
+            <col className="w-[160px]" />
+            <col className="w-[125px]" />
+            <col className="w-[95px]" />
+            <col className="w-[130px]" />
+            <col className="w-[205px]" />
+            <col className="w-[180px]" />
+            <col className="w-[110px]" />
           </colgroup>
-          <thead className="border-b border-[rgba(11,31,51,0.08)] bg-[#FBFCFD] text-[10px] font-bold uppercase text-[rgba(11,31,51,0.52)]">
-            <tr>
-              <th className="bg-[#FBFCFD] px-4 py-3 lg:sticky lg:left-0 lg:z-10 lg:px-5">Perk</th>
-              <th className="border-l border-[rgba(11,31,51,0.06)] px-5 py-3">Partner</th>
-              <th className="border-l border-[rgba(11,31,51,0.06)] px-5 py-3">Category</th>
-              <th className="border-l border-[rgba(11,31,51,0.06)] px-5 py-3">Status</th>
-              <th className="border-l border-[rgba(11,31,51,0.06)] px-5 py-3">Dates</th>
-              <th className="border-l border-[rgba(11,31,51,0.06)] px-5 py-3">Performance</th>
-              <th className="border-l border-[rgba(11,31,51,0.06)] px-5 py-3">Relationships</th>
-              <th className="border-l border-[rgba(11,31,51,0.06)] px-5 py-3">Actions</th>
+          <thead className="border-b border-[rgba(11,31,51,0.05)] bg-white text-[9px] font-semibold uppercase text-[rgba(11,31,51,0.48)]">
+              <tr>
+                <th className="bg-white px-0 py-2.5 pr-4 lg:sticky lg:left-0 lg:z-10">Perk</th>
+                <th className="px-0 py-2.5 pr-4">CTA</th>
+                <th className="px-0 py-2.5 pr-4">Partner</th>
+                <th className="px-0 py-2.5 pr-4">Category</th>
+              <th className="px-0 py-2.5 pr-4">Status</th>
+              <th className="px-0 py-2.5 pr-4">Dates</th>
+              <th className="px-0 py-2.5 pr-4">Performance</th>
+              <th className="px-0 py-2.5 pr-4">Links</th>
+              <th className="px-0 py-2.5">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-[rgba(11,31,51,0.08)]">
+          <tbody className="divide-y divide-[rgba(11,31,51,0.04)]">
             {filteredPerks.length === 0 ? (
               <tr>
-                <td colSpan={8} className="p-8 text-center text-[rgba(11,31,51,0.58)]">
+                <td colSpan={9} className="p-8 text-center text-[rgba(11,31,51,0.58)]">
                   Nothing matches this view. Add a perk, adjust the filters, or refresh partners.
                 </td>
               </tr>
@@ -407,50 +424,53 @@ export default function DowntownPerks() {
               const status = perk.status || (perk.active ? 'active' : 'draft');
               const entityLabel = perk.property_id || perk.hotel_id || perk.venue_id || perk.brand_id || '';
               return (
-              <tr key={perk.id} className="align-top transition-colors hover:bg-[#F7F8FB]/70">
-                <td className="bg-white px-4 py-5 lg:sticky lg:left-0 lg:z-10 lg:px-5 lg:shadow-[8px_0_18px_rgba(11,31,51,0.035)]">
-                  <p className="text-[14px] font-semibold leading-5 text-[#0B1F33]">{perk.title || 'Untitled perk'}</p>
-                  <p className="mt-2 max-w-[210px] text-[12px] leading-5 text-[rgba(11,31,51,0.62)] lg:max-w-[255px]">{perk.description || 'No description added.'}</p>
-                  <p className="mt-3 inline-flex border border-[rgba(11,31,51,0.08)] px-2 py-1 text-[11px] font-semibold text-[rgba(11,31,51,0.58)]">CTA: {perk.cta_label || perk.cta || 'Redeem perk'}</p>
+              <tr key={perk.id} className="align-top transition-colors hover:bg-white">
+                <td className="bg-white px-0 py-3 pr-4 lg:sticky lg:left-0 lg:z-10">
+                  <p className="text-[13px] font-semibold leading-4 text-[#0B1F33]">{perk.title || 'Untitled perk'}</p>
+                  <p className="mt-1.5 max-w-[245px] text-[11px] leading-4 text-[rgba(11,31,51,0.62)]">{perk.description || 'No description added.'}</p>
                 </td>
-                <td className="border-l border-[rgba(11,31,51,0.06)] px-5 py-5">
-                  <p className="text-[13px] font-semibold leading-5 text-[#0B1F33]">{perk.partnerName}</p>
+                <td className="px-0 py-3 pr-4">
+                  <p className="max-w-[105px] text-[11px] font-semibold leading-4 text-[#0B1F33]">{perk.cta_label || perk.cta || 'Redeem perk'}</p>
+                  <p className="mt-1 text-[9px] font-semibold uppercase text-[rgba(11,31,51,0.42)]">{perk.redemption_type || 'QR scan'}</p>
                 </td>
-                <td className="border-l border-[rgba(11,31,51,0.06)] px-5 py-5">
-                  <p className="text-[13px] font-semibold leading-5 text-[#0B1F33]">{perk.category || 'Uncategorized'}</p>
-                  <p className="mt-2 text-[11px] font-semibold uppercase text-[rgba(11,31,51,0.46)]">{formatDistrict(perk.district)}</p>
+                <td className="px-0 py-3 pr-4">
+                  <p className="text-[12px] font-semibold leading-4 text-[#0B1F33]">{perk.partnerName}</p>
                 </td>
-                <td className="border-l border-[rgba(11,31,51,0.06)] px-5 py-5">
+                <td className="px-0 py-3 pr-4">
+                  <p className="text-[12px] font-semibold leading-4 text-[#0B1F33]">{perk.category || 'Uncategorized'}</p>
+                  <p className="mt-1 text-[9px] font-semibold uppercase text-[rgba(11,31,51,0.46)]">{formatDistrict(perk.district)}</p>
+                </td>
+                <td className="px-0 py-3 pr-4">
                   <StatusPill status={status} />
                 </td>
-                <td className="border-l border-[rgba(11,31,51,0.06)] px-5 py-5">
-                  <div className="grid gap-2">
+                <td className="px-0 py-3 pr-4">
+                  <div className="grid gap-1">
                     <DateLine label="Start" value={perk.start_date || 'Not set'} />
                     <DateLine label="End" value={perk.end_date || 'Not set'} />
                   </div>
                 </td>
-                <td className="border-l border-[rgba(11,31,51,0.06)] px-5 py-5">
-                  <div className="grid grid-cols-2 gap-px overflow-hidden border border-[rgba(11,31,51,0.08)] bg-[rgba(11,31,51,0.08)] text-[11px] leading-4 text-[rgba(11,31,51,0.58)]">
+                <td className="px-0 py-3 pr-4">
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-[11px] leading-4 text-[rgba(11,31,51,0.58)]">
                     <MetricPair label="Views" value={perk.views} />
                     <MetricPair label="Saves" value={perk.saves} />
                     <MetricPair label="Directions" value={perk.directions} />
                     <MetricPair label="Scans" value={perk.scans} />
                   </div>
-                  <p className="mt-3 border-t border-[rgba(11,31,51,0.08)] pt-3 text-[12px] font-semibold leading-5 text-[#0B1F33]">
+                  <p className="mt-2 text-[11px] font-semibold leading-4 text-[#0B1F33]">
                     {perk.redemptionCount} used · {perk.conversion}% follow-through
                   </p>
                 </td>
-                <td className="border-l border-[rgba(11,31,51,0.06)] px-5 py-5 text-[12px] leading-5 text-[rgba(11,31,51,0.58)]">
+                <td className="px-0 py-3 pr-4 text-[11px] leading-4 text-[rgba(11,31,51,0.58)]">
                   <RelationshipLine label="Campaign" value={campaigns.find((campaign) => campaign.id === perk.campaign_id)?.name || perk.campaign_id || 'None'} />
                   <RelationshipLine label="Event" value={events.find((event) => event.id === perk.event_id)?.title || perk.event_id || 'None'} />
                   <RelationshipLine label="Entity" value={entityLabel || 'Not linked'} />
                 </td>
-                <td className="border-l border-[rgba(11,31,51,0.06)] px-5 py-5">
-                  <div className="grid grid-cols-2 gap-2">
-                    <Button aria-label={`Edit ${perk.title || 'perk'}`} title="Edit perk" variant="outline" size="sm" onClick={() => openEdit(perk)} disabled={!canManage} className="h-9 w-9 border-[rgba(11,31,51,0.12)] bg-white p-0 text-[#0B1F33]"><Edit2 className="h-3.5 w-3.5" /></Button>
-                    <Button aria-label={`Activate ${perk.title || 'perk'}`} title="Activate perk" variant="outline" size="sm" onClick={() => setPerkStatus(perk, 'active')} disabled={!canManage || status === 'active'} className="h-9 w-9 border-[rgba(11,31,51,0.12)] bg-white p-0 text-[#0B1F33]"><Ticket className="h-3.5 w-3.5" /></Button>
-                    <Button aria-label={`Pause ${perk.title || 'perk'}`} title="Pause perk" variant="outline" size="sm" onClick={() => setPerkStatus(perk, 'paused')} disabled={!canManage || status === 'paused'} className="h-9 w-9 border-[rgba(11,31,51,0.12)] bg-white p-0 text-[#0B1F33]"><Archive className="h-3.5 w-3.5" /></Button>
-                    <Button aria-label={`Archive ${perk.title || 'perk'}`} title="Archive perk" variant="outline" size="sm" onClick={() => archivePerk(perk)} disabled={!canManage} className="h-9 w-9 border-[rgba(11,31,51,0.12)] bg-white p-0 text-rose-600"><Trash2 className="h-3.5 w-3.5" /></Button>
+                <td className="px-0 py-3">
+                  <div className="grid grid-cols-2 gap-1.5">
+                    <Button aria-label={`Edit ${perk.title || 'perk'}`} title="Edit perk" variant="ghost" size="sm" onClick={() => openEdit(perk)} disabled={!canManage} className="h-8 w-8 p-0 text-[#0B1F33]"><Edit2 className="h-3.5 w-3.5" /></Button>
+                    <Button aria-label={`Activate ${perk.title || 'perk'}`} title="Activate perk" variant="ghost" size="sm" onClick={() => setPerkStatus(perk, 'active')} disabled={!canManage || status === 'active'} className="h-8 w-8 p-0 text-[#0B1F33]"><Ticket className="h-3.5 w-3.5" /></Button>
+                    <Button aria-label={`Pause ${perk.title || 'perk'}`} title="Pause perk" variant="ghost" size="sm" onClick={() => setPerkStatus(perk, 'paused')} disabled={!canManage || status === 'paused'} className="h-8 w-8 p-0 text-[#0B1F33]"><Archive className="h-3.5 w-3.5" /></Button>
+                    <Button aria-label={`Archive ${perk.title || 'perk'}`} title="Archive perk" variant="ghost" size="sm" onClick={() => archivePerk(perk)} disabled={!canManage} className="h-8 w-8 p-0 text-rose-600"><Trash2 className="h-3.5 w-3.5" /></Button>
                   </div>
                 </td>
               </tr>
@@ -462,11 +482,12 @@ export default function DowntownPerks() {
 
       <section className="grid gap-5 xl:grid-cols-[1fr_1fr]">
         <Panel title="Perk analytics" eyebrow="Reporting relationships">
-          <div className="grid gap-3">
-            <InsightLine label="Top redeemed" value={topBy(enrichedPerks, 'redemptionCount')} />
-            <InsightLine label="Most saved" value={topBy(enrichedPerks, 'saves')} />
-            <InsightLine label="Best conversion" value={topBy(enrichedPerks, 'conversion', '%')} />
-            <InsightLine label="Highest district engagement" value={topDistrict(enrichedPerks)} />
+          <div className="grid gap-2">
+            <InsightLine label="Partner links" value={`${relationshipSummary.partnerLinks} perks are tied to partner records.`} />
+            <InsightLine label="Campaign links" value={`${relationshipSummary.campaignLinks} perks are connected to campaign records.`} />
+            <InsightLine label="Event links" value={`${relationshipSummary.eventLinks} perks are connected to event records.`} />
+            <InsightLine label="Place links" value={`${relationshipSummary.placeLinks} perks are tied to a property, hotel, venue, or brand record.`} />
+            <InsightLine label="Measured records" value={`${relationshipSummary.measured} perks have at least one tracked view, save, direction, scan, or redemption.`} />
           </div>
         </Panel>
 
@@ -475,8 +496,8 @@ export default function DowntownPerks() {
             {auditLogs.length === 0 ? (
               <p className="text-sm text-[rgba(11,31,51,0.58)]">No perk updates yet.</p>
             ) : auditLogs.map((log) => (
-              <div key={log.id} className="border-t border-[rgba(11,31,51,0.08)] pt-3">
-                <p className="text-sm font-semibold">{String(log.action || '').replace(/_/g, ' ')}</p>
+              <div key={log.id} className="border-t border-[rgba(11,31,51,0.04)] pt-2.5">
+                <p className="text-[13px] font-semibold">{String(log.action || '').replace(/_/g, ' ')}</p>
                 <p className="mt-1 text-xs text-[rgba(11,31,51,0.52)]">{log.actor_email || 'operator'} · {new Date(log.created_at || Date.now()).toLocaleString()}</p>
               </div>
             ))}
@@ -607,9 +628,9 @@ function Panel({ eyebrow, title, children }: any) {
 
 function InsightLine({ label, value }: any) {
   return (
-    <div className="flex items-start justify-between gap-4 border-t border-[rgba(11,31,51,0.08)] pt-3">
-      <span className="text-sm text-[rgba(11,31,51,0.62)]">{label}</span>
-      <strong className="text-right text-sm font-semibold">{value}</strong>
+    <div className="grid gap-1 border-t border-[rgba(11,31,51,0.04)] pt-2.5 sm:grid-cols-[150px_1fr] sm:gap-4">
+      <span className="text-[12px] font-semibold text-[rgba(11,31,51,0.52)]">{label}</span>
+      <strong className="text-[12px] font-medium leading-5 text-[#0B1F33]">{value}</strong>
     </div>
   );
 }
@@ -663,20 +684,4 @@ function formatDistrict(value?: string) {
   return String(value)
     .replace(/[_-]+/g, ' ')
     .replace(/\b\w/g, (letter) => letter.toUpperCase());
-}
-
-function topBy(rows: any[], key: string, suffix = '') {
-  const top = [...rows].sort((a, b) => Number(b[key] || 0) - Number(a[key] || 0))[0];
-  if (!top) return 'No data';
-  return `${top.title || top.partnerName} · ${Number(top[key] || 0).toLocaleString()}${suffix}`;
-}
-
-function topDistrict(rows: any[]) {
-  const totals = new Map<string, number>();
-  rows.forEach((row) => {
-    const district = row.district || 'Unassigned';
-    totals.set(district, (totals.get(district) || 0) + row.views + row.saves + row.directions + row.redemptionCount);
-  });
-  const [district, total] = [...totals.entries()].sort((a, b) => b[1] - a[1])[0] || [];
-  return district ? `${district} · ${total.toLocaleString()} actions` : 'No data';
 }

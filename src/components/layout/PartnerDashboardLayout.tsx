@@ -7,6 +7,7 @@ export default function PartnerDashboardLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const isLandingPage = location.pathname === '/';
   const goBack = () => {
     if (window.history.length > 1) {
       navigate(-1);
@@ -99,12 +100,12 @@ export default function PartnerDashboardLayout() {
         <div className="sticky top-0 z-40 flex items-center justify-between bg-white p-4 lg:hidden">
            <div className="flex items-center gap-2 text-[#11182B] ">
               <Button
-                onClick={goBack}
+                onClick={isLandingPage ? () => navigate('/') : goBack}
                 variant="ghost"
                 className="mr-1 h-9 w-9 p-0"
-                aria-label="Go back"
+                aria-label={isLandingPage ? 'Go home' : 'Go back'}
               >
-                <ArrowLeft className="w-4 h-4" />
+                {isLandingPage ? <HomeIcon className="w-4 h-4" /> : <ArrowLeft className="w-4 h-4" />}
               </Button>
               <div className="w-6 h-6 bg-[#11182B] flex items-center justify-center">
                  <Building2 className="w-3 h-3 text-white" />
@@ -183,15 +184,19 @@ export default function PartnerDashboardLayout() {
 
         <div className="sticky top-0 z-30 hidden bg-white/96 px-6 py-3 backdrop-blur lg:block">
           <div className="flex items-center gap-4">
-            <Button
-              onClick={goBack}
-              variant="ghost"
-              className="h-9 gap-2 px-0 text-[11px] font-semibold text-[#11182B]"
-              aria-label="Go back to previous platform page"
-            >
-              <ArrowLeft className="w-4 h-4" /> Back
-            </Button>
-            <span className="h-4 w-px bg-[rgba(11,31,51,0.12)]" aria-hidden="true" />
+            {!isLandingPage && (
+              <>
+                <Button
+                  onClick={goBack}
+                  variant="ghost"
+                  className="h-9 gap-2 px-0 text-[11px] font-semibold text-[#11182B]"
+                  aria-label="Go back to previous platform page"
+                >
+                  <ArrowLeft className="w-4 h-4" /> Back
+                </Button>
+                <span className="h-4 w-px bg-[rgba(11,31,51,0.12)]" aria-hidden="true" />
+              </>
+            )}
             <Button
               onClick={() => navigate('/')}
               variant="ghost"
