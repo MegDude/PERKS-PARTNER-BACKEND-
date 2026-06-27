@@ -60,6 +60,11 @@ export interface QRCode {
   scans: number;
   lastScan: string;
   conversionSignal: string;
+  headline?: string;
+  bodyCopy?: string;
+  logoUrl?: string;
+  imageUrl?: string;
+  printSize?: string;
 }
 
 export interface Perk {
