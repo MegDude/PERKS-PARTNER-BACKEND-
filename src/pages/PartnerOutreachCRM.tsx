@@ -106,6 +106,7 @@ export default function PartnerOutreachCRM() {
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const [loading, setLoading] = useState(true);
   const [working, setWorking] = useState('');
+  const [googlePlacesConfigured, setGooglePlacesConfigured] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [batchStatus, setBatchStatus] = useState('Ready to contact');
   const [savedViews, setSavedViews] = useState<SavedView[]>([]);
@@ -118,6 +119,7 @@ export default function PartnerOutreachCRM() {
     setPartners(payload.partners || []);
     setStatuses(payload.statuses || []);
     setFilters(payload.filters || ['All']);
+    setGooglePlacesConfigured(Boolean(payload.google_places_configured));
     setSelectedId((current) => current || payload.partners?.[0]?.id || '');
     setLoading(false);
   }
@@ -352,6 +354,9 @@ export default function PartnerOutreachCRM() {
             <button onClick={enrichMapData} className="inline-flex min-h-8 items-center gap-1.5 border border-[rgba(11,31,51,0.08)] px-2.5 text-[9.5px] font-semibold uppercase text-[#0B1F33]">
               <RefreshCw className={`h-3.5 w-3.5 ${working === 'enrich' ? 'animate-spin' : ''}`} /> Verify data
             </button>
+            <span className="inline-flex min-h-8 items-center border border-[rgba(11,31,51,0.08)] px-2 text-[9px] font-semibold uppercase text-[rgba(11,31,51,0.52)]">
+              Places {googlePlacesConfigured ? 'on' : 'pending'}
+            </span>
             <span className="inline-flex min-h-8 items-center gap-1.5 border border-[rgba(11,31,51,0.08)] px-2.5 text-[9.5px] font-semibold uppercase text-[rgba(11,31,51,0.5)]">
               <Database className="h-3.5 w-3.5 text-[#C8A96A]" /> Export
             </span>

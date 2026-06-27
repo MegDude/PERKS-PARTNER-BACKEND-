@@ -1243,6 +1243,10 @@ function googleMapsSearchUrl(name: string, address = "") {
   return query ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}` : "";
 }
 
+function isGeneratedGoogleMapsSearchUrl(value: any) {
+  return String(value || "").includes("google.com/maps/search/?api=1");
+}
+
 function buildMapEnrichmentCandidates(entities: Database["entities"]) {
   const locations = entities.PartnerLocation.map((location) => {
     const partner = (entities.Partner.find((item) => item.id === location.partner_id) || {}) as Record<string, any>;
@@ -1308,19 +1312,39 @@ async function fetchGooglePlacesVerification(partner: Record<string, any>) {
   if (!apiKey) return null;
   const textQuery = [partner.name || partner.business_name, partner.address, partner.district, "Austin TX"].filter(Boolean).join(" ");
   if (!textQuery.trim()) return null;
-  const response = await fetch("https://places.googleapis.com/v1/places:searchText", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-Goog-Api-Key": apiKey,
-      "X-Goog-FieldMask": "places.id,places.displayName,places.formattedAddress,places.nationalPhoneNumber,places.websiteUri,places.googleMapsUri,places.location",
-    },
-    body: JSON.stringify({ textQuery, maxResultCount: 1 }),
-  });
-  if (!response.ok) return null;
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 6500);
+  let response: Response;
+  try {
+    response = await fetch("https://places.googleapis.com/v1/places:searchText", {
+      method: "POST",
+      signal: controller.signal,
+      headers: {
+        "Content-Type": "application/json",
+        "X-Goog-Api-Key": apiKey,
+        "X-Goog-FieldMask": "places.id,places.displayName,places.formattedAddress,places.nationalPhoneNumber,places.websiteUri,places.googleMapsUri,places.location",
+      },
+      body: JSON.stringify({ textQuery, maxResultCount: 1 }),
+    });
+  } finally {
+    clearTimeout(timeout);
+  }
+  if (!response.ok) {
+    const errorPayload = await response.json().catch(() => ({}));
+    return {
+      source_type: "google_places_api_error",
+      error_status: response.status,
+      error_text: response.statusText,
+      error_detail: errorPayload?.error?.message || "",
+    };
+  }
   const payload = await response.json();
   const place = payload?.places?.[0];
-  if (!place) return null;
+  if (!place) {
+    return {
+      source_type: "google_places_api_no_match",
+    };
+  }
   return {
     name: place.displayName?.text || "",
     address: place.formattedAddress || "",
@@ -1338,6 +1362,7 @@ async function enrichOutreachCrmFromMapSources(entities: Database["entities"], o
   const candidates = buildMapEnrichmentCandidates(entities);
   const updated: Array<Record<string, any>> = [];
   const skipped: Array<Record<string, any>> = [];
+  const googleDiagnostics: Array<Record<string, any>> = [];
   const googleEnabled = Boolean(options.google_places && (process.env.GOOGLE_MAPS_API_KEY || process.env.GOOGLE_PLACES_API_KEY));
 
   for (const partner of entities.Partner.filter((item) => item.source_type === "partner_outreach_crm")) {
@@ -1349,8 +1374,25 @@ async function enrichOutreachCrmFromMapSources(entities: Database["entities"], o
     let google: Record<string, any> | null = null;
     if (googleEnabled) {
       try {
-        google = await fetchGooglePlacesVerification(partner);
-      } catch {
+        const googleResult = await fetchGooglePlacesVerification(partner);
+        if (googleResult?.source_type === "google_places_api") {
+          google = googleResult;
+        } else if (googleResult?.source_type) {
+          googleDiagnostics.push({
+            id: partner.id,
+            name: partner.name || partner.business_name,
+            reason: googleResult.source_type,
+            status: googleResult.error_status || "",
+            status_text: googleResult.error_text || "",
+            detail: googleResult.error_detail || "",
+          });
+        }
+      } catch (error) {
+        googleDiagnostics.push({
+          id: partner.id,
+          name: partner.name || partner.business_name,
+          reason: error instanceof Error && error.name === "AbortError" ? "google_places_timeout" : "google_places_request_failed",
+        });
         google = null;
       }
     }
@@ -1365,16 +1407,19 @@ async function enrichOutreachCrmFromMapSources(entities: Database["entities"], o
     const source = sources[0];
     const fallback = sources[1] || {};
     const candidateSource = source.source_type || fallback.source_type || "downtown_perks_map";
-    const fill = (field: string, value: any) => {
+    const fill = (field: string, value: any, options: { allowUpgrade?: boolean } = {}) => {
       const cleaned = cleanCrmValue(value);
-      if (cleaned && isMissingCrmField(partner[field])) changes[field] = cleaned;
+      if (!cleaned) return;
+      if (isMissingCrmField(partner[field]) || options.allowUpgrade) changes[field] = cleaned;
     };
 
     fill("address", source.address || fallback.address);
     fill("district", source.district || fallback.district);
     fill("website", source.website || fallback.website);
     fill("phone", source.phone || fallback.phone);
-    fill("google_maps_url", source.google_maps_url || fallback.google_maps_url);
+    fill("google_maps_url", source.google_maps_url || fallback.google_maps_url, {
+      allowUpgrade: source.source_type === "google_places_api" && isGeneratedGoogleMapsSearchUrl(partner.google_maps_url),
+    });
     if (isMissingCrmField(partner.google_maps_url) && !changes.google_maps_url && (partner.address || source.address || fallback.address)) {
       changes.google_maps_url = googleMapsSearchUrl(partner.name || partner.business_name, partner.address || source.address || fallback.address);
     }
@@ -1411,6 +1456,14 @@ async function enrichOutreachCrmFromMapSources(entities: Database["entities"], o
     success: true,
     google_places_enabled: googleEnabled,
     google_places_configured: Boolean(process.env.GOOGLE_MAPS_API_KEY || process.env.GOOGLE_PLACES_API_KEY),
+    google_places_diagnostics: {
+      checked_count: googleDiagnostics.length,
+      error_count: googleDiagnostics.filter((item) => item.reason === "google_places_api_error").length,
+      no_match_count: googleDiagnostics.filter((item) => item.reason === "google_places_api_no_match").length,
+      timeout_count: googleDiagnostics.filter((item) => item.reason === "google_places_timeout").length,
+      failed_count: googleDiagnostics.filter((item) => item.reason === "google_places_request_failed").length,
+      samples: googleDiagnostics.slice(0, 8),
+    },
     candidates: candidates.length,
     updated_count: updated.length,
     skipped_count: skipped.length,
@@ -3719,6 +3772,7 @@ export async function createApp() {
     res.json({
       partners,
       statuses: outreachStatuses,
+      google_places_configured: Boolean(process.env.GOOGLE_MAPS_API_KEY || process.env.GOOGLE_PLACES_API_KEY),
       filters: ["All", "Restaurants", "Bars", "Coffee", "Retail", "Hotels", "Properties", "Residential Buildings", "Office Buildings", "Civic", "Services", "Wellness", "Fitness", "Events", "Brands", "Real Estate", "Campaigns", "Perks"],
       counts: partners.reduce((acc: Record<string, number>, partner) => {
         const type = String(partner.type || "Partners");
@@ -5666,25 +5720,27 @@ export async function createApp() {
   });
 
   app.get("/api/integrations/status", (req, res) => {
-    const defaults = [
+    const defaults: Array<[string, string | string[]]> = [
       ["Tally Webhooks", "TALLY_WEBHOOK_SECRET"],
       ["Twilio Verify", "TWILIO_VERIFY_SERVICE_SID"],
       ["Twilio Messaging", "TWILIO_MESSAGING_SERVICE_SID"],
       ["Supabase Operational Store", "SUPABASE_URL"],
       ["n8n Workflow Orchestration", "N8N_WEBHOOK_URL"],
       ["OpenAI Insights", "OPENAI_API_KEY"],
+      ["Firebase Auth / Firestore", ["VITE_FIREBASE_API_KEY", "VITE_FIREBASE_PROJECT_ID", "VITE_FIREBASE_APP_ID"]],
       ["Google Sheets / Reports DB", "GOOGLE_SHEETS_CLIENT_EMAIL"],
-      ["Google Maps", "GOOGLE_MAPS_API_KEY"],
+      ["Google Maps / Places", ["GOOGLE_MAPS_API_KEY", "GOOGLE_PLACES_API_KEY"]],
       ["Stripe", "STRIPE_SECRET_KEY"],
       ["Storage Provider", "STORAGE_BUCKET"],
     ];
     const records = defaults.map(([provider, envKey]) => {
+      const envKeys = Array.isArray(envKey) ? envKey : [envKey];
       const stored = db.entities.IntegrationStatus.find((item) => item.provider === provider) || db.entities.IntegrationEndpoint.find((item) => item.provider === provider || item.name === provider);
       return {
         id: stored?.id || `integration_${slug(provider)}`,
         provider,
-        status: process.env[envKey] ? "configured" : stored?.status || "pending_credentials",
-        required_env_vars: [envKey],
+        status: envKeys.some((key) => process.env[key]) ? "configured" : stored?.status || "pending_credentials",
+        required_env_vars: envKeys,
         last_tested: stored?.last_tested || "",
         last_success: stored?.last_success || "",
         logs: stored?.logs || [],

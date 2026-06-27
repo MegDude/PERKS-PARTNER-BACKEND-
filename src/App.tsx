@@ -42,6 +42,7 @@ function RouteFallback() {
 function AuthAction() {
   const { user, configured, loading, signInWithGoogle, logout } = useAuth();
   const label = !configured ? 'Firebase pending' : user ? 'Sign out' : 'Sign in with Google';
+
   return (
     <button
       type="button"

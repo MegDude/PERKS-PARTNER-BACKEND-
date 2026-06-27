@@ -878,6 +878,115 @@
   }
 }
 
+/* Global rail lock: every backend surface shares one left edge and one wrapping right edge. */
+.dp-admin-shell {
+  --dp-shell-gutter: clamp(16px, 3.2vw, 28px);
+  --dp-shell-readable: min(100%, calc(100vw - var(--dp-admin-sidebar) - (var(--dp-shell-gutter) * 2)));
+}
+
+.dp-admin-shell main {
+  min-width: 0;
+}
+
+.dp-admin-shell :where(
+  main > div:not([class*="fixed"]):not([class*="absolute"]),
+  main > section:not([class*="fixed"]):not([class*="absolute"]),
+  .dp-page-surface,
+  .shore-main,
+  .shore-header-shell
+) {
+  width: 100% !important;
+  max-width: var(--dp-shell-readable) !important;
+  margin-left: 0 !important;
+  margin-right: auto !important;
+  padding-left: var(--dp-shell-gutter) !important;
+  padding-right: var(--dp-shell-gutter) !important;
+}
+
+.dp-admin-shell :where(
+  .max-w-7xl,
+  .max-w-6xl,
+  .max-w-5xl,
+  .max-w-4xl,
+  .max-w-3xl,
+  .max-w-2xl
+) {
+  max-width: 100% !important;
+}
+
+.dp-admin-shell :where(
+  section,
+  article,
+  header,
+  footer,
+  form,
+  aside,
+  table,
+  .grid,
+  .flex,
+  .dp-summary-matrix,
+  .shore-section,
+  .shore-card,
+  .shore-read,
+  .shore-builder
+) {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.dp-admin-shell :where(
+  h1,
+  h2,
+  h3,
+  h4,
+  p,
+  li,
+  span,
+  a,
+  button,
+  label,
+  th,
+  td,
+  input,
+  textarea,
+  select
+) {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+.dp-admin-shell :where(.shore-header-top, .shore-header-actions, .dp-admin-toolbar, .dp-admin-page-header) {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.dp-admin-shell :where(.shore-header-title, .shore-header-status, .shore-brand-word) {
+  white-space: normal;
+}
+
+@media (min-width: 1024px) {
+  .dp-admin-shell {
+    --dp-shell-readable: min(var(--dp-admin-max), calc(100vw - var(--dp-admin-sidebar) - (var(--dp-shell-gutter) * 2)));
+  }
+}
+
+@media (max-width: 1023px) {
+  .dp-admin-shell {
+    --dp-shell-gutter: 16px;
+    --dp-shell-readable: calc(100vw - (var(--dp-shell-gutter) * 2));
+  }
+
+  .dp-admin-shell :where(
+    main > div:not([class*="fixed"]):not([class*="absolute"]),
+    main > section:not([class*="fixed"]):not([class*="absolute"]),
+    .dp-page-surface,
+    .shore-main,
+    .shore-header-shell
+  ) {
+    max-width: var(--dp-shell-readable) !important;
+  }
+}
+
 /* Final quiet surface pass: keep the app bright, remove decorative box chrome, preserve real controls. */
 html,
 body,
