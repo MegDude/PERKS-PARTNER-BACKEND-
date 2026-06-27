@@ -1048,23 +1048,6 @@ export function PartnerWorkspaceTemplate(props: Props) {
                 </a>
               ))}
             </div>
-            <div className="mt-4 pt-3">
-              <div className="text-[11px] font-bold uppercase text-[#C8A96A]">Keep close</div>
-              <h2 className="mt-1 text-xl font-semibold leading-tight text-[#0B1F33]">Favorites</h2>
-              <p className="mt-2 text-[11px] leading-4 text-[rgba(11,31,51,0.58)]">
-                Choose the places, perks, and plans residents should see first. Tapping a row saves the featured list to this partner workspace and feeds the resident guide.
-              </p>
-              <div className="mt-2 grid gap-0">
-                {favorites.slice(0, 4).map((item) => (
-                  <button key={item.id} type="button" onClick={() => toggleFavorite(item.id)} className="group grid min-h-9 grid-cols-[0.82fr_1fr_auto] items-baseline gap-2 border-t border-[rgba(11,31,51,0.045)] py-1.5 text-left first:border-t-0">
-                    <span className="min-w-0 truncate text-[11.5px] font-semibold leading-4 text-[#0B1F33] group-hover:text-[#C8A96A]">{item.name}</span>
-                    <span className="min-w-0 truncate text-[9.5px] font-semibold uppercase leading-3 text-[rgba(11,31,51,0.46)]">{item.type} · {item.saved ? 'shown first' : 'hidden from first view'}</span>
-                    <Heart className={`h-3.5 w-3.5 ${item.saved ? 'fill-[#C8A96A] text-[#C8A96A]' : 'text-[rgba(11,31,51,0.32)]'}`} />
-                  </button>
-                ))}
-              </div>
-              <p className="mt-2 text-[10.5px] leading-4 text-[rgba(11,31,51,0.5)]">Saved favorites are stored in partner settings and can be reused by the map, resident guide, reports, and broadcasts.</p>
-            </div>
           </div>
         </section>
 
@@ -1131,6 +1114,26 @@ export function PartnerWorkspaceTemplate(props: Props) {
                 </tbody>
               </table>
             </div>
+          </div>
+        </section>
+
+        <section>
+          <div className="shore-read">
+            <div className="text-[11px] font-bold uppercase text-[#C8A96A]">Keep close</div>
+            <h2 className="mt-1 text-xl font-semibold leading-tight text-[#0B1F33]">Favorites</h2>
+            <p className="mt-2 max-w-[760px] text-[11px] leading-4 text-[rgba(11,31,51,0.58)]">
+              Choose the places, perks, and plans residents should see first. Tapping a row saves the featured list to this partner workspace and feeds the resident guide.
+            </p>
+            <div className="mt-3 grid gap-0 sm:grid-cols-2 sm:gap-x-8">
+              {favorites.slice(0, 4).map((item) => (
+                <button key={item.id} type="button" onClick={() => toggleFavorite(item.id)} className="group grid min-h-9 grid-cols-[0.82fr_1fr_auto] items-baseline gap-2 border-t border-[rgba(11,31,51,0.045)] py-1.5 text-left first:border-t-0 sm:nth-[2]:border-t-0">
+                  <span className="min-w-0 truncate text-[11.5px] font-semibold leading-4 text-[#0B1F33] group-hover:text-[#C8A96A]">{item.name}</span>
+                  <span className="min-w-0 truncate text-[9.5px] font-semibold uppercase leading-3 text-[rgba(11,31,51,0.46)]">{item.type} · {item.saved ? 'shown first' : 'hidden from first view'}</span>
+                  <Heart className={`h-3.5 w-3.5 ${item.saved ? 'fill-[#C8A96A] text-[#C8A96A]' : 'text-[rgba(11,31,51,0.32)]'}`} />
+                </button>
+              ))}
+            </div>
+            <p className="mt-2 text-[10.5px] leading-4 text-[rgba(11,31,51,0.5)]">Saved favorites are stored in partner settings and can be reused by the map, resident guide, reports, and broadcasts.</p>
           </div>
         </section>
 

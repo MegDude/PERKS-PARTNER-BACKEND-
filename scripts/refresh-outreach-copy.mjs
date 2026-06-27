@@ -61,17 +61,21 @@ function score(copy, brief) {
 }
 
 function emailHtml(name, subject, body, perk) {
+  const headline = "A local idea for " + name;
+  const banner = "https://images.unsplash.com/photo-1531218150217-54595bc2b934?auto=format&fit=crop&w=1200&q=80";
   return [
     "<!doctype html>",
     '<html lang="en"><head><meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" /><meta name="x-apple-disable-message-reformatting" />',
     "<title>" + escapeHtml(subject) + "</title></head>",
     '<body style="margin:0;padding:0;background:#ffffff;color:#0B1F33;font-family:Inter,Arial,sans-serif;-webkit-font-smoothing:antialiased;">',
     '<div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;">' + escapeHtml(perk) + " for " + escapeHtml(name) + ".</div>",
-    '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;background:#ffffff;"><tr><td align="center" style="padding:28px 16px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:620px;border-collapse:collapse;">',
-    '<tr><td style="padding:0 0 14px 0;border-bottom:1px solid rgba(11,31,51,0.10);"><p style="margin:0;color:#C8A96A;font-size:11px;line-height:1.2;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;">Downtown Perks</p><h1 style="margin:9px 0 0 0;color:#0B1F33;font-size:24px;line-height:1.18;font-weight:650;">' + escapeHtml(subject) + "</h1></td></tr>",
-    '<tr><td style="padding:18px 0 0 0;"><div style="margin:0;color:#24384B;font-size:15px;line-height:1.62;font-weight:400;">' + escapeHtml(body).replace(/\n/g, "<br />") + "</div></td></tr>",
-    '<tr><td style="padding:22px 0 0 0;"><a href="mailto:meg@downtownperks.com?subject=' + encodeURIComponent("Downtown Perks chat: " + name) + '" style="display:inline-block;background:#C8A96A;color:#0B1F33;text-decoration:none;padding:11px 16px;border-radius:4px;font-size:13px;line-height:1;font-weight:700;">Set up a quick chat</a></td></tr>',
-    '<tr><td style="padding:24px 0 0 0;"><p style="margin:0;padding-top:14px;border-top:1px solid rgba(11,31,51,0.10);color:rgba(11,31,51,0.56);font-size:12px;line-height:1.5;">Downtown Perks · Local discovery for downtown Austin residents, guests, and nearby workers.</p></td></tr>',
+    '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;background:#ffffff;"><tr><td align="center" style="padding:24px 14px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:640px;border-collapse:collapse;border:1px solid rgba(11,31,51,0.10);">',
+    '<tr><td style="padding:18px 20px;border-bottom:1px solid rgba(11,31,51,0.08);"><p style="margin:0;color:#0B1F33;font-size:14px;line-height:1;font-weight:750;">Downtown Perks</p></td></tr>',
+    '<tr><td><img src="' + banner + '" width="640" alt="' + escapeHtml(name) + ' local discovery" style="display:block;width:100%;max-width:640px;height:auto;max-height:250px;object-fit:cover;border:0;" /></td></tr>',
+    '<tr><td style="padding:22px 22px 6px 22px;"><p style="margin:0;color:#C8A96A;font-size:10px;line-height:1.2;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;">Downtown Perks</p><h1 style="margin:8px 0 0 0;color:#0B1F33;font-size:20px;line-height:1.2;font-weight:650;">' + escapeHtml(headline) + '</h1><p style="margin:9px 0 0 0;color:rgba(11,31,51,0.64);font-size:13px;line-height:1.45;font-weight:400;">' + escapeHtml(perk) + "</p></td></tr>",
+    '<tr><td style="padding:12px 22px 0 22px;"><div style="margin:0;color:#24384B;font-size:14px;line-height:1.58;font-weight:400;">' + escapeHtml(body).replace(/\n/g, "<br />") + "</div></td></tr>",
+    '<tr><td style="padding:20px 22px 24px 22px;"><table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;"><tr><td style="padding:0 10px 8px 0;"><a href="https://downtown-perks-backend.vercel.app/partners/register" style="display:inline-block;background:#C8A96A;color:#0B1F33;text-decoration:none;padding:11px 15px;border-radius:4px;font-size:12px;line-height:1;font-weight:700;">Review partner setup</a></td><td style="padding:0 0 8px 0;"><a href="https://downtown-perks-backend.vercel.app/map" style="display:inline-block;color:#0B1F33;text-decoration:none;padding:10px 0;border-bottom:1px solid #C8A96A;font-size:12px;line-height:1;font-weight:700;">View map idea</a></td></tr></table></td></tr>',
+    '<tr><td style="padding:15px 22px;background:#0B1F33;"><p style="margin:0;color:#ffffff;font-size:12px;line-height:1.45;font-weight:700;">Downtown Perks</p><p style="margin:4px 0 0 0;color:rgba(255,255,255,0.72);font-size:11px;line-height:1.45;">Local discovery for downtown Austin residents, guests, and nearby workers.</p></td></tr>',
     "</table></td></tr></table></body></html>",
   ].join("\n");
 }
@@ -111,7 +115,10 @@ for (const partner of partners) {
     quality_rules: [
       "Use the partner name naturally, not as a mail-merge token.",
       "Reference the partner type, district, perk, campaign, or notes in a specific way.",
-      "Write like a thoughtful local operator, not a SaaS sales sequence.",
+      "Write in the Downtown Perks brand voice: clean, calm, direct, local, premium, and easy to understand.",
+      "Use everyday language people actually say. Prefer short words and simple sentences.",
+      "Sound like a thoughtful local operator, not a SaaS sales sequence or marketing deck.",
+      "Avoid jargon like optimize, leverage, unlock, synergy, ecosystem, frictionless, maximize, seamless, hyperlocal, and omnichannel.",
       "Keep the text message under 70 words and the email under 170 words.",
       "Do not claim results, traffic, exclusivity, guaranteed revenue, or formal partnership status.",
       "End with a low-pressure quick-chat ask.",
@@ -121,8 +128,8 @@ for (const partner of partners) {
   const reason = String(brief.proof_point || brief.district_insight).replace(/[.。]+$/, "");
   const typeContext = (brief.district + " " + brief.partner_type.toLowerCase()).replace(/\s+/g, " ").trim();
   const subject = brief.partner_name + ": " + brief.suggested_perk;
-  const shortText = "Hey " + first + " - " + brief.partner_name + " feels like a natural fit for " + brief.suggested_perk + ", especially for " + typeContext + " outreach. I’d like to show a quick " + brief.suggested_campaign + " concept and see if it is useful. Open to a 15-minute chat?";
-  const body = "Hi " + first + ",\n\nI’m building Downtown Perks as a practical discovery layer for downtown residents, guests, and nearby workers.\n\n" + brief.partner_name + " stood out because " + reason + ". In " + brief.district + ", the opportunity is not broad awareness; it is showing up when " + brief.audience + " are deciding what to visit, try, recommend, or share next.\n\nFor the first touch, I would not overbuild it. I’d start with " + brief.suggested_perk + ", then frame it through " + brief.suggested_campaign + ". That gives " + brief.partner_name + " a specific, easy-to-understand reason to be on the map.\n\nWould you be open to a quick 15-minute chat next week to see if this angle is worth testing? No pressure either way.\n\nBest,\nMeg";
+  const shortText = "Hey " + first + " - I’m building Downtown Perks for people who are already nearby. " + brief.partner_name + " feels like a good fit for " + brief.suggested_perk + ", especially around " + typeContext + ". I’d love to show you the idea and see if it feels useful. Open to a quick chat?";
+  const body = "Hi " + first + ",\n\nI’m building Downtown Perks, a simple local map for people who live, work, and stay downtown.\n\n" + brief.partner_name + " stood out because " + reason + ".\n\nFor a first step, I’d keep it simple: " + brief.suggested_perk + ". That could pair well with " + brief.suggested_campaign + " and give people nearby a clear reason to notice " + brief.partner_name + ".\n\nWould you be open to a quick 15-minute chat next week? No pressure either way.\n\nBest,\nMeg";
   const strategy = {
     angle: brief.recommended_angle,
     audience: brief.audience,
@@ -130,6 +137,7 @@ for (const partner of partners) {
     proof_point: brief.proof_point,
     ask: brief.practical_ask,
     quality: "curated_local_strategy",
+    voice: "downtown_perks_plainspoken",
     specificity_score: score({ shortText, subject, body }, brief),
   };
   let email = db.entities.PartnerOutreachMessage.find((item) => item.partner_id === partner.id && item.channel === "email");
