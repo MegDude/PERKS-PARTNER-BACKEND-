@@ -457,24 +457,53 @@
 }
 
 .dp-admin-shell .dp-crm-quick-view {
-  overflow: hidden;
+  overflow: visible;
 }
 
-.dp-admin-shell .dp-crm-quick-view > div > div {
-  min-height: 27px !important;
-  padding: 0.22rem 0.5rem !important;
+.dp-admin-shell .dp-crm-kpi-tile {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.35rem !important;
+  min-width: 0 !important;
+  min-height: 34px !important;
+  padding: 0.34rem 0.58rem !important;
 }
 
-.dp-admin-shell .dp-crm-quick-view p:first-child {
-  font-size: 0.5rem !important;
-  line-height: 0.92 !important;
+.dp-admin-shell .dp-crm-kpi-auth {
+  width: 100% !important;
+  max-width: none !important;
+  min-width: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  text-transform: none !important;
+}
+
+.dp-admin-shell .dp-crm-kpi-label {
+  min-width: 0;
+  color: rgba(11, 31, 51, 0.5) !important;
+  font-size: 0.55rem !important;
   font-weight: 600 !important;
+  line-height: 1.08 !important;
+  overflow-wrap: normal !important;
+  text-transform: uppercase;
+  white-space: normal !important;
+  word-break: normal !important;
 }
 
-.dp-admin-shell .dp-crm-quick-view p:last-child {
+.dp-admin-shell .dp-crm-kpi-value {
+  color: #0b1f33 !important;
   font-size: 0.78rem !important;
-  line-height: 0.92 !important;
   font-weight: 600 !important;
+  line-height: 1.05 !important;
+  text-align: right;
+  white-space: nowrap !important;
+}
+
+@media (max-width: 640px) {
+  .dp-admin-shell .dp-crm-kpi-tile {
+    min-height: 32px !important;
+  }
 }
 
 .dp-admin-shell .dp-crm-compact-edit label {

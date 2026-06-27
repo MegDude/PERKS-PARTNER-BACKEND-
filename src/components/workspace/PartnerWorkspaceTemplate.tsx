@@ -361,8 +361,36 @@ export function PartnerWorkspaceTemplate(props: Props) {
     const link = document.createElement('a');
     link.href = url;
     link.download = filename;
+    link.style.display = 'none';
+    document.body.appendChild(link);
     link.click();
-    URL.revokeObjectURL(url);
+    document.body.removeChild(link);
+    window.setTimeout(() => URL.revokeObjectURL(url), 250);
+  }
+
+  function billingDocumentText(record: Record<string, any>, documentType: 'Quote' | 'Invoice request') {
+    const lineItems = Array.isArray(record.line_items) ? record.line_items : [];
+    return [
+      `Downtown Perks ${documentType}`,
+      `Document: ${record.invoice_number}`,
+      `Partner: ${record.partner_name}`,
+      `Billing email: ${record.billing_email || 'Not provided'}`,
+      `Plan: ${record.plan_label}`,
+      `Cadence: ${record.cadence}`,
+      '',
+      'Line items',
+      ...lineItems.map((item: Record<string, any>) => `- ${item.label}: ${money(Number(item.amount || 0))}${item.cadence ? ` / ${item.cadence}` : ''}`),
+      '',
+      `Subtotal: ${money(Number(record.subtotal || 0))}`,
+      `Credit: ${record.coupon || 'None'}`,
+      `Discount: ${money(Number(record.discount_amount || 0))}`,
+      `Total due: ${money(Number(record.total || 0))}`,
+      '',
+      record.status === 'invoice_requested'
+        ? 'Next step: billing can review this request, send an invoice, and keep the partner workspace active.'
+        : 'Next step: share this quote with the partner, then request an invoice or activate the plan.',
+      `Created: ${new Date(record.created_at || Date.now()).toLocaleString()}`,
+    ].join('\n');
   }
 
   async function upsertEntity(entity: string, id: string, payload: Record<string, any>) {
@@ -738,8 +766,8 @@ export function PartnerWorkspaceTemplate(props: Props) {
     try {
       if (action === 'subscription') {
         const subscriptionId = `subscription_${workspaceSlug}`;
-        const response = await fetch(`/api/entities/PartnerSubscription/${encodeURIComponent(subscriptionId)}`, {
-          method: 'PATCH',
+        const response = await fetch('/api/billing/subscriptions', {
+          method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             ...basePayload,
@@ -751,50 +779,39 @@ export function PartnerWorkspaceTemplate(props: Props) {
           }),
         });
         if (!response.ok) {
-          await fetch('/api/entities/PartnerSubscription', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              ...basePayload,
-              id: subscriptionId,
-              status: 'active',
-              billing_status: totalDue === 0 ? 'promotional' : 'invoice_ready',
-              amount: props.billing.price,
-            }),
-          });
+          throw new Error('Subscription save failed');
         }
         setBillingNotice(`${props.billing.name} is active for ${workspaceName}. Modules can now be added to the plan or billed once.`);
         return;
       }
       const invoiceId = `${action}_${workspaceSlug}_${timestamp}`;
-      await fetch('/api/entities/PartnerInvoice', {
+      const documentType = action === 'quote' ? 'Quote' : 'Invoice request';
+      const invoiceRecord = {
+        ...basePayload,
+        id: invoiceId,
+        invoice_number: `DP-${workspaceSlug.toUpperCase().slice(0, 12)}-${timestamp}`,
+        status: action === 'quote' ? 'quote_ready' : 'invoice_requested',
+        billing_status: action === 'quote' ? 'quote' : 'requested',
+        discount_amount: couponResult?.accepted ? props.billing.price - totalDue : 0,
+        created_at: new Date(timestamp).toISOString(),
+        line_items: [
+          { label: props.billing.name, amount: props.billing.price, cadence: props.billing.cadence },
+          ...(addOn ? [{ label: addOn, amount: 0, cadence: 'module' }] : []),
+        ],
+      };
+      const invoiceResponse = await fetch('/api/billing/invoices', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...basePayload,
-          id: invoiceId,
-          invoice_number: `DP-${workspaceSlug.toUpperCase().slice(0, 12)}-${timestamp}`,
-          status: action === 'quote' ? 'quote_ready' : 'invoice_requested',
-          billing_status: action === 'quote' ? 'quote' : 'requested',
-          line_items: [
-            { label: props.billing.name, amount: props.billing.price, cadence: props.billing.cadence },
-            ...(addOn ? [{ label: addOn, amount: 0, cadence: 'module' }] : []),
-          ],
-        }),
+        body: JSON.stringify(invoiceRecord),
       });
-      if (action === 'quote') {
-        downloadTextFile(
-          `${workspaceSlug.replace(/^partner-/, '')}-quote.txt`,
-          [
-            `${workspaceName} Downtown Perks quote`,
-            `${props.billing.name}: ${money(props.billing.price)}/${props.billing.cadence}`,
-            `Credit: ${couponResult?.accepted ? coupon.toUpperCase() : 'none'}`,
-            `Total: ${money(totalDue)}`,
-            `Modules: ${props.billing.addOns.join(', ')}`,
-          ].join('\n'),
-        );
+      if (!invoiceResponse.ok) {
+        throw new Error('Billing document save failed');
       }
-      setBillingNotice(action === 'quote' ? 'Quote saved and downloaded.' : 'Invoice request saved for billing review.');
+      downloadTextFile(
+        `${cleanFileName(workspaceName)}-${action === 'quote' ? 'quote' : 'invoice-request'}-${timestamp}.txt`,
+        billingDocumentText(invoiceRecord, documentType),
+      );
+      setBillingNotice(action === 'quote' ? 'Quote saved and downloaded.' : 'Invoice request saved and downloaded.');
     } catch {
       setBillingNotice('Could not save this billing update. Please try again.');
     }

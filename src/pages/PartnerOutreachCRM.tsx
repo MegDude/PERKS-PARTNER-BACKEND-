@@ -10,7 +10,6 @@ import {
   RefreshCw,
   Save,
   Search,
-  Send,
   SlidersHorizontal,
   Trash2,
   X,
@@ -76,12 +75,6 @@ const savedViewsKey = 'dp-outreach-crm-saved-views';
 
 function clean(value: any) {
   return String(value || '').trim() || missing;
-}
-
-function todayPlus(days: number) {
-  const date = new Date();
-  date.setDate(date.getDate() + days);
-  return date.toISOString().slice(0, 10);
 }
 
 function sortValue(partner: any, key: string) {
@@ -293,26 +286,6 @@ export default function PartnerOutreachCRM() {
     setWorking('');
   }
 
-  async function markContacted(id: string) {
-    setWorking('contacted');
-    const response = await fetch(`/api/outreach-crm/partners/${id}/mark-contacted`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
-    const updated = await response.json();
-    setPartners((items) => items.map((item) => (item.id === id ? updated : item)));
-    setWorking('');
-  }
-
-  async function scheduleFollowUp(id: string) {
-    setWorking('followup');
-    const response = await fetch(`/api/outreach-crm/partners/${id}/schedule-follow-up`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ follow_up_at: todayPlus(5) }),
-    });
-    const updated = await response.json();
-    setPartners((items) => items.map((item) => (item.id === id ? updated : item)));
-    setWorking('');
-  }
-
   async function applyBatchStatus() {
     if (!selectedIds.length) return;
     setWorking('batch');
@@ -375,11 +348,11 @@ export default function PartnerOutreachCRM() {
       </section>
 
       <section className="dp-crm-quick-view border border-[rgba(11,31,51,0.07)] bg-white">
-        <div className="grid grid-cols-2 divide-x divide-y divide-[rgba(11,31,51,0.06)] sm:grid-cols-5 sm:divide-y-0">
+        <div className="grid grid-cols-1 divide-y divide-[rgba(11,31,51,0.06)] sm:grid-cols-5 sm:divide-x sm:divide-y-0">
         {stats.map((stat) => (
-          <div key={stat.label} className="grid min-h-8 grid-cols-[1fr_auto] items-center gap-1.5 px-2.5 py-1.5">
-            <p className="text-[8px] font-semibold uppercase leading-none text-[rgba(11,31,51,0.48)]">{stat.label}</p>
-            <p className="text-[13px] font-semibold leading-none tabular-nums">{stat.value.toLocaleString()}</p>
+          <div key={stat.label} className="dp-crm-kpi-tile">
+            <p className="dp-crm-kpi-label">{stat.label}</p>
+            <p className="dp-crm-kpi-value tabular-nums">{stat.value.toLocaleString()}</p>
           </div>
         ))}
           <button
@@ -388,11 +361,11 @@ export default function PartnerOutreachCRM() {
               if (!configured) return;
               void (user ? logout() : signInWithGoogle());
             }}
-            className="grid min-h-8 grid-cols-[1fr_auto] items-center gap-1.5 px-2.5 py-1.5 text-left transition-colors hover:bg-[#FBFAF6]"
+            className="dp-crm-kpi-tile dp-crm-kpi-auth text-left transition-colors hover:bg-[#FBFAF6]"
             aria-label={authLabel}
           >
-            <span className="text-[8px] font-semibold uppercase leading-none text-[rgba(11,31,51,0.48)]">{authLabel}</span>
-            <span className="text-[11px] font-semibold leading-none text-[#0B1F33]">{authValue}</span>
+            <span className="dp-crm-kpi-label">{authLabel}</span>
+            <span className="dp-crm-kpi-value">{authValue}</span>
           </button>
         </div>
       </section>
@@ -550,10 +523,6 @@ export default function PartnerOutreachCRM() {
               <select value={selected.outreach_stage || 'Not started'} onChange={(event) => patchPartner(selected.id, { outreach_stage: event.target.value, status: event.target.value })} className="min-h-8 border border-[rgba(11,31,51,0.1)] bg-white px-2.5 text-[12px]">
                 {statuses.map((item) => <option key={item}>{item}</option>)}
               </select>
-              <div className="grid grid-cols-2 gap-2">
-                <button onClick={() => markContacted(selected.id)} className="inline-flex min-h-8 items-center justify-center gap-1.5 bg-[#0B1F33] px-2.5 text-[10px] font-semibold uppercase text-white"><CheckCircle2 className="h-3.5 w-3.5" /> Contacted</button>
-                <button onClick={() => scheduleFollowUp(selected.id)} className="inline-flex min-h-8 items-center justify-center gap-1.5 border border-[#C8A96A] px-2.5 text-[10px] font-semibold uppercase"><Send className="h-3.5 w-3.5" /> Follow up</button>
-              </div>
             </div>
 
             <DetailSection title="Overview" rows={[
@@ -592,8 +561,6 @@ export default function PartnerOutreachCRM() {
               ['Next action', clean(selected.next_action)],
             ]} />
 
-            <ActivityFeed activities={selected.activities || []} />
-
             <div className="mt-4 border-t border-[rgba(11,31,51,0.08)] pt-3">
               <div className="mb-2 flex items-center justify-between gap-3">
                 <div>
@@ -609,6 +576,8 @@ export default function PartnerOutreachCRM() {
                 <div className="bg-white p-3 text-[12px]" dangerouslySetInnerHTML={{ __html: selected.message?.html || '' }} />
               </div>
             </div>
+
+            <ActivityFeed activities={selected.activities || []} />
           </aside>
         )}
       </section>
@@ -628,25 +597,41 @@ function formatActivityDate(value?: string) {
 }
 
 function ActivityFeed({ activities }: { activities: any[] }) {
-  const items = activities.slice(0, 12);
+  const [expanded, setExpanded] = useState(false);
+  const items = (expanded ? activities : activities.slice(0, 3)).slice(0, 24);
+  const hasMore = activities.length > 3;
   return (
     <section className="mt-4 border-t border-[rgba(11,31,51,0.08)] pt-3">
       <div className="flex items-center justify-between gap-3">
-        <p className="text-[9px] font-bold uppercase text-[#C8A96A]">Activity timeline</p>
-        <span className="text-[9px] font-semibold uppercase text-[rgba(11,31,51,0.42)]">{activities.length} events</span>
+        <div>
+          <p className="text-[9px] font-bold uppercase text-[#C8A96A]">Activity timeline</p>
+          <p className="mt-0.5 text-[9px] font-semibold uppercase text-[rgba(11,31,51,0.42)]">
+            {activities.length} {activities.length === 1 ? 'event' : 'events'}
+          </p>
+        </div>
+        {hasMore && (
+          <button
+            type="button"
+            onClick={() => setExpanded((value) => !value)}
+            className="min-h-7 border border-[rgba(11,31,51,0.08)] px-2 text-[9px] font-semibold uppercase text-[#0B1F33]"
+            aria-expanded={expanded}
+          >
+            {expanded ? 'Collapse' : `Show all ${activities.length}`}
+          </button>
+        )}
       </div>
       {items.length === 0 ? (
         <p className="mt-2 border border-[rgba(11,31,51,0.08)] p-2.5 text-[11px] text-[rgba(11,31,51,0.55)]">No activity yet. Edits, status changes, generated messages, and follow-ups will appear here.</p>
       ) : (
-        <ol className="mt-2 grid gap-2">
+        <ol className="mt-2 grid gap-1.5">
           {items.map((activity) => (
-            <li key={activity.id || `${activity.activity_type}_${activity.created_at}`} className="border border-[rgba(11,31,51,0.08)] p-2.5">
+            <li key={activity.id || `${activity.activity_type}_${activity.created_at}`} className="border border-[rgba(11,31,51,0.08)] p-2">
               <div className="flex items-start justify-between gap-2">
-                <p className="text-[12px] font-semibold text-[#0B1F33]">{clean(activity.title || activity.activity_type)}</p>
+                <p className="text-[11px] font-semibold leading-4 text-[#0B1F33]">{clean(activity.title || activity.activity_type)}</p>
                 <span className="shrink-0 text-[9px] font-semibold uppercase text-[rgba(11,31,51,0.42)]">{formatActivityDate(activity.created_at || activity.updated_at)}</span>
               </div>
               {activity.status && <p className="mt-1 text-[9.5px] font-semibold uppercase text-[#A88947]">{activity.status}</p>}
-              {activity.notes && <p className="mt-1 whitespace-pre-wrap text-[11px] leading-5 text-[rgba(11,31,51,0.62)]">{activity.notes}</p>}
+              {activity.notes && <p className="mt-1 whitespace-pre-wrap text-[10.5px] leading-4 text-[rgba(11,31,51,0.62)]">{activity.notes}</p>}
             </li>
           ))}
         </ol>

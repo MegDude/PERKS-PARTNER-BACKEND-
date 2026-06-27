@@ -4291,6 +4291,88 @@ export async function createApp() {
     res.json(db.entities.User[0] || { id: "user_admin", role: "admin", name: "Demo Admin", email: "admin@downtownperks.local" });
   });
 
+  app.get("/api/billing/invoices", (req, res) => {
+    res.json(listEntity(db, "PartnerInvoice", req.query));
+  });
+
+  app.get("/api/billing/subscriptions", (req, res) => {
+    res.json(listEntity(db, "PartnerSubscription", req.query));
+  });
+
+  app.post("/api/billing/invoices", async (req, res) => {
+    const payload = req.body || {};
+    const id = payload.id || makeId("partner_invoice");
+    const status = payload.status || "invoice_requested";
+    const invoice = ensureRecord(db.entities.PartnerInvoice, id, {
+      ...payload,
+      id,
+      status,
+      billing_status: payload.billing_status || (status === "quote_ready" ? "quote" : "requested"),
+      source: payload.source || "partner_workspace",
+    });
+
+    const action = status === "quote_ready" ? "billing_quote_created" : "billing_invoice_requested";
+    ensureRecord(db.entities.TenantNotification, `notification_${id}`, {
+      tenant_id: payload.tenant_id || payload.partner_id || "",
+      organization_id: payload.organization_id || payload.tenant_id || payload.partner_id || "org_downtown_perks",
+      workspace_id: payload.workspace_id || "",
+      partner_id: payload.partner_id || payload.tenant_id || "",
+      type: "billing",
+      status: status === "quote_ready" ? "ready" : "requested",
+      title: status === "quote_ready" ? "Quote ready" : "Invoice requested",
+      body: `${payload.partner_name || "Partner"} ${status === "quote_ready" ? "created a quote" : "requested an invoice"} for ${payload.plan_label || "a partner plan"}.`,
+      entity_type: "PartnerInvoice",
+      entity_id: id,
+      invoice_id: id,
+      metadata: { total: payload.total, coupon: payload.coupon || "", selected_module: payload.selected_module || "" },
+    });
+    writeAuditEvent(db, req, {
+      action,
+      entity_type: "PartnerInvoice",
+      entity_id: id,
+      after: invoice,
+      metadata: { source: "partner_workspace_billing" },
+    });
+    writeAnalyticsEvent(db, req, {
+      event: action,
+      entity_type: "PartnerInvoice",
+      entity_id: id,
+      source: "partner_workspace_billing",
+      ...organizationContext(invoice),
+      metadata: { total: payload.total, status, selected_module: payload.selected_module || "" },
+    });
+    await saveDatabase(db);
+    res.status(201).json({ success: true, invoice });
+  });
+
+  app.post("/api/billing/subscriptions", async (req, res) => {
+    const payload = req.body || {};
+    const id = payload.id || makeId("partner_subscription");
+    const subscription = ensureRecord(db.entities.PartnerSubscription, id, {
+      ...payload,
+      id,
+      status: payload.status || "active",
+      billing_status: payload.billing_status || "invoice_ready",
+      source: payload.source || "partner_workspace",
+    });
+    writeAuditEvent(db, req, {
+      action: "partner_subscription_saved",
+      entity_type: "PartnerSubscription",
+      entity_id: id,
+      after: subscription,
+      metadata: { source: "partner_workspace_billing" },
+    });
+    writeAnalyticsEvent(db, req, {
+      event: "partner_subscription_saved",
+      entity_type: "PartnerSubscription",
+      entity_id: id,
+      source: "partner_workspace_billing",
+      ...organizationContext(subscription),
+    });
+    await saveDatabase(db);
+    res.status(201).json({ success: true, subscription });
+  });
+
   app.patch("/api/auth/me", async (req, res) => {
     const current = db.entities.User[0] || withTimestamps({ role: "admin", name: "Demo Admin" }, "user_admin");
     db.entities.User[0] = { ...current, ...req.body, updated_at: now() };
