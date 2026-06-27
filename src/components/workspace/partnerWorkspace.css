@@ -293,6 +293,66 @@
   padding-top: 8px;
 }
 
+.shore-at-glance {
+  align-self: stretch;
+  padding-block: 4px;
+}
+
+.shore-at-glance-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.shore-workspace-matrix {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px 18px;
+  margin-top: 18px;
+}
+
+.shore-matrix-item {
+  display: block;
+  min-width: 0;
+  color: #0b1f33;
+  text-decoration: none;
+}
+
+.shore-matrix-item span,
+.shore-matrix-item strong,
+.shore-matrix-item small {
+  display: block;
+}
+
+.shore-matrix-item span {
+  color: rgba(11, 31, 51, 0.52);
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.shore-matrix-item strong {
+  margin-top: 5px;
+  color: #0b1f33;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.05;
+}
+
+.shore-matrix-item small {
+  margin-top: 5px;
+  color: rgba(11, 31, 51, 0.58);
+  font-size: 11px;
+  line-height: 1.38;
+}
+
+.shore-matrix-item:hover strong,
+.shore-matrix-item:focus-visible strong {
+  color: #8d733c;
+}
+
 .shore-button {
   min-height: 38px;
   border-radius: 0 !important;
@@ -473,8 +533,28 @@
   border-width: 0 !important;
 }
 
-.shore-workspace :where(div[class*="bg-[#F7F8FB]"], section[class*="bg-[#F7F8FB]"], article[class*="bg-[#F7F8FB]"]) {
+.shore-workspace :where(div[class*="bg-"], section[class*="bg-"], article[class*="bg-"], aside[class*="bg-"], li[class*="bg-"]) {
   background: #ffffff !important;
+}
+
+.shore-workspace :where(div[class*="rounded"], section[class*="rounded"], article[class*="rounded"], button[class*="rounded"], a[class*="rounded"], input[class*="rounded"], textarea[class*="rounded"], select[class*="rounded"]) {
+  border-radius: 0 !important;
+}
+
+.shore-workspace :where(div[class*="shadow"], section[class*="shadow"], article[class*="shadow"], button[class*="shadow"], a[class*="shadow"]) {
+  box-shadow: none !important;
+}
+
+.shore-workspace :where(.shore-card, .shore-module-item, .shore-status-strip, .shore-section, .shore-menu-panel) {
+  background: #ffffff !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+.shore-workspace :where(.shore-button, .shore-rail-link, .shore-menu-button, .shore-plan-option) {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
 }
 
 @media (max-width: 640px) {
@@ -586,6 +666,25 @@
   .shore-module-item {
     min-height: auto;
     padding-top: 0;
+  }
+
+  .shore-at-glance-head {
+    align-items: flex-start;
+  }
+
+  .shore-workspace-matrix {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 13px 16px;
+    margin-top: 16px;
+  }
+
+  .shore-matrix-item strong {
+    font-size: 16px;
+  }
+
+  .shore-matrix-item small {
+    font-size: 10.5px;
+    line-height: 1.34;
   }
 
   .shore-section-heading {

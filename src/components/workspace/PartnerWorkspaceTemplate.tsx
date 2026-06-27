@@ -214,19 +214,14 @@ export function PartnerWorkspaceTemplate(props: Props) {
     };
   }, [campaigns, events, lead.unitCount, perks, props.qrs, props.trendingLocations, residents.length]);
 
-  const activeModules = useMemo(
-    () => [
-      ['Profile', 'Ready'],
-      ['Codes', 'Live'],
-      ['Residents', `${residents.length} records`],
-      ['Perks', `${activePerks} live`],
-      ['Events', `${upcomingEvents} next up`],
-      ['Broadcasts', `${campaigns.length} ready`],
-      ['Reports', 'Fresh'],
-      ['Plan', props.partner.status],
-    ],
-    [activePerks, campaigns.length, props.partner.status, residents.length, upcomingEvents],
-  );
+  const workspaceMatrix = [
+    { label: 'Setup', value: `${setupProgress}%`, note: 'Profile, signs, perks, and plan are almost there.', href: '#setup' },
+    { label: 'Resident reach', value: String(reportSnapshot.metrics.find((metric) => metric.id === 'broadcast-views')?.value || 0), note: 'Broadcasts opened this month.', href: '#campaigns' },
+    { label: 'Residents', value: String(residents.length), note: 'People in the sample list.', href: '#residents' },
+    { label: 'Live tools', value: `${activePerks}/${upcomingEvents}/${campaigns.length}`, note: 'Perks, events, and broadcasts ready to use.', href: '#perks' },
+    { label: 'Next move', value: 'Lobby link', note: 'Add it to the move-in email and elevator sign.', href: '#qr' },
+    { label: 'Plan', value: props.partner.status, note: props.billing.name, href: '#billing' },
+  ];
 
   function updateLead(key: keyof PartnerLead, value: string) {
     setLead((current) => ({
@@ -720,50 +715,38 @@ export function PartnerWorkspaceTemplate(props: Props) {
                 <div className="shore-partner-kicker">
                   <Building2 className="h-4 w-4" />
                   <span>{props.partner.type}</span>
-                  <span>{workspaceName}</span>
                 </div>
                 <h1 className="mt-2 text-[28px] leading-tight text-[#0B1F33] sm:text-[34px]">{workspaceName} workspace</h1>
                 <p className="mt-3 text-sm leading-6 text-[rgba(11,31,51,0.66)]">
                   {props.profile.residentFacingCopy} Keep the building’s resident view, signs, perks, events, broadcasts, reports, and plan in one easy place.
                 </p>
-                <div className="mt-5 flex flex-wrap gap-2">
-                  <a href="#setup" className="shore-button shore-button-primary">Finish setup</a>
-                  <a href="#resident-preview" className="shore-button">Preview the resident view</a>
-                </div>
               </div>
               <figure className="shore-hero-photo">
                 <img src={props.profile.heroImage} alt={`${workspaceName} in Downtown Austin`} />
-                <figcaption>{workspaceName} · {props.profile.address || props.partner.district}</figcaption>
               </figure>
             </div>
           </div>
-          <div className="shore-card py-2">
-            <div className="flex items-center justify-between gap-4">
+          <div className="shore-card shore-at-glance">
+            <div className="shore-at-glance-head">
               <div>
-                <div className="text-[11px] font-bold uppercase text-[rgba(11,31,51,0.5)]">Workspace setup</div>
-                <div className="mt-2 text-2xl font-semibold text-[#0B1F33]">{setupProgress}%</div>
+                <div className="text-[11px] font-bold uppercase text-[#C8A96A]">At a glance</div>
+                <h2 className="mt-1 text-lg font-semibold text-[#0B1F33]">What needs attention now</h2>
               </div>
-              <div className="flex h-16 w-16 items-center justify-center border border-[rgba(11,31,51,0.08)] bg-[#F7F8FB]">
-                <Check className="h-7 w-7 text-[#C8A96A]" />
-              </div>
+              <a href="#resident-preview" className="shore-button">Resident view</a>
             </div>
-            <div className="shore-progress-track mt-5">
+            <div className="shore-progress-track mt-4">
               <div className="h-full bg-[#C8A96A]" style={{ width: `${setupProgress}%` }} />
             </div>
-            <div className="mt-5 grid grid-cols-2 gap-6">
-              <MiniStat label="Seen this month" value="867" note="Resident broadcasts opened" />
-              <MiniStat label="Best next move" value="Ready" note="Add the lobby link to the move-in email" />
+            <div className="shore-workspace-matrix">
+              {workspaceMatrix.map((item) => (
+                <a key={item.label} href={item.href} className="shore-matrix-item">
+                  <span>{item.label}</span>
+                  <strong>{item.value}</strong>
+                  <small>{item.note}</small>
+                </a>
+              ))}
             </div>
           </div>
-        </section>
-
-        <section className="shore-status-strip grid gap-x-8 gap-y-4 sm:grid-cols-2 lg:grid-cols-4" aria-label={`${workspaceName} workspace status`}>
-          {activeModules.map(([label, value]) => (
-            <div key={label} className="shore-module-item">
-              <div className="text-xs font-semibold text-[#0B1F33]">{label}</div>
-              <div className="mt-2 text-[11px] font-bold uppercase text-[#C8A96A]">{value}</div>
-            </div>
-          ))}
         </section>
 
         <section className="grid gap-10 lg:grid-cols-[0.8fr_1.2fr]">
