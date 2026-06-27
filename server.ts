@@ -5178,6 +5178,79 @@ export async function createApp() {
     res.status(201).json({ success: true, checkout_session: checkoutRecord, stripe: stripePayload, checkout_url: stripePayload.url });
   });
 
+  app.post("/api/stripe/webhook", async (req, res) => {
+    const event = req.body || {};
+    const eventType = String(event.type || "");
+    const object = event.data?.object || event.object || event;
+    const stripeCheckoutId = String(object.id || object.checkout_session || "");
+    const stripePaymentLinkId = String(object.payment_link || object.paymentLink || "");
+    const hostedUrl = String(object.hosted_invoice_url || object.url || "");
+    const customerEmail = String(object.customer_details?.email || object.customer_email || object.receipt_email || "").toLowerCase();
+    const paidAmount = Number(object.amount_total ?? object.amount_paid ?? object.amount_received ?? 0) / 100;
+    const paidEvents = new Set(["checkout.session.completed", "payment_intent.succeeded", "invoice.payment_succeeded", "invoice.paid"]);
+
+    if (!eventType) return res.status(400).json({ error: "Stripe event type is required." });
+
+    const invoice = db.entities.PartnerInvoice.find((item) => {
+      const emailMatches = customerEmail && String(item.billing_email || "").toLowerCase() === customerEmail;
+      return (
+        item.checkout_session_id === stripeCheckoutId ||
+        item.stripe_checkout_session_id === stripeCheckoutId ||
+        item.stripe_payment_link_id === stripePaymentLinkId ||
+        item.hosted_invoice_url === hostedUrl ||
+        (emailMatches && (item.status === "pending_payment" || item.billing_status === "pending_payment"))
+      );
+    });
+    const subscription = db.entities.PartnerSubscription.find((item) => {
+      const emailMatches = customerEmail && String(item.billing_email || "").toLowerCase() === customerEmail;
+      return item.tenant_id === invoice?.tenant_id || item.workspace_id === invoice?.workspace_id || emailMatches;
+    });
+
+    if (paidEvents.has(eventType)) {
+      if (invoice) {
+        Object.assign(invoice, {
+          status: "paid",
+          billing_status: "paid",
+          provider: invoice.provider || "stripe",
+          stripe_checkout_session_id: stripeCheckoutId || invoice.stripe_checkout_session_id || "",
+          stripe_payment_link_id: stripePaymentLinkId || invoice.stripe_payment_link_id || "",
+          amount_paid: paidAmount || invoice.total || invoice.amount_paid || 0,
+          paid_at: now(),
+          updated_at: now(),
+          stripe_event_id: event.id || invoice.stripe_event_id || "",
+        });
+      }
+      if (subscription) {
+        Object.assign(subscription, {
+          status: "active",
+          billing_status: "paid",
+          provider: subscription.provider || "stripe",
+          payment_provider: "stripe",
+          amount_paid: paidAmount || subscription.amount_paid || subscription.amount || 0,
+          renewal_date: subscription.renewal_date || addOneYearIso(),
+          updated_at: now(),
+          stripe_event_id: event.id || subscription.stripe_event_id || "",
+        });
+      }
+    }
+
+    writeAuditEvent(db, req, {
+      action: `stripe_${eventType.replace(/[^a-z0-9]+/gi, "_").toLowerCase()}`,
+      entity_type: "stripe_webhook",
+      entity_id: event.id || stripeCheckoutId || stripePaymentLinkId || makeId("stripe_event"),
+      after: { event_type: eventType, invoice_id: invoice?.id || "", subscription_id: subscription?.id || "", customer_email: customerEmail },
+      metadata: { source: "stripe_webhook" },
+    });
+    writeAnalyticsEvent(db, req, {
+      event: "stripe_webhook_received",
+      entity_type: "stripe_webhook",
+      entity_id: event.id || stripeCheckoutId || stripePaymentLinkId || "",
+      metadata: { event_type: eventType, invoice_id: invoice?.id || "", subscription_id: subscription?.id || "" },
+    });
+    await saveDatabase(db);
+    res.json({ received: true, event_type: eventType, invoice_id: invoice?.id || null, subscription_id: subscription?.id || null });
+  });
+
   app.get("/api/auth/me", (req, res) => {
     res.json(db.entities.User[0] || { id: "user_admin", role: "admin", name: "Demo Admin", email: "admin@downtownperks.local" });
   });
