@@ -26,11 +26,13 @@ export default function ResidentMapShell() {
   };
 
   const saveEntity = (entity: any) => {
-    console.log("Saved:", entity.name);
+    if (!entity?.id) return;
+    window.localStorage.setItem(`dp-saved-${entity.id}`, JSON.stringify({ id: entity.id, name: entity.name, saved_at: new Date().toISOString() }));
   };
 
   const triggerReminder = (entity: any) => {
-    console.log("Reminder scheduled for:", entity.name);
+    if (!entity?.id) return;
+    window.localStorage.setItem(`dp-reminder-${entity.id}`, JSON.stringify({ id: entity.id, name: entity.name, reminder_at: new Date().toISOString() }));
   };
 
   if (step === "welcome") return <ResidentWelcomeScreen onStart={() => setStep("intent")} />;

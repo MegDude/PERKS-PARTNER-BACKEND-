@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { toast } from 'sonner';
 
 export default function SurveyForm({ survey, onSave, onCancel }: any) {
   const isTemplateDraft = survey?.template_key && !survey?.id;
@@ -15,12 +16,21 @@ export default function SurveyForm({ survey, onSave, onCancel }: any) {
   });
 
   const saveSurvey = () => {
+    const questions = String(formData.questions || '')
+      .split('\n')
+      .map((question) => question.trim())
+      .filter(Boolean);
+    if (!formData.title.trim()) {
+      toast.error('Add a survey title first.');
+      return;
+    }
+    if (questions.length === 0) {
+      toast.error('Add at least one question.');
+      return;
+    }
     onSave({
       ...formData,
-      questions: String(formData.questions || '')
-        .split('\n')
-        .map((question) => question.trim())
-        .filter(Boolean),
+      questions,
     });
   };
 
@@ -44,7 +54,7 @@ export default function SurveyForm({ survey, onSave, onCancel }: any) {
         />
       </div>
       <div className="space-y-2">
-        <Label>Use case</Label>
+        <Label>What this is for</Label>
         <select
           className="dp-admin-select w-full"
           value={formData.use_case}
@@ -53,7 +63,7 @@ export default function SurveyForm({ survey, onSave, onCancel }: any) {
           <option value="resident_onboarding">Resident onboarding</option>
           <option value="perk_redemption_feedback">Perk redemption feedback</option>
           <option value="partner_application">Partner application</option>
-          <option value="resident_intelligence">Resident intelligence</option>
+          <option value="resident_intelligence">Resident feedback summary</option>
           <option value="resident_feedback">Resident feedback</option>
         </select>
       </div>

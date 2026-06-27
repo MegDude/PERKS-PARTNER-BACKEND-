@@ -572,11 +572,30 @@ export default function PartnerOutreachCRM() {
               <EditableMessage icon={<MessageSquare className="h-4 w-4" />} title="Short text / DM" body={clean(selected.sms_message?.body)} onCopy={() => copyText(selected.sms_message?.body || '')} onSave={(value) => patchMessage(selected.sms_message?.id, { body: value })} />
               <EditableMessage icon={<Mail className="h-4 w-4" />} title={clean(selected.message?.subject)} body={clean(selected.message?.body)} onCopy={() => copyText(selected.message?.body || '')} onSave={(value) => patchMessage(selected.message?.id, { body: value })} />
               <div className="mt-3 overflow-hidden border border-[rgba(11,31,51,0.08)]">
-                <div className="border-b border-[rgba(11,31,51,0.08)] px-3 py-1.5 text-[9px] font-bold uppercase text-[rgba(11,31,51,0.52)]">Branded email render</div>
+                <div className="flex items-center justify-between gap-2 border-b border-[rgba(11,31,51,0.08)] px-3 py-1.5">
+                  <span className="text-[9px] font-bold uppercase text-[rgba(11,31,51,0.52)]">Downtown Perks HTML email</span>
+                  <span className="flex items-center gap-2">
+                    <a
+                      href={`/api/outreach-crm/partners/${selected.id}/email.html`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-[9px] font-semibold uppercase text-[#0B1F33] hover:text-[#C8A96A]"
+                    >
+                      Open HTML
+                    </a>
+                    <button
+                      type="button"
+                      onClick={() => copyText(selected.message?.html || '')}
+                      className="min-h-6 text-[9px] font-semibold uppercase text-[#0B1F33]"
+                    >
+                      Copy HTML
+                    </button>
+                  </span>
+                </div>
                 <iframe
                   title={`${clean(selected.name)} branded email preview`}
                   srcDoc={selected.message?.html || ''}
-                  sandbox=""
+                  sandbox="allow-popups allow-popups-to-escape-sandbox"
                   className="h-[420px] w-full border-0 bg-white"
                 />
               </div>

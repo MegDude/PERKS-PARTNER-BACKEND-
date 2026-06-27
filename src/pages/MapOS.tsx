@@ -8,10 +8,11 @@ import {
 import UnifiedMapShell from '../components/map/unified/UnifiedMapShell';
 import { mapEntities } from '../data/sampleMapEntities';
 import { useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 
 type Mode = 'resident' | 'intelligence';
 
-const filters = ['All', 'Property', 'Real Estate', 'Venue', 'Hotel', 'Brand', 'Event', 'Civic', 'Service'];
+const filters = ['All', 'Property', 'Real Estate', 'Venue', 'Hotel', 'Brand', 'Event', 'Campaign', 'Perk', 'Civic', 'Service'];
 
 export default function MapOS() {
   const navigate = useNavigate();
@@ -26,10 +27,19 @@ export default function MapOS() {
   const [trackedPartners, setTrackedPartners] = useState<Set<string>>(new Set());
   const [showResidentCard, setShowResidentCard] = useState(false);
   const [showCampaignBuilder, setShowCampaignBuilder] = useState(false);
+  const { data: liveMapRows = [] } = useQuery({
+    queryKey: ['live-map-entities'],
+    queryFn: async () => {
+      const response = await fetch('/api/map/entities');
+      if (!response.ok) throw new Error('Map could not load');
+      return response.json();
+    },
+    refetchInterval: 5000,
+  });
   
   // Handlers
   const trackEvent = (eventName: string, payload: any) => {
-    console.log(`[ANALYTICS] ${eventName}`, payload);
+    window.dispatchEvent(new CustomEvent('dp-map-analytics', { detail: { eventName, payload, created_at: new Date().toISOString() } }));
   };
 
   const handleSave = (id: string) => {
@@ -72,7 +82,22 @@ export default function MapOS() {
   };
 
   // Filter entities
-  const filteredEntities = mapEntities.filter(e => {
+  const liveEntities = (Array.isArray(liveMapRows) && liveMapRows.length ? liveMapRows : mapEntities)
+    .map((entity: any) => ({
+      ...entity,
+      id: entity.id || entity.entity_id,
+      name: entity.name || entity.title || 'Downtown place',
+      type: normalizeMapType(entity.entity_type || entity.type || entity.category),
+      category: entity.category || entity.entity_type || entity.type || 'Place',
+      description: entity.description || entity.content?.summary || entity.status || '',
+      lat: Number(entity.lat),
+      lng: Number(entity.lng),
+      perk: entity.perk || entity.entity_type === 'perk',
+      stats: entity.stats || entity.analytics_summary || {},
+    }))
+    .filter((entity: any) => Number.isFinite(entity.lat) && Number.isFinite(entity.lng));
+
+  const filteredEntities = liveEntities.filter(e => {
     if (selectedFilter !== 'All' && e.type !== selectedFilter && e.category !== selectedFilter) return false;
     if (searchQuery && !e.name.toLowerCase().includes(searchQuery.toLowerCase()) && !e.category.toLowerCase().includes(searchQuery.toLowerCase())) return false;
     return true;
@@ -458,4 +483,18 @@ export default function MapOS() {
 
     </div>
   );
+}
+
+function normalizeMapType(value?: string) {
+  const raw = String(value || '').toLowerCase();
+  if (raw.includes('event')) return 'Event';
+  if (raw.includes('campaign')) return 'Campaign';
+  if (raw.includes('passport')) return 'Event';
+  if (raw.includes('perk')) return 'Perk';
+  if (raw.includes('property') || raw.includes('building') || raw.includes('real estate')) return 'Property';
+  if (raw.includes('hotel')) return 'Hotel';
+  if (raw.includes('brand')) return 'Brand';
+  if (raw.includes('civic')) return 'Civic';
+  if (raw.includes('service')) return 'Service';
+  return value || 'Venue';
 }

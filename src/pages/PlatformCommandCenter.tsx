@@ -127,12 +127,12 @@ export default function PlatformCommandCenter() {
         <section className="py-8">
           <p className="text-[11px] font-semibold uppercase text-[#C8A96A]">Worth opening first</p>
           <h2 className="mt-2 text-[1.45rem] font-semibold leading-tight">Places with momentum.</h2>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-[rgba(11,31,51,0.62)]">The partners, places, events, and broadcasts that are easiest to review next.</p>
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-[rgba(11,31,51,0.62)]">The partners, places, events, and broadcasts worth opening next.</p>
           <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {topEntities.map((entity) => (
               <Link key={`${entity.type}-${entity.name}`} to={entity.to} className="group grid gap-1 bg-white text-sm">
                 <span className="font-semibold text-[#0B1F33] group-hover:text-[#C8A96A]">{entity.name}</span>
-                <span className="text-xs text-[rgba(11,31,51,0.56)]">{entity.type} · {Number(entity.score || 0).toLocaleString()} recent signals</span>
+                <span className="text-xs text-[rgba(11,31,51,0.56)]">{entity.type} · {Number(entity.score || 0).toLocaleString()} recent actions</span>
                 <span className="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-[#0B1F33] group-hover:text-[#C8A96A]">Open <ArrowRight className="h-3.5 w-3.5" /></span>
               </Link>
             ))}

@@ -12,7 +12,7 @@
   --dp-shadow: 0 18px 50px rgba(11,31,51,.08);
 
   --dp-admin-max: 1320px;
-  --dp-admin-sidebar: 240px;
+  --dp-admin-sidebar: 256px;
   --dp-admin-gutter: clamp(20px, 4vw, 32px);
   --dp-admin-section-gap: 24px;
   --dp-admin-card-pad: 18px;

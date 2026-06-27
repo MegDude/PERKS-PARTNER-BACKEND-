@@ -25,7 +25,7 @@ const networkRoles = [
   {
     icon: Building2,
     title: 'Properties',
-    body: 'Connect resident access, building context, amenities, surveys, and retention signals to the wider local network.',
+    body: 'Connect resident access, building context, amenities, surveys, and retention notes to the wider local network.',
   },
   {
     icon: Handshake,
@@ -47,7 +47,7 @@ const networkRoles = [
 const operatingPrinciples = [
   'Every public place should have a clear owner and a clear report.',
   'Every area should be easy to open, edit, save, archive, and review.',
-  'Every action should leave a useful signal: join, view, save, RSVP, use, respond, export, or report.',
+  'Every action should leave something useful behind: join, view, save, RSVP, use, respond, export, or report.',
   'Every partner and property should understand what happened, what is happening, and what to do next.',
 ];
 

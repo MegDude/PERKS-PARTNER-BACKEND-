@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { useOutletContext, useParams } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { Link, useOutletContext, useParams } from 'react-router-dom';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/Button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Plus, Edit2, Trash2, CheckCircle, Clock, AlertCircle, MessageSquare, Workflow, Database, Brain, FileSpreadsheet, Send, Eye, Rocket } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { toast } from 'sonner';
 import SurveyForm from '@/components/surveys/SurveyForm';
 import SurveyResults from '@/components/surveys/SurveyResults';
 
@@ -20,7 +21,7 @@ const architectureLayers = [
   { icon: MessageSquare, layer: 'Follow-up messages', platform: 'Reach the right audience', purpose: 'Send reminders, progress updates, and response follow-ups when residents need a next step.' },
   { icon: Database, layer: 'Resident records', platform: 'Keep responses connected', purpose: 'Attach feedback to resident, building, event, perk, partner, and campaign records.' },
   { icon: FileSpreadsheet, layer: 'Exports and reports', platform: 'Turn responses into evidence', purpose: 'Prepare clean summaries for property teams, partners, civic programs, and monthly reports.' },
-  { icon: Brain, layer: 'Insights', platform: 'Find the signal', purpose: 'Summarize themes, sentiment, risks, opportunities, and recommended next actions.' },
+  { icon: Brain, layer: 'What we heard', platform: 'Find what matters', purpose: 'Summarize themes, sentiment, risks, opportunities, and recommended next steps.' },
   { icon: Workflow, layer: 'Follow-through', platform: 'Move from feedback to action', purpose: 'Route low scores, urgent comments, event feedback, and support requests to the right workflow.' },
 ];
 
@@ -81,7 +82,7 @@ const surveyTemplates = [
   },
   {
     key: 'resident-intelligence-platform',
-    title: 'Resident Intelligence Platform',
+    title: 'Resident feedback desk',
     badge: 'Future phase',
     use_case: 'resident_intelligence',
     description: 'Collect resident feedback and keep it connected to the right building, program, or campaign.',
@@ -92,7 +93,7 @@ const surveyTemplates = [
       'Which building, event, perk, or partner does this feedback connect to?',
       'What sentiment best describes the response?',
       'What action should the operator take next?',
-      'Should this response be included in monthly intelligence reporting?',
+      'Should this response be included in the monthly report?',
     ],
   },
 ];
@@ -106,6 +107,7 @@ export default function Surveys() {
   const [editingSurvey, setEditingSurvey] = useState<any>(null);
   const [previewTemplate, setPreviewTemplate] = useState<any>(null);
   const [user, setUser] = useState<any>(null);
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     base44.auth.me().then(setUser).catch(() => {});
@@ -140,16 +142,201 @@ export default function Surveys() {
     queryFn: () => base44.entities.CrmSegment.list().catch(() => []),
   });
 
+  const { data: passportPrograms = [] } = useQuery({
+    queryKey: ['passport-programs'],
+    queryFn: () => base44.entities.PassportProgram.list().catch(() => []),
+  });
+
+  const { data: campaigns = [] } = useQuery({
+    queryKey: ['survey-campaigns'],
+    queryFn: () => base44.entities.Campaign.list().catch(() => []),
+  });
+
+  const { data: events = [] } = useQuery({
+    queryKey: ['survey-events'],
+    queryFn: () => base44.entities.Event.list().catch(() => []),
+  });
+
+  const { data: aiInsights = [] } = useQuery({
+    queryKey: ['survey-ai-insights'],
+    queryFn: () => base44.entities.AiInsight.list().catch(() => []),
+  });
+
+  const moduleOperations = [
+    { key: 'messaging', label: 'Messaging', count: (messagingJourneys as any[]).length, detail: 'Resident follow-ups and reminder paths', to: '/admin/engagement' },
+    { key: 'exports', label: 'Exports', count: (integrationEndpoints as any[]).length, detail: 'Report and spreadsheet connections', to: '/admin/reports' },
+    { key: 'events', label: 'Events', count: (events as any[]).length, detail: 'Event setup, sharing, and RSVP review', to: '/admin/events' },
+    { key: 'surveys', label: 'Surveys', count: (surveys as any[]).length, detail: 'Question sets and response review', to: '/admin/surveys' },
+    { key: 'passport', label: 'Downtown Passport', count: (passportPrograms as any[]).length, detail: 'QR stamps, rewards, and progress updates', to: '/admin/perks' },
+    { key: 'intelligence', label: 'Partner Intelligence', count: (aiInsights as any[]).length, detail: 'Plain next steps from resident and partner activity', to: '/admin/analytics' },
+    { key: 'workflow', label: 'Workflow routing', count: (automationRuns as any[]).length, detail: 'Handoffs that move work to the right place', to: '/admin/settings' },
+    { key: 'campaigns', label: 'Campaigns', count: (campaigns as any[]).length, detail: 'Notes, offers, event pushes, and follow-up', to: '/admin/engagement' },
+    { key: 'addons', label: 'Add-ons', count: (crmSegments as any[]).length, detail: 'Resident groups and optional modules ready to use', to: '/admin/promotions' },
+  ];
+
+  const createModule = useMutation({
+    mutationFn: async (kind: string) => {
+      const createdAt = new Date().toISOString();
+      if (kind === 'messaging') {
+        return base44.entities.MessagingJourney.create({
+          name: 'Resident welcome follow-up',
+          service: 'Email + SMS',
+          purpose: 'Welcome residents, confirm contact details, and send the next helpful reminder.',
+          status: 'planned',
+          trigger: 'resident invited',
+          flow: ['resident invited', 'contact confirmed', 'welcome note sent', 'follow-up scheduled'],
+          audience: 'residents',
+          created_at: createdAt,
+        });
+      }
+      if (kind === 'exports') {
+        return base44.entities.IntegrationEndpoint.create({
+          name: 'Monthly report export',
+          provider: 'Google Sheets',
+          layer: 'Reporting',
+          purpose: 'Send survey, event, and campaign results into a shareable monthly report.',
+          status: 'pending_credentials',
+          required_env: ['GOOGLE_SERVICE_ACCOUNT_JSON'],
+          created_at: createdAt,
+        });
+      }
+      if (kind === 'events') {
+        const event = await base44.entities.Event.create({
+          title: 'Resident follow-up event',
+          description: 'A resident event created from the module setup area.',
+          category: 'community',
+          date: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
+          location: 'Downtown Austin',
+          registered_count: 0,
+          status: 'draft',
+          created_at: createdAt,
+        });
+        await base44.entities.AutomationRun.create({
+          name: 'Event reminder follow-up',
+          provider: 'Email + SMS',
+          status: 'ready_for_credentials',
+          trigger: 'RSVP created',
+          action: 'Send event reminders and ask for feedback after the event.',
+          target: 'event_feedback',
+          event_id: event.id,
+          created_at: createdAt,
+        });
+        return event;
+      }
+      if (kind === 'surveys') {
+        return base44.entities.Survey.create({
+          title: 'Resident feedback check-in',
+          description: 'A short survey for resident feedback.',
+          use_case: 'resident_feedback',
+          questions: ['What should we improve first?', 'What would make this more useful?'],
+          status: 'draft',
+          responses_count: 0,
+          created_at: createdAt,
+        });
+      }
+      if (kind === 'passport') {
+        const passport = await base44.entities.PassportProgram.create({
+          name: 'Downtown Passport',
+          status: 'planned',
+          partner_group: 'Downtown Perks',
+          required_stamps: 4,
+          reward: 'Reward ready after four verified visits',
+          channels: ['QR', 'SMS', 'Workspace report'],
+          metrics: ['stamps', 'completion_rate', 'repeat_visits', 'reward_ready'],
+          created_at: createdAt,
+        });
+        await base44.entities.AutomationRun.create({
+          name: 'Passport progress follow-up',
+          provider: 'SMS',
+          status: 'ready_for_credentials',
+          trigger: 'QR stamp created',
+          action: 'Send progress and reward-ready messages.',
+          target: 'passport_stamps',
+          passport_program_id: passport.id,
+          created_at: createdAt,
+        });
+        return passport;
+      }
+      if (kind === 'intelligence') {
+        return base44.entities.AiInsight.create({
+          source: 'Survey, event, campaign, and resident activity',
+          insight_type: 'recommendation',
+          title: 'Review what residents are using next',
+          summary: 'Use recent resident activity to choose the next event, perk, or broadcast.',
+          recommended_action: 'Open reports and compare surveys, events, campaigns, and saved perks.',
+          status: 'open',
+          created_at: createdAt,
+        });
+      }
+      if (kind === 'workflow') {
+        return base44.entities.AutomationRun.create({
+          name: 'Resident follow-up routing',
+          provider: 'Workspace',
+          status: 'ready_for_credentials',
+          trigger: 'Resident feedback received',
+          action: 'Create the next task and route it to the right workspace.',
+          target: 'resident_follow_up',
+          created_at: createdAt,
+        });
+      }
+      if (kind === 'campaigns') {
+        const campaign = await base44.entities.Campaign.create({
+          name: 'Resident weekend note',
+          title: 'Resident weekend note',
+          description: 'A short note that points residents to nearby plans.',
+          status: 'draft',
+          audience: 'Residents',
+          channel: 'Email',
+          created_at: createdAt,
+        });
+        await base44.entities.Broadcast.create({
+          title: 'Resident weekend note',
+          message: 'A short note is ready to send.',
+          audience: 'Residents',
+          channel: 'Email',
+          delivery_status: 'draft',
+          campaign_id: campaign.id,
+          created_at: createdAt,
+        });
+        return campaign;
+      }
+      if (kind === 'addons') {
+        return base44.entities.ProductOffering.create({
+          name: 'Monthly resident note support',
+          display_name: 'Monthly resident note support',
+          family: 'Add-ons',
+          kind: 'addon',
+          amount: 99,
+          currency: 'usd',
+          interval: 'month',
+          status: 'active',
+          created_at: createdAt,
+        });
+      }
+      throw new Error('Module type not found.');
+    },
+    onSuccess: (_record, kind) => {
+      toast.success('Module created and connected.');
+      queryClient.invalidateQueries();
+    },
+    onError: (error: any) => toast.error(error?.message || 'Module could not be created.'),
+  });
+
   const handleCreateSurvey = async (data: any) => {
-    await base44.entities.Survey.create({
-      ...data,
-      ...(buildingId ? { building_id: buildingId } : {}),
-      status: 'draft',
-      responses_count: 0,
-    });
-    setShowForm(false);
-    setEditingSurvey(null);
-    refetch();
+    try {
+      await base44.entities.Survey.create({
+        ...data,
+        ...(buildingId ? { building_id: buildingId } : {}),
+        status: data.status || 'draft',
+        responses_count: data.responses_count || 0,
+      });
+      toast.success(data.status === 'active' ? 'Survey published.' : 'Survey saved.');
+      setShowForm(false);
+      setEditingSurvey(null);
+      refetch();
+    } catch (error: any) {
+      toast.error(error?.message || 'Survey could not be saved.');
+    }
   };
 
   const templateToSurvey = (template: any, status = 'draft') => ({
@@ -173,27 +360,43 @@ export default function Surveys() {
   };
 
   const handleDeployTemplate = async (template: any) => {
-    await base44.entities.Survey.create(templateToSurvey(template, 'active'));
-    setPreviewTemplate(null);
-    refetch();
+    try {
+      await base44.entities.Survey.create(templateToSurvey(template, 'active'));
+      toast.success(`${template.title} is live.`);
+      setPreviewTemplate(null);
+      refetch();
+    } catch (error: any) {
+      toast.error(error?.message || 'Survey could not be deployed.');
+    }
   };
 
   const handleUpdateSurvey = async (id: string, data: any) => {
-    await base44.entities.Survey.update(id, data);
-    setEditingSurvey(null);
-    refetch();
+    try {
+      await base44.entities.Survey.update(id, data);
+      toast.success('Survey updated.');
+      setEditingSurvey(null);
+      refetch();
+    } catch (error: any) {
+      toast.error(error?.message || 'Survey could not be updated.');
+    }
   };
 
   const handleDeleteSurvey = async (id: string) => {
     if (window.confirm('Delete this survey?')) {
       await base44.entities.Survey.delete(id);
+      toast.success('Survey deleted.');
       refetch();
     }
   };
 
   const handleStatusChange = async (id: string, newStatus: string) => {
-    await base44.entities.Survey.update(id, { status: newStatus });
-    refetch();
+    try {
+      await base44.entities.Survey.update(id, { status: newStatus });
+      toast.success(newStatus === 'active' ? 'Survey published.' : 'Survey closed.');
+      refetch();
+    } catch (error: any) {
+      toast.error(error?.message || 'Survey status could not be changed.');
+    }
   };
 
   if (selectedSurvey) {
@@ -241,7 +444,7 @@ export default function Surveys() {
               <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-[#C8A96A]">Resident feedback</p>
               <h2 className="mt-2 text-2xl font-semibold text-[#0B1F33]">Ask, understand, and act.</h2>
               <p className="mt-3 text-sm leading-6 text-[rgba(11,31,51,0.68)]">
-                Use surveys to learn what residents need, what events delivered, which perks are working, and where a property or partner should take action next.
+                Use surveys to learn what residents need, which events worked, which perks people used, and what deserves attention next.
               </p>
               <div className="mt-5 grid gap-3">
                 {launchPhases.map(([phase, title, body]) => (
@@ -294,6 +497,7 @@ export default function Surveys() {
                   meta={`${formatStatus(journey.status)} · ${formatUseCase(journey.audience || 'audience')}`}
                   detail={rewriteJourneyPurpose(journey.purpose)}
                   extra={summarizeJourney(journey)}
+                  actions={<><ActionLink to="/admin/engagement">Open broadcasts</ActionLink><ActionLink to="/admin/residents">Open residents</ActionLink></>}
                 />
               ))}
             </div>
@@ -310,6 +514,7 @@ export default function Surveys() {
                   meta={`${displayLayer(endpoint.layer || endpoint.provider)} · ${formatStatus(endpoint.status)}`}
                   detail={rewriteIntegrationPurpose(endpoint.purpose)}
                   extra={integrationActionCopy(endpoint.status)}
+                  actions={<><ActionLink to="/admin/settings">Set up</ActionLink><ActionLink to="/admin/reports">Open reports</ActionLink></>}
                 />
               ))}
             </div>
@@ -324,18 +529,49 @@ export default function Surveys() {
                   meta={`${formatStatus(run.status)} · ${displayWorkflowTarget(run.target)}`}
                   detail={rewriteWorkflowAction(run.action)}
                   extra={displayWorkflowTrigger(run.trigger)}
+                  actions={<><ActionLink to="/admin/engagement">Open notes</ActionLink><ActionLink to="/admin/reports">Open reports</ActionLink></>}
                 />
               ))}
             </div>
           </Panel>
         </section>
 
-        <section className="mb-8 rounded-xl border border-[rgba(11,31,51,0.08)] bg-white p-6">
-          <div className="grid gap-4 md:grid-cols-4">
+        <section className="mb-8 bg-white">
+          <p className="text-[10px] font-semibold uppercase text-[#C8A96A]">Quick look</p>
+          <div className="dp-summary-matrix mt-2">
+            <div className="dp-summary-matrix__grid">
             <StatTile label="Feedback templates" value={surveyTemplates.length} />
             <StatTile label="Follow-up journeys" value={(messagingJourneys as any[]).length} />
             <StatTile label="CRM segments" value={(crmSegments as any[]).length} />
             <StatTile label="Workflows" value={(automationRuns as any[]).length} />
+            </div>
+          </div>
+        </section>
+
+        <section className="mb-8 bg-white">
+          <p className="text-[10px] font-semibold uppercase text-[#C8A96A]">Module wiring</p>
+          <h2 className="mt-1 text-[15px] font-semibold leading-tight text-[#0B1F33]">What is built and where to open it</h2>
+          <div className="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+            {moduleOperations.map((item) => (
+              <div key={item.label} className="group grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-x-3 gap-y-1 py-1.5 text-left">
+                <span className="min-w-0">
+                  <span className="block truncate text-[12px] font-semibold text-[#0B1F33] group-hover:text-[#C8A96A]">{item.label}</span>
+                  <span className="mt-0.5 block text-[10px] leading-4 text-[rgba(11,31,51,0.56)]">{item.detail}</span>
+                </span>
+                <span className="text-[12px] font-semibold tabular-nums text-[#0B1F33]">{Number(item.count || 0).toLocaleString()}</span>
+                <span className="col-span-2 flex flex-nowrap items-center gap-3">
+                  <ActionLink to={item.to}>Open</ActionLink>
+                  <button
+                    type="button"
+                    onClick={() => createModule.mutate(item.key)}
+                    disabled={createModule.isPending}
+                    className="inline-flex min-h-7 items-center px-0 text-[10px] font-semibold uppercase text-[#0B1F33] hover:text-[#C8A96A] disabled:opacity-50"
+                  >
+                    Build
+                  </button>
+                </span>
+              </div>
+            ))}
           </div>
         </section>
 
@@ -394,15 +630,15 @@ export default function Surveys() {
                             <StatusIcon className="w-6 h-6" />
                           </div>
                           <div>
-                            <h3 className="font-bold text-lg text-navy">{survey.title || 'Resident feedback survey'}</h3>
-                            <p className="text-textSecondary text-sm">
+                            <h3 className="text-[13px] font-semibold leading-tight text-navy">{survey.title || 'Resident feedback survey'}</h3>
+                            <p className="mt-0.5 text-[11px] leading-none text-textSecondary">
                               {survey.responses_count || 0} responses
                             </p>
                           </div>
                         </div>
 
                         <div className="flex items-center gap-4">
-                          <span className={`border border-[rgba(11,31,51,0.08)] px-3 py-1 text-xs font-bold uppercase tracking-normal rounded-none ${statusCfg.bg} ${statusCfg.color}`}>
+                          <span className={`px-0 py-1 text-[10px] font-semibold uppercase tracking-normal rounded-none ${statusCfg.bg} ${statusCfg.color}`}>
                             {statusCfg.label}
                           </span>
                           <div className="flex flex-wrap justify-end gap-2">
@@ -457,10 +693,10 @@ function TemplateCard({ template, onPreview, onUse, onDeploy }: any) {
           <h3 className="text-sm font-semibold text-[#0B1F33]">{template.title}</h3>
           <p className="mt-1 text-xs font-semibold text-[#C8A96A]">{template.badge} · {formatUseCase(template.use_case)}</p>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <Button variant="outline" onClick={onPreview} className="text-[#11182B]">Preview</Button>
-          <Button variant="outline" onClick={onUse} className="text-[#11182B]"><Edit2 className="h-3.5 w-3.5" /> Edit</Button>
-          <Button onClick={onDeploy} className="text-[#11182B]"><Rocket className="h-3.5 w-3.5" /> Deploy</Button>
+        <div className="flex flex-nowrap items-center gap-3">
+          <Button variant="outline" onClick={onPreview} className="min-h-7 px-0 text-[10px] text-[#11182B]">Preview</Button>
+          <Button variant="outline" onClick={onUse} className="min-h-7 gap-1 px-0 text-[10px] text-[#11182B]"><Edit2 className="h-3.5 w-3.5" /> Edit</Button>
+          <Button onClick={onDeploy} className="min-h-7 gap-1 px-0 text-[10px] text-[#11182B]"><Rocket className="h-3.5 w-3.5" /> Deploy</Button>
         </div>
       </div>
       <p className="mt-2 text-sm leading-6 text-[rgba(11,31,51,0.62)]">{template.description}</p>
@@ -501,14 +737,15 @@ function TemplatePreview({ template, onClose, onUse, onDeploy }: any) {
   );
 }
 
-function OperationalRow({ title, meta, detail, extra }: any) {
+function OperationalRow({ title, meta, detail, extra, actions }: any) {
   return (
-    <div className="border-t border-[rgba(11,31,51,0.08)] pt-3">
+    <div className="pt-3">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h3 className="text-sm font-semibold text-[#0B1F33]">{title}</h3>
           <p className="mt-1 text-xs font-semibold uppercase tracking-normal text-[#C8A96A]">{meta}</p>
         </div>
+        {actions ? <div className="flex flex-wrap gap-2">{actions}</div> : null}
       </div>
       <p className="mt-2 text-sm leading-6 text-[rgba(11,31,51,0.62)]">{detail}</p>
       {extra ? <p className="mt-1 text-xs leading-5 text-[rgba(11,31,51,0.48)]">{extra}</p> : null}
@@ -518,10 +755,18 @@ function OperationalRow({ title, meta, detail, extra }: any) {
 
 function StatTile({ label, value }: any) {
   return (
-    <div className="border-t border-[rgba(11,31,51,0.08)] pt-3">
-      <p className="text-[11px] font-bold uppercase text-[rgba(11,31,51,0.52)]">{label}</p>
-      <strong className="mt-2 block text-2xl font-semibold text-[#0B1F33]">{value}</strong>
+    <div className="dp-summary-matrix__item">
+      <p className="dp-summary-matrix__label">{label}</p>
+      <strong className="dp-summary-matrix__value">{value}</strong>
     </div>
+  );
+}
+
+function ActionLink({ to, children }: any) {
+  return (
+    <Link to={to} className="inline-flex min-h-7 items-center px-0 text-[10px] font-semibold uppercase text-[#0B1F33] hover:text-[#C8A96A]">
+      {children}
+    </Link>
   );
 }
 
@@ -617,7 +862,7 @@ function rewriteWorkflowAction(action?: string) {
   const text = String(action || '').toLowerCase();
   if (text.includes('store response')) return 'Save the response, update reporting, and prepare a clear summary for operators.';
   if (text.includes('24h') || text.includes('2h')) return 'Remind residents before the event and keep the RSVP journey on track.';
-  if (text.includes('reward')) return 'Notify residents when progress changes or a reward is unlocked.';
+  if (text.includes('reward')) return 'Notify residents when progress changes or a reward is ready.';
   if (text.includes('sentiment') || text.includes('recommend')) return 'Summarize responses, identify sentiment, and suggest the next action.';
   return action || 'Move the response to the right follow-up workflow.';
 }

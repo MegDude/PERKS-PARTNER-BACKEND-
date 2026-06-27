@@ -7,6 +7,23 @@
 
 .shore-workspace * {
   box-sizing: border-box;
+  min-width: 0;
+}
+
+.shore-workspace {
+  overflow-x: clip;
+}
+
+.shore-workspace :where(h1, h2, h3, h4, p, li, td, th, span, a, button, label, input, textarea, select) {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+
+.shore-workspace :where(pre, code) {
+  max-width: 100%;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 
 .shore-scrollbar {
@@ -123,6 +140,10 @@
 .shore-section-heading {
   margin-bottom: clamp(16px, 2.4vw, 26px);
   max-width: 720px;
+}
+
+.shore-section-heading h2 {
+  font-weight: 700 !important;
 }
 
 .shore-section-copy {
@@ -254,7 +275,7 @@
   border: 0;
   background: #ffffff;
   padding: 14px;
-  box-shadow: 0 18px 48px rgba(11, 31, 51, 0.08);
+  box-shadow: none;
 }
 
 .shore-menu-link {
@@ -410,7 +431,7 @@
 .shore-matrix-item strong {
   margin-top: 5px;
   color: #0b1f33;
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 700;
   line-height: 1.05;
 }
@@ -607,16 +628,18 @@
   border-width: 0 !important;
 }
 
-.shore-workspace :where(div[class*="bg-"], section[class*="bg-"], article[class*="bg-"], aside[class*="bg-"], li[class*="bg-"]) {
+.shore-workspace :where(div[class*="bg-"], section[class*="bg-"], article[class*="bg-"], aside[class*="bg-"], li[class*="bg-"], main[class*="bg-"]) {
   background: #ffffff !important;
+  background-image: none !important;
 }
 
 .shore-workspace :where(div[class*="rounded"], section[class*="rounded"], article[class*="rounded"], button[class*="rounded"], a[class*="rounded"], input[class*="rounded"], textarea[class*="rounded"], select[class*="rounded"]) {
   border-radius: 0 !important;
 }
 
-.shore-workspace :where(div[class*="shadow"], section[class*="shadow"], article[class*="shadow"], button[class*="shadow"], a[class*="shadow"]) {
+.shore-workspace :where(div[class*="shadow"], section[class*="shadow"], article[class*="shadow"], button[class*="shadow"], a[class*="shadow"], [class*="ring-"], [class*="outline"]) {
   box-shadow: none !important;
+  outline: none !important;
 }
 
 .shore-workspace :where(.shore-card, .shore-read, .shore-module-item, .shore-status-strip, .shore-section, .shore-menu-panel) {
@@ -643,12 +666,12 @@
   }
 
   .shore-main {
-    gap: 4px;
+    gap: 2px;
     padding: 8px 18px 28px !important;
   }
 
   .shore-workspace section {
-    padding-block: 24px !important;
+    padding-block: 20px !important;
   }
 
   .shore-header-shell {
@@ -690,7 +713,7 @@
 
   .shore-rail-link {
     min-height: 24px;
-    padding-inline: 7px;
+    padding-inline: 6px;
     font-size: 10px;
   }
 

@@ -39,7 +39,7 @@ export default function Events() {
       <div className="max-w-6xl mx-auto">
         <div className="mb-12">
           <H1 className="text-4xl font-bold text-[#11182B] mb-2">Events OS</H1>
-          <Body className="text-lg text-slate-500 font-medium">Publish building events, track RSVP demand, and turn attendance into resident engagement signals.</Body>
+          <Body className="text-lg text-slate-500 font-medium">Publish building events, track RSVPs, and see what residents actually showed up for.</Body>
         </div>
 
         {isLoading ? (

@@ -921,7 +921,7 @@ export function PartnerWorkspaceTemplate(props: Props) {
               Buzz nearby
             </div>
             <h2 className="mt-2 text-xl font-semibold leading-tight text-[#0B1F33]">Nearby spots residents are already choosing</h2>
-            <p className="mt-1 text-[12px] leading-5 text-[rgba(11,31,51,0.6)]">Use these signals to decide what deserves a resident nudge.</p>
+            <p className="mt-1 text-[12px] leading-5 text-[rgba(11,31,51,0.6)]">Use this activity to decide what deserves a resident nudge.</p>
             <div className="mt-3 overflow-x-auto [scrollbar-width:thin]">
               <table className="w-full min-w-[680px] table-fixed text-left">
                 <thead>
@@ -1312,7 +1312,7 @@ export function PartnerWorkspaceTemplate(props: Props) {
           </div>
         </Section>
 
-        <Section id="residents" eyebrow="Residents" title="People, not a spreadsheet" description="Add residents one at a time or paste a short contact list. Keep the useful signals visible and the private details tidy.">
+        <Section id="residents" eyebrow="Residents" title="People, not a spreadsheet" description="Add residents one at a time or paste a short contact list. Keep the useful activity visible and the private details tidy.">
           <div className="shore-builder mb-5 grid gap-4 lg:grid-cols-[1fr_0.42fr]">
             <label className="block">
               <span className="text-[11px] font-bold uppercase text-[#C8A96A]">Import contacts</span>
@@ -1381,11 +1381,11 @@ export function PartnerWorkspaceTemplate(props: Props) {
                 </div>
               ))}
             </div>
-            <div className="mt-4 border-t border-[rgba(11,31,51,0.08)] pt-3">
+            <div className="mt-4 grid gap-1 border-t border-[rgba(11,31,51,0.08)] pt-3 sm:grid-cols-[0.72fr_0.8fr_0.48fr_1.3fr] sm:gap-4">
               <div className="text-[10px] font-bold uppercase text-[#C8A96A]">Next move</div>
-              <div className="mt-1 max-w-[720px]">
+              <div className="mt-1 max-w-[720px] sm:col-span-3 sm:col-start-2 sm:mt-0">
                 <p className="text-sm font-semibold leading-6 text-[#0B1F33]">{reportSnapshot.recommendation}</p>
-                <p className="mt-1 text-xs leading-5 text-[rgba(11,31,51,0.58)]">No names here. Just enough signal to know what residents are using and what deserves another push.</p>
+                <p className="mt-1 text-xs leading-5 text-[rgba(11,31,51,0.58)]">No names here. Just enough activity to know what residents are using and what deserves another push.</p>
               </div>
             </div>
           </div>

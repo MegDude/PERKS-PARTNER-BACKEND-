@@ -212,8 +212,63 @@ export default function PartnerLifecycle() {
           total: state.plan.amount,
         },
       };
-      const response = await base44.functions.invoke('provisionPartnerWorkspace', payload);
-      setState((current) => ({ ...current, checkout: payload.checkout, provision: response.data || response }));
+      await fetch('/api/partner-leads', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          organization_name: payload.organization.name,
+          business_name: payload.organization.name,
+          partner_type: payload.organizationType,
+          contact: payload.contact,
+          email: payload.contact.email,
+          name: payload.contact.name,
+          phone: payload.contact.phone,
+          plan: payload.plan,
+          checkout: payload.checkout,
+          source_type: 'partner_registration',
+        }),
+      });
+      const checkoutResponse = await fetch('/api/checkout/session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          organization_name: payload.organization.name,
+          business_name: payload.checkout.business_name,
+          customer_email: payload.checkout.billing_email,
+          billing_email: payload.checkout.billing_email,
+          partner_type: payload.organizationType,
+          plan: payload.plan,
+          plan_amount: payload.plan.amount,
+          coupon: payload.checkout.coupon,
+          line_items: [{
+            name: payload.plan.label,
+            amount: Number(payload.plan.amount || 0),
+            cadence: payload.plan.cadence,
+            quantity: 1,
+          }],
+          success_url: `${window.location.origin}/partners/provision?checkout=success`,
+          cancel_url: `${window.location.origin}/partners/checkout?checkout=cancelled`,
+        }),
+      });
+      const checkoutResult = await checkoutResponse.json();
+      if (!checkoutResponse.ok) {
+        throw new Error(checkoutResult?.error || 'Checkout failed');
+      }
+      const nextCheckout = {
+        ...payload.checkout,
+        checkout_session_id: checkoutResult.checkout_session?.id,
+        checkout_status: checkoutResult.status,
+        checkout_url: checkoutResult.checkout_url,
+        billing_status: checkoutResult.checkout_session?.billing_status || checkoutResult.status,
+        provider: checkoutResult.checkout_session?.provider || checkoutResult.status,
+      };
+      if (checkoutResult.checkout_url && /^https?:\/\//.test(checkoutResult.checkout_url) && checkoutResult.status !== 'promotional') {
+        setState((current) => ({ ...current, checkout: nextCheckout }));
+        window.location.href = checkoutResult.checkout_url;
+        return;
+      }
+      const response = await base44.functions.invoke('provisionPartnerWorkspace', { ...payload, checkout: nextCheckout });
+      setState((current) => ({ ...current, checkout: nextCheckout, provision: response.data || response }));
       navigate('/partners/provision');
     } finally {
       setLoading(false);
@@ -464,7 +519,7 @@ function WorkspaceView({ state, scoped, data, selectedWorkspace, selectedTenantI
     { label: 'Offer Saves', value: analytics.saves || 0, note: 'Resident interest' },
     { label: 'Redemptions', value: analytics.redemptions || 0, note: 'Confirmed use' },
     { label: 'Events', value: scoped.events?.length || 0, note: 'Active programming' },
-    { label: 'Visitors Nearby', value: analytics.guests_reached || 0, note: 'Local reach signal' },
+    { label: 'Visitors Nearby', value: analytics.guests_reached || 0, note: 'Local reach' },
     { label: 'Campaign Reach', value: scoped.campaigns?.reduce((sum, item) => sum + Number(item.reach || 0), 0) || 0, note: 'Audience coverage' },
     { label: 'Recommendations', value: 4, note: 'Next actions queued' },
   ];
@@ -633,6 +688,8 @@ function moduleTitle(slug: string) {
 }
 
 function ModuleTable({ slug, scoped }: { slug: string; scoped: Record<string, any[]> }) {
+  const navigate = useNavigate();
+  const [query, setQuery] = useState('');
   const rowsBySlug: Record<string, any[]> = {
     offers: scoped.offers,
     events: scoped.events,
@@ -647,6 +704,22 @@ function ModuleTable({ slug, scoped }: { slug: string; scoped: Record<string, an
     settings: scoped.modules,
   };
   const rows = rowsBySlug[slug] || scoped.modules || [];
+  const filteredRows = query.trim()
+    ? rows.filter((row: any) => `${row.title || row.name || row.display_name || row.module || row.plan_label || row.invoice_number || row.id} ${row.status || row.workspace_status || ''} ${row.email || row.partner_id || row.tenant_id || ''}`.toLowerCase().includes(query.trim().toLowerCase()))
+    : rows;
+  const createRoutes: Record<string, string> = {
+    offers: '/admin/perks',
+    events: '/admin/events',
+    campaigns: '/admin/engagement',
+    reports: '/admin/reports',
+    analytics: '/admin/analytics',
+    team: '/admin/settings',
+    billing: '/admin/promotions',
+    qr: '/admin/perks',
+    map: '/map',
+    profile: '/admin/partner',
+    settings: '/admin/settings',
+  };
   return (
     <SectionCard>
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
@@ -654,9 +727,12 @@ function ModuleTable({ slug, scoped }: { slug: string; scoped: Record<string, an
           <p className="text-lg font-semibold">{moduleTitle(slug)}</p>
           <p className="mt-1 text-sm text-[rgba(11,31,51,0.62)]">{rows.length} items ready to review</p>
         </div>
-        <div className="flex gap-2">
-          <button className="inline-flex h-9 items-center gap-2 border border-[rgba(11,31,51,0.12)] bg-white px-3 text-xs font-semibold"><Search className="h-4 w-4" /> Search</button>
-          <button className="inline-flex h-9 items-center gap-2 border border-[rgba(11,31,51,0.12)] bg-white px-3 text-xs font-semibold"><Plus className="h-4 w-4" /> Create</button>
+        <div className="flex flex-wrap items-center gap-2">
+          <label className="flex min-h-9 items-center gap-2 border-b border-[rgba(11,31,51,0.12)] bg-white px-0 text-xs font-semibold">
+            <Search className="h-4 w-4 text-[#C8A96A]" />
+            <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search this list" className="w-[150px] bg-transparent py-1 text-xs outline-none" />
+          </label>
+          <button type="button" onClick={() => navigate(createRoutes[slug] || '/admin/partner')} className="inline-flex h-9 items-center gap-2 bg-white px-0 text-xs font-semibold"><Plus className="h-4 w-4" /> Create</button>
         </div>
       </div>
       <div className="overflow-x-auto">
@@ -665,7 +741,7 @@ function ModuleTable({ slug, scoped }: { slug: string; scoped: Record<string, an
             <tr><th className="py-3 pr-4">Record</th><th className="py-3 pr-4">Status</th><th className="py-3 pr-4">Owner</th><th className="py-3 pr-4">Updated</th></tr>
           </thead>
           <tbody className="divide-y divide-[rgba(11,31,51,0.08)]">
-            {rows.map((row: any) => (
+            {filteredRows.map((row: any) => (
               <tr key={row.id}>
                 <td className="py-3 pr-4 font-semibold">{row.title || row.name || row.display_name || row.module || row.plan_label || row.invoice_number || row.id}</td>
                 <td className="py-3 pr-4">{row.status || row.workspace_status || 'ready'}</td>
@@ -673,7 +749,7 @@ function ModuleTable({ slug, scoped }: { slug: string; scoped: Record<string, an
                 <td className="py-3 pr-4 text-[rgba(11,31,51,0.52)]">{row.updated_at ? new Date(row.updated_at).toLocaleDateString() : 'Not updated'}</td>
               </tr>
             ))}
-            {rows.length === 0 && <tr><td colSpan={4} className="py-8 text-[rgba(11,31,51,0.58)]">Nothing here yet. Use Create to add the first item.</td></tr>}
+            {filteredRows.length === 0 && <tr><td colSpan={4} className="py-8 text-[rgba(11,31,51,0.58)]">{rows.length === 0 ? 'Nothing here yet. Use Create to add the first item.' : 'No matching items in this list.'}</td></tr>}
           </tbody>
         </table>
       </div>

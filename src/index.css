@@ -1,6 +1,18 @@
 @import "./styles/tokens.css";
 @import "tailwindcss";
 
+html,
+body,
+#root {
+  min-height: 100%;
+  background: #ffffff;
+}
+
+body {
+  margin: 0;
+  color: #0b1f33;
+}
+
 .dp-admin-shell {
   background: #ffffff;
   color: #0b1f33;
@@ -54,12 +66,12 @@
   max-width: 100%;
 }
 
-.dp-admin-shell :where([class*="bg-[#F5F7FA]"], [class*="bg-[#F7F8FB]"], [class*="bg-[#FAFAFA]"], [class*="bg-[#F1F3F7]"], [class*="bg-bgMain"], [class*="bg-bgAlt"], [class*="from-slate"], [class*="to-slate"]) {
+.dp-admin-shell :where([class*="bg-[#F5F7FA]"], [class*="bg-[#F7F8FB]"], [class*="bg-[#FAFAFA]"], [class*="bg-[#F1F3F7]"], [class*="bg-[#FBFAF6]"], [class*="bg-bgMain"], [class*="bg-bgAlt"], [class*="from-slate"], [class*="to-slate"]) {
   background-color: #ffffff !important;
   background-image: none !important;
 }
 
-.dp-admin-shell :where([class*="bg-slate-50"], [class*="bg-slate-100"]) {
+.dp-admin-shell :where([class*="bg-slate-50"], [class*="bg-slate-100"], [class*="bg-gray-"], [class*="bg-zinc-"], [class*="bg-neutral-"], [class*="bg-stone-"]) {
   background-color: #ffffff !important;
   background-image: none !important;
 }
@@ -76,12 +88,13 @@
   border-radius: var(--dp-admin-control-radius) !important;
 }
 
-.dp-admin-shell :where(.border, [class*="border-[#EFEFEF]"], [class*="border-slate"], [class*="border-navy"]) {
-  border-color: rgba(11, 31, 51, 0.055) !important;
+.dp-admin-shell :where(.border, [class*="border-[#EFEFEF]"], [class*="border-slate"], [class*="border-gray"], [class*="border-zinc"], [class*="border-neutral"], [class*="border-navy"]) {
+  border-color: rgba(11, 31, 51, 0.045) !important;
 }
 
-.dp-admin-shell :where([class*="shadow"], [class*="ring-"], [class*="outline"]) {
+.dp-admin-shell :where([class*="shadow"], [class*="ring-"], [class*="outline"], [style*="box-shadow"]) {
   box-shadow: none !important;
+  outline: none !important;
 }
 
 .dp-admin-shell :where(section.bg-white, article.bg-white, aside.bg-white, div.bg-white[class*="border"], form.bg-white, .bg-white.border) {
@@ -90,7 +103,7 @@
 }
 
 .dp-admin-shell :where(section.bg-white[class*="p-"], article.bg-white[class*="p-"], aside.bg-white[class*="p-"], div.bg-white[class*="p-"][class*="border"]) {
-  border-color: rgba(11, 31, 51, 0.055) !important;
+  border-color: rgba(11, 31, 51, 0.045) !important;
 }
 
 .dp-admin-shell :where(table) {
@@ -121,20 +134,20 @@
 
 .dp-admin-shell :where(th) {
   color: rgba(11, 31, 51, 0.52) !important;
-  font-size: 11px !important;
+  font-size: 10px !important;
   font-weight: 600 !important;
   letter-spacing: 0 !important;
   text-transform: uppercase;
-  padding: 0.58rem 0.72rem !important;
+  padding: 0.48rem 0.58rem !important;
   line-height: 1.25 !important;
   vertical-align: top;
 }
 
 .dp-admin-shell :where(td) {
   color: #0b1f33;
-  padding: 0.64rem 0.72rem !important;
-  font-size: 12.5px !important;
-  line-height: 1.38;
+  padding: 0.5rem 0.58rem !important;
+  font-size: 12px !important;
+  line-height: 1.34;
   vertical-align: top;
 }
 
@@ -248,7 +261,7 @@
 }
 
 .dp-admin-shell :where(h1) {
-  font-size: clamp(2rem, 4vw, var(--type-h1));
+  font-size: clamp(1.85rem, 3.4vw, 3rem);
   line-height: 1.12;
   font-weight: 600;
   max-width: 100%;
@@ -256,7 +269,7 @@
 }
 
 .dp-admin-shell :where(h2) {
-  font-size: clamp(1.5rem, 3vw, var(--type-h2));
+  font-size: clamp(1.28rem, 2.4vw, 2rem);
   line-height: 1.2;
   font-weight: 600;
   max-width: 100%;
@@ -264,14 +277,14 @@
 }
 
 .dp-admin-shell :where(h3) {
-  font-size: clamp(1.125rem, 2vw, var(--type-h3));
+  font-size: clamp(1rem, 1.7vw, 1.38rem);
   line-height: 1.25;
   font-weight: 600;
   color: #0b1f33;
 }
 
 .dp-admin-shell :where(p, li, td, input, select, textarea) {
-  font-size: 14px;
+  font-size: 13px;
   line-height: 1.48;
 }
 
@@ -623,14 +636,14 @@
 
 .dp-admin-shell :where(.dp-admin-kpi-card) {
   display: grid;
-  min-height: 68px;
+  min-height: 58px;
   gap: 0.22rem;
   border: 0;
-  border-right: 1px solid rgba(11, 31, 51, 0.06);
-  border-bottom: 1px solid rgba(11, 31, 51, 0.06);
+  border-right: 1px solid rgba(11, 31, 51, 0.045);
+  border-bottom: 1px solid rgba(11, 31, 51, 0.045);
   border-radius: 0;
   background: #ffffff;
-  padding: 0.68rem 0.78rem;
+  padding: 0.52rem 0.62rem;
 }
 
 .dp-admin-shell :where(.md\:grid-cols-4:has([class*="border-t"])) {
@@ -656,8 +669,8 @@
 
 .dp-admin-shell :where(.dp-summary-matrix__grid) {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(116px, 1fr));
-  gap: 0.8rem 1.15rem;
+  grid-template-columns: repeat(auto-fit, minmax(112px, 1fr));
+  gap: 0.56rem 0.95rem;
 }
 
 .dp-admin-shell :where(.dp-summary-matrix__item) {
@@ -683,7 +696,7 @@
   display: block;
   margin-top: 0.16rem;
   color: #0b1f33;
-  font-size: 0.98rem;
+  font-size: 0.88rem;
   font-weight: 600;
   line-height: 1;
 }
@@ -691,7 +704,7 @@
 .dp-admin-shell :where(.dp-summary-matrix__detail) {
   margin-top: 0.2rem;
   color: rgba(11, 31, 51, 0.52);
-  font-size: 0.62rem;
+  font-size: 0.58rem;
   line-height: 1.25;
 }
 
@@ -978,6 +991,163 @@
   padding-right: var(--dp-shell-gutter) !important;
 }
 
+.dp-admin-shell main > .sticky {
+  width: 100% !important;
+  max-width: none !important;
+  margin: 0 !important;
+  padding-left: var(--dp-shell-gutter) !important;
+  padding-right: var(--dp-shell-gutter) !important;
+}
+
+/* Final admin polish lock. Keep the backend bright, quiet, and aligned. */
+.dp-admin-shell {
+  background: #ffffff !important;
+}
+
+.dp-admin-shell :where(
+  main,
+  main > div,
+  main > section,
+  section,
+  article,
+  aside,
+  header,
+  footer,
+  form,
+  nav,
+  table,
+  thead,
+  tbody,
+  tr,
+  th,
+  td
+) {
+  background-color: #ffffff !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+
+.dp-admin-shell :where(
+  section[class*="border"],
+  article[class*="border"],
+  aside[class*="border"],
+  form[class*="border"],
+  div[class*="border"][class*="bg-white"],
+  div[class*="border"][class*="bg-[#"]
+) {
+  border-color: rgba(11, 31, 51, 0.04) !important;
+}
+
+.dp-admin-shell :where([class*="shadow"], [class*="drop-shadow"], [class*="ring-"], [class*="outline"]) {
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+.dp-admin-shell :where([class*="bg-white/"], [class*="backdrop-blur"]) {
+  background-color: #ffffff !important;
+  backdrop-filter: none !important;
+}
+
+.dp-admin-shell :where([class*="bg-[#F"], [class*="bg-slate"], [class*="bg-gray"], [class*="bg-zinc"], [class*="bg-neutral"], [class*="bg-stone"], [class*="bg-amber"], [class*="bg-orange"], [class*="bg-emerald"]) {
+  background-color: #ffffff !important;
+  background-image: none !important;
+}
+
+.dp-admin-shell :where(h1, h2, h3, h4) {
+  letter-spacing: 0 !important;
+}
+
+.dp-admin-shell :where(p, li) {
+  max-width: 68rem;
+}
+
+.dp-admin-shell :where(table) {
+  font-size: 12px !important;
+}
+
+.dp-admin-shell :where(th, td) {
+  border-color: rgba(11, 31, 51, 0.045) !important;
+}
+
+.dp-admin-shell :where(
+  section[class*="border"],
+  article[class*="border"],
+  aside[class*="border"],
+  form[class*="border"],
+  div[class*="border"]:not([class*="overflow-x-auto"]):not([class*="dp-crm-table-scroll"]),
+  li[class*="border"]
+) {
+  border-color: transparent !important;
+}
+
+.dp-admin-shell :where(
+  thead[class*="border"],
+  tbody[class*="divide"],
+  tr[class*="border"],
+  th[class*="border"],
+  td[class*="border"]
+) {
+  border-color: transparent !important;
+}
+
+.dp-admin-shell :where([class*="divide-"] > :not([hidden]) ~ :not([hidden])) {
+  border-color: transparent !important;
+}
+
+.dp-admin-shell :where(tbody tr:hover, article:hover, a:hover, button:hover) {
+  background-color: #ffffff !important;
+}
+
+.dp-admin-shell :where(button, a[role="button"], a[class*="inline-flex"]) {
+  border-color: transparent !important;
+}
+
+.dp-admin-shell :where(button:hover, a[role="button"]:hover, a[class*="inline-flex"]:hover) {
+  border-color: rgba(200, 169, 106, 0.65) !important;
+}
+
+.dp-admin-shell :where(input, textarea, select) {
+  border-top-color: transparent !important;
+  border-left-color: transparent !important;
+  border-right-color: transparent !important;
+  box-shadow: none !important;
+}
+
+.dp-admin-shell :where(.dp-summary-matrix__grid) {
+  gap: 0.5rem 0.8rem !important;
+}
+
+.dp-admin-shell :where(.dp-summary-matrix__label) {
+  font-size: 0.52rem !important;
+}
+
+.dp-admin-shell :where(.dp-summary-matrix__value) {
+  font-size: 0.82rem !important;
+}
+
+.dp-admin-shell :where(.dp-summary-matrix__detail) {
+  font-size: 0.56rem !important;
+}
+
+@media (max-width: 430px) {
+  .dp-admin-shell :where(h1) {
+    font-size: 1.72rem !important;
+  }
+
+  .dp-admin-shell :where(h2) {
+    font-size: 1.2rem !important;
+  }
+
+  .dp-admin-shell :where(p, li, td, input, select, textarea) {
+    font-size: 12.5px !important;
+  }
+
+  .dp-admin-shell :where(main > div:not([class*="fixed"]):not([class*="absolute"]), main > section:not([class*="fixed"]):not([class*="absolute"])) {
+    padding-left: 18px !important;
+    padding-right: 18px !important;
+  }
+}
+
 .dp-admin-shell :where(
   .max-w-7xl,
   .max-w-6xl,
@@ -1238,4 +1408,41 @@ body :where(section.bg-white[class*="border"], article.bg-white[class*="border"]
   .dp-admin-shell :where(main > div > section, main > section, .dp-summary-matrix) {
     box-shadow: none !important;
   }
+}
+
+.dp-admin-shell :where(h1, h2, h3, h4),
+.shore-workspace :where(h1, h2, h3, h4) {
+  font-weight: 700 !important;
+}
+
+/* Keep long names, URLs, CTAs, and table copy inside the readable page edge. */
+.dp-admin-shell,
+.dp-admin-shell :where(main, section, article, aside, nav, form, header, footer, div, table, tr, th, td, p, li, span, a, button, label, input, select, textarea),
+.shore-workspace,
+.shore-workspace :where(main, section, article, aside, nav, form, header, footer, div, table, tr, th, td, p, li, span, a, button, label, input, select, textarea) {
+  min-width: 0 !important;
+  max-width: 100%;
+}
+
+.dp-admin-shell,
+.shore-workspace {
+  overflow-x: clip;
+}
+
+.dp-admin-shell :where(h1, h2, h3, h4, p, li, td, th, span, a, button, label),
+.shore-workspace :where(h1, h2, h3, h4, p, li, td, th, span, a, button, label) {
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+
+.dp-admin-shell :where(pre, code),
+.shore-workspace :where(pre, code) {
+  max-width: 100%;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.dp-admin-shell :where(img, svg, canvas, video),
+.shore-workspace :where(img, svg, canvas, video) {
+  max-width: 100%;
 }

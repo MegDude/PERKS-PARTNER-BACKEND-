@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 import path from "path";
 import { fileURLToPath } from "url";
 import fs from "fs/promises";
+import crypto from "crypto";
 import { execFile } from "child_process";
 import { promisify } from "util";
 import { enterpriseComponents, platformArchitecture, platformDomains, serializePlatformDomain } from "./src/platform/registry.js";
@@ -783,7 +784,7 @@ function normalizeMapEntityType(row: Record<string, any>) {
 
 function cleanCrmValue(value: any) {
   const text = String(value ?? "").trim();
-  if (!text || /^(to verify|verify|n\/a|na|tbd|unknown|null|undefined)$/i.test(text)) return "";
+  if (!text || /^(to verify|verify|needs verification|n\/a|na|tbd|unknown|null|undefined)$/i.test(text)) return "";
   return text;
 }
 
@@ -855,7 +856,7 @@ function classifyPartnerType(row: Record<string, any>) {
 
 function contactFirstName(contactName: string) {
   const cleaned = cleanCrmValue(contactName);
-  if (!cleaned || /verify/i.test(cleaned)) return "there";
+  if (!cleaned || /verif|needs|unknown|contact/i.test(cleaned)) return "there";
   return cleaned.split(/\s+/)[0];
 }
 
@@ -893,7 +894,7 @@ function buildDowntownPerksEmailTemplate(input: {
   const headline = escapeHtml(input.subject || `A quick local idea for ${partnerName}`);
   const bodyHtml = escapeHtml(input.body).replace(/\n/g, "<br />");
   const ctaLabel = escapeHtml(input.ctaLabel || "Set up a quick chat");
-  const ctaHref = escapeHtml(input.ctaHref || "mailto:meg@downtownperks.local?subject=Downtown%20Perks%20chat");
+  const ctaHref = escapeHtml(input.ctaHref || `mailto:${process.env.OUTREACH_REPLY_TO_EMAIL || "meg@downtownperks.com"}?subject=${encodeURIComponent(`Downtown Perks chat: ${partnerName}`)}`);
   const previewText = escapeHtml(input.previewText || `A simple Downtown Perks partnership idea for ${partnerName}.`);
 
   return `<!doctype html>
@@ -939,6 +940,15 @@ function buildDowntownPerksEmailTemplate(input: {
 </html>`;
 }
 
+function buildOutreachEmailHtml(partner: Record<string, any>, message: Record<string, any>) {
+  return buildDowntownPerksEmailTemplate({
+    partnerName: partner.name || partner.business_name,
+    subject: message.subject,
+    body: message.body,
+    previewText: `A simple Downtown Perks partnership idea for ${partner.name || partner.business_name}.`,
+  });
+}
+
 function generateOutreachCopy(partner: Record<string, any>, contact: Record<string, any> = {}) {
   const name = displayCrmValue(partner.name || partner.business_name);
   const type = partner.type || partner.category || "Partner";
@@ -946,6 +956,7 @@ function generateOutreachCopy(partner: Record<string, any>, contact: Record<stri
   const perk = displayCrmValue(partner.suggested_perk || partner.recommended_perk);
   const campaign = displayCrmValue(partner.suggested_campaign || partner.recommended_campaign);
   const reason = cleanCrmValue(partner.partner_fit || partner.resident_value || partner.notes) || `${type} presence in ${displayCrmValue(partner.district)}`;
+  const reasonSentence = reason.replace(/[.。]+$/, "");
   const angle = partnerAngle(type);
   const subject = `Quick Downtown Perks idea for ${name}`;
   const shortText = `Hey ${firstName} - I’m building Downtown Perks, a simple local discovery map for downtown residents, guests, and nearby workers. I thought ${name} could be a strong fit for ${angle}. I’d love to set up a quick time to chat. No pressure.`;
@@ -953,7 +964,7 @@ function generateOutreachCopy(partner: Record<string, any>, contact: Record<stri
 
 I’m building Downtown Perks, a simple local discovery map for people who live, work, and stay downtown.
 
-I came across ${name} and thought it could be a strong fit because ${reason}.
+I came across ${name} and thought it could be a strong fit because ${reasonSentence}.
 
 The idea is simple: help the right people nearby discover you at the moment they’re deciding where to go, what to do, or what to try next.
 
@@ -1077,13 +1088,14 @@ function buildOutreachCrmRows(entities: Database["entities"]) {
       const smsMessage = (entities.PartnerOutreachMessage.find((item) => item.partner_id === partner.id && item.channel === "sms") || {}) as Record<string, any>;
       const step = (entities.PartnerOutreachStep.find((item) => item.partner_id === partner.id) || {}) as Record<string, any>;
       const activities = getOutreachActivities(entities, partner.id);
+      const emailMessage = message.id && !message.html ? { ...message, html: buildOutreachEmailHtml(partner, message) } : message;
       return {
         ...partner,
         name: partner.business_name || partner.name,
         type: partner.partner_type || partner.type || partner.category,
         contact,
         campaign,
-        message,
+        message: emailMessage,
         sms_message: smsMessage,
         step,
         activities,
@@ -1866,7 +1878,7 @@ function ensureMapPartnerWorkspace(entities: Database["entities"], source: Recor
     assistant_name: "Downtown Assistant",
     status: "active",
     context_summary: `${name} is connected to the Downtown Perks map as a ${category} partner in ${source.district || "Downtown Austin"}.`,
-    suggested_actions: ["Review map profile", "Confirm campaign visibility", "Add offer or event", "Review imported reporting signals"],
+    suggested_actions: ["Review map profile", "Confirm campaign visibility", "Add offer or event", "Review imported reporting"],
     source_type: source.source_type || "map_import",
   });
 
@@ -2237,7 +2249,7 @@ async function importPartnerIntelligenceData(entities: Database["entities"]) {
     source: "downtown_perks_intelligence_zip",
     insight_type: "agentic_module_inventory",
     title: "Agentic map and partner intelligence modules imported",
-    summary: "The older intelligence build provided agent prompt bars, suggestion cards, map search overlays, campaign builder overlays, intelligence strips, partner scanners, resident profiles, relationship engine, live signals, and agent recommendation hooks. The current 3014 platform imports their operational data and records the module inventory without copying old UI.",
+    summary: "The older intelligence build provided agent prompt bars, suggestion cards, map search overlays, campaign builder overlays, partner scanners, resident profiles, relationship engine, live activity reads, and agent recommendation hooks. The current 3014 platform imports their operational data and records the module inventory without copying old UI.",
     recommended_action: "Keep current 3014 UI, use the imported partner intelligence records to power AI recommendations, campaign suggestions, reporting, and map entity context.",
     status: "open",
     source_files: {
@@ -2958,10 +2970,10 @@ Meg Dude`,
       withTimestamps({
         name: "Downtown Passport",
         service: "Twilio Messaging + QR",
-        purpose: "Passport stamps, reward progress, and unlock messaging for multi-location programs.",
+        purpose: "Passport stamps, reward progress, and resident messages for multi-location programs.",
         status: "planned",
         trigger: "QR stamp added",
-        flow: ["visit location", "scan QR", "stamp added", "progress SMS", "reward unlocked"],
+        flow: ["visit location", "scan QR", "stamp added", "progress SMS", "reward ready"],
         audience: "passport participants",
       }, "journey_downtown_passport"),
       withTimestamps({
@@ -2983,9 +2995,9 @@ Meg Dude`,
         status: "planned",
         partner_group: "Larry & Guy",
         required_stamps: 4,
-        reward: "Reward unlocked after four verified location visits",
+        reward: "Reward ready after four verified location visits",
         channels: ["QR", "Twilio SMS", "Workspace report"],
-        metrics: ["stamps", "completion_rate", "repeat_visits", "reward_unlocks"],
+        metrics: ["stamps", "completion_rate", "repeat_visits", "reward_ready"],
       }, "passport_sugar_wolf_larry_guy")
     );
   }
@@ -3002,7 +3014,7 @@ Meg Dude`,
     entities.AutomationRun.push(
       withTimestamps({ name: "Survey Webhook Intake", provider: "n8n", status: "ready_for_credentials", trigger: "Tally or Jotform webhook", action: "Store response, sync Sheets, create AI summary", last_run: "", target: "survey_responses" }, "automation_survey_webhook"),
       withTimestamps({ name: "Event Reminder Journey", provider: "Twilio", status: "ready_for_credentials", trigger: "RSVP created", action: "Send 24h and 2h reminders", last_run: "", target: "event_feedback" }, "automation_event_reminder"),
-      withTimestamps({ name: "Passport Stamp Progress", provider: "Twilio", status: "ready_for_credentials", trigger: "QR stamp created", action: "Send progress and reward unlock SMS", last_run: "", target: "passport_stamps" }, "automation_passport_stamp"),
+      withTimestamps({ name: "Passport Stamp Progress", provider: "Twilio", status: "ready_for_credentials", trigger: "QR stamp created", action: "Send progress and reward-ready SMS", last_run: "", target: "passport_stamps" }, "automation_passport_stamp"),
       withTimestamps({ name: "AI Survey Analysis", provider: "OpenAI", status: process.env.OPENAI_API_KEY ? "active" : "ready_for_credentials", trigger: "survey response completed", action: "Summarize, classify sentiment, recommend action", last_run: "", target: "ai_insights" }, "automation_ai_survey_analysis")
     );
   }
@@ -3465,6 +3477,17 @@ function mapEntityRows(db: Database) {
         redemptions: 0,
       },
       content: entity.content || {},
+      description: entity.description || entity.content?.resident_body || entity.content?.summary || "",
+      resident_copy: entity.content?.resident_body || entity.description || "",
+      partner_copy: entity.content?.partner_body || "",
+      panel_headline: entity.content?.resident_headline || entity.name || entity.title || "",
+      panel_body: entity.content?.resident_body || entity.description || "",
+      drawer_copy: entity.content?.drawer_copy || entity.content?.resident_body || entity.description || "",
+      popup_copy: entity.content?.popup_copy || entity.content?.resident_body || entity.description || "",
+      icon: entity.icon || entity.pin_icon || entity.content?.icon || "",
+      icon_url: entity.icon_url || entity.content?.icon_url || "",
+      logo_url: entity.logo_url || entity.content?.logo_url || "",
+      image_url: entity.image_url || entity.hero_image || entity.content?.image_url || entity.content?.hero_image || "",
       seo: entity.seo || {},
       publishing: entity.publishing || {},
       last_updated: entity.updated_at || entity.created_at || "",
@@ -3507,6 +3530,17 @@ function mapEntityRows(db: Database) {
         directions: Number(analytics?.directions || 0),
         redemptions: Number(analytics?.redemptions || 0),
       },
+      description: profile?.description || tenant?.description || location?.description || "",
+      resident_copy: profile?.resident_copy || profile?.description || tenant?.description || "",
+      partner_copy: profile?.partner_copy || analytics?.summary || "",
+      panel_headline: profile?.panel_headline || profile?.display_name || tenant?.name || "",
+      panel_body: profile?.panel_body || profile?.description || tenant?.description || "",
+      drawer_copy: profile?.drawer_copy || profile?.description || tenant?.description || "",
+      popup_copy: profile?.popup_copy || profile?.short_description || profile?.description || "",
+      icon: link.icon || profile?.icon || tenant?.icon || "",
+      icon_url: link.icon_url || profile?.icon_url || tenant?.icon_url || "",
+      logo_url: link.logo_url || profile?.logo_url || tenant?.logo_url || "",
+      image_url: link.image_url || profile?.hero_image || profile?.image_url || tenant?.hero_image || "",
       last_updated: link.updated_at || link.created_at || "",
     };
   });
@@ -3538,15 +3572,163 @@ function mapEntityRows(db: Database) {
       directions: Number(perk.directions || 0),
       redemptions: Number(perk.redemption_count || 0),
     },
+    description: perk.description || perk.offer || perk.details || "",
+    resident_copy: perk.resident_copy || perk.description || perk.offer || "",
+    partner_copy: perk.partner_copy || perk.redemption_notes || "",
+    panel_headline: perk.panel_headline || perk.name || perk.title || "Perk",
+    panel_body: perk.panel_body || perk.description || perk.offer || "",
+    drawer_copy: perk.drawer_copy || perk.description || perk.offer || "",
+    popup_copy: perk.popup_copy || perk.short_description || perk.description || "",
+    icon: perk.icon || "perk",
+    icon_url: perk.icon_url || "",
+    logo_url: perk.logo_url || perk.partner_logo_url || "",
+    image_url: perk.image_url || perk.hero_image || "",
     last_updated: perk.updated_at || perk.created_at || "",
   }));
 
+  const fromEvents = db.entities.Event.map((event, index) => ({
+    id: `map_event_${event.id}`,
+    map_entity_id: event.id,
+    entity_type: "event",
+    entity_id: event.id,
+    title: event.title || event.name || "Event",
+    category: event.category || "event",
+    district: event.district || "Downtown Austin",
+    lat: event.lat ?? event.latitude ?? 30.2672 + (index % 4) * 0.0018,
+    lng: event.lng ?? event.longitude ?? -97.7431 - (index % 4) * 0.0018,
+    status: event.status || "draft",
+    visibility: event.status === "active" || event.status === "published" ? "public" : "admin",
+    partner_id: event.partner_id || "",
+    property_id: event.property_id || "",
+    building_id: event.building_id || "",
+    campaign_id: event.campaign_id || "",
+    perk_id: event.perk_id || "",
+    event_id: event.id,
+    organization_id: event.tenant_id || event.partner_id || "org_downtown_perks",
+    tenant_id: event.tenant_id || "",
+    workspace_id: event.workspace_id || "",
+    analytics_summary: {
+      views: db.entities.AnalyticsEvent.filter((item) => item.entity_id === event.id && item.event === "pin_viewed").length,
+      saves: db.entities.AnalyticsEvent.filter((item) => item.entity_id === event.id && item.event === "save_clicked").length,
+      directions: db.entities.AnalyticsEvent.filter((item) => item.entity_id === event.id && item.event === "directions_clicked").length,
+      redemptions: Number(event.registered_count || event.rsvp_count || 0),
+    },
+    description: event.description || event.summary || "",
+    resident_copy: event.resident_copy || event.description || event.summary || "",
+    partner_copy: event.partner_copy || event.internal_notes || "",
+    panel_headline: event.panel_headline || event.title || event.name || "Event",
+    panel_body: event.panel_body || event.description || event.summary || "",
+    drawer_copy: event.drawer_copy || event.description || event.summary || "",
+    popup_copy: event.popup_copy || event.short_description || event.description || "",
+    icon: event.icon || "event",
+    icon_url: event.icon_url || "",
+    logo_url: event.logo_url || "",
+    image_url: event.image_url || event.hero_image || "",
+    last_updated: event.updated_at || event.created_at || "",
+  }));
+
+  const fromCampaigns = db.entities.Campaign.map((campaign, index) => ({
+    id: `map_campaign_${campaign.id}`,
+    map_entity_id: campaign.id,
+    entity_type: "campaign",
+    entity_id: campaign.id,
+    title: campaign.title || campaign.name || "Campaign",
+    category: "campaign",
+    district: campaign.district || "Downtown Austin",
+    lat: campaign.lat ?? campaign.latitude ?? 30.2662 + (index % 5) * 0.0015,
+    lng: campaign.lng ?? campaign.longitude ?? -97.7442 - (index % 5) * 0.0015,
+    status: campaign.status || "draft",
+    visibility: campaign.status === "active" || campaign.status === "published" ? "public" : "admin",
+    partner_id: campaign.partner_id || "",
+    property_id: campaign.property_id || "",
+    building_id: campaign.building_id || "",
+    campaign_id: campaign.id,
+    perk_id: campaign.perk_id || "",
+    event_id: campaign.event_id || "",
+    organization_id: campaign.tenant_id || campaign.partner_id || "org_downtown_perks",
+    tenant_id: campaign.tenant_id || "",
+    workspace_id: campaign.workspace_id || "",
+    analytics_summary: {
+      views: Number(campaign.views || campaign.opens || 0),
+      saves: Number(campaign.saves || 0),
+      directions: 0,
+      redemptions: Number(campaign.redemptions || 0),
+    },
+    description: campaign.description || campaign.message || campaign.summary || "",
+    resident_copy: campaign.resident_copy || campaign.message || campaign.description || "",
+    partner_copy: campaign.partner_copy || campaign.operator_notes || "",
+    panel_headline: campaign.panel_headline || campaign.title || campaign.name || "Campaign",
+    panel_body: campaign.panel_body || campaign.message || campaign.description || "",
+    drawer_copy: campaign.drawer_copy || campaign.message || campaign.description || "",
+    popup_copy: campaign.popup_copy || campaign.short_description || campaign.message || "",
+    icon: campaign.icon || "campaign",
+    icon_url: campaign.icon_url || "",
+    logo_url: campaign.logo_url || "",
+    image_url: campaign.image_url || campaign.hero_image || "",
+    last_updated: campaign.updated_at || campaign.created_at || "",
+  }));
+
+  const fromPassports = db.entities.PassportProgram.map((passport, index) => ({
+    id: `map_passport_${passport.id}`,
+    map_entity_id: passport.id,
+    entity_type: "passport",
+    entity_id: passport.id,
+    title: passport.name || "Downtown Passport",
+    category: "passport",
+    district: passport.district || "Downtown Austin",
+    lat: passport.lat ?? passport.latitude ?? 30.2654 + (index % 3) * 0.0012,
+    lng: passport.lng ?? passport.longitude ?? -97.7421 - (index % 3) * 0.0012,
+    status: passport.status || "planned",
+    visibility: passport.status === "active" ? "public" : "admin",
+    partner_id: passport.partner_id || "",
+    property_id: passport.property_id || "",
+    building_id: passport.building_id || "",
+    campaign_id: passport.campaign_id || "",
+    perk_id: "",
+    event_id: "",
+    organization_id: passport.tenant_id || passport.partner_id || "org_downtown_perks",
+    tenant_id: passport.tenant_id || "",
+    workspace_id: passport.workspace_id || "",
+    analytics_summary: {
+      views: Number(passport.views || 0),
+      saves: Number(passport.stamps || 0),
+      directions: 0,
+      redemptions: Number(passport.completions || 0),
+    },
+    description: passport.description || passport.summary || "",
+    resident_copy: passport.resident_copy || passport.description || passport.summary || "",
+    partner_copy: passport.partner_copy || passport.operator_notes || "",
+    panel_headline: passport.panel_headline || passport.name || "Downtown Passport",
+    panel_body: passport.panel_body || passport.description || passport.summary || "",
+    drawer_copy: passport.drawer_copy || passport.description || passport.summary || "",
+    popup_copy: passport.popup_copy || passport.short_description || passport.description || "",
+    icon: passport.icon || "passport",
+    icon_url: passport.icon_url || "",
+    logo_url: passport.logo_url || "",
+    image_url: passport.image_url || passport.hero_image || "",
+    last_updated: passport.updated_at || passport.created_at || "",
+  }));
+
   const merged = new Map<string, Record<string, any>>();
-  [...fromContent, ...fromLinks, ...fromPerks].forEach((record) => {
+  [...fromContent, ...fromLinks, ...fromPerks, ...fromEvents, ...fromCampaigns, ...fromPassports].forEach((record) => {
     const key = record.map_entity_id || record.id;
     if (!merged.has(key)) merged.set(key, record);
   });
   return [...merged.values()];
+}
+
+function mapSourceForRow(db: Database, row: Record<string, any>): { entityName: EntityName; id: string } | null {
+  if (row.perk_id) return { entityName: "PerkLocation", id: row.perk_id };
+  if (row.event_id) return { entityName: "Event", id: row.event_id };
+  if (row.campaign_id) return { entityName: "Campaign", id: row.campaign_id };
+  if (row.entity_type === "passport" || String(row.id || "").startsWith("map_passport_")) return { entityName: "PassportProgram", id: row.entity_id || row.map_entity_id };
+  if (String(row.id || "").startsWith("cms_")) return { entityName: "ContentEntity", id: row.entity_id || row.map_entity_id };
+  if (db.entities.MapEntityLink.some((item) => item.id === row.id)) return { entityName: "MapEntityLink", id: row.id };
+  const content = db.entities.ContentEntity.find((item) => item.id === row.entity_id || item.id === row.map_entity_id);
+  if (content) return { entityName: "ContentEntity", id: content.id };
+  const link = db.entities.MapEntityLink.find((item) => item.entity_id === row.map_entity_id || item.entity_id === row.entity_id);
+  if (link) return { entityName: "MapEntityLink", id: link.id };
+  return null;
 }
 
 function findEntityById(collection: EntityRecord[], id: string) {
@@ -3564,6 +3746,138 @@ function recordsToCsv(records: Record<string, any>[]) {
     return set;
   }, new Set<string>()));
   return `${columns.join(",")}\n${records.map((record) => columns.map((column) => csvValue(record[column])).join(",")).join("\n")}\n`;
+}
+
+function googleSheetsConfig() {
+  const clientEmail = process.env.GOOGLE_SHEETS_CLIENT_EMAIL || process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL || "";
+  const privateKey = (process.env.GOOGLE_SHEETS_PRIVATE_KEY || process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY || "").replace(/\\n/g, "\n");
+  const spreadsheetId = process.env.GOOGLE_SHEETS_SPREADSHEET_ID || process.env.GOOGLE_SHEETS_REPORTS_SPREADSHEET_ID || "";
+  return {
+    clientEmail,
+    privateKey,
+    spreadsheetId,
+    defaultRange: process.env.GOOGLE_SHEETS_DEFAULT_RANGE || "Downtown Perks Exports!A:Z",
+    surveyRange: process.env.GOOGLE_SHEETS_SURVEY_RANGE || "Survey Responses!A:Z",
+    leadRange: process.env.GOOGLE_SHEETS_LEAD_RANGE || "Partner Leads!A:Z",
+    reportRange: process.env.GOOGLE_SHEETS_REPORT_RANGE || "Reports!A:Z",
+  };
+}
+
+function googleSheetsReady() {
+  const config = googleSheetsConfig();
+  return Boolean(config.clientEmail && config.privateKey && config.spreadsheetId);
+}
+
+function base64Url(input: string | Buffer) {
+  return Buffer.from(input).toString("base64").replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_");
+}
+
+async function getGoogleSheetsAccessToken() {
+  const config = googleSheetsConfig();
+  if (!config.clientEmail || !config.privateKey) {
+    return { status: "pending_configuration" as const, error: "Google Sheets service-account email and private key are required." };
+  }
+  const issuedAt = Math.floor(Date.now() / 1000);
+  const header = { alg: "RS256", typ: "JWT" };
+  const claim = {
+    iss: config.clientEmail,
+    scope: "https://www.googleapis.com/auth/spreadsheets",
+    aud: "https://oauth2.googleapis.com/token",
+    exp: issuedAt + 3600,
+    iat: issuedAt,
+  };
+  const unsigned = `${base64Url(JSON.stringify(header))}.${base64Url(JSON.stringify(claim))}`;
+  const signature = crypto.createSign("RSA-SHA256").update(unsigned).sign(config.privateKey);
+  const assertion = `${unsigned}.${base64Url(signature)}`;
+  const response = await fetch("https://oauth2.googleapis.com/token", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({
+      grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer",
+      assertion,
+    }),
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok || !payload.access_token) {
+    return { status: "failed" as const, error: payload.error_description || payload.error || `Google auth failed with ${response.status}` };
+  }
+  return { status: "configured" as const, accessToken: String(payload.access_token) };
+}
+
+function rangeForGoogleSheetPayload(type = "") {
+  const config = googleSheetsConfig();
+  const normalized = String(type).toLowerCase();
+  if (normalized.includes("survey")) return config.surveyRange;
+  if (normalized.includes("lead") || normalized.includes("contact")) return config.leadRange;
+  if (normalized.includes("report")) return config.reportRange;
+  return config.defaultRange;
+}
+
+function flattenForSheet(value: any) {
+  if (value === undefined || value === null) return "";
+  if (Array.isArray(value)) return value.map((item) => (typeof item === "object" ? JSON.stringify(item) : String(item))).join(" | ");
+  if (typeof value === "object") return JSON.stringify(value);
+  return String(value);
+}
+
+function sheetRowsFromPayload(payload: Record<string, any>) {
+  const source = payload.response || payload.lead || payload.report || payload.record || payload;
+  const record = {
+    exported_at: now(),
+    export_type: payload.type || payload.function || payload.source || "downtown_perks_export",
+    id: source.id || payload.id || "",
+    name: source.name || source.title || source.resident_name || source.contactName || source.organizationName || "",
+    email: source.email || source.resident_email || "",
+    property: source.building_name || source.propertyName || source.organizationName || source.property || "",
+    partner: source.partner_name || source.partner || "",
+    status: source.status || payload.status || "",
+    score: source.score ?? "",
+    sentiment: source.sentiment || "",
+    summary: source.answersSummary || source.message || source.description || source.notes || "",
+    payload: source,
+  };
+  const headers = Object.keys(record);
+  return {
+    headers,
+    values: [headers.map((key) => flattenForSheet((record as Record<string, any>)[key]))],
+  };
+}
+
+async function appendRowsToGoogleSheet(payload: Record<string, any>) {
+  const config = googleSheetsConfig();
+  if (!config.spreadsheetId) {
+    return { status: "pending_configuration" as const, error: "GOOGLE_SHEETS_SPREADSHEET_ID is required." };
+  }
+  const token = await getGoogleSheetsAccessToken();
+  if (token.status !== "configured") return token;
+  const range = payload.range || rangeForGoogleSheetPayload(payload.type || payload.function || payload.source);
+  const rows = Array.isArray(payload.values) ? { values: payload.values } : sheetRowsFromPayload(payload);
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(config.spreadsheetId)}/values/${encodeURIComponent(range)}:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`;
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token.accessToken}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(rows),
+  });
+  const result = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    return { status: "failed" as const, error: result.error?.message || `Google Sheets append failed with ${response.status}`, details: result };
+  }
+  return {
+    status: "success" as const,
+    spreadsheetId: config.spreadsheetId,
+    range,
+    updatedRange: result.updates?.updatedRange,
+    updatedRows: result.updates?.updatedRows,
+    googleSheetRowId: result.updates?.updatedRange || "",
+    details: result,
+  };
+}
+
+function googleSheetExportRowId(result: Awaited<ReturnType<typeof appendRowsToGoogleSheet>>) {
+  return result.status === "success" ? result.googleSheetRowId || result.updatedRange || "" : "";
 }
 
 function columnLetters(index: number) {
@@ -3907,6 +4221,10 @@ export async function createApp() {
     const message = findEntityById(db.entities.PartnerOutreachMessage, req.params.id);
     if (!message) return res.status(404).json({ error: "Message not found" });
     Object.assign(message, req.body || {}, { updated_at: now() });
+    if (message.channel === "email" && ("body" in (req.body || {}) || "subject" in (req.body || {}))) {
+      const partner = db.entities.Partner.find((item) => item.id === message.partner_id) || {};
+      message.html = buildOutreachEmailHtml(partner, message);
+    }
     logOutreachActivity(db.entities, {
       partner_id: message.partner_id,
       contact_id: message.contact_id || "",
@@ -3918,6 +4236,16 @@ export async function createApp() {
     });
     await saveDatabase(db);
     res.json(message);
+  });
+
+  app.get("/api/outreach-crm/partners/:id/email.html", (req, res) => {
+    const partner = findEntityById(db.entities.Partner, req.params.id);
+    if (!partner) return res.status(404).send("Partner not found");
+    const message = db.entities.PartnerOutreachMessage.find((item) => item.partner_id === partner.id && item.channel === "email");
+    if (!message) return res.status(404).send("Email message not found");
+    const html = message.html || buildOutreachEmailHtml(partner, message);
+    res.setHeader("Content-Type", "text/html; charset=utf-8");
+    res.send(html);
   });
 
   app.post("/api/outreach-crm/partners/:id/generate-message", async (req, res) => {
@@ -4180,13 +4508,23 @@ export async function createApp() {
     const body = req.body || {};
     const lineItems = Array.isArray(body.line_items) ? body.line_items : [];
     const selectedPriceIds = lineItems.map((item: any) => item.price || item.stripe_price_id).filter(Boolean);
-    const products = db.entities.ProductOffering.filter((product) => selectedPriceIds.includes(product.stripe_price_id) || selectedPriceIds.some((priceId: string) => product.prices?.some((price: any) => price.stripe_price_id === priceId)));
+    const matchedProducts = db.entities.ProductOffering.filter((product) => selectedPriceIds.includes(product.stripe_price_id) || selectedPriceIds.some((priceId: string) => product.prices?.some((price: any) => price.stripe_price_id === priceId)));
+    const products = matchedProducts.length ? matchedProducts : lineItems.map((item: any, index: number) => ({
+      id: item.product_id || `local_plan_${slug(item.name || body.plan?.label || body.plan || `plan_${index + 1}`)}`,
+      name: item.name || body.plan?.label || body.plan || "Partner plan",
+      display_name: item.display_name || item.name || body.plan?.label || "Partner plan",
+      stripe_product_id: item.product || item.product_id || "",
+      stripe_price_id: item.price || item.stripe_price_id || `local_price_${slug(item.name || body.plan?.key || body.plan || `plan_${index + 1}`)}`,
+      amount: Number(item.amount ?? body.plan_amount ?? body.plan?.amount ?? 0),
+      interval: item.interval || item.cadence || body.plan?.cadence || "annual",
+      currency: item.currency || "usd",
+    }));
     const billingEmail = body.customer_email || body.billing_email || body.email || "";
     const organizationName = body.organization_name || body.business_name || "Downtown Perks Partner";
     const subtotal = products.reduce((sum, product) => sum + Number(product.amount || 0), 0);
     const promotionCode = normalizePromotionCode(body.promotion_code || body.coupon || body.checkout?.coupon);
 
-    if (!selectedPriceIds.length) return res.status(400).json({ error: "At least one Stripe price ID is required." });
+    if (!products.length) return res.status(400).json({ error: "At least one plan or price is required." });
     const promotionValidation = promotionCode ? validatePromotion(db.entities, {
       code: promotionCode,
       subtotal,
@@ -4290,13 +4628,14 @@ export async function createApp() {
       });
     }
 
-    if (!process.env.STRIPE_SECRET_KEY) {
+    const hasStripePriceIds = selectedPriceIds.length > 0 && matchedProducts.length > 0;
+    if (!process.env.STRIPE_SECRET_KEY || !hasStripePriceIds) {
       ensureRecord(db.entities.PartnerInvoice, `invoice_${checkoutRecord.id}`, {
         tenant_id: checkoutRecord.tenant_id,
         workspace_id: checkoutRecord.workspace_id,
         billing_email: billingEmail,
         status: "pending_payment",
-        provider: "local_checkout_ready_for_stripe",
+        provider: process.env.STRIPE_SECRET_KEY && !hasStripePriceIds ? "local_plan_ready_for_stripe_price" : "local_checkout_ready_for_stripe",
         checkout_session_id: checkoutRecord.id,
         subtotal,
         discount: promotionValidation?.discount || 0,
@@ -4307,10 +4646,12 @@ export async function createApp() {
       await saveDatabase(db);
       return res.status(202).json({
         success: true,
-        status: "pending_credentials",
+        status: process.env.STRIPE_SECRET_KEY && !hasStripePriceIds ? "pending_price_mapping" : "pending_credentials",
         checkout_session: checkoutRecord,
         checkout_url: `/partners/checkout?session_id=${checkoutRecord.id}&status=pending_credentials`,
-        message: "Stripe credentials are not configured. Local checkout record created and ready for Stripe activation.",
+        message: process.env.STRIPE_SECRET_KEY && !hasStripePriceIds
+          ? "Local checkout record created. Add Stripe price IDs to collect payment for this plan."
+          : "Stripe credentials are not configured. Local checkout record created and ready for Stripe activation.",
       });
     }
 
@@ -5083,22 +5424,42 @@ export async function createApp() {
           makeId("notification")
         );
         db.entities.ManagementNotification.push(notification);
-        db.entities.SurveyExportLog.push(withTimestamps({ survey_response_id: surveyResponse.id, status: "pending", destination: "local-json", attempted_at: now() }, makeId("survey_export")));
+        const sheetsExport = await appendRowsToGoogleSheet({ type: "survey_response", response: surveyResponse });
+        const exportLog = withTimestamps(
+          {
+            survey_response_id: surveyResponse.id,
+            status: sheetsExport.status === "success" ? "success" : sheetsExport.status === "pending_configuration" ? "pending" : "failed",
+            destination: "google-sheets",
+            attempted_at: now(),
+            completed_at: sheetsExport.status === "success" ? now() : "",
+            row_id: googleSheetExportRowId(sheetsExport),
+            error: sheetsExport.error || "",
+          },
+          makeId("survey_export")
+        );
+        db.entities.SurveyExportLog.push(exportLog);
+        surveyResponse.exported_to_google_sheets = sheetsExport.status === "success";
+        surveyResponse.google_sheets_export_status = sheetsExport.status;
         await saveDatabase(db);
-        return res.json({ data: { success: true, surveyResponse, notification } });
+        return res.json({ data: { success: true, surveyResponse, notification, google_sheets: sheetsExport } });
       }
 
       if (functionName === "retryPendingSurveyExports") {
         const pending = db.entities.SurveyExportLog.filter((log) => log.status === "pending" || log.status === "failed");
-        pending.forEach((log) => {
-          log.status = "success";
-          log.completed_at = now();
+        for (const log of pending) {
+          const response = db.entities.SurveyResponse.find((item) => item.id === log.survey_response_id);
+          const sheetsExport = await appendRowsToGoogleSheet({ type: "survey_response", response: response || log });
+          log.status = sheetsExport.status === "success" ? "success" : sheetsExport.status === "pending_configuration" ? "pending" : "failed";
+          log.completed_at = sheetsExport.status === "success" ? now() : "";
+          log.row_id = googleSheetExportRowId(sheetsExport) || log.row_id || "";
+          log.error = sheetsExport.error || "";
           log.updated_at = now();
-        });
-        db.entities.SurveyResponse.forEach((response) => {
-          response.exported_to_google_sheets = true;
-          response.updated_at = now();
-        });
+          if (response) {
+            response.exported_to_google_sheets = sheetsExport.status === "success";
+            response.google_sheets_export_status = sheetsExport.status;
+            response.updated_at = now();
+          }
+        }
         await saveDatabase(db);
         return res.json({ data: { success: true, retried: pending.length } });
       }
@@ -5232,7 +5593,27 @@ export async function createApp() {
         return res.json({ data: { success: true, updated_count, errors } });
       }
 
-      if (["exportWeeklyResidentEngagement", "exportSurveyDataToSheets", "monthlyPartnerRedemptionReport", "sendMonthlyPartnerReports", "sendWeeklyPartnerSummary", "generatePartnerMonthlyReport", "generatePartnerReportOnDemand"].includes(functionName)) {
+      if (functionName === "exportSurveyDataToSheets") {
+        const sheetsExport = await appendRowsToGoogleSheet({ type: body.type || "survey_response", ...body });
+        const log = withTimestamps(
+          {
+            survey_response_id: body.response?.id || body.survey_response_id || "",
+            status: sheetsExport.status === "success" ? "success" : sheetsExport.status === "pending_configuration" ? "pending" : "failed",
+            destination: "google-sheets",
+            attempted_at: now(),
+            completed_at: sheetsExport.status === "success" ? now() : "",
+            row_id: googleSheetExportRowId(sheetsExport),
+            error: sheetsExport.error || "",
+            payload_type: body.type || "survey_response",
+          },
+          makeId("survey_export")
+        );
+        db.entities.SurveyExportLog.push(log);
+        await saveDatabase(db);
+        return res.json({ data: { success: sheetsExport.status === "success", google_sheets: sheetsExport, export_log: log } });
+      }
+
+      if (["exportWeeklyResidentEngagement", "monthlyPartnerRedemptionReport", "sendMonthlyPartnerReports", "sendWeeklyPartnerSummary", "generatePartnerMonthlyReport", "generatePartnerReportOnDemand"].includes(functionName)) {
         const partner = resolvePartner();
         const summary = partnerSummary(partner, body.year_month || new Date().toISOString().slice(0, 7));
         const payload = {
@@ -5886,7 +6267,7 @@ export async function createApp() {
       ["n8n Workflow Orchestration", "N8N_WEBHOOK_URL"],
       ["OpenAI Insights", "OPENAI_API_KEY"],
       ["Firebase Auth / Firestore", ["VITE_FIREBASE_API_KEY", "VITE_FIREBASE_PROJECT_ID", "VITE_FIREBASE_APP_ID"]],
-      ["Google Sheets / Reports DB", "GOOGLE_SHEETS_CLIENT_EMAIL"],
+      ["Google Sheets / Reports DB", ["GOOGLE_SHEETS_CLIENT_EMAIL", "GOOGLE_SHEETS_PRIVATE_KEY", "GOOGLE_SHEETS_SPREADSHEET_ID"]],
       ["Google Maps / Places", ["GOOGLE_MAPS_API_KEY", "GOOGLE_PLACES_API_KEY"]],
       ["Stripe", "STRIPE_SECRET_KEY"],
       ["Storage Provider", "STORAGE_BUCKET"],
@@ -5897,7 +6278,7 @@ export async function createApp() {
       return {
         id: stored?.id || `integration_${slug(provider)}`,
         provider,
-        status: envKeys.some((key) => process.env[key]) ? "configured" : stored?.status || "pending_credentials",
+        status: envKeys.every((key) => process.env[key]) ? "configured" : stored?.status || "pending_credentials",
         required_env_vars: envKeys,
         last_tested: stored?.last_tested || "",
         last_success: stored?.last_success || "",
@@ -5924,6 +6305,95 @@ export async function createApp() {
     writeAuditEvent(db, req, { action: "integration_tested", entity_type: "integration", entity_id: status.id, after: status });
     await saveDatabase(db);
     res.json(status);
+  });
+
+  app.get("/api/google-sheets/status", (req, res) => {
+    const config = googleSheetsConfig();
+    res.json({
+      provider: "Google Sheets",
+      status: googleSheetsReady() ? "configured" : "pending_credentials",
+      spreadsheet_id: config.spreadsheetId ? "configured" : "",
+      default_range: config.defaultRange,
+      survey_range: config.surveyRange,
+      lead_range: config.leadRange,
+      report_range: config.reportRange,
+      required_env_vars: ["GOOGLE_SHEETS_CLIENT_EMAIL", "GOOGLE_SHEETS_PRIVATE_KEY", "GOOGLE_SHEETS_SPREADSHEET_ID"],
+      missing_env_vars: [
+        !config.clientEmail ? "GOOGLE_SHEETS_CLIENT_EMAIL" : "",
+        !config.privateKey ? "GOOGLE_SHEETS_PRIVATE_KEY" : "",
+        !config.spreadsheetId ? "GOOGLE_SHEETS_SPREADSHEET_ID" : "",
+      ].filter(Boolean),
+    });
+  });
+
+  app.post("/api/google-sheets/test", async (req, res) => {
+    const result = await appendRowsToGoogleSheet({
+      type: "integration_test",
+      range: req.body?.range,
+      record: {
+        id: makeId("sheets_test"),
+        name: "Downtown Perks Google Sheets test",
+        status: "test",
+        notes: "Credential and append test from the operations app.",
+      },
+    });
+    const status = withTimestamps(
+      {
+        provider: "Google Sheets / Reports DB",
+        status: result.status === "success" ? "configured" : result.status === "pending_configuration" ? "pending_credentials" : "failed",
+        last_tested: now(),
+        last_success: result.status === "success" ? now() : "",
+        responsible_module: "reports",
+        logs: [{ at: now(), message: result.status === "success" ? "Google Sheets append test completed." : result.error || "Google Sheets setup is incomplete." }],
+      },
+      "integration_google_sheets_reports_db"
+    );
+    ensureRecord(db.entities.IntegrationStatus, status.id, status);
+    await saveDatabase(db);
+    res.status(result.status === "failed" ? 502 : 200).json({ ...result, integration: status });
+  });
+
+  app.post("/api/google-sheets/append", async (req, res) => {
+    const result = await appendRowsToGoogleSheet(req.body || {});
+    const log = withTimestamps(
+      {
+        survey_response_id: req.body?.response?.id || req.body?.survey_response_id || "",
+        status: result.status === "success" ? "success" : result.status === "pending_configuration" ? "pending" : "failed",
+        destination: "google-sheets",
+        attempted_at: now(),
+        completed_at: result.status === "success" ? now() : "",
+        row_id: googleSheetExportRowId(result),
+        error: result.error || "",
+        payload_type: req.body?.type || "manual_append",
+      },
+      makeId("survey_export")
+    );
+    db.entities.SurveyExportLog.push(log);
+    await saveDatabase(db);
+    res.status(result.status === "failed" ? 502 : 200).json({ ...result, export_log: log });
+  });
+
+  app.post("/api/google-sheets/export-surveys", async (_req, res) => {
+    const pendingResponses = db.entities.SurveyResponse.filter((response) => !response.exported_to_google_sheets);
+    const results = [];
+    for (const response of pendingResponses) {
+      const result = await appendRowsToGoogleSheet({ type: "survey_response", response });
+      response.exported_to_google_sheets = result.status === "success";
+      response.google_sheets_export_status = result.status;
+      response.updated_at = now();
+      db.entities.SurveyExportLog.push(withTimestamps({
+        survey_response_id: response.id,
+        status: result.status === "success" ? "success" : result.status === "pending_configuration" ? "pending" : "failed",
+        destination: "google-sheets",
+        attempted_at: now(),
+        completed_at: result.status === "success" ? now() : "",
+        row_id: googleSheetExportRowId(result),
+        error: result.error || "",
+      }, makeId("survey_export")));
+      results.push({ survey_response_id: response.id, status: result.status, error: result.error || "" });
+    }
+    await saveDatabase(db);
+    res.json({ success: true, attempted: pendingResponses.length, results });
   });
 
   app.get("/api/qr/:id", (req, res) => {

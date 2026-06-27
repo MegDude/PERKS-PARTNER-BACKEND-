@@ -1,4 +1,4 @@
-const WEBHOOK_URL = (import.meta as any).env?.VITE_GOOGLE_SHEETS_SURVEY_WEBHOOK_URL;
+import { appendSurveyResponseToGoogleSheet } from "@/lib/googleSheets";
 
 export type SurveyAnswer = {
   question: string;
@@ -7,11 +7,14 @@ export type SurveyAnswer = {
 
 export type SurveyExportContext = {
   surveyId?: string;
+  surveyName?: string;
   buildingId?: string;
   buildingName?: string;
   residentId?: string;
   residentName?: string;
   residentEmail?: string;
+  partnerId?: string;
+  partnerName?: string;
   perkId?: string;
   perkName?: string;
   redemptionId?: string;
@@ -24,15 +27,20 @@ export type SurveyExportContext = {
 export function buildSurveyExportPayload(responseContext: SurveyExportContext) {
   const answers = responseContext.answers || [];
   return {
+    id: responseContext.surveyId ? `survey-export-${responseContext.surveyId}-${Date.now()}` : `survey-export-${Date.now()}`,
     timestamp: new Date().toISOString(),
-    buildingId: responseContext.buildingId || "",
-    buildingName: responseContext.buildingName || "",
-    residentIdOrSessionId: responseContext.residentId || responseContext.residentEmail || "anonymous",
-    residentName: responseContext.residentName || "",
-    surveyId: responseContext.surveyId || "",
-    perkId: responseContext.perkId || "",
-    perkName: responseContext.perkName || "",
-    redemptionId: responseContext.redemptionId || "",
+    survey_id: responseContext.surveyId || "",
+    survey_name: responseContext.surveyName || "",
+    building_id: responseContext.buildingId || "",
+    building_name: responseContext.buildingName || "",
+    resident_id: responseContext.residentId || "",
+    resident_name: responseContext.residentName || "",
+    resident_email: responseContext.residentEmail || "",
+    partner_id: responseContext.partnerId || "",
+    partner_name: responseContext.partnerName || "",
+    perk_id: responseContext.perkId || "",
+    perk_name: responseContext.perkName || "",
+    redemption_id: responseContext.redemptionId || "",
     answers,
     answersSummary: answers.map((answer) => `${answer.question}: ${answer.answer}`).join(" | "),
     score: responseContext.score ?? null,
@@ -44,17 +52,10 @@ export function buildSurveyExportPayload(responseContext: SurveyExportContext) {
 }
 
 export async function exportSurveyResponseToSheet(payload: Record<string, unknown>) {
-  if (!WEBHOOK_URL) return { status: "skipped" as const };
-
-  try {
-    const response = await fetch(WEBHOOK_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-    if (!response.ok) throw new Error(`Webhook returned ${response.status}`);
-    return { status: "success" as const };
-  } catch (error) {
-    return { status: "failed" as const, error: error instanceof Error ? error.message : String(error) };
+  const result = await appendSurveyResponseToGoogleSheet(payload);
+  if (result.status === "success") return { status: "success" as const, result };
+  if (result.status === "pending_configuration" || result.status === "pending_credentials") {
+    return { status: "pending_configuration" as const, result };
   }
+  return { status: "failed" as const, error: result.errorMessage || result.error || "Google Sheets export failed.", result };
 }
