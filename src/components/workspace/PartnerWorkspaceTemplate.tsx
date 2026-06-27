@@ -18,7 +18,7 @@ import {
   Users,
   X,
 } from 'lucide-react';
-import type { FavoriteItem, PartnerLead, PartnerWorkspaceData, Perk } from '@/types/partnerWorkspace';
+import type { Campaign, Event, FavoriteItem, PartnerLead, PartnerWorkspaceData, Perk, Resident } from '@/types/partnerWorkspace';
 import {
   applyCoupon,
   calculateSetupProgress,
@@ -45,7 +45,7 @@ const navItems = [
   { label: 'Codes', href: '#qr' },
   { label: 'Perks', href: '#perks' },
   { label: 'Events', href: '#events' },
-  { label: 'Notes', href: '#campaigns' },
+  { label: 'Broadcasts', href: '#campaigns' },
   { label: 'Residents', href: '#residents' },
   { label: 'Reports', href: '#reports' },
   { label: 'Plan', href: '#billing' },
@@ -144,8 +144,15 @@ export function PartnerWorkspaceTemplate(props: Props) {
   const [billingNotice, setBillingNotice] = useState('Use DUDE2026 when you want the demo to end with a clean $0 checkout.');
   const [workspaceMenuOpen, setWorkspaceMenuOpen] = useState(false);
   const [perks, setPerks] = useState<Perk[]>(props.perks);
+  const [events, setEvents] = useState<Event[]>(props.events);
+  const [campaigns, setCampaigns] = useState<Campaign[]>(props.campaigns);
+  const [residents, setResidents] = useState<Resident[]>(props.residents);
   const [perkNotice, setPerkNotice] = useState<Record<string, string>>({});
+  const [eventNotice, setEventNotice] = useState<Record<string, string>>({});
+  const [campaignNotice, setCampaignNotice] = useState<Record<string, string>>({});
+  const [residentNotice, setResidentNotice] = useState<Record<string, string>>({});
   const [qrNotice, setQrNotice] = useState<Record<string, string>>({});
+  const [residentImport, setResidentImport] = useState('');
   const [qrArtwork, setQrArtwork] = useState<Record<string, QrArtwork>>(() =>
     Object.fromEntries(props.qrs.map((qr) => [qr.id, {
       headline: qr.headline || qr.name,
@@ -157,19 +164,20 @@ export function PartnerWorkspaceTemplate(props: Props) {
   );
   const setupProgress = calculateSetupProgress(props, lead);
   const activePerks = perks.filter((perk) => perk.status === 'Active').length;
-  const upcomingEvents = props.events.filter((event) => event.status !== 'Draft').length;
+  const upcomingEvents = events.filter((event) => event.status !== 'Draft').length;
 
   const activeModules = useMemo(
     () => [
       ['Profile', 'Ready'],
       ['Codes', 'Live'],
-      ['Residents', 'Ready'],
+      ['Residents', `${residents.length} records`],
       ['Perks', `${activePerks} live`],
       ['Events', `${upcomingEvents} next up`],
+      ['Broadcasts', `${campaigns.length} ready`],
       ['Reports', 'Fresh'],
       ['Plan', props.partner.status],
     ],
-    [activePerks, props.partner.status, upcomingEvents],
+    [activePerks, campaigns.length, props.partner.status, residents.length, upcomingEvents],
   );
 
   function updateLead(key: keyof PartnerLead, value: string) {
@@ -190,7 +198,7 @@ export function PartnerWorkspaceTemplate(props: Props) {
   function toggleFavorite(id: string) {
     const existing = favorites.some((favorite) => favorite.id === id);
     const perk = perks.find((item) => `fav-${item.id.replace('perk-', '')}` === id);
-    const event = props.events.find((item) => `fav-${item.id.replace('event-', '')}` === id);
+    const event = events.find((item) => `fav-${item.id.replace('event-', '')}` === id);
     const next = existing
       ? favorites.map((favorite) => (favorite.id === id ? { ...favorite, saved: !favorite.saved } : favorite))
       : [
