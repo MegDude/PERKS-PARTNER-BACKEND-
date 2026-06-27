@@ -315,12 +315,12 @@ export default function PartnerOutreachCRM() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-[1840px] space-y-3 p-4 text-[#0B1F33] sm:p-5">
+    <div className="dp-outreach-crm-page w-full max-w-none space-y-3 p-4 text-left text-[#0B1F33] sm:p-5">
       <section className="grid gap-3 xl:grid-cols-[1fr_520px] xl:items-end">
         <div>
           <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-[#C8A96A]">Partner growth</p>
-          <h1 className="mt-1 text-2xl font-semibold tracking-normal">Outreach CRM</h1>
-          <p className="mt-1 max-w-3xl text-[12px] leading-5 text-[rgba(11,31,51,0.64)]">
+          <h1 className="mt-1 text-xl font-semibold tracking-normal sm:text-2xl">Outreach CRM</h1>
+          <p className="mt-1 max-w-3xl text-[11px] leading-5 text-[rgba(11,31,51,0.62)]">
             One calm place to review partners, verify contacts, tune the angle, send the note, and move the relationship forward.
           </p>
         </div>
@@ -450,18 +450,18 @@ export default function PartnerOutreachCRM() {
             </div>
           )}
           <div className="dp-crm-table-scroll overflow-x-auto" role="region" aria-label="Scrollable partner directory table" tabIndex={0}>
-            <table className="dp-outreach-crm-table w-full min-w-[2040px] table-fixed text-left">
+            <table className="dp-outreach-crm-table w-full min-w-[1760px] table-fixed text-left">
               <colgroup>
-                <col className="w-[48px]" />
-                <col className="w-[250px]" />
-                <col className="w-[155px]" />
-                <col className="w-[155px]" />
-                <col className="w-[235px]" />
-                <col className="w-[410px]" />
-                <col className="w-[410px]" />
-                <col className="w-[82px]" />
-                <col className="w-[175px]" />
-                <col className="w-[120px]" />
+                <col className="w-[42px]" />
+                <col className="w-[218px]" />
+                <col className="w-[132px]" />
+                <col className="w-[132px]" />
+                <col className="w-[210px]" />
+                <col className="w-[350px]" />
+                <col className="w-[350px]" />
+                <col className="w-[72px]" />
+                <col className="w-[150px]" />
+                <col className="w-[104px]" />
               </colgroup>
               <thead>
                 <tr>

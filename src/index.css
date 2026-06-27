@@ -175,35 +175,37 @@ body {
   min-height: 32px;
   padding-inline: 0.58rem !important;
   padding-block: 0.36rem !important;
-  white-space: nowrap !important;
+  white-space: normal !important;
   overflow-wrap: normal !important;
   word-break: keep-all !important;
+  max-width: 100%;
+  text-align: center;
 }
 
 .dp-admin-shell .dp-outreach-crm-table :where(th, td) {
   white-space: normal !important;
-  overflow-wrap: anywhere !important;
+  overflow-wrap: break-word !important;
   word-break: normal !important;
   hyphens: auto;
-  padding: 0.32rem 0.3rem !important;
+  padding: 0.26rem 0.26rem !important;
   vertical-align: top !important;
 }
 
 .dp-admin-shell .dp-outreach-crm-table :where(td p, td span) {
   white-space: normal !important;
-  overflow-wrap: anywhere !important;
+  overflow-wrap: break-word !important;
 }
 
 .dp-admin-shell .dp-outreach-crm-table :where(th) {
-  font-size: 9px !important;
+  font-size: 8.5px !important;
   font-weight: 600 !important;
   line-height: 1.2 !important;
   color: rgba(11, 31, 51, 0.46) !important;
 }
 
 .dp-admin-shell .dp-outreach-crm-table :where(td) {
-  font-size: 10.5px !important;
-  line-height: 1.28 !important;
+  font-size: 9.5px !important;
+  line-height: 1.24 !important;
   color: rgba(11, 31, 51, 0.78) !important;
 }
 
@@ -224,14 +226,14 @@ body {
 }
 
 .dp-admin-shell .dp-outreach-crm-table .dp-crm-cell-primary {
-  font-size: 10.75px !important;
+  font-size: 10px !important;
   font-weight: 600;
   line-height: 1.25 !important;
   color: #0b1f33;
 }
 
 .dp-admin-shell .dp-outreach-crm-table .dp-crm-cell-secondary {
-  font-size: 9.25px !important;
+  font-size: 8.75px !important;
   font-weight: 500;
   line-height: 1.22 !important;
   color: rgba(11, 31, 51, 0.46);
@@ -246,7 +248,7 @@ body {
   display: inline-flex;
   min-width: 2.1rem;
   justify-content: flex-start;
-  font-size: 10.25px !important;
+  font-size: 9.5px !important;
   font-weight: 600;
   color: #a88947 !important;
   font-variant-numeric: tabular-nums;
@@ -364,8 +366,8 @@ body {
 }
 
 .dp-admin-shell .dp-crm-table-scroll table {
-  width: 2040px !important;
-  min-width: 2040px !important;
+  width: 1760px !important;
+  min-width: 1760px !important;
   max-width: none !important;
   table-layout: fixed !important;
 }
@@ -399,7 +401,7 @@ body {
 
 .dp-admin-shell .dp-outreach-crm-table :where(th:nth-child(2), td:nth-child(2)) {
   position: sticky;
-  left: 48px;
+  left: 42px;
   z-index: 4;
   background: inherit;
   box-shadow: 10px 0 16px -16px rgba(11, 31, 51, 0.35);
