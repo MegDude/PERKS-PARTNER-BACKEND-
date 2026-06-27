@@ -1,5 +1,5 @@
-import type { AgentContext, ToolCallPlan, ToolResult } from "../agent/types";
-import { canUseAgentTool } from "../agent/guardrails";
+import type { AgentContext, ToolCallPlan, ToolResult } from "../agent/types.js";
+import { canUseAgentTool } from "../agent/guardrails.js";
 
 const matchesQuery = (record: Record<string, any>, query: string) => {
   const haystack = [record.title, record.name, record.business_name, record.category, record.district, record.description, record.summary].filter(Boolean).join(" ").toLowerCase();

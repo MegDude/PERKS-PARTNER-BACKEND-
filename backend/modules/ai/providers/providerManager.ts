@@ -1,4 +1,4 @@
-import { OpenAIProvider, getOpenAIConfig } from "./openai";
+import { OpenAIProvider, getOpenAIConfig } from "./openai.js";
 
 export function getProviderManager() {
   const openai = new OpenAIProvider(getOpenAIConfig());

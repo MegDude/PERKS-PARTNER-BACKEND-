@@ -1,1 +1,1 @@
-export { createConversationRecord } from "../memory/conversationStore";
+export { createConversationRecord } from "../memory/conversationStore.js";

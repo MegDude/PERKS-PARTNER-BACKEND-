@@ -1,4 +1,4 @@
-import type { AgentContext, AgentPlan, ToolCallPlan } from "./types";
+import type { AgentContext, AgentPlan, ToolCallPlan } from "./types.js";
 
 function includesAny(value: string, terms: string[]) {
   return terms.some((term) => value.includes(term));

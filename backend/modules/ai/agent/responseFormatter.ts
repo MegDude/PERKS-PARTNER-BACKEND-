@@ -1,4 +1,4 @@
-import type { AgentContext, AgentPlan, AgentResponse, ToolResult } from "./types";
+import type { AgentContext, AgentPlan, AgentResponse, ToolResult } from "./types.js";
 
 function flattenToolData(results: ToolResult[]) {
   return results.flatMap((result) => Array.isArray(result.data) ? result.data : result.data ? [result.data] : []);

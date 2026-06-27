@@ -1,4 +1,4 @@
-import type { AgentContext, AgentDataAccess, AgentQueryPayload } from "./types";
+import type { AgentContext, AgentDataAccess, AgentQueryPayload } from "./types.js";
 
 const fallbackSession = () => `agent_session_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 

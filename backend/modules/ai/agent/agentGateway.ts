@@ -1,11 +1,11 @@
-import { buildAgentContext } from "./contextEngine";
-import { planAgentResponse } from "./planner";
-import { formatAgentResponse } from "./responseFormatter";
-import type { AgentDataAccess, AgentQueryPayload } from "./types";
-import { createConversationRecord } from "../memory/conversationStore";
-import { getProviderManager } from "../providers/providerManager";
-import { getPromptForMode } from "../prompts/promptLibrary";
-import { executeToolPlan } from "../tools/toolRegistry";
+import { buildAgentContext } from "./contextEngine.js";
+import { planAgentResponse } from "./planner.js";
+import { formatAgentResponse } from "./responseFormatter.js";
+import type { AgentDataAccess, AgentQueryPayload } from "./types.js";
+import { createConversationRecord } from "../memory/conversationStore.js";
+import { getProviderManager } from "../providers/providerManager.js";
+import { getPromptForMode } from "../prompts/promptLibrary.js";
+import { executeToolPlan } from "../tools/toolRegistry.js";
 
 export async function runAgentQuery(payload: AgentQueryPayload, data: AgentDataAccess) {
   const context = buildAgentContext(payload, data);

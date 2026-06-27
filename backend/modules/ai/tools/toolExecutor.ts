@@ -1,1 +1,1 @@
-export { executeToolCall, executeToolPlan } from "./toolRegistry";
+export { executeToolCall, executeToolPlan } from "./toolRegistry.js";
