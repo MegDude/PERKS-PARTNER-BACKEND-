@@ -536,8 +536,9 @@ const stage11Collections = [
 ];
 
 const pricingImportSources = {
-  productsCsv: "/Users/megdude/Downloads/PRODUCTS LIST/UPDATED NEW PRICING/products.csv",
-  pricesCsv: "/Users/megdude/Downloads/PRODUCTS LIST/UPDATED NEW PRICING/prices (1).csv",
+  productsCsv: process.env.STRIPE_PRODUCTS_CSV || path.join(__dirname, "data", "pricing", "products.csv"),
+  pricesCsv: process.env.STRIPE_PRICES_CSV || path.join(__dirname, "data", "pricing", "prices.csv"),
+  paymentLinksCsv: process.env.STRIPE_PAYMENT_LINKS_CSV || path.join(__dirname, "data", "pricing", "payment_links.csv"),
 };
 
 const partnerOutreachWorkbookPath = "/Users/megdude/Downloads/OUTREACH/downtown_perks_full_map_partner_crm (1).xlsx";
@@ -1958,15 +1959,48 @@ function normalizeProductSlug(name: string) {
   return slug(normalizeProductName(name)).replace(/_/g, "-");
 }
 
+function productDisplayName(name: string) {
+  const cleaned = normalizeProductName(name);
+  if (!cleaned.includes("/")) return cleaned;
+  return cleaned.split("/").filter(Boolean).at(-1) || cleaned;
+}
+
+function productLookupKey(value: any) {
+  return normalizeProductSlug(String(value || "").replace(/subscription$/i, "").replace(/\s+add\s+on$/i, ""));
+}
+
+function paymentLinkForProduct(productName: string, linksByName: Map<string, Record<string, any>>) {
+  const candidates = [
+    productName,
+    productDisplayName(productName),
+    productName.replace(/^AddOn\//, "").replace(/^Tier\//, ""),
+    productName.replace(/^Hospitality /, "Hotel "),
+    productName.replace(/^Hotel /, "Hospitality "),
+  ];
+  for (const candidate of candidates) {
+    const match = linksByName.get(productLookupKey(candidate));
+    if (match) return match;
+  }
+  return null;
+}
+
 async function importPricingCatalog(entities: Database["entities"]) {
   const products = await readCsvIfExists(pricingImportSources.productsCsv);
   const prices = await readCsvIfExists(pricingImportSources.pricesCsv);
+  const paymentLinks = await readCsvIfExists(pricingImportSources.paymentLinksCsv);
   const pricesByProduct = new Map<string, Record<string, any>[]>();
   prices.forEach((price) => {
     const productId = price["Product ID"];
     if (!pricesByProduct.has(productId)) pricesByProduct.set(productId, []);
     pricesByProduct.get(productId)?.push(price);
   });
+  const linksByName = new Map<string, Record<string, any>>();
+  paymentLinks
+    .filter((link) => String(link.Active || "").toLowerCase() !== "false" && link.Name && link.Url)
+    .forEach((link) => {
+      const key = productLookupKey(link.Name);
+      if (!linksByName.has(key)) linksByName.set(key, link);
+    });
 
   let imported = 0;
   products.forEach((product) => {
@@ -1980,12 +2014,15 @@ async function importPricingCatalog(entities: Database["entities"]) {
     const family = product["family (metadata)"] || productName.split("/")[1] || "Core";
     const kind = product["kind (metadata)"] || (productName.startsWith("Tier/") ? "tier" : productName.startsWith("AddOn/") ? "addon" : "product");
     const partnerType = product["partnerType (metadata)"] || productName.split("/")[1] || "";
+    const paymentLink = paymentLinkForProduct(productName, linksByName);
     ensureRecord(entities.ProductOffering, `product_${normalizeProductSlug(productId)}`, {
       product_id: productId,
       stripe_product_id: productId,
       stripe_price_id: primaryPrice["Price ID"] || "",
+      stripe_payment_link_id: paymentLink?.id || "",
+      stripe_payment_link_url: paymentLink?.Url || "",
       name: productName,
-      display_name: productName.replace(/^AddOn\//, "").replace(/^Tier\//, ""),
+      display_name: productDisplayName(productName),
       description: product.Description || primaryPrice.Description || "",
       family,
       kind,
@@ -2011,7 +2048,77 @@ async function importPricingCatalog(entities: Database["entities"]) {
     imported += 1;
   });
 
-  return { products: products.length, prices: prices.length, imported };
+  return { products: products.length, prices: prices.length, payment_links: paymentLinks.length, imported };
+}
+
+const checkoutPlanAliases: Record<string, string> = {
+  property_basic: "Property Basic Subscription",
+  property_basic_building: "Property Basic Subscription",
+  property_resident_plus: "Property Plus Subscription",
+  property_plus: "Property Plus Subscription",
+  property_pro: "Property Pro Subscription",
+  venue_basic: "Venue Basic Subscription",
+  venue_growth: "Venue Growth Subscription",
+  venue_pro: "Venue Pro Subscription",
+  hotel_starter: "Hospitality Starter",
+  hotel_basic: "Hospitality Starter",
+  hotel_pro: "Hospitality Pro",
+  hospitality_basic: "Hospitality Starter",
+  hospitality_pro: "Hospitality Pro",
+  brand_access: "Brand Basic Subscription",
+  brand_basic: "Brand Basic Subscription",
+  brand_campaigns: "Brand Pro Subscription",
+  brand_pro: "Brand Pro Subscription",
+  civic_basic: "Civic Basic Subscription",
+  civic_plus: "Civic Plus Subscription",
+  civic_pro: "Civic Pro Subscription",
+  perk_campaign: "Perk Campaign",
+  featured_campaign: "Featured Campaign",
+  sponsored_campaign: "Sponsored Campaign",
+  event_boost: "Event Boost",
+  featured_event: "Featured Event",
+  sponsored_event: "Sponsored Event",
+  single_survey: "Single Survey",
+  survey_series: "Survey Series",
+  custom_research_survey: "Custom Research Project",
+  analytics_plus: "Analytics Plus Add On",
+  analytics_pro: "Analytics Pro Add On",
+  broadcast_5m: "Nearby Broadcast (5-min walk)",
+  sms_500: "SMS Broadcast (up to 500)",
+};
+
+function productMatchesValue(product: Record<string, any>, value: any) {
+  const key = productLookupKey(value);
+  if (!key) return false;
+  const fields = [
+    product.id,
+    product.product_id,
+    product.stripe_product_id,
+    product.stripe_price_id,
+    product.stripe_payment_link_id,
+    product.tier_id,
+    product.name,
+    product.display_name,
+    checkoutPlanAliases[String(value || "").trim().toLowerCase()],
+  ];
+  return fields.some((field) => productLookupKey(field) === key);
+}
+
+function findCatalogProduct(entities: Database["entities"], source: Record<string, any>) {
+  const values = [
+    source.price,
+    source.stripe_price_id,
+    source.product,
+    source.product_id,
+    source.plan_key,
+    source.key,
+    source.name,
+    source.display_name,
+    source.label,
+  ].filter(Boolean);
+  const aliasValues = values.map((value) => checkoutPlanAliases[String(value).trim().toLowerCase()]).filter(Boolean);
+  const searchValues = [...values, ...aliasValues];
+  return entities.ProductOffering.find((product) => searchValues.some((value) => productMatchesValue(product, value)));
 }
 
 function ensureMapPartnerWorkspace(entities: Database["entities"], source: Record<string, any>) {
