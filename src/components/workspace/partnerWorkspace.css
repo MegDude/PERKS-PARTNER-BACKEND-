@@ -24,6 +24,38 @@
   box-shadow: none !important;
 }
 
+.shore-read {
+  background: #ffffff !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+.shore-builder {
+  background: #ffffff !important;
+  border: 1px solid rgba(11, 31, 51, 0.1) !important;
+  box-shadow: none !important;
+  padding: clamp(16px, 2.4vw, 24px);
+}
+
+.shore-builder + .shore-builder {
+  margin-top: 0;
+}
+
+.shore-mini-stat {
+  min-width: 0;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+}
+
+.shore-favorite-row {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  color: #0b1f33;
+}
+
 .shore-main {
   display: grid;
   gap: clamp(12px, 2vw, 22px);
@@ -47,7 +79,7 @@
 }
 
 .shore-section-heading {
-  margin-bottom: clamp(20px, 3vw, 32px);
+  margin-bottom: clamp(16px, 2.4vw, 26px);
   max-width: 720px;
 }
 
@@ -55,8 +87,8 @@
   margin-top: 8px;
   max-width: 680px;
   color: rgba(11, 31, 51, 0.64);
-  font-size: 14px;
-  line-height: 1.62;
+  font-size: 13px;
+  line-height: 1.55;
 }
 
 .shore-workspace img {
@@ -545,9 +577,15 @@
   box-shadow: none !important;
 }
 
-.shore-workspace :where(.shore-card, .shore-module-item, .shore-status-strip, .shore-section, .shore-menu-panel) {
+.shore-workspace :where(.shore-card, .shore-read, .shore-module-item, .shore-status-strip, .shore-section, .shore-menu-panel) {
   background: #ffffff !important;
   border: 0 !important;
+  box-shadow: none !important;
+}
+
+.shore-workspace :where(.shore-builder) {
+  background: #ffffff !important;
+  border: 1px solid rgba(11, 31, 51, 0.1) !important;
   box-shadow: none !important;
 }
 
@@ -704,6 +742,10 @@
   .shore-card {
     padding-left: 0 !important;
     padding-right: 0 !important;
+  }
+
+  .shore-builder {
+    padding: 14px !important;
   }
 
   .shore-card .grid.grid-cols-3 {

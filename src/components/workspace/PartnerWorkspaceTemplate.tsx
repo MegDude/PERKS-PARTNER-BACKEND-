@@ -79,9 +79,9 @@ function Section({ id, eyebrow, title, description, children }: { id: string; ey
 
 function MiniStat({ label, value, note }: { label: string; value: string; note: string }) {
   return (
-    <div className="shore-card p-4">
+    <div className="shore-mini-stat">
       <div className="text-[11px] font-bold uppercase text-[rgba(11,31,51,0.5)]">{label}</div>
-      <div className="mt-2 text-2xl font-semibold text-[#0B1F33]">{value}</div>
+      <div className="mt-1 text-base font-semibold text-[#0B1F33]">{value}</div>
       <p className="mt-1 text-xs leading-5 text-[rgba(11,31,51,0.62)]">{note}</p>
     </div>
   );
@@ -89,7 +89,7 @@ function MiniStat({ label, value, note }: { label: string; value: string; note: 
 
 function ToggleFavorite({ item, onToggle }: { item: FavoriteItem; onToggle: (id: string) => void }) {
   return (
-    <button type="button" onClick={() => onToggle(item.id)} className="shore-card flex w-full items-center justify-between gap-3 p-3 text-left">
+    <button type="button" onClick={() => onToggle(item.id)} className="shore-favorite-row flex w-full items-center justify-between gap-3 text-left">
       <span>
         <span className="block text-[11px] font-bold uppercase text-[#C8A96A]">{item.type}</span>
         <span className="block text-sm font-semibold text-[#0B1F33]">{item.name}</span>
@@ -807,7 +807,7 @@ export function PartnerWorkspaceTemplate(props: Props) {
 
       <main className="shore-main mx-auto max-w-6xl px-5 py-4 sm:px-8 lg:py-6">
         <section id="home" className="shore-hero grid items-start gap-8 lg:grid-cols-[1.05fr_0.95fr]">
-          <div className="shore-card shore-hero-copy overflow-hidden">
+          <div className="shore-read shore-hero-copy overflow-hidden">
             <div className="grid gap-6 md:grid-cols-[1fr_0.72fr]">
               <div className="py-2">
                 <div className="shore-partner-kicker">
@@ -824,7 +824,7 @@ export function PartnerWorkspaceTemplate(props: Props) {
               </figure>
             </div>
           </div>
-          <div className="shore-card shore-at-glance">
+          <div className="shore-read shore-at-glance">
             <div className="shore-at-glance-head">
               <div>
                 <div className="text-[11px] font-bold uppercase text-[#C8A96A]">At a glance</div>
@@ -862,7 +862,7 @@ export function PartnerWorkspaceTemplate(props: Props) {
         </section>
 
         <section>
-          <div className="shore-card">
+          <div className="shore-read">
             <div className="flex items-center gap-2 text-[11px] font-bold uppercase text-[#C8A96A]">
               <MapPin className="h-4 w-4" />
               Nearby read
@@ -889,7 +889,7 @@ export function PartnerWorkspaceTemplate(props: Props) {
 
         <Section id="setup" eyebrow="Setup" title={`The details that make ${workspaceName} feel ready`} description="Start with the basics people notice first: the place, the neighborhood, the right contact, and the first note worth sending.">
           <div className="grid gap-10 lg:grid-cols-[1fr_0.8fr]">
-            <form onSubmit={handleSubmit} className="shore-card grid gap-4 sm:grid-cols-2">
+            <form onSubmit={handleSubmit} className="shore-builder grid gap-4 sm:grid-cols-2">
               <Field label="Organization name" value={lead.organizationName} onChange={(value) => updateLead('organizationName', value)} />
               <Field label="Partner type" value={lead.partnerType} onChange={(value) => updateLead('partnerType', value)} />
               <Field label="Contact name" value={lead.contactName} placeholder="Add the property contact" onChange={(value) => updateLead('contactName', value)} />
@@ -910,7 +910,7 @@ export function PartnerWorkspaceTemplate(props: Props) {
                 <span className="text-xs font-semibold text-[rgba(11,31,51,0.58)]">{leadNotice}</span>
               </div>
             </form>
-            <div className="shore-card">
+            <div className="shore-read">
               <div className="text-[11px] font-bold uppercase text-[#C8A96A]">Building note</div>
               <h3 className="mt-2 text-xl font-semibold text-[#0B1F33]">{props.profile.propertyName}</h3>
               <p className="mt-2 text-sm leading-6 text-[rgba(11,31,51,0.66)]">{props.profile.description}</p>
@@ -925,7 +925,7 @@ export function PartnerWorkspaceTemplate(props: Props) {
         </Section>
 
         <Section id="resident-preview" eyebrow="Resident view" title="What residents see" description={`A quick look at the ${workspaceName} view: useful places, resident perks, plans worth joining, and the building signs that point people there.`}>
-          <div className="shore-card grid gap-8 lg:grid-cols-[0.85fr_1.15fr]">
+          <div className="shore-read grid gap-8 lg:grid-cols-[0.85fr_1.15fr]">
             <div>
               <div className="text-[11px] font-bold uppercase text-[#C8A96A]">{workspaceName} resident guide</div>
               <h3 className="mt-2 text-xl font-semibold">{props.profile.propertyName}</h3>
@@ -957,7 +957,7 @@ export function PartnerWorkspaceTemplate(props: Props) {
         <Section id="qr" eyebrow="Codes" title="Put the entry points where people already look" description="Each code now has artwork, editable copy, print sizing, scan context, and export controls for lobby signs, mailroom cards, elevator sheets, welcome emails, and partner campaign materials.">
           <div className="grid gap-x-10 gap-y-8 lg:grid-cols-2">
             {props.qrs.map((qr) => (
-              <div key={qr.id} className="shore-card py-2">
+              <div key={qr.id} className="shore-builder">
                 <div className="grid gap-5 sm:grid-cols-[190px_1fr]">
                   <QrArtworkPreview workspaceName={workspaceName} qr={qr} artwork={qrArtwork[qr.id]} />
                   <div>
@@ -1024,7 +1024,7 @@ export function PartnerWorkspaceTemplate(props: Props) {
         <Section id="perks" eyebrow="Perks" title="Small reasons to choose somewhere nearby" description="Offers should be easy to understand, easy to save, and easy to use without making residents decode fine print.">
           <div className="grid gap-x-12 gap-y-8 lg:grid-cols-2">
             {perks.map((perk) => (
-              <div key={perk.id} className="shore-card">
+              <div key={perk.id} className="shore-builder">
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <label className="block">
@@ -1106,7 +1106,7 @@ export function PartnerWorkspaceTemplate(props: Props) {
           </div>
           <div className="grid gap-x-12 gap-y-8 lg:grid-cols-2">
             {events.map((event) => (
-              <div key={event.id} className="shore-card">
+              <div key={event.id} className="shore-builder">
                 <div className="grid gap-3 sm:grid-cols-[1fr_130px]">
                   <label className="block">
                     <span className="text-[11px] font-bold uppercase text-[#C8A96A]">Event name</span>
@@ -1187,7 +1187,7 @@ export function PartnerWorkspaceTemplate(props: Props) {
           </div>
           <div className="grid gap-x-8 gap-y-6 lg:grid-cols-3">
             {campaigns.map((campaign) => (
-              <div key={campaign.id} className="shore-card">
+              <div key={campaign.id} className="shore-builder">
                 <label className="block">
                   <span className="text-[11px] font-bold uppercase text-[#C8A96A]">Broadcast</span>
                   <input className="shore-input mt-1 text-sm font-semibold" value={campaign.name} onChange={(inputEvent) => updateCampaign(campaign.id, 'name', inputEvent.target.value)} />
@@ -1240,7 +1240,7 @@ export function PartnerWorkspaceTemplate(props: Props) {
         </Section>
 
         <Section id="residents" eyebrow="Residents" title="People, not a spreadsheet" description="Add residents one at a time or paste a short contact list. Keep the useful signals visible and the private details tidy.">
-          <div className="shore-card mb-5 grid gap-4 lg:grid-cols-[1fr_0.42fr]">
+          <div className="shore-builder mb-5 grid gap-4 lg:grid-cols-[1fr_0.42fr]">
             <label className="block">
               <span className="text-[11px] font-bold uppercase text-[#C8A96A]">Import contacts</span>
               <textarea className="shore-input mt-2 min-h-24" placeholder="Name, unit, email, Coffee|Yoga" value={residentImport} onChange={(event) => setResidentImport(event.target.value)} />
@@ -1259,7 +1259,7 @@ export function PartnerWorkspaceTemplate(props: Props) {
           </div>
           <div className="grid gap-x-8 gap-y-6 sm:grid-cols-2 lg:grid-cols-3">
             {residents.map((resident) => (
-              <div key={resident.id} className="shore-card">
+              <div key={resident.id} className="shore-builder">
                 <div className="flex items-center justify-between gap-2">
                   <Users className="h-4 w-4 text-[#C8A96A]" />
                   <select className="shore-input max-w-[155px]" value={resident.engagementStatus} onChange={(inputEvent) => updateResident(resident.id, 'engagementStatus', inputEvent.target.value as Resident['engagementStatus'])}>
@@ -1297,7 +1297,7 @@ export function PartnerWorkspaceTemplate(props: Props) {
         </Section>
 
         <Section id="reports" eyebrow="Reports" title="What residents found, saved, joined, and used" description="A quick read on what is working: signs, perks, events, broadcasts, resident activity, and the places around downtown that people are actually opening.">
-          <div className="shore-card">
+          <div className="shore-read">
             <div className="grid gap-0">
               {reportSnapshot.metrics.map((metric) => (
                 <div key={metric.id} className="grid gap-1 border-b border-[rgba(11,31,51,0.055)] py-2 last:border-b-0 sm:grid-cols-[0.72fr_0.8fr_0.48fr_1.3fr] sm:items-baseline sm:gap-4">
@@ -1319,7 +1319,7 @@ export function PartnerWorkspaceTemplate(props: Props) {
         </Section>
 
         <Section id="billing" eyebrow="Plan" title="Keep the building connected" description="See the current plan, add help when it is useful, and keep billing simple.">
-          <div className="shore-card grid gap-8 lg:grid-cols-[0.8fr_1.2fr]">
+          <div className="shore-builder grid gap-8 lg:grid-cols-[0.8fr_1.2fr]">
             <div>
               <div className="flex items-center gap-2 text-[11px] font-bold uppercase text-[#C8A96A]"><CreditCard className="h-4 w-4" /> {props.billing.conversionState}</div>
               <h3 className="mt-2 text-2xl font-semibold">{props.billing.name}</h3>
