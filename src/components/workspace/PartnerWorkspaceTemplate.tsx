@@ -157,7 +157,7 @@ function QrArtworkPreview({ workspaceName, qr, artwork }: { workspaceName: strin
         {artwork.logoUrl ? <img className="shore-qr-logo" src={artwork.logoUrl} alt={`${workspaceName} logo`} /> : <span className="shore-qr-logo-text">{workspaceName.slice(0, 2).toUpperCase()}</span>}
         <span>{workspaceName}</span>
       </div>
-      <img className="shore-qr-code-image" src={qrImageUrl(qr.destination)} alt={`QR code for ${qr.name}`} />
+      <img className="shore-qr-code-image" src={qrImageUrl(qr.destination)} alt="Scan code" />
       <div className="shore-qr-artwork-copy">
         <strong>{artwork.headline}</strong>
         <span>{artwork.bodyCopy}</span>
@@ -1152,10 +1152,10 @@ export function PartnerWorkspaceTemplate(props: Props) {
                       <QrCode className="h-5 w-5 text-[#C8A96A]" />
                       <span className="text-[11px] font-bold uppercase text-[rgba(11,31,51,0.52)]">{qr.status}</span>
                     </div>
-                    <h3 className="mt-3 text-base font-semibold">{qr.name}</h3>
-                    <p className="mt-1 text-xs leading-5 text-[rgba(11,31,51,0.62)]">{qr.placement} sign for the resident experience.</p>
-                    <div className="mt-3 text-sm font-semibold">Tracking starts after this code is used.</div>
-                    <p className="text-xs text-[rgba(11,31,51,0.6)]">Keep the destination hidden here; residents only need the code and the promise.</p>
+                    <h3 className="mt-3 text-base font-semibold">Material setup</h3>
+                    <p className="mt-1 text-xs leading-5 text-[rgba(11,31,51,0.62)]">
+                      {qr.name} · {qr.placement} · {qr.status}
+                    </p>
                     <div className="mt-4 grid gap-3 sm:grid-cols-2">
                       <label className="block">
                         <span className="text-[10px] font-bold uppercase text-[rgba(11,31,51,0.52)]">Headline</span>
@@ -1197,7 +1197,7 @@ export function PartnerWorkspaceTemplate(props: Props) {
                         <Check className="h-3.5 w-3.5" /> Save
                       </button>
                       <button type="button" className="shore-button" onClick={() => downloadTextFile(`${qr.id}.txt`, `${qr.name}\n${absoluteUrl(qr.destination)}\n${qrArtwork[qr.id].headline}\n${qrArtwork[qr.id].bodyCopy}`)}>
-                        <Download className="h-3.5 w-3.5" /> Copy deck
+                        <Download className="h-3.5 w-3.5" /> Deck
                       </button>
                     </div>
                     {qrNotice[qr.id] && <p className="mt-2 text-xs font-semibold text-[rgba(11,31,51,0.58)]">{qrNotice[qr.id]}</p>}

@@ -4750,6 +4750,12 @@ export async function createApp() {
     const billingEmail = body.customer_email || body.billing_email || body.email || "";
     const organizationName = body.organization_name || body.business_name || "Downtown Perks Partner";
     const subtotal = products.reduce((sum, product) => sum + Number(product.amount || 0), 0);
+    const recurringSubtotal = products
+      .filter((product) => {
+        const interval = String(product.interval || "").toLowerCase();
+        return interval && interval !== "one_time" && interval !== "one-time";
+      })
+      .reduce((sum, product) => sum + Number(product.amount || 0), 0);
     const promotionCode = normalizePromotionCode(body.promotion_code || body.coupon || body.checkout?.coupon);
 
     if (!products.length) return res.status(400).json({ error: "At least one plan or price is required." });
@@ -4813,7 +4819,10 @@ export async function createApp() {
         plan: body.plan || products[0]?.display_name || products[0]?.name || "partner",
         plan_label: products[0]?.display_name || products[0]?.name || "Partner Plan",
         cadence: products[0]?.interval || "annual",
-        amount: subtotal,
+        amount: recurringSubtotal || subtotal,
+        first_payment_amount: subtotal,
+        annual_commitment: Number(body.checkout?.annual_commitment || body.annual_commitment || (recurringSubtotal || subtotal) * 12),
+        selected_add_ons: body.checkout?.selected_add_ons || body.selected_add_ons || [],
         status: "active",
         billing_status: "promotional",
         provider: "promotion",
@@ -5158,6 +5167,7 @@ export async function createApp() {
           "settings",
         ];
         const planSubtotal = Number(checkout.subtotal ?? selectedPlan.amount ?? selectedPlan.price ?? 0);
+        const monthlyDue = Number(checkout.monthly_due ?? selectedPlan.amount ?? selectedPlan.price ?? 0);
         const promotionCode = normalizePromotionCode(checkout.promotion_code || checkout.coupon || body.promotion_code || body.coupon);
         const promotionValidation = promotionCode ? validatePromotion(db.entities, {
           code: promotionCode,
@@ -5292,7 +5302,10 @@ export async function createApp() {
           plan: selectedPlan.key || selectedPlan.name || "starter",
           plan_label: selectedPlan.label || selectedPlan.name || "Starter",
           cadence: selectedPlan.cadence || "annual",
-          amount: planSubtotal,
+          amount: monthlyDue,
+          first_payment_amount: planSubtotal,
+          annual_commitment: Number(checkout.annual_commitment || monthlyDue * 12),
+          selected_add_ons: checkout.selected_add_ons || [],
           status: "active",
           billing_status: isPromotional ? "promotional" : checkout.billing_status || "paid",
           provider: isPromotional ? "promotion" : checkout.provider || "local_checkout_ready_for_stripe",

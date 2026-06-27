@@ -263,15 +263,17 @@ export default function PartnerLifecycle() {
     try {
       const payload = {
         ...state,
-        checkout: {
-          ...state.checkout,
-          billing_email: state.checkout.billing_email || state.contact.email,
-          business_name: state.checkout.business_name || state.organization.name,
-          subtotal: totals.firstPayment,
-          total: totals.firstPayment,
-          annual_commitment: totals.annualCommitment,
-          selected_add_ons: totals.selectedAddOns,
-        },
+          checkout: {
+            ...state.checkout,
+            billing_email: state.checkout.billing_email || state.contact.email,
+            business_name: state.checkout.business_name || state.organization.name,
+            subtotal: totals.firstPayment,
+            total: totals.firstPayment,
+            monthly_due: totals.monthlyDue,
+            one_time_add_ons: totals.oneTimeAddOns,
+            annual_commitment: totals.annualCommitment,
+            selected_add_ons: totals.selectedAddOns,
+          },
       };
       await fetch('/api/partner-leads', {
         method: 'POST',
@@ -454,26 +456,171 @@ export default function PartnerLifecycle() {
   }
 
   if (location.pathname === '/partners/pricing') {
+    const visiblePlans = plans.filter((plan) => plan.partnerType === state.organizationType);
+    const plansByVertical = plans.reduce((groups, plan) => {
+      if (!groups[plan.vertical]) groups[plan.vertical] = [];
+      groups[plan.vertical].push(plan);
+      return groups;
+    }, {} as Record<string, typeof plans>);
+    const addOnsByCategory = addOns.reduce((groups, item) => {
+      if (!groups[item.category]) groups[item.category] = [];
+      groups[item.category].push(item);
+      return groups;
+    }, {} as Record<string, typeof addOns>);
     return (
-      <Shell eyebrow="Plan" title="Select the plan that matches the workspace." body="Pricing belongs in the onboarding flow here so the selected plan can carry directly into checkout and provisioning.">
+      <Shell eyebrow="Pricing" title="Partner with the neighborhood." body="Choose your annual plan, add what helps right now, capture the signup details, and move straight into checkout and workspace access.">
         <Progress active={4} />
-        <div className="grid gap-4 lg:grid-cols-3">
-          {plans.map((plan) => (
-            <button key={plan.key} type="button" onClick={() => setState((current) => ({ ...current, plan }))} className={`border bg-white p-6 text-left transition hover:border-[#C8A96A] ${state.plan.key === plan.key ? 'border-[#C8A96A]' : 'border-[rgba(11,31,51,0.08)]'}`}>
-              <p className="text-lg font-semibold">{plan.label}</p>
-              <p className="mt-2 text-3xl font-semibold">{plan.amount ? `$${plan.amount}` : 'Custom'}<span className="text-sm font-normal text-[rgba(11,31,51,0.52)]"> / {plan.cadence}</span></p>
-              <p className="mt-4 text-sm leading-6 text-[rgba(11,31,51,0.62)]">{plan.summary}</p>
-              <p className="mt-4 text-xs font-semibold uppercase tracking-[0.08em] text-[#C8A96A]">{plan.limits}</p>
-              <div className="mt-4 grid gap-2 text-sm">
-                {plan.modules.map((module) => <span key={module}>• {module}</span>)}
+        <section className="grid gap-6 xl:grid-cols-[0.86fr_1.14fr]">
+          <SectionCard className="xl:sticky xl:top-6 xl:self-start">
+            <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-[#C8A96A]">Be where plans are made</p>
+            <h2 className="mt-2 text-2xl font-semibold leading-tight">Start with the plan that fits.</h2>
+            <p className="mt-3 text-sm leading-6 text-[rgba(11,31,51,0.64)]">
+              Downtown Perks is the digital layer for downtown Austin. People scan a code, find what is nearby, save what looks good, and partners see what worked.
+            </p>
+            <div className="mt-5 grid gap-3">
+              {[
+                ['No app to download', 'Residents open the guide from a simple QR or link.'],
+                ['Real signal', 'See saves, scans, directions, joins, and redemptions.'],
+                ['Local by design', 'Built for the places, properties, brands, and civic teams that make downtown useful.'],
+              ].map(([title, copy]) => (
+                <div key={title} className="border-t border-[rgba(11,31,51,0.06)] pt-3">
+                  <p className="text-sm font-semibold">{title}</p>
+                  <p className="mt-1 text-xs leading-5 text-[rgba(11,31,51,0.58)]">{copy}</p>
+                </div>
+              ))}
+            </div>
+          </SectionCard>
+
+          <div className="grid gap-6">
+            <SectionCard>
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+                <div>
+                  <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-[#C8A96A]">Annual subscription tiers</p>
+                  <h2 className="mt-2 text-xl font-semibold">Monthly rate, annual commitment.</h2>
+                </div>
+                <p className="max-w-xl text-xs leading-5 text-[rgba(11,31,51,0.58)]">The monthly rate is used for billing. The annual cost shows the full twelve-month commitment.</p>
               </div>
-            </button>
-          ))}
-        </div>
-        <div className="mt-6 flex flex-wrap gap-3">
-          <ActionLink to="/partners/checkout">Continue to checkout <ArrowRight className="h-4 w-4" /></ActionLink>
-          <ActionLink to="/partners/register">Edit registration</ActionLink>
-        </div>
+              <div className="mt-5 overflow-x-auto [scrollbar-width:thin]">
+                <table className="w-full min-w-[720px] table-fixed text-left text-[12px]">
+                  <thead className="text-[10px] font-bold uppercase tracking-[0.08em] text-[rgba(11,31,51,0.48)]">
+                    <tr>
+                      <th className="w-[22%] py-2 pr-4">Vertical</th>
+                      <th className="w-[28%] py-2 pr-4">Tier</th>
+                      <th className="w-[18%] py-2 pr-4 text-right">Monthly</th>
+                      <th className="w-[20%] py-2 pr-4 text-right">Annual</th>
+                      <th className="py-2 text-right">Choose</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[rgba(11,31,51,0.06)]">
+                    {Object.entries(plansByVertical).flatMap(([vertical, rows]) => rows.map((plan, index) => (
+                      <tr key={plan.key} className="align-middle">
+                        <td className="py-2.5 pr-4 text-[11px] font-semibold text-[rgba(11,31,51,0.58)]">{index === 0 ? vertical : ''}</td>
+                        <td className="py-2.5 pr-4">
+                          <button type="button" onClick={() => setState((current) => ({ ...current, organizationType: plan.partnerType, organization: { ...current.organization, industry: plan.vertical }, plan }))} className="text-left text-[12px] font-semibold leading-4 text-[#0B1F33] hover:text-[#C8A96A]">
+                            {plan.label}
+                          </button>
+                        </td>
+                        <td className="py-2.5 pr-4 text-right font-semibold">{money(plan.amount)}</td>
+                        <td className="py-2.5 pr-4 text-right font-semibold">{money(annualCost(plan))}</td>
+                        <td className="py-2.5 text-right">
+                          <button type="button" onClick={() => setState((current) => ({ ...current, organizationType: plan.partnerType, plan }))} className={`min-h-7 px-2 text-[10px] font-semibold uppercase ${state.plan.key === plan.key ? 'text-[#C8A96A]' : 'text-[#0B1F33]'}`}>
+                            {state.plan.key === plan.key ? 'Selected' : 'Select'}
+                          </button>
+                        </td>
+                      </tr>
+                    )))}
+                  </tbody>
+                </table>
+              </div>
+            </SectionCard>
+
+            <section className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
+              <SectionCard>
+                <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-[#C8A96A]">Plan selector</p>
+                <h2 className="mt-2 text-xl font-semibold">Recommended for {selectedType.label.toLowerCase()} partners.</h2>
+                <div className="mt-4 grid gap-3">
+                  {visiblePlans.map((plan) => (
+                    <button key={plan.key} type="button" onClick={() => setState((current) => ({ ...current, plan }))} className={`border-t border-[rgba(11,31,51,0.06)] py-3 text-left ${state.plan.key === plan.key ? 'text-[#0B1F33]' : 'text-[rgba(11,31,51,0.66)]'}`}>
+                      <span className="flex items-center justify-between gap-3">
+                        <strong className="text-sm">{plan.label}</strong>
+                        <span className="text-xs font-semibold">{money(plan.amount)}/mo</span>
+                      </span>
+                      <span className="mt-1 block text-xs leading-5">{plan.summary}</span>
+                    </button>
+                  ))}
+                </div>
+              </SectionCard>
+
+              <SectionCard>
+                <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-[#C8A96A]">Add things when needed</p>
+                <h2 className="mt-2 text-xl font-semibold">Add-on modules.</h2>
+                <div className="mt-4 grid gap-4">
+                  {Object.entries(addOnsByCategory).map(([category, rows]) => (
+                    <div key={category}>
+                      <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-[rgba(11,31,51,0.48)]">{category}</p>
+                      <div className="mt-2 grid gap-2">
+                        {rows.map((item) => {
+                          const quantity = Number(state.addOns?.[item.key] || 0);
+                          return (
+                            <div key={item.key} className="grid grid-cols-[1fr_auto] gap-3 border-t border-[rgba(11,31,51,0.05)] py-2">
+                              <div>
+                                <p className="text-[12px] font-semibold">{item.label} <span className="text-[rgba(11,31,51,0.48)]">· {money(item.amount)}{item.cadence === 'month' ? '/mo' : ''}</span></p>
+                                <p className="mt-0.5 text-[11px] leading-4 text-[rgba(11,31,51,0.56)]">{item.summary}</p>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <button type="button" aria-label={`Remove ${item.label}`} onClick={() => setAddOnQuantity(item.key, quantity - 1)} className="h-7 w-7 text-sm font-semibold text-[#0B1F33]">-</button>
+                                <span className="w-5 text-center text-xs font-semibold">{quantity}</span>
+                                <button type="button" aria-label={`Add ${item.label}`} onClick={() => setAddOnQuantity(item.key, quantity + 1)} className="h-7 w-7 text-sm font-semibold text-[#0B1F33]">+</button>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </SectionCard>
+            </section>
+
+            <section className="grid gap-6 xl:grid-cols-[1fr_380px]">
+              <SectionCard>
+                <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-[#C8A96A]">Signup details</p>
+                <h2 className="mt-2 text-xl font-semibold">Create the partner record.</h2>
+                <p className="mt-2 text-xs leading-5 text-[rgba(11,31,51,0.58)]">This captures the lead, attempts a Google Sheets sync, starts checkout, and opens the workspace after payment or an approved promotion.</p>
+                <div className="mt-5 grid gap-5 md:grid-cols-2">
+                  <Field label="Organization" required value={state.organization.name} onChange={(value) => updateGroup('organization', 'name', value)} />
+                  <Field label="Website" value={state.organization.website} onChange={(value) => updateGroup('organization', 'website', value)} />
+                  <Field label="Primary contact" required value={state.contact.name} onChange={(value) => updateGroup('contact', 'name', value)} />
+                  <Field label="Email" required value={state.contact.email} onChange={(value) => updateGroup('contact', 'email', value)} />
+                  <Field label="Phone" value={state.contact.phone} onChange={(value) => updateGroup('contact', 'phone', value)} />
+                  <Field label="Address" value={state.location.address} onChange={(value) => updateGroup('location', 'address', value)} />
+                  <Field label="Promotion code" value={state.checkout.coupon} onChange={(value) => updateGroup('checkout', 'coupon', value.toUpperCase())} placeholder="DUDE2026" />
+                  <Field label="Billing email" value={state.checkout.billing_email || state.contact.email} onChange={(value) => updateGroup('checkout', 'billing_email', value)} />
+                </div>
+                <button disabled={loading || !state.organization.name || !state.contact.email} onClick={provisionWorkspace} className="mt-6 inline-flex min-h-9 items-center gap-2 bg-[#0B1F33] px-3 text-[11px] font-semibold uppercase text-white disabled:opacity-50">
+                  {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <CreditCard className="h-4 w-4" />}
+                  {state.checkout.coupon === 'DUDE2026' ? 'Create workspace' : 'Continue to checkout'}
+                </button>
+              </SectionCard>
+
+              <SectionCard>
+                <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-[#C8A96A]">Your setup</p>
+                <h2 className="mt-2 text-xl font-semibold">{state.plan.label}</h2>
+                <Line label="Monthly plan" value={`${money(state.plan.amount)} / month`} />
+                <Line label="Annual commitment" value={money(totals.annualCommitment)} />
+                <Line label="One-time add-ons" value={money(totals.oneTimeAddOns)} />
+                <Line label="First checkout" value={money(totals.firstPayment)} strong />
+                {state.checkout.coupon === 'DUDE2026' && (
+                  <p className="mt-4 text-xs leading-5 text-[#0B1F33]">DUDE2026 gives eligible partners a complimentary first year. No payment is required today, and the workspace opens immediately.</p>
+                )}
+                <div className="mt-4 border-t border-[rgba(11,31,51,0.06)] pt-4">
+                  <p className="text-[11px] font-semibold uppercase text-[#C8A96A]">After checkout</p>
+                  <p className="mt-2 text-xs leading-5 text-[rgba(11,31,51,0.58)]">The backend creates the organization, workspace, owner access, subscription, invoice record, starter reports, map presence, QR access, and audit trail.</p>
+                </div>
+              </SectionCard>
+            </section>
+          </div>
+        </section>
       </Shell>
     );
   }
@@ -497,10 +644,11 @@ export default function PartnerLifecycle() {
           <SectionCard>
             <p className="text-sm font-semibold">Invoice summary</p>
             <Line label="Plan" value={state.plan.label || 'Starter'} />
-            <Line label="Cadence" value={state.plan.cadence || 'annual'} />
-            <Line label="Subtotal" value={state.plan.amount ? `$${state.plan.amount}` : 'Custom'} />
-            <Line label="Tax" value={`$${Number(state.checkout.tax || 0).toLocaleString()}`} />
-            <Line label="Total" value={state.plan.amount ? `$${Number(state.plan.amount || 0) + Number(state.checkout.tax || 0)}` : 'Custom'} strong />
+            <Line label="Monthly plan" value={`${money(state.plan.amount)} / month`} />
+            <Line label="Annual commitment" value={money(totals.annualCommitment)} />
+            <Line label="One-time add-ons" value={money(totals.oneTimeAddOns)} />
+            <Line label="Tax" value={money(Number(state.checkout.tax || 0))} />
+            <Line label="First checkout" value={money(totals.firstPayment)} strong />
           </SectionCard>
         </div>
       </Shell>
