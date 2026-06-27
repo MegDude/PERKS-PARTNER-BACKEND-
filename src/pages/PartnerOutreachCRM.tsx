@@ -544,9 +544,9 @@ export default function PartnerOutreachCRM() {
               ['Confidence', clean(selected.contact?.confidence)],
               ['Verification', clean(selected.contact?.verification_status)],
             ]} />
-            <section className="mt-4 border-t border-[rgba(11,31,51,0.08)] pt-3">
+            <section className="dp-crm-compact-edit mt-4 border-t border-[rgba(11,31,51,0.08)] pt-3">
               <p className="text-[9px] font-bold uppercase text-[#C8A96A]">Contact edits</p>
-              <div className="mt-2 grid gap-2">
+              <div className="mt-2 grid gap-1.5">
                 <EditableField label="Primary contact" value={selected.contact?.name || selected.contact?.contact_name} needsVerify={!selected.contact?.name || selected.contact?.name === missing} onSave={(value) => patchContact(selected.contact?.id, { name: value, contact_name: value })} />
                 <EditableField label="Role" value={selected.contact?.role} needsVerify={!selected.contact?.role || selected.contact?.role === missing} onSave={(value) => patchContact(selected.contact?.id, { role: value })} />
                 <EditableField label="Email or route" value={selected.contact?.email || selected.contact?.contact_route} needsVerify={!selected.contact?.email && !selected.contact?.contact_route} onSave={(value) => patchContact(selected.contact?.id, value.includes('@') ? { email: value, contact_route: value } : { contact_route: value })} />
@@ -578,6 +578,7 @@ export default function PartnerOutreachCRM() {
                     <p><span className="font-semibold text-[#0B1F33]">Angle:</span> {clean(selected.message?.strategy?.angle || selected.message?.intelligence?.recommended_angle)}</p>
                     <p><span className="font-semibold text-[#0B1F33]">Audience:</span> {clean(selected.message?.strategy?.audience || selected.message?.intelligence?.audience)}</p>
                     <p><span className="font-semibold text-[#0B1F33]">Benefit:</span> {clean(selected.message?.strategy?.benefit || selected.message?.intelligence?.strategic_benefit)}</p>
+                    <p><span className="font-semibold text-[#0B1F33]">Specificity:</span> {clean(selected.message?.strategy?.specificity_score)}</p>
                     {selected.message?.guardrail && <p><span className="font-semibold text-[#0B1F33]">Guardrail:</span> {selected.message.guardrail}</p>}
                   </div>
                 </div>
@@ -702,18 +703,17 @@ function SortButton({ label, sortKey, current, direction, onClick }: { label: st
 }
 
 function EditableField({ label, value, needsVerify, onSave }: { label: string; value: any; needsVerify?: boolean; onSave: (value: string) => void }) {
-  const [draft, setDraft] = useState(clean(value));
-  useEffect(() => setDraft(clean(value)), [value]);
-  const isMissing = needsVerify || draft === missing;
+  const initialValue = clean(value) === missing ? '' : clean(value);
+  const [draft, setDraft] = useState(initialValue);
+  useEffect(() => setDraft(clean(value) === missing ? '' : clean(value)), [value]);
   return (
-    <label className="grid gap-1">
-      <span className="flex items-center justify-between gap-2 text-[9px] font-semibold uppercase text-[rgba(11,31,51,0.48)]">
+    <label className="grid gap-0.5">
+      <span className="text-[8.5px] font-semibold uppercase text-[rgba(11,31,51,0.46)]">
         {label}
-        {isMissing && <span className="text-[#C8A96A]">{missing}</span>}
       </span>
-      <div className="flex gap-2">
-        <input value={draft} onChange={(event) => setDraft(event.target.value)} className="min-h-8 flex-1 border border-[rgba(11,31,51,0.1)] px-2.5 text-[12px] outline-none" />
-        <button onClick={() => onSave(draft === missing ? '' : draft)} type="button" className="min-h-8 border border-[#C8A96A] px-2.5 text-[10px] font-semibold uppercase">Save</button>
+      <div className="flex gap-1.5">
+        <input value={draft} placeholder={needsVerify ? missing : ''} onChange={(event) => setDraft(event.target.value)} className="min-h-7 flex-1 border border-[rgba(11,31,51,0.1)] px-2 text-[10.5px] leading-4 outline-none placeholder:text-[rgba(11,31,51,0.34)]" />
+        <button onClick={() => onSave(draft.trim())} type="button" className="min-h-7 border border-[#C8A96A] px-2 text-[8.5px] font-semibold uppercase">Save</button>
       </div>
     </label>
   );

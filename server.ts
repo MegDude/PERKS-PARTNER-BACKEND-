@@ -1002,33 +1002,54 @@ function stripTemplateArtifacts(value: string) {
     .trim();
 }
 
+function meaningfulTerms(value: string, max = 4) {
+  return String(value || "")
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, " ")
+    .split(/\s+/)
+    .filter((term) => term.length > 3 && !["with", "from", "that", "this", "into", "nearby", "simple", "downtown", "perks", "partner"].includes(term))
+    .slice(0, max);
+}
+
+function outreachSpecificityScore(copy: { shortText?: string; subject?: string; body?: string }, brief: ReturnType<typeof buildOutreachStrategyBrief>) {
+  const combined = `${copy.shortText || ""} ${copy.subject || ""} ${copy.body || ""}`.toLowerCase();
+  let score = 0;
+  const partnerTerms = meaningfulTerms(brief.partner_name, 3);
+  if (partnerTerms.some((term) => combined.includes(term))) score += 2;
+  if (meaningfulTerms(brief.suggested_perk, 5).some((term) => combined.includes(term))) score += 2;
+  if (meaningfulTerms(brief.suggested_campaign, 5).some((term) => combined.includes(term))) score += 1;
+  if (meaningfulTerms(brief.district, 2).some((term) => combined.includes(term))) score += 1;
+  if (meaningfulTerms(brief.partner_type, 2).some((term) => combined.includes(term))) score += 1;
+  if (meaningfulTerms(brief.audience, 4).some((term) => combined.includes(term))) score += 1;
+  if (meaningfulTerms(brief.business_value, 5).some((term) => combined.includes(term))) score += 1;
+  if (meaningfulTerms(brief.resident_value, 5).some((term) => combined.includes(term))) score += 1;
+  return score;
+}
+
 function outreachCopyLooksGeneric(copy: { shortText?: string; subject?: string; body?: string }, brief: ReturnType<typeof buildOutreachStrategyBrief>) {
   const combined = `${copy.shortText || ""} ${copy.subject || ""} ${copy.body || ""}`.toLowerCase();
-  const partnerName = brief.partner_name.toLowerCase();
-  const partnerPieces = partnerName.split(/\s+/).filter((piece) => piece.length > 2);
-  const namesPartner = combined.includes(partnerName) || partnerPieces.some((piece) => combined.includes(piece));
-  const hasSpecificSignal = [brief.district, brief.suggested_perk, brief.suggested_campaign, brief.contact_role, brief.partner_type]
-    .map((item) => String(item || "").toLowerCase())
-    .some((item) => item.length > 4 && combined.includes(item.split(/\s+/)[0]));
-  const badPhrases = ["dear valued partner", "game changer", "revolutionize", "synergy", "unlock growth", "ai-powered outreach", "as a language model"];
+  const badPhrases = ["dear valued partner", "game changer", "revolutionize", "synergy", "unlock growth", "ai-powered outreach", "as a language model", "i hope this message finds you well", "transform your business", "maximize exposure"];
   const hasBadPhrase = badPhrases.some((phrase) => combined.includes(phrase));
-  return !namesPartner || !hasSpecificSignal || hasBadPhrase;
+  const score = outreachSpecificityScore(copy, brief);
+  const bodyWords = String(copy.body || "").split(/\s+/).filter(Boolean).length;
+  const textWords = String(copy.shortText || "").split(/\s+/).filter(Boolean).length;
+  return score < 6 || hasBadPhrase || bodyWords > 180 || textWords > 85;
 }
 
 function curatedStrategistOutreachCopy(partner: Record<string, any>, contact: Record<string, any> = {}, brief = buildOutreachStrategyBrief(partner, contact)) {
   const firstName = contactFirstName(brief.contact_name);
   const reason = String(brief.proof_point || brief.district_insight).replace(/[.。]+$/, "");
-  const subject = `Quick Downtown Perks idea for ${brief.partner_name}`;
-  const shortText = `Hey ${firstName} - I’m building Downtown Perks for people already downtown and nearby. ${brief.partner_name} stood out for ${brief.suggested_perk}. I think it could be a useful fit for ${brief.audience}. Open to a quick chat sometime next week? No pressure.`;
+  const subject = `${brief.partner_name}: ${brief.suggested_perk}`;
+  const shortText = `Hey ${firstName} - ${brief.partner_name} feels like a natural fit for ${brief.suggested_perk}, especially with ${brief.district} ${brief.partner_type.toLowerCase()} discovery. I’d like to show a quick ${brief.suggested_campaign} concept and see if it is useful. Open to a 15-minute chat?`;
   const body = `Hi ${firstName},
 
-I’m building Downtown Perks, a simple local discovery map for people who live, work, and stay downtown.
+I’m building Downtown Perks as a practical discovery layer for downtown residents, guests, and nearby workers.
 
-${brief.partner_name} stood out because ${reason}.
+${brief.partner_name} stood out because ${reason}. In ${brief.district}, the opportunity is not broad awareness; it is showing up when ${brief.audience} are deciding what to visit, try, recommend, or share next.
 
-For a first pass, I’d suggest ${brief.suggested_perk}. It pairs naturally with ${brief.suggested_campaign}, and it gives ${brief.audience} a clear reason to notice ${brief.partner_name} at the right moment.
+For the first touch, I would not overbuild it. I’d start with ${brief.suggested_perk}, then frame it through ${brief.suggested_campaign}. That gives ${brief.partner_name} a specific, easy-to-understand reason to be on the map.
 
-Would you be open to a quick 15-minute chat next week? No pressure either way.
+Would you be open to a quick 15-minute chat next week to see if this angle is worth testing? No pressure either way.
 
 Best,
 Meg`;
@@ -1050,6 +1071,7 @@ Meg`;
       proof_point: brief.proof_point,
       ask: brief.practical_ask,
       quality: "curated_local_strategy",
+      specificity_score: outreachSpecificityScore({ shortText, subject, body }, brief),
     },
   };
 }
@@ -1144,21 +1166,21 @@ async function generatePersonalizedOutreachCopy(partner: Record<string, any>, co
       {
         role: "system",
         content:
-          "You are the Downtown Perks outreach intelligence layer: a world-class digital marketing strategist, data analyst, content strategist, brand strategist, and media strategist. You do not blanket-dump copy. You first choose the strongest partner-specific angle, then write concise human outreach. Return strict JSON only with keys: shortText, subject, body, strategy. strategy must include angle, audience, benefit, proof_point, ask, and quality_notes. The body must be plain text signed Best, Meg.",
+          "You are the Downtown Perks outreach intelligence layer: a world-class digital marketing strategist, data analyst, content strategist, brand strategist, and media strategist. You do not blanket-dump copy. Every line must be traceable to this partner's type, district, perk, campaign, resident value, business value, notes, or contact role. Generic copy will be rejected. First decide the strongest partner-specific angle, then write concise human outreach. Return strict JSON only with keys: shortText, subject, body, strategy. strategy must include angle, audience, benefit, proof_point, ask, quality_notes, and specificity_signals_used. The body must be plain text signed Best, Meg.",
       },
       {
         role: "user",
-        content: `Craft one tailored short text and one email from this strategy brief. Follow every quality rule. Use only the supplied facts. If contact_name is missing, write "Hi there," and "Hey there". Do not sound automated.\n\n${JSON.stringify(brief, null, 2)}`,
+        content: `Craft one tailored short text and one email from this strategy brief. Follow every quality rule. Use only the supplied facts. Required: mention the partner by name, use the specific suggested perk or campaign, reference the district/type/audience context, and explain one practical business or resident benefit. If contact_name is missing, write "Hi there," and "Hey there". Do not sound automated.\n\n${JSON.stringify(brief, null, 2)}`,
       },
     ]);
     const parsed = JSON.parse(response);
-    const generated = {
-      shortText: stripTemplateArtifacts(cleanCrmValue(parsed.shortText)) || fallback.shortText,
-      subject: stripTemplateArtifacts(cleanCrmValue(parsed.subject)) || fallback.subject,
-      body: stripTemplateArtifacts(cleanCrmValue(parsed.body)) || fallback.body,
-      strategy: parsed.strategy && typeof parsed.strategy === "object" ? parsed.strategy : fallback.strategy,
+    const modelDraft = {
+      shortText: stripTemplateArtifacts(cleanCrmValue(parsed.shortText)) || "",
+      subject: stripTemplateArtifacts(cleanCrmValue(parsed.subject)) || "",
+      body: stripTemplateArtifacts(cleanCrmValue(parsed.body)) || "",
+      strategy: parsed.strategy && typeof parsed.strategy === "object" ? parsed.strategy : {},
     };
-    if (outreachCopyLooksGeneric(generated, brief)) {
+    if (modelDraft.shortText && modelDraft.subject && modelDraft.body && outreachCopyLooksGeneric(modelDraft, brief)) {
       return {
         ...fallback,
         provider: "local_strategy_guardrail",
@@ -1166,13 +1188,21 @@ async function generatePersonalizedOutreachCopy(partner: Record<string, any>, co
         guardrail: "OpenAI output was missing partner-specific signals or contained generic language.",
       };
     }
+    const generated = {
+      ...fallback,
+      strategy: {
+        ...fallback.strategy,
+        model_quality_notes: modelDraft.strategy?.quality_notes || "",
+        model_specificity_signals: modelDraft.strategy?.specificity_signals_used || [],
+      },
+    };
     const html = buildDowntownPerksEmailTemplate({
       partnerName: partner.name || partner.business_name,
       subject: generated.subject,
       body: generated.body,
       previewText: `A simple Downtown Perks partnership idea for ${partner.name || partner.business_name}.`,
     });
-    return { ...generated, html, provider: "openai_strategy", intelligence: brief };
+    return { ...generated, html, provider: "openai_strategy_curated_copy", intelligence: brief };
   } catch (error) {
     return { ...fallback, provider: "local_strategy_fallback", intelligence: brief, error: error instanceof Error ? error.message : "AI generation failed" };
   }
