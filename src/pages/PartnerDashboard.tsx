@@ -14,6 +14,7 @@ export default function PartnerDashboard() {
   const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7));
   const [partnerSearch, setPartnerSearch] = useState('');
   const [partnerType, setPartnerType] = useState('All');
+  const [showAllPartners, setShowAllPartners] = useState(false);
 
   const { data: user } = useQuery({
     queryKey: ['current_user'],
@@ -116,6 +117,12 @@ export default function PartnerDashboard() {
       return matchesSearch && matchesType;
     });
   }, [activePartners, partnerSearch, partnerType]);
+  const hasPartnerFilters = partnerSearch.trim().length > 0 || partnerType !== 'All';
+  const partnerPreviewLimit = 24;
+  const visiblePartners = showAllPartners || hasPartnerFilters
+    ? filteredPartners
+    : filteredPartners.slice(0, partnerPreviewLimit);
+  const hiddenPartnerCount = Math.max(filteredPartners.length - visiblePartners.length, 0);
 
   const partnerById = useMemo(() => {
     return Object.fromEntries((partners as any[]).map((partner: any) => [partner.id, partner]));
@@ -240,7 +247,10 @@ export default function PartnerDashboard() {
           <Search className="h-3.5 w-3.5 shrink-0 text-[#C5A028]" />
           <input
             value={partnerSearch}
-            onChange={(event) => setPartnerSearch(event.target.value)}
+            onChange={(event) => {
+              setPartnerSearch(event.target.value);
+              setShowAllPartners(false);
+            }}
             placeholder="Search partners"
             className="w-full bg-transparent text-[11px] font-medium leading-none text-[#0B1F33] outline-none placeholder:text-[rgba(11,31,51,0.36)]"
           />
@@ -249,7 +259,10 @@ export default function PartnerDashboard() {
           <SlidersHorizontal className="h-3.5 w-3.5 shrink-0 text-[#C5A028]" />
           <select
             value={partnerType}
-            onChange={(event) => setPartnerType(event.target.value)}
+            onChange={(event) => {
+              setPartnerType(event.target.value);
+              setShowAllPartners(false);
+            }}
             className="w-full bg-transparent text-[11px] font-semibold text-[#0B1F33] outline-none"
           >
             {partnerTypes.map((type) => <option key={type}>{type}</option>)}
@@ -294,9 +307,9 @@ export default function PartnerDashboard() {
             <div className="flex flex-wrap items-end justify-between gap-2">
               <div>
                 <CardTitle className="text-[15px] font-semibold leading-5 text-[#11182B]">Active partners</CardTitle>
-            <CardDescription className="mt-0 text-[11px] font-medium leading-4 text-[rgba(11,31,51,0.54)]">
-                  {filteredPartners.length.toLocaleString()} shown. Open the workspace or scan the latest partner signals.
-            </CardDescription>
+                <CardDescription className="mt-0 text-[11px] font-medium leading-4 text-[rgba(11,31,51,0.54)]">
+                  {visiblePartners.length.toLocaleString()} of {filteredPartners.length.toLocaleString()} shown. Search, filter, or expand the full directory.
+                </CardDescription>
               </div>
               {(partnerSearch || partnerType !== 'All') && (
                 <button
@@ -304,6 +317,7 @@ export default function PartnerDashboard() {
                   onClick={() => {
                     setPartnerSearch('');
                     setPartnerType('All');
+                    setShowAllPartners(false);
                   }}
                   className="min-h-7 text-[9px] font-semibold uppercase text-[rgba(11,31,51,0.54)] transition-colors hover:text-[#C5A028]"
                 >
@@ -317,7 +331,7 @@ export default function PartnerDashboard() {
               <p className="py-8 text-[12px] font-medium text-[rgba(11,31,51,0.54)]">No partners match this view.</p>
             ) : (
               <div className="divide-y divide-[rgba(11,31,51,0.045)]">
-                {filteredPartners.map((partner) => {
+                {visiblePartners.map((partner) => {
                   const stats = getPartnerStats(partner.id);
                   return (
                     <motion.div
@@ -356,6 +370,22 @@ export default function PartnerDashboard() {
                     </motion.div>
                   );
                 })}
+                {(hiddenPartnerCount > 0 || (showAllPartners && !hasPartnerFilters && filteredPartners.length > partnerPreviewLimit)) && (
+                  <div className="flex flex-wrap items-center justify-between gap-2 bg-white py-3">
+                    <p className="text-[10px] font-medium leading-4 text-[rgba(11,31,51,0.54)]">
+                      {showAllPartners
+                        ? `Full directory open: ${filteredPartners.length.toLocaleString()} partners.`
+                        : `${hiddenPartnerCount.toLocaleString()} more partners are rolled up to keep this page easy to scan.`}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setShowAllPartners((value) => !value)}
+                      className="inline-flex min-h-7 items-center justify-center border border-[rgba(11,31,51,0.10)] bg-white px-2 text-[8.5px] font-semibold uppercase leading-none text-[#0B1F33] transition-colors hover:border-[#C8A96A] hover:text-[#C8A96A]"
+                    >
+                      {showAllPartners ? 'Collapse' : 'Show all'}
+                    </button>
+                  </div>
+                )}
               </div>
             )}
           </CardContent>

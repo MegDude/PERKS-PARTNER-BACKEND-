@@ -8,6 +8,7 @@ import {
   Building2,
   CalendarDays,
   CreditCard,
+  DollarSign,
   FileText,
   Hotel,
   Loader2,
@@ -35,7 +36,8 @@ const moduleRoutes = [
   { label: 'Perks', to: '/admin/perks', icon: Ticket },
   { label: 'Broadcasts', to: '/admin/engagement', icon: Megaphone },
   { label: 'Reports', to: '/admin/reports', icon: FileText },
-  { label: 'Plans & billing', to: '/admin/promotions', icon: CreditCard },
+  { label: 'Pricing', to: '/partners/pricing', icon: DollarSign },
+  { label: 'Billing and accounts', to: '/admin/promotions', icon: CreditCard },
   { label: 'People with access', to: '/admin/settings', icon: Users },
   { label: 'Messages', to: '/admin/settings', icon: Bell },
   { label: 'Health check', to: '/admin/platform', icon: Activity },
@@ -165,7 +167,7 @@ export default function BackendWorkspace() {
     },
     {
       title: 'Measure',
-      routes: moduleRoutes.filter((route) => ['Reports', 'Plans & billing', 'Health check'].includes(route.label)),
+      routes: moduleRoutes.filter((route) => ['Reports', 'Pricing', 'Billing and accounts', 'Health check'].includes(route.label)),
     },
     {
       title: 'Support',

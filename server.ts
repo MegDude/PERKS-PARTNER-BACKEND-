@@ -5086,6 +5086,38 @@ export async function createApp() {
     res.status(201).json({ success: true, invoice });
   });
 
+  app.patch("/api/billing/invoices/:id", async (req, res) => {
+    const invoice = findEntityById(db.entities.PartnerInvoice, req.params.id);
+    if (!invoice) return res.status(404).json({ error: "Invoice not found" });
+    const before = { ...invoice };
+    const payload = req.body || {};
+    const nextStatus = payload.action === "mark_paid" ? "paid" : payload.status || invoice.status;
+    Object.assign(invoice, {
+      ...payload,
+      status: nextStatus,
+      billing_status: payload.billing_status || (nextStatus === "paid" ? "paid" : invoice.billing_status || nextStatus),
+      paid_at: nextStatus === "paid" ? payload.paid_at || invoice.paid_at || now() : invoice.paid_at,
+      updated_at: now(),
+    });
+    writeAuditEvent(db, req, {
+      action: payload.action === "mark_paid" ? "billing_invoice_marked_paid" : "billing_invoice_updated",
+      entity_type: "PartnerInvoice",
+      entity_id: invoice.id,
+      before,
+      after: invoice,
+      metadata: { source: "billing_account_management" },
+    });
+    writeAnalyticsEvent(db, req, {
+      event: payload.action === "mark_paid" ? "billing_invoice_marked_paid" : "billing_invoice_updated",
+      entity_type: "PartnerInvoice",
+      entity_id: invoice.id,
+      source: "billing_account_management",
+      ...organizationContext(invoice),
+    });
+    await saveDatabase(db);
+    res.json({ success: true, invoice });
+  });
+
   app.post("/api/billing/subscriptions", async (req, res) => {
     const payload = req.body || {};
     const id = payload.id || makeId("partner_subscription");
@@ -5112,6 +5144,40 @@ export async function createApp() {
     });
     await saveDatabase(db);
     res.status(201).json({ success: true, subscription });
+  });
+
+  app.patch("/api/billing/subscriptions/:id", async (req, res) => {
+    const subscription = findEntityById(db.entities.PartnerSubscription, req.params.id);
+    if (!subscription) return res.status(404).json({ error: "Subscription not found" });
+    const before = { ...subscription };
+    const payload = req.body || {};
+    const action = String(payload.action || "update");
+    const nextStatus = action === "cancel" ? "cancelled" : action === "activate" ? "active" : action === "renew" ? "active" : payload.status || subscription.status;
+    Object.assign(subscription, {
+      ...payload,
+      status: nextStatus,
+      billing_status: payload.billing_status || (nextStatus === "active" ? subscription.billing_status || "active" : nextStatus),
+      renewal_date: action === "renew" ? addOneYearIso() : payload.renewal_date || subscription.renewal_date,
+      cancelled_at: action === "cancel" ? payload.cancelled_at || now() : subscription.cancelled_at,
+      updated_at: now(),
+    });
+    writeAuditEvent(db, req, {
+      action: action === "cancel" ? "partner_subscription_cancelled" : action === "renew" ? "partner_subscription_renewed" : "partner_subscription_updated",
+      entity_type: "PartnerSubscription",
+      entity_id: subscription.id,
+      before,
+      after: subscription,
+      metadata: { source: "billing_account_management" },
+    });
+    writeAnalyticsEvent(db, req, {
+      event: action === "cancel" ? "partner_subscription_cancelled" : action === "renew" ? "partner_subscription_renewed" : "partner_subscription_updated",
+      entity_type: "PartnerSubscription",
+      entity_id: subscription.id,
+      source: "billing_account_management",
+      ...organizationContext(subscription),
+    });
+    await saveDatabase(db);
+    res.json({ success: true, subscription });
   });
 
   app.patch("/api/auth/me", async (req, res) => {

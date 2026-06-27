@@ -67,7 +67,8 @@ const primaryModules = [
   { label: 'Notes to send', to: '/admin/engagement', icon: Send, key: 'campaigns' },
   { label: 'Reports', to: '/admin/reports', icon: FileText, key: 'reports' },
   { label: 'Perk results', to: '/admin/analytics', icon: BarChart3, key: 'reports' },
-  { label: 'Plans & billing', to: '/admin/promotions', icon: Receipt, key: 'promotions' },
+  { label: 'Pricing', to: '/partners/pricing', icon: Receipt, key: 'promotions' },
+  { label: 'Billing & accounts', to: '/admin/promotions', icon: Receipt, key: 'promotions' },
   { label: 'Today downtown', to: '/admin/platform', icon: Compass, key: 'tenants' },
   { label: 'Partner view', to: '/admin/partner-portal', icon: Presentation, key: 'workspaces' },
 ];
@@ -227,7 +228,7 @@ export default function Home() {
     { label: 'Perks', value: data.perks.length, note: `${activePerkCount} active now` },
     { label: 'Events', value: data.events.length, note: `${upcomingEventCount} upcoming` },
     { label: 'Notes', value: data.campaigns.length, note: `${mappedCampaignCount} tied to the map` },
-    { label: 'Billing', value: data.invoices.length, note: `${data.subscriptions.length} plans on file` },
+    { label: 'Billing', value: data.invoices.length, note: `${data.subscriptions.length} plans on file · ${data.promotions.length} codes` },
   ];
 
   const moduleCount = (module: (typeof primaryModules)[number]) => {

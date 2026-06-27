@@ -287,6 +287,7 @@ export function PartnerWorkspaceTemplate(props: Props) {
   const billingDiscount = Math.round(billingSubtotal * (appliedCreditPercent / 100));
   const billingTotalDue = Math.max(0, billingSubtotal - billingDiscount);
   const workspaceIsActive = billingStatus === 'active' || billingStatus === 'promotional';
+  const isLegendsResidentialLayer = workspaceRecordSlug === 'legends-residential-layer' || workspaceName.toLowerCase() === 'legends residential layer';
   const reportAudience = workspaceSubject === 'building' ? 'residents' : 'people';
   const reportSnapshot = useMemo(() => {
     const topQr = [...props.qrs].sort((a, b) => b.scans - a.scans)[0];
@@ -304,14 +305,23 @@ export function PartnerWorkspaceTemplate(props: Props) {
     };
   }, [props.qrs, reportAudience, workspaceSubject]);
 
-  const workspaceMatrix = [
-    { label: 'Setup', value: `${setupProgress}%`, note: setupProgress >= 80 ? 'Ready for review.' : 'Add real contacts, activity, and reporting.', href: '#setup' },
-    { label: 'Reach', value: campaigns.some((campaign) => Number(campaign.opensViews || 0) > 0) ? 'Started' : 'Not sent', note: 'Send one useful note first.', href: '#campaigns' },
-    { label: 'People', value: residents.some((resident) => !String(resident.email || '').endsWith('@downtownperks.local')) ? 'Added' : 'Needed', note: 'Add or import the real list.', href: '#residents' },
-    { label: 'Tools', value: 'Draft', note: 'Perks, events, and codes are editable.', href: '#perks' },
-    { label: 'Next', value: 'Choose', note: 'Pick one sign, perk, and note.', href: '#qr' },
-    { label: 'Plan', value: props.billing.conversionState, note: props.billing.name, href: '#billing' },
-  ];
+  const workspaceMatrix = isLegendsResidentialLayer
+    ? [
+        { label: 'Workspace Completion', value: `${setupProgress}%`, note: 'Complete your profile to unlock reporting and resident campaigns.', href: '#setup' },
+        { label: 'Resident Reach', value: campaigns.some((campaign) => Number(campaign.opensViews || 0) > 0) ? 'Growing' : 'Not sent', note: 'Publish your first campaign to begin measuring engagement.', href: '#campaigns' },
+        { label: 'Resident Directory', value: residents.some((resident) => !String(resident.email || '').endsWith('@downtownperks.local')) ? 'Added' : 'Needs Import', note: 'Import residents to personalize communications and reporting.', href: '#residents' },
+        { label: 'Content Status', value: 'Ready', note: 'Perks, events, and QR materials are ready to review and publish.', href: '#perks' },
+        { label: 'Recommended Next Step', value: 'Next Priority', note: 'Publish one QR sign, one resident offer, and one welcome message.', href: '#qr' },
+        { label: 'Plan', value: props.billing.conversionState, note: props.billing.name, href: '#billing' },
+      ]
+    : [
+        { label: 'Setup', value: `${setupProgress}%`, note: setupProgress >= 80 ? 'Ready for review.' : 'Add real contacts, activity, and reporting.', href: '#setup' },
+        { label: 'Reach', value: campaigns.some((campaign) => Number(campaign.opensViews || 0) > 0) ? 'Started' : 'Not sent', note: 'Send one useful note first.', href: '#campaigns' },
+        { label: 'People', value: residents.some((resident) => !String(resident.email || '').endsWith('@downtownperks.local')) ? 'Added' : 'Needed', note: 'Add or import the real list.', href: '#residents' },
+        { label: 'Tools', value: 'Draft', note: 'Perks, events, and codes are editable.', href: '#perks' },
+        { label: 'Next', value: 'Choose', note: 'Pick one sign, perk, and note.', href: '#qr' },
+        { label: 'Plan', value: props.billing.conversionState, note: props.billing.name, href: '#billing' },
+      ];
 
   const buzzInsights = props.trendingLocations.slice(0, 4).map((place, index) => {
     const perk = perks[index % Math.max(perks.length, 1)];
@@ -340,28 +350,51 @@ export function PartnerWorkspaceTemplate(props: Props) {
       favoriteId: `fav-${place.id.replace('trend-', '')}`,
     };
   });
-  const partnerEducationItems = [
-    {
-      title: 'Be easy to find',
-      copy: 'Your profile, perks, events, and codes give residents one clear place to open first.',
-      href: '#setup',
-    },
-    {
-      title: 'Let people scan in',
-      copy: 'Printed codes, emails, and signs send people straight to the right resident view without another app.',
-      href: '#qr',
-    },
-    {
-      title: 'Keep offers useful',
-      copy: 'Perks, broadcasts, and events can be edited here, then measured from the same workspace.',
-      href: '#perks',
-    },
-    {
-      title: 'See what worked',
-      copy: 'Reports show the scans, saves, joins, and offer use that are ready to guide the next push.',
-      href: '#reports',
-    },
-  ];
+  const partnerEducationItems = isLegendsResidentialLayer
+    ? [
+        {
+          title: 'Discoverable',
+          copy: 'Keep your property profile, amenities, neighborhood recommendations, perks, and events accurate across Downtown Perks.',
+          href: '#setup',
+        },
+        {
+          title: 'QR Entry Points',
+          copy: 'Create lobby signs, welcome cards, leasing materials, and move-in guides that open directly to your property.',
+          href: '#qr',
+        },
+        {
+          title: 'Resident Experience',
+          copy: 'Publish useful offers, events, and neighborhood recommendations residents can immediately use.',
+          href: '#perks',
+        },
+        {
+          title: 'Performance',
+          copy: 'Understand which entry points, campaigns, QR materials, and experiences generate the most activity.',
+          href: '#reports',
+        },
+      ]
+    : [
+        {
+          title: 'Be easy to find',
+          copy: 'Your profile, perks, events, and codes give residents one clear place to open first.',
+          href: '#setup',
+        },
+        {
+          title: 'Let people scan in',
+          copy: 'Printed codes, emails, and signs send people straight to the right resident view without another app.',
+          href: '#qr',
+        },
+        {
+          title: 'Keep offers useful',
+          copy: 'Perks, broadcasts, and events can be edited here, then measured from the same workspace.',
+          href: '#perks',
+        },
+        {
+          title: 'See what worked',
+          copy: 'Reports show the scans, saves, joins, and offer use that are ready to guide the next push.',
+          href: '#reports',
+        },
+      ];
 
   function updateLead(key: keyof PartnerLead, value: string) {
     setLead((current) => ({
@@ -1020,21 +1053,27 @@ export function PartnerWorkspaceTemplate(props: Props) {
                   <Building2 className="h-4 w-4" />
                   <span>{props.partner.type}</span>
                 </div>
-                <h1 className="mt-2 text-[28px] leading-tight text-[#0B1F33] sm:text-[34px]">{workspaceName} workspace</h1>
+                <h1 className="mt-2 text-[28px] leading-tight text-[#0B1F33] sm:text-[34px]">
+                  {isLegendsResidentialLayer ? "Manage your property's presence across Downtown Perks." : `${workspaceName} workspace`}
+                </h1>
                 <p className="mt-3 text-sm leading-6 text-[rgba(11,31,51,0.66)]">
-                  Keep {workspaceName}’s resident guide, signs, perks, events, broadcasts, reports, and plan in order from one calm workspace.
+                  {isLegendsResidentialLayer
+                    ? 'Everything residents discover about your building starts here. Keep your property profile current, publish offers and events, create QR materials, communicate with residents, and understand what people engage with most.'
+                    : `Keep ${workspaceName}’s resident guide, signs, perks, events, broadcasts, reports, and plan in order from one calm workspace.`}
                 </p>
               </div>
               <figure className="shore-hero-photo">
-                <img src={props.profile.heroImage} alt={`${workspaceName} in Downtown Austin`} />
+                <img src={props.profile.heroImage} alt={isLegendsResidentialLayer ? `${workspaceName} real estate workspace` : `${workspaceName} in Downtown Austin`} />
               </figure>
             </div>
           </div>
           <div className="shore-read shore-at-glance">
             <div className="shore-at-glance-head">
               <div>
-                <div className="text-[11px] font-bold uppercase text-[#C8A96A]">At a glance</div>
-                <h2 className="mt-1 text-lg font-semibold text-[#0B1F33]">What needs attention now</h2>
+                <div className="text-[11px] font-bold uppercase text-[#C8A96A]">{isLegendsResidentialLayer ? 'Workspace Overview' : 'At a glance'}</div>
+                <h2 className="mt-1 text-lg font-semibold text-[#0B1F33]">
+                  {isLegendsResidentialLayer ? 'Keep the property visible and up to date.' : 'What needs attention now'}
+                </h2>
               </div>
               <a href="#resident-preview" className="shore-button">Resident view</a>
             </div>
@@ -1056,11 +1095,15 @@ export function PartnerWorkspaceTemplate(props: Props) {
         <section className="shore-partner-education" aria-label={`How ${workspaceName} works on Downtown Perks`}>
           <div className="shore-partner-education-head">
             <div>
-              <div className="text-[11px] font-bold uppercase text-[#C8A96A]">How it works</div>
-              <h2 className="mt-1 text-xl font-semibold leading-tight text-[#0B1F33]">A quick guide before you start</h2>
+              <div className="text-[11px] font-bold uppercase text-[#C8A96A]">{isLegendsResidentialLayer ? 'Partner Workspace' : 'How it works'}</div>
+              <h2 className="mt-1 text-xl font-semibold leading-tight text-[#0B1F33]">
+                {isLegendsResidentialLayer ? 'Everything residents see starts here.' : 'A quick guide before you start'}
+              </h2>
             </div>
             <p>
-              This workspace is where {workspaceName} gets found, keeps resident-facing details current, and sees what people actually used.
+              {isLegendsResidentialLayer
+                ? 'Your workspace brings together every resident-facing touchpoint. Update your building profile, manage neighborhood recommendations, publish experiences, and monitor performance from one place.'
+                : `This workspace is where ${workspaceName} gets found, keeps resident-facing details current, and sees what people actually used.`}
             </p>
           </div>
           <div className="shore-partner-education-grid">
@@ -1071,10 +1114,10 @@ export function PartnerWorkspaceTemplate(props: Props) {
               </a>
             ))}
           </div>
-          <div className="shore-action-rail mt-4">
-            <a href="#setup" className="shore-button">Set up profile</a>
-            <a href="#qr" className="shore-button">Create codes</a>
-            <a href="#billing" className="shore-button">Review plan</a>
+          <div className="shore-guide-cta-rail mt-4">
+            <a href="#setup" className="shore-button">{isLegendsResidentialLayer ? 'Edit Property' : 'Set up profile'}</a>
+            <a href="#qr" className="shore-button">{isLegendsResidentialLayer ? 'Create QR Materials' : 'Create codes'}</a>
+            <a href="#billing" className="shore-button">{isLegendsResidentialLayer ? 'Manage Subscription' : 'Review plan'}</a>
           </div>
         </section>
 
@@ -1082,11 +1125,15 @@ export function PartnerWorkspaceTemplate(props: Props) {
           <div className="shore-read">
             <div className="flex items-center gap-2 text-[11px] font-bold uppercase text-[#C8A96A]">
               <MapPin className="h-4 w-4" />
-              Buzz nearby
+              {isLegendsResidentialLayer ? 'Nearby Opportunities' : 'Buzz nearby'}
             </div>
-            <h2 className="mt-2 text-xl font-semibold leading-tight text-[#0B1F33]">Nearby places to watch</h2>
+            <h2 className="mt-2 text-xl font-semibold leading-tight text-[#0B1F33]">
+              {isLegendsResidentialLayer ? "Strengthen the property's local story." : 'Nearby places to watch'}
+            </h2>
             <p className="mt-1 text-[12px] leading-5 text-[rgba(11,31,51,0.6)]">
-              This shows the nearby anchors, partners, perks, and plans that can shape what residents see next. Save an item to feature it in the resident guide, or remove it when it is no longer useful.
+              {isLegendsResidentialLayer
+                ? "Highlight nearby destinations that make the property easier to understand. Feature neighborhood favorites, trusted partners, and everyday conveniences residents are most likely to use."
+                : 'This shows the nearby anchors, partners, perks, and plans that can shape what residents see next. Save an item to feature it in the resident guide, or remove it when it is no longer useful.'}
             </p>
             <div className="mt-3 overflow-x-auto [scrollbar-width:thin]">
               <table className="w-full min-w-[720px] table-fixed text-left">
@@ -1553,23 +1600,30 @@ export function PartnerWorkspaceTemplate(props: Props) {
           </div>
         </Section>
 
-        <Section id="reports" eyebrow="Reports" title="What people used, and what to try next" description="A simple read on the entry points, offers, notes, and nearby places that are starting to work. If nothing is live yet, this shows exactly where tracking will begin.">
-          <div className="shore-read">
-            <div className="shore-report-matrix" aria-label={`${workspaceName} report quick view`}>
+        <Section id="reports" eyebrow="Reports" title="What people used, and what to try next" description="A simple read on the entry points, offers, notes, and nearby places that are starting to work. If nothing is live yet, this shows where tracking will begin.">
+          <div className="shore-read shore-report-panel">
+            <div className="shore-report-table" aria-label={`${workspaceName} report quick view`}>
+              <div className="shore-report-head" aria-hidden="true">
+                <span>Signal</span>
+                <span>Status</span>
+                <span>What it means</span>
+              </div>
               {reportSnapshot.metrics.map((metric) => (
-                <article key={metric.id} className="shore-report-metric">
-                  <span>{metric.label}</span>
-                  <strong>{metric.value}</strong>
+                <div key={metric.id} className="shore-report-row">
+                  <div>
+                    <span className="shore-report-label">{metric.label}</span>
+                    <strong>{metric.value}</strong>
+                  </div>
                   <em>{metric.change}</em>
                   <p>{metric.explanation}</p>
-                </article>
+                </div>
               ))}
             </div>
-            <div className="mt-4 grid gap-1 border-t border-[rgba(11,31,51,0.08)] pt-3 sm:grid-cols-[0.72fr_0.8fr_0.48fr_1.3fr] sm:gap-4">
-              <div className="text-[10px] font-bold uppercase text-[#C8A96A]">Next move</div>
-              <div className="mt-1 max-w-[720px] sm:col-span-3 sm:col-start-2 sm:mt-0">
-                <p className="text-sm font-semibold leading-6 text-[#0B1F33]">{reportSnapshot.recommendation}</p>
-                <p className="mt-1 text-xs leading-5 text-[rgba(11,31,51,0.58)]">No names here. Just enough activity to see what is useful, what needs a better nudge, and what deserves another push.</p>
+            <div className="shore-report-next">
+              <span>Next move</span>
+              <div>
+                <p>{reportSnapshot.recommendation}</p>
+                <small>No names here. Just enough activity to see what is useful, what needs a better nudge, and what deserves another push.</small>
               </div>
             </div>
           </div>

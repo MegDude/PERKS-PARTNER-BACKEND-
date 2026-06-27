@@ -403,7 +403,7 @@
 
 .shore-workspace-matrix {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(150px, 100%), 1fr));
   gap: 9px 14px;
   margin-top: 14px;
 }
@@ -427,9 +427,10 @@
   max-width: 100%;
   min-width: 0;
   overflow: visible;
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
   text-wrap: wrap;
   white-space: normal;
+  word-break: normal;
 }
 
 .shore-matrix-item span {
@@ -463,6 +464,118 @@
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px 16px;
+}
+
+.shore-report-panel {
+  display: grid;
+  gap: 16px;
+}
+
+.shore-report-table {
+  display: grid;
+  gap: 0;
+  width: 100%;
+}
+
+.shore-report-head,
+.shore-report-row {
+  display: grid;
+  grid-template-columns: minmax(120px, 0.8fr) minmax(92px, 0.56fr) minmax(0, 1.65fr);
+  gap: 12px;
+  align-items: start;
+}
+
+.shore-report-head {
+  padding-bottom: 8px;
+  color: rgba(11, 31, 51, 0.42);
+  font-size: 8.5px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  line-height: 1.15;
+  text-transform: uppercase;
+}
+
+.shore-report-row {
+  padding-block: 9px;
+  border-top: 1px solid rgba(11, 31, 51, 0.055);
+}
+
+.shore-report-row strong,
+.shore-report-row em,
+.shore-report-row p,
+.shore-report-next p,
+.shore-report-next small {
+  overflow-wrap: break-word;
+  white-space: normal;
+  word-break: normal;
+}
+
+.shore-report-label {
+  display: block;
+  color: rgba(11, 31, 51, 0.52);
+  font-size: 8.5px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  line-height: 1.15;
+  text-transform: uppercase;
+}
+
+.shore-report-row strong {
+  display: block;
+  margin-top: 2px;
+  color: #0b1f33;
+  font-size: 12.5px;
+  font-weight: 700;
+  line-height: 1.14;
+}
+
+.shore-report-row em {
+  color: #c8a96a;
+  font-size: 8.5px;
+  font-style: normal;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.shore-report-row p {
+  color: rgba(11, 31, 51, 0.6);
+  font-size: 10px;
+  line-height: 1.38;
+}
+
+.shore-report-next {
+  display: grid;
+  grid-template-columns: minmax(120px, 0.8fr) minmax(0, 2.21fr);
+  gap: 12px;
+  align-items: start;
+  padding-top: 12px;
+  border-top: 1px solid rgba(11, 31, 51, 0.07);
+}
+
+.shore-report-next > span {
+  color: #c8a96a;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  line-height: 1.15;
+  text-transform: uppercase;
+}
+
+.shore-report-next p {
+  color: #0b1f33;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+.shore-report-next small {
+  display: block;
+  margin-top: 4px;
+  color: rgba(11, 31, 51, 0.58);
+  font-size: 10.5px;
+  line-height: 1.42;
 }
 
 .shore-report-metric {
@@ -559,6 +672,40 @@
 .shore-partner-education-item:hover strong,
 .shore-partner-education-item:focus-visible strong {
   color: #8d733c;
+}
+
+.shore-guide-cta-rail {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 10px;
+  max-width: 100%;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.shore-guide-cta-rail::-webkit-scrollbar {
+  display: none;
+}
+
+.shore-guide-cta-rail .shore-button {
+  min-height: 30px;
+  flex: 0 0 auto;
+  border-bottom: 1px solid rgba(200, 169, 106, 0.48);
+  color: #8d733c;
+  padding: 0 1px 2px;
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.shore-guide-cta-rail .shore-button:hover,
+.shore-guide-cta-rail .shore-button:focus-visible {
+  border-bottom-color: #0b1f33;
+  color: #0b1f33;
+  outline: none;
 }
 
 .shore-button {
@@ -970,7 +1117,7 @@
   }
 
   .shore-workspace-matrix {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 8px 10px;
     margin-top: 12px;
   }
@@ -988,6 +1135,26 @@
   .shore-report-matrix {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 9px 12px;
+  }
+
+  .shore-report-head {
+    display: none;
+  }
+
+  .shore-report-row {
+    grid-template-columns: minmax(86px, 0.8fr) minmax(74px, 0.54fr) minmax(0, 1.2fr);
+    gap: 8px;
+    padding-block: 8px;
+  }
+
+  .shore-report-row p {
+    font-size: 9px;
+    line-height: 1.28;
+  }
+
+  .shore-report-next {
+    grid-template-columns: 1fr;
+    gap: 6px;
   }
 
   .shore-report-metric strong {

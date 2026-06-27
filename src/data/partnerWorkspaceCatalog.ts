@@ -483,6 +483,7 @@ export function buildWorkspaceFromRecords(slug: string, records: WorkspaceRecord
   const curated = curatedPartnerWorkspaces[requestedSlug];
   if (curated) return buildPartnerWorkspaceFromSeed(curated);
   if (requestedSlug === 'the-shore') return theShoreWorkspace;
+  const isLegendsResidentialLayer = requestedSlug === 'legends-residential-layer';
 
   const name =
     records.property?.name ||
@@ -491,7 +492,9 @@ export function buildWorkspaceFromRecords(slug: string, records: WorkspaceRecord
     records.tenant?.name ||
     records.locations?.[0]?.name ||
     slug.split('-').map((part) => part.charAt(0).toUpperCase() + part.slice(1)).join(' ');
-  const type = records.property?.category || records.property?.type || records.property?.source_type || records.profile?.type || records.partner?.category || records.tenant?.type || records.locations?.[0]?.category || 'Partner';
+  const type = isLegendsResidentialLayer
+    ? 'Real Estate Partner'
+    : records.property?.category || records.property?.type || records.property?.source_type || records.profile?.type || records.partner?.category || records.tenant?.type || records.locations?.[0]?.category || 'Partner';
   const address = records.property?.address || records.profile?.address || records.partner?.address || records.locations?.[0]?.address || 'Downtown Austin';
   const heroImage = firstImageFrom(
     records.profile?.hero_image,
@@ -515,12 +518,22 @@ export function buildWorkspaceFromRecords(slug: string, records: WorkspaceRecord
     address,
     heroImage,
     district: records.property?.district || records.profile?.district || records.partner?.district || 'Downtown Austin',
-    description: `${name} has a Downtown Perks page for the essentials: profile, map links, building signs, broadcasts, readouts, and what people did next.`,
-    audience: `${name} audience, residents, visitors, partner teams, and downtown operators.`,
-    managerNotes: 'Use this workspace to keep partner setup, map visibility, outreach, reports, and next actions in good order.',
-    amenities: ['Profile', 'Map presence', 'QR codes', 'Campaigns', 'Reports'],
-    anchors: [name, 'Downtown Austin', 'Partner network', 'Reports'],
-    plan: 'Partner Workspace',
+    description: isLegendsResidentialLayer
+      ? 'Legends Residential Layer manages property visibility, listing context, QR entry points, resident communications, and real-estate reporting across Downtown Perks.'
+      : `${name} has a Downtown Perks page for the essentials: profile, map links, building signs, broadcasts, readouts, and what people did next.`,
+    audience: isLegendsResidentialLayer
+      ? 'Property managers, leasing teams, real-estate partners, residents, and people comparing downtown buildings.'
+      : `${name} audience, residents, visitors, partner teams, and downtown operators.`,
+    managerNotes: isLegendsResidentialLayer
+      ? 'Keep the property profile, listing context, resident materials, QR entry points, and performance readouts ready for review.'
+      : 'Use this workspace to keep partner setup, map visibility, outreach, reports, and next actions in good order.',
+    amenities: isLegendsResidentialLayer
+      ? ['Property profile', 'Listing context', 'QR entry points', 'Resident updates', 'Real-estate reports']
+      : ['Profile', 'Map presence', 'QR codes', 'Campaigns', 'Reports'],
+    anchors: isLegendsResidentialLayer
+      ? [name, 'Downtown Austin', 'Seaholm', 'Rainey', '2nd Street District']
+      : [name, 'Downtown Austin', 'Partner network', 'Reports'],
+    plan: isLegendsResidentialLayer ? 'Real Estate Workspace' : 'Partner Workspace',
   };
   const base = buildPartnerWorkspaceFromSeed(seed);
 

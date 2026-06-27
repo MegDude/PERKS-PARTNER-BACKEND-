@@ -19,7 +19,7 @@ export default function PartnerDashboardLayout() {
   const links = [
     { section: 'Start' },
     { to: '/', icon: <HomeIcon className="w-4 h-4" />, label: 'Home' },
-    { to: '/admin', icon: <LayoutDashboard className="w-4 h-4" />, label: 'Command center' },
+    { to: '/admin', icon: <LayoutDashboard className="w-4 h-4" />, label: 'Admin' },
     { to: '/admin/platform', icon: <ShieldIcon />, label: 'Today downtown' },
 
     { section: 'Network' },
@@ -47,10 +47,11 @@ export default function PartnerDashboardLayout() {
     { to: '/admin/platform/modules', icon: <Sparkles className="w-4 h-4" />, label: 'AI and tools' },
 
     { section: 'Account' },
-    { to: '/admin/promotions', icon: <CreditCard className="w-4 h-4" />, label: 'Plans and billing' },
+    { to: '/partners/pricing', icon: <CreditCard className="w-4 h-4" />, label: 'Pricing' },
+    { to: '/admin/promotions', icon: <CreditCard className="w-4 h-4" />, label: 'Billing and accounts' },
 
     { section: 'About' },
-    { to: '/admin/about', icon: <Ticket className="w-4 h-4" />, label: 'Program guide' },
+    { to: '/admin/about', icon: <Ticket className="w-4 h-4" />, label: 'About' },
     { to: '/admin/developer-engagement', icon: <Building2 className="w-4 h-4" />, label: 'Sponsor view' },
   ];
 
