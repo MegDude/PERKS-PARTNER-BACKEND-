@@ -973,39 +973,39 @@ export function PartnerWorkspaceTemplate(props: Props) {
           </div>
         </Section>
 
-        <Section id="resident-preview" eyebrow="Resident view" title="What residents see" description={`A quick look at the ${workspaceName} experience: useful places, perks, plans, and the signs that point residents there.`}>
-          <div className="shore-read grid gap-5 lg:grid-cols-[1fr_0.72fr]">
-            <div>
+        <Section id="resident-preview" eyebrow="Resident view" title="The resident guide" description={`${workspaceName} as residents experience it: where to start, what to use, what to join, and how they find their way in.`}>
+          <div className="shore-read">
+            <div className="shore-resident-guide">
               <div className="text-[10px] font-semibold uppercase text-[#C8A96A]">{workspaceName} resident guide</div>
               <h3 className="mt-1 text-[18px] font-semibold leading-6 text-[#0B1F33]">{props.profile.propertyName}</h3>
-              <p className="mt-2 text-[12px] leading-5 text-[rgba(11,31,51,0.64)]">{props.profile.residentFacingCopy}</p>
+              <p className="mt-2 max-w-[760px] text-[12px] leading-5 text-[rgba(11,31,51,0.64)]">{props.profile.residentFacingCopy}</p>
               <div className="mt-4 grid gap-0">
                 {[
-                  ['Good first stop', previewAnchors || props.profile.district],
-                  ['Resident perk', previewPerk ? `${previewPerk.partner} · ${previewPerk.offerTitle}` : 'Add the first resident perk'],
+                  ['Start here', previewAnchors || props.profile.district],
+                  ['Perk to show', previewPerk ? `${previewPerk.partner} · ${previewPerk.offerTitle}` : 'Add the first resident perk'],
                   ['Plan to join', previewEvent ? previewEvent.title : 'Add the next resident plan'],
-                  ['How residents find it', previewCode ? previewCode.name : 'Add a building code'],
+                  ['Entry point', previewCode ? previewCode.name : 'Add a building code'],
                 ].map(([label, value]) => (
-                  <div key={label} className="grid grid-cols-[130px_1fr] gap-3 border-t border-[rgba(11,31,51,0.045)] py-1.5 first:border-t-0">
+                  <div key={label} className="grid grid-cols-[112px_1fr] gap-3 py-1.5 sm:grid-cols-[132px_1fr]">
                     <span className="text-[9.5px] font-semibold uppercase leading-4 text-[rgba(11,31,51,0.44)]">{label}</span>
                     <span className="text-[11.5px] font-semibold leading-4 text-[#0B1F33]">{value}</span>
                   </div>
                 ))}
               </div>
-            </div>
-            <div className="grid content-start gap-2">
-              <button type="button" className="shore-button justify-start" onClick={() => toggleFavorite(buzzInsights[0]?.favoriteId || `fav-${workspaceSlug}`)}>
-                <Heart className="h-4 w-4" /> Save this for later
-              </button>
-              <a href="/map?mode=resident&tab=map&filter=All" className="shore-button justify-start">
-                <ArrowUpRight className="h-4 w-4" /> Open the neighborhood map
-              </a>
-              <a href="#perks" className="shore-button justify-start">
-                <ArrowUpRight className="h-4 w-4" /> See {workspaceName} perks
-              </a>
-              <a href="#events" className="shore-button justify-start">
-                <ArrowUpRight className="h-4 w-4" /> See what’s coming up
-              </a>
+              <div className="shore-action-rail mt-4" aria-label={`${workspaceName} resident guide actions`}>
+                <button type="button" className="shore-button" onClick={() => toggleFavorite(buzzInsights[0]?.favoriteId || `fav-${workspaceSlug}`)}>
+                  <Heart className="h-3.5 w-3.5" /> Save
+                </button>
+                <a href="/map?mode=resident&tab=map&filter=All" className="shore-button">
+                  <ArrowUpRight className="h-3.5 w-3.5" /> Map
+                </a>
+                <a href="#perks" className="shore-button">
+                  <ArrowUpRight className="h-3.5 w-3.5" /> Perks
+                </a>
+                <a href="#events" className="shore-button">
+                  <ArrowUpRight className="h-3.5 w-3.5" /> Events
+                </a>
+              </div>
             </div>
           </div>
         </Section>

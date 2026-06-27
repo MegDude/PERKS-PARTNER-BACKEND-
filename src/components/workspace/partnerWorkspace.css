@@ -56,6 +56,25 @@
   color: #0b1f33;
 }
 
+.shore-resident-guide {
+  max-width: 860px;
+}
+
+.shore-action-rail {
+  display: flex;
+  max-width: 100%;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.shore-action-rail .shore-button {
+  min-height: 32px;
+  flex: 0 1 auto;
+  padding-inline: 10px;
+  white-space: nowrap;
+}
+
 .shore-main {
   display: grid;
   gap: clamp(12px, 2vw, 22px);
