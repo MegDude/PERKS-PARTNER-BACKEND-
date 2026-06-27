@@ -2057,8 +2057,13 @@ function getPartnerName(db: Database, partnerId?: string) {
 
 function mapEntityRows(db: Database) {
   const fromLinks = db.entities.MapEntityLink.map((link) => {
-    const location = db.entities.PartnerLocation.find((item) => item.map_entity_id === link.entity_id || item.partner_id === link.partner_id || item.tenant_id === link.tenant_id);
-    const profile = db.entities.PartnerProfile.find((item) => item.partner_id === link.partner_id || item.tenant_id === link.tenant_id);
+    const locationByEntity = db.entities.PartnerLocation.find((item) => item.map_entity_id === link.entity_id);
+    const locationByPartner = link.partner_id ? db.entities.PartnerLocation.find((item) => item.partner_id === link.partner_id) : undefined;
+    const locationByTenant = link.tenant_id ? db.entities.PartnerLocation.find((item) => item.tenant_id === link.tenant_id) : undefined;
+    const location = locationByEntity || locationByPartner || locationByTenant;
+    const profile = link.partner_id
+      ? db.entities.PartnerProfile.find((item) => item.partner_id === link.partner_id) || db.entities.PartnerProfile.find((item) => item.tenant_id === link.tenant_id)
+      : db.entities.PartnerProfile.find((item) => item.tenant_id === link.tenant_id);
     const tenant = db.entities.PlatformTenant.find((item) => item.id === link.tenant_id);
     const analytics = db.entities.PartnerAnalytics.find((item) => item.tenant_id === link.tenant_id || item.workspace_id === link.workspace_id);
     return {
