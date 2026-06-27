@@ -119,7 +119,7 @@ function Field({ label, value, onChange, required = false, placeholder = '' }: {
 }
 
 function SectionCard({ children, className = '' }: { children: React.ReactNode; className?: string }) {
-  return <section className={`border border-[rgba(11,31,51,0.08)] bg-white p-5 shadow-none sm:p-6 ${className}`}>{children}</section>;
+  return <section className={`border border-[rgba(11,31,51,0.08)] bg-white p-5 text-left shadow-none sm:p-6 ${className}`}>{children}</section>;
 }
 
 function ActionLink({ to, children }: { to: string; children: React.ReactNode }) {
@@ -470,7 +470,7 @@ export default function PartnerLifecycle() {
     return (
       <Shell eyebrow="Pricing" title="Partner with the neighborhood." body="Choose your annual plan, add what helps right now, capture the signup details, and move straight into checkout and workspace access.">
         <Progress active={4} />
-        <section className="grid gap-6 xl:grid-cols-[0.86fr_1.14fr]">
+        <section className="grid gap-6 text-left xl:grid-cols-[0.86fr_1.14fr]">
           <SectionCard className="xl:sticky xl:top-6 xl:self-start">
             <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-[#C8A96A]">Be where plans are made</p>
             <h2 className="mt-2 text-2xl font-semibold leading-tight">Start with the plan that fits.</h2>
@@ -506,9 +506,9 @@ export default function PartnerLifecycle() {
                     <tr>
                       <th className="w-[22%] py-2 pr-4">Vertical</th>
                       <th className="w-[28%] py-2 pr-4">Tier</th>
-                      <th className="w-[18%] py-2 pr-4 text-right">Monthly</th>
-                      <th className="w-[20%] py-2 pr-4 text-right">Annual</th>
-                      <th className="py-2 text-right">Choose</th>
+                      <th className="w-[18%] py-2 pr-4 text-left">Monthly</th>
+                      <th className="w-[20%] py-2 pr-4 text-left">Annual</th>
+                      <th className="py-2 text-left">Choose</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[rgba(11,31,51,0.06)]">
@@ -520,10 +520,10 @@ export default function PartnerLifecycle() {
                             {plan.label}
                           </button>
                         </td>
-                        <td className="py-2.5 pr-4 text-right font-semibold">{money(plan.amount)}</td>
-                        <td className="py-2.5 pr-4 text-right font-semibold">{money(annualCost(plan))}</td>
-                        <td className="py-2.5 text-right">
-                          <button type="button" onClick={() => setState((current) => ({ ...current, organizationType: plan.partnerType, plan }))} className={`min-h-7 px-2 text-[10px] font-semibold uppercase ${state.plan.key === plan.key ? 'text-[#C8A96A]' : 'text-[#0B1F33]'}`}>
+                        <td className="py-2.5 pr-4 text-left font-semibold">{money(plan.amount)}</td>
+                        <td className="py-2.5 pr-4 text-left font-semibold">{money(annualCost(plan))}</td>
+                        <td className="py-2.5 text-left">
+                          <button type="button" onClick={() => setState((current) => ({ ...current, organizationType: plan.partnerType, plan }))} className={`min-h-7 px-0 text-left text-[10px] font-semibold uppercase ${state.plan.key === plan.key ? 'text-[#C8A96A]' : 'text-[#0B1F33]'}`}>
                             {state.plan.key === plan.key ? 'Selected' : 'Select'}
                           </button>
                         </td>
@@ -541,7 +541,7 @@ export default function PartnerLifecycle() {
                 <div className="mt-4 grid gap-3">
                   {visiblePlans.map((plan) => (
                     <button key={plan.key} type="button" onClick={() => setState((current) => ({ ...current, plan }))} className={`border-t border-[rgba(11,31,51,0.06)] py-3 text-left ${state.plan.key === plan.key ? 'text-[#0B1F33]' : 'text-[rgba(11,31,51,0.66)]'}`}>
-                      <span className="flex items-center justify-between gap-3">
+                      <span className="grid gap-1">
                         <strong className="text-sm">{plan.label}</strong>
                         <span className="text-xs font-semibold">{money(plan.amount)}/mo</span>
                       </span>
@@ -702,9 +702,9 @@ export default function PartnerLifecycle() {
 
 function Shell({ eyebrow, title, body, children }: { eyebrow: string; title: string; body: string; children: React.ReactNode }) {
   return (
-    <main className="min-h-screen bg-white text-[#0B1F33]">
-      <div className="mx-auto max-w-[1440px] px-5 py-8 sm:px-8 lg:py-10">
-        <div className="mb-8 flex flex-wrap items-center justify-between gap-3 border-b border-[rgba(11,31,51,0.08)] pb-5">
+    <main className="min-h-screen bg-white text-left text-[#0B1F33]">
+      <div className="w-full max-w-none px-4 py-6 sm:px-5 lg:px-6 lg:py-8">
+        <div className="mb-7 flex flex-wrap items-center justify-between gap-3 border-b border-[rgba(11,31,51,0.08)] pb-5">
           <Link to="/admin" className="text-sm font-semibold">Downtown Perks Platform</Link>
           <nav className="flex flex-wrap gap-3 text-xs font-semibold text-[rgba(11,31,51,0.62)]">
             <Link to="/partners">Partners</Link>
@@ -713,12 +713,12 @@ function Shell({ eyebrow, title, body, children }: { eyebrow: string; title: str
             <Link to="/admin">Admin</Link>
           </nav>
         </div>
-        <header className="mb-8 grid gap-5 lg:grid-cols-[1fr_420px] lg:items-end">
+        <header className="mb-7 max-w-5xl text-left">
           <div>
             <p className="text-[11px] font-bold uppercase tracking-[0.1em] text-[#C8A96A]">{eyebrow}</p>
             <h1 className="mt-3 max-w-4xl text-4xl font-semibold leading-tight tracking-normal sm:text-5xl">{title}</h1>
           </div>
-          <p className="text-sm leading-6 text-[rgba(11,31,51,0.66)]">{body}</p>
+          <p className="mt-4 max-w-3xl text-sm leading-6 text-[rgba(11,31,51,0.66)]">{body}</p>
         </header>
         {children}
       </div>
@@ -741,7 +741,7 @@ function Progress({ active }: { active: number }) {
 
 function Line({ label, value, strong = false }: { label: string; value: React.ReactNode; strong?: boolean }) {
   return (
-    <div className="mt-4 flex items-center justify-between gap-4 border-t border-[rgba(11,31,51,0.08)] pt-4 text-sm">
+    <div className="mt-4 grid gap-1 border-t border-[rgba(11,31,51,0.08)] pt-4 text-left text-sm sm:grid-cols-[150px_minmax(0,1fr)] sm:gap-4">
       <span className="text-[rgba(11,31,51,0.58)]">{label}</span>
       <span className={strong ? 'font-semibold text-[#0B1F33]' : 'font-medium'}>{value}</span>
     </div>
