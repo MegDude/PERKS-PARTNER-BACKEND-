@@ -15,6 +15,20 @@ type WorkspaceSeed = {
   plan?: string;
 };
 
+function residentCopyForSeed(seed: WorkspaceSeed) {
+  const anchors = seed.anchors.slice(0, 2).join(' and ') || 'downtown';
+  if (seed.type.toLowerCase().includes('property') || seed.type.toLowerCase().includes('residential')) {
+    return `${seed.name} helps residents turn a regular day into a better one: what to try nearby, what to save for later, and what is worth saying yes to this week.`;
+  }
+  if (seed.type.toLowerCase().includes('hotel')) {
+    return `${seed.name} gives guests an easy way to find the places, events, and offers that make downtown feel close at hand.`;
+  }
+  if (seed.type.toLowerCase().includes('civic')) {
+    return `${seed.name} keeps downtown neighbors close to the updates, meetings, and local work that shape the blocks around ${anchors}.`;
+  }
+  return `${seed.name} makes it easier to choose something good nearby, keep it for later, and know what is happening around ${anchors}.`;
+}
+
 type WorkspaceRecords = {
   partner?: any;
   tenant?: any;
@@ -283,7 +297,7 @@ export function buildPartnerWorkspaceFromSeed(seed: WorkspaceSeed): PartnerWorks
       nearbyAnchors: seed.anchors,
       contactPerson: `${seed.name} team`,
       managerNotes: seed.managerNotes,
-      residentFacingCopy: seed.description,
+      residentFacingCopy: residentCopyForSeed(seed),
     },
     qrs: [
       { id: `qr-${id}-profile`, name: 'Profile code', placement: 'Partner profile', destination: `/workspaces/${id}`, status: 'Active', scans: metrics.scans, lastScan: 'Today', conversionSignal: `${metrics.saves} people saved or opened this page` },
@@ -291,8 +305,8 @@ export function buildPartnerWorkspaceFromSeed(seed: WorkspaceSeed): PartnerWorks
       { id: `qr-${id}-report`, name: 'Report link', placement: 'Monthly report', destination: `/reports?partner=${id}`, status: 'Draft', scans: 0, lastScan: 'Not sent', conversionSignal: 'Ready for the next report' },
     ],
     perks: [
-      { id: `perk-${id}-feature`, partner: seed.name, offerTitle: `${seed.name} feature`, description: `A clean partner feature for ${seed.name} that can be used in resident, visitor, or stakeholder campaigns.`, eligibility: 'Downtown Perks audience', startDate: '2026-06-26', endDate: '2026-09-30', status: 'Active', saves: metrics.saves, redemptions: metrics.redemptions, qrScans: metrics.scans, location: seed.address || 'Downtown Austin', calendarDate: '2026-07-10T17:00:00' },
-      { id: `perk-${id}-welcome`, partner: seed.name, offerTitle: 'Welcome moment', description: 'A starter activation for people discovering this partner through Downtown Perks.', eligibility: 'Partner audience', startDate: '2026-07-01', endDate: '2026-10-01', status: 'Scheduled', saves: Math.round(metrics.saves * 0.55), redemptions: Math.round(metrics.redemptions * 0.4), qrScans: Math.round(metrics.scans * 0.38), location: seed.address || 'Downtown Austin', calendarDate: '2026-07-20T17:00:00' },
+      { id: `perk-${id}-feature`, partner: seed.name, offerTitle: `${seed.name} pick`, description: `A clear reason to choose ${seed.name} when someone is looking for a good downtown plan.`, eligibility: 'Downtown Perks members', startDate: '2026-06-26', endDate: '2026-09-30', status: 'Active', saves: metrics.saves, redemptions: metrics.redemptions, qrScans: metrics.scans, location: seed.address || 'Downtown Austin', calendarDate: '2026-07-10T17:00:00' },
+      { id: `perk-${id}-welcome`, partner: seed.name, offerTitle: 'A first reason to stop by', description: `A simple welcome offer for people seeing ${seed.name} through Downtown Perks for the first time.`, eligibility: 'Downtown Perks members', startDate: '2026-07-01', endDate: '2026-10-01', status: 'Scheduled', saves: Math.round(metrics.saves * 0.55), redemptions: Math.round(metrics.redemptions * 0.4), qrScans: Math.round(metrics.scans * 0.38), location: seed.address || 'Downtown Austin', calendarDate: '2026-07-20T17:00:00' },
     ],
     events: [
       { id: `event-${id}-intro`, title: `${seed.name} intro`, dateTime: '2026-07-18T23:00:00', location: seed.address || 'Downtown Austin', description: `A simple activation moment for ${seed.name}.`, rsvpCount: Math.max(12, Math.round(metrics.saves * 0.45)), capacity: 90, status: 'Published', linkedQR: 'Profile code', linkedCampaign: 'Welcome campaign' },

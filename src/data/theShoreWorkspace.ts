@@ -37,7 +37,7 @@ export const theShoreWorkspace: PartnerWorkspaceData = {
     nearbyAnchors: ['Rainey Street', 'Lady Bird Lake', 'Hotel Van Zandt', 'Waterloo Greenway', 'Downtown Austin'],
     contactPerson: 'The Shore property team',
     managerNotes: 'Start where residents already are: the lobby, elevator, leasing office, and move-in email.',
-    residentFacingCopy: 'The Shore gives residents an easy way to find what is nearby, worth saving, and happening now.',
+    residentFacingCopy: 'Step outside with a better plan: coffee before the lake, dinner on Rainey, a lobby-hour drink next door, and resident perks made for The Shore.',
   },
   qrs: [
     { id: 'qr-lobby', name: 'Lobby welcome code', placement: 'Lobby', destination: '/map?property=the-shore&source=lobby', status: 'Active', scans: 128, lastScan: 'Today, 9:42 AM', conversionSignal: '34 residents saved a nearby place' },

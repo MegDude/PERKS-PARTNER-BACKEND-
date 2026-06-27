@@ -180,6 +180,10 @@ export function PartnerWorkspaceTemplate(props: Props) {
   const setupProgress = calculateSetupProgress(props, lead);
   const activePerks = perks.filter((perk) => perk.status === 'Active').length;
   const upcomingEvents = events.filter((event) => event.status !== 'Draft').length;
+  const previewAnchors = props.profile.nearbyAnchors.slice(0, 2).join(' and ');
+  const previewPerk = perks.find((perk) => perk.status === 'Active') || perks[0];
+  const previewEvent = events.find((event) => event.status === 'Published' || event.status === 'Scheduled') || events[0];
+  const previewCode = props.qrs.find((qr) => qr.status === 'Active') || props.qrs[0];
   const reportSnapshot = useMemo(() => {
     const qrScans = props.qrs.reduce((total, qr) => total + qr.scans, 0);
     const residentActivations = Math.round(residents.length * 23.4);
@@ -841,31 +845,31 @@ export function PartnerWorkspaceTemplate(props: Props) {
           </div>
         </Section>
 
-        <Section id="resident-preview" eyebrow="Resident view" title="What residents see" description="A quick preview of the card, map links, nearby places, and one-tap actions residents can use from the lobby, elevator, or move-in email.">
+        <Section id="resident-preview" eyebrow="Resident view" title="What residents see" description={`A quick look at the ${workspaceName} view: useful places, resident perks, plans worth joining, and the building signs that point people there.`}>
           <div className="shore-card grid gap-8 lg:grid-cols-[0.85fr_1.15fr]">
             <div>
-              <div className="text-[11px] font-bold uppercase text-[#C8A96A]">Resident card</div>
+              <div className="text-[11px] font-bold uppercase text-[#C8A96A]">{workspaceName} resident guide</div>
               <h3 className="mt-2 text-xl font-semibold">{props.profile.propertyName}</h3>
               <p className="mt-2 text-sm leading-6 text-[rgba(11,31,51,0.66)]">{props.profile.residentFacingCopy}</p>
               <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
-                <span>Nearby: Hotel Van Zandt, Rainey Street</span>
-                <span>Next up: Mixer, Rainey Night Out</span>
-                <span>Resident card: Ready</span>
-                <span>Entry point: Lobby code</span>
+                <span>Good first stop: {previewAnchors || props.profile.district}</span>
+                <span>Resident perk: {previewPerk ? `${previewPerk.partner} · ${previewPerk.offerTitle}` : 'Add the first resident perk'}</span>
+                <span>Plan to join: {previewEvent ? previewEvent.title : 'Add the next resident plan'}</span>
+                <span>How residents find it: {previewCode ? previewCode.name : 'Add a building code'}</span>
               </div>
             </div>
             <div className="grid gap-2 sm:grid-cols-2">
               <button type="button" className="shore-button justify-start" onClick={() => toggleFavorite('fav-van-zandt')}>
-                <Heart className="h-4 w-4" /> Save a nearby place
+                <Heart className="h-4 w-4" /> Save this for later
               </button>
               <a href="/map?mode=resident&tab=map&filter=All" className="shore-button justify-start">
-                <ArrowUpRight className="h-4 w-4" /> Open the resident map
+                <ArrowUpRight className="h-4 w-4" /> Open the neighborhood map
               </a>
               <a href="#perks" className="shore-button justify-start">
-                <ArrowUpRight className="h-4 w-4" /> See resident perks
+                <ArrowUpRight className="h-4 w-4" /> See The Shore perks
               </a>
               <a href="#events" className="shore-button justify-start">
-                <ArrowUpRight className="h-4 w-4" /> See events
+                <ArrowUpRight className="h-4 w-4" /> See what’s coming up
               </a>
             </div>
           </div>
