@@ -308,9 +308,19 @@ export default function BackendWorkspace() {
           <p className="mt-3 text-sm leading-6 text-[rgba(11,31,51,0.62)]">
             People find a place or offer, take part, and the results show up clearly enough to make the next note better.
           </p>
-          <div className="mt-4 flex flex-wrap gap-2">
-            {['Find it', 'Take part', 'See what happened', 'Share the result', 'Make it better'].map((item) => (
-              <span key={item} className="border border-[rgba(11,31,51,0.08)] px-3 py-2 text-xs font-semibold text-[#0B1F33]">{item}</span>
+          <div className="mt-4 grid gap-0">
+            {[
+              { label: 'Find it', detail: 'Open the live downtown view.', to: '/admin/platform' },
+              { label: 'Take part', detail: 'Review events and resident actions.', to: '/admin/events' },
+              { label: 'See what happened', detail: 'Read performance and activity.', to: '/admin/dashboard' },
+              { label: 'Share the result', detail: 'Open reports for partner-ready summaries.', to: '/admin/reports' },
+              { label: 'Make it better', detail: 'Adjust offers, notes, and follow-ups.', to: '/admin/perks' },
+            ].map((item) => (
+              <Link key={item.label} to={item.to} className="grid min-h-9 grid-cols-[130px_1fr_auto] items-center gap-3 border-t border-[rgba(11,31,51,0.045)] py-1.5 text-left text-[12px] hover:text-[#C8A96A] first:border-t-0">
+                <span className="font-semibold text-[#0B1F33]">{item.label}</span>
+                <span className="text-[11px] leading-4 text-[rgba(11,31,51,0.58)]">{item.detail}</span>
+                <ArrowRight className="h-3.5 w-3.5 text-[#C8A96A]" />
+              </Link>
             ))}
           </div>
           <div className="mt-5 flex flex-wrap gap-3">
