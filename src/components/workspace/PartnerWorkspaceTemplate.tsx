@@ -1012,7 +1012,7 @@ export function PartnerWorkspaceTemplate(props: Props) {
               <span className="shore-brand-word">Downtown Perks</span>
             </a>
             <div className="shore-header-actions">
-              <span className="shore-header-title">Partner workspace</span>
+              <span className="shore-header-title">{isLegendsResidentialLayer ? 'Real estate workspace' : 'Partner workspace'}</span>
               <div className="shore-header-status">{props.partner.status}</div>
               <button
                 type="button"

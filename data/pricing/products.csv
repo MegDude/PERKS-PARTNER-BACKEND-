@@ -1,0 +1,54 @@
+id,Name,Date (UTC),Description,Url,Tax Code,family (metadata),tierId (metadata),kind (metadata),partnerType (metadata)
+prod_UmY1ueMFUAHyJf,Property Basic Subscription,2026-06-27 16:18,,,,,,,
+prod_UmY1Vqcc3Paiag,Property Plus Subscription,2026-06-27 16:17,,,,,,,
+prod_Uj7z8iZsGG0398,Property Pro Subscription,2026-06-18 13:11,,,,,,,
+prod_UhLvbegqI9K5ZD,AddOn/Support/Custom Partner Report,2026-06-13 19:27,,,,Support,,addon,
+prod_UhLvetVT4sr0pz,AddOn/Support/Building Placement Pack,2026-06-13 19:27,,,,Support,,addon,
+prod_UhLvNhhl60GDvh,AddOn/Support/Campaign Launch Kit,2026-06-13 19:27,,,,Support,,addon,
+prod_UhLvzRHlgVaFBO,AddOn/Support/Survey Pulse,2026-06-13 19:27,,,,Support,,addon,
+prod_UhLvxoRFt72W2k,AddOn/Sponsorship/Seasonal Sponsor,2026-06-13 19:27,,,,Sponsorship,,addon,
+prod_UhLvnHI6oA4miF,AddOn/Sponsorship/District Sponsor,2026-06-13 19:27,,,,Sponsorship,,addon,
+prod_UhLvWaoXkuDTfN,AddOn/Activation/Street Team Activation (Full Day),2026-06-13 19:27,,,,Activation,,addon,
+prod_UhLv3FnAn3Jdgs,AddOn/Activation/Street Team Activation (Half Day),2026-06-13 19:27,,,,Activation,,addon,
+prod_UhLuxPK5HTqQmt,AddOn/Activation/Multi-Location Activation,2026-06-13 19:27,,,,Activation,,addon,
+prod_UhLu9BrbgvsojL,AddOn/Activation/Property Activation,2026-06-13 19:27,,,,Activation,,addon,
+prod_UhLuwU5utttSsA,AddOn/Activation/In-Venue Activation,2026-06-13 19:27,,,,Activation,,addon,
+prod_UhLumGkoATCyPt,Analytics Pro Add On,2026-06-13 19:27,,,,Analytics,,addon,
+prod_UhLumngLTkgq0B,Analytics Plus Add On,2026-06-13 19:27,,,,Analytics,,addon,
+prod_UhLuvvJZCIM6vV,AddOn/Surveys/Custom Research Project,2026-06-13 19:27,,,,Surveys,,addon,
+prod_UhLuSnAYaGPZtb,AddOn/Surveys/Survey Series,2026-06-13 19:27,,,,Surveys,,addon,
+prod_UhLu65S5NsDrtC,AddOn/Surveys/Single Survey,2026-06-13 19:27,,,,Surveys,,addon,
+prod_UhLuR7nfP9y4V2,"AddOn/Broadcast/SMS Broadcast (up to 5,000)",2026-06-13 19:27,,,,Broadcast,,addon,
+prod_UhLud5hy0p68l4,"AddOn/Broadcast/SMS Broadcast (up to 2,500)",2026-06-13 19:27,,,,Broadcast,,addon,
+prod_UhLuxEe2Xt4mBk,AddOn/Broadcast/SMS Broadcast (up to 500),2026-06-13 19:27,,,,Broadcast,,addon,
+prod_UhLuzB1NjXfkNz,AddOn/Broadcast/Nearby Broadcast (Downtown),2026-06-13 19:27,,,,Broadcast,,addon,
+prod_UhLuB00ofP7Pc8,AddOn/Broadcast/Nearby Broadcast (District),2026-06-13 19:27,,,,Broadcast,,addon,
+prod_UhLumwsNj5qbN4,AddOn/Broadcast/Nearby Broadcast (10-min walk),2026-06-13 19:27,,,,Broadcast,,addon,
+prod_UhLurg2aMH1gWP,AddOn/Broadcast/Nearby Broadcast (5-min walk),2026-06-13 19:27,,,,Broadcast,,addon,
+prod_UhLulOpnb5m3q4,AddOn/Events/Sponsored Event,2026-06-13 19:27,,,,Events,,addon,
+prod_UhLuzn5aJ4egHH,AddOn/Events/Featured Event,2026-06-13 19:27,,,,Events,,addon,
+prod_UhLuNdyFEL2rSh,AddOn/Events/Event Boost,2026-06-13 19:27,,,,Events,,addon,
+prod_UhLuH3OMW5nFdV,AddOn/Campaigns/Monthly Unlimited Perk Campaigns,2026-06-13 19:27,,,,Campaigns,,addon,
+prod_UhLu7iGkXYnFHZ,AddOn/Campaigns/Sponsored Campaign,2026-06-13 19:27,,,,Campaigns,,addon,
+prod_UhLuMiOzoxClRh,AddOn/Campaigns/Featured Campaign,2026-06-13 19:26,,,,Campaigns,,addon,
+prod_UhLusGabygv156,AddOn/Campaigns/Perk Campaign,2026-06-13 19:26,,,,Campaigns,,addon,
+prod_UhLug0xlaYd6S8,AddOn/Placements/District Featured (90d),2026-06-13 19:26,,,,Placements,,addon,
+prod_UhLuCYVpeS9afw,AddOn/Placements/District Featured (30d),2026-06-13 19:26,,,,Placements,,addon,
+prod_UhLuM2J6h4EBZc,AddOn/Placements/Category Featured (90d),2026-06-13 19:26,,,,Placements,,addon,
+prod_UhLuINCjO0Oc1u,AddOn/Placements/Category Featured (30d),2026-06-13 19:26,,,,Placements,,addon,
+prod_UhLuHKJ4asAUe7,AddOn/Placements/Category Featured (7d),2026-06-13 19:26,,,,Placements,,addon,
+prod_UhLunUqogUBOHh,Resident Join (Building Not Member),2026-06-13 19:26,,,,Resident,,addon,
+prod_UhLug77svIcgsH,Civic Pro Subscription,2026-06-13 19:26,,,,,civic_pro,tier,civic
+prod_UhLunfNKPIVaia,Civic Basic Subscription,2026-06-13 19:26,,,,,civic_plus,tier,civic
+prod_UhLuKy1gPMugwe,Civic Plus Subscription,2026-06-13 19:26,,,,,civic_basic,tier,civic
+prod_UhLuzZSj85X0uj,Brand Pro Subscription,2026-06-13 19:26,,,,,brand_campaigns,tier,brand
+prod_UhLuVTPyC7I5W8,Brand Basic Subscription,2026-06-13 19:26,,,,,brand_access,tier,brand
+prod_UhLu1ygnujHJ8U,Hospitality Pro,2026-06-13 19:26,,,,,hotel_pro,tier,hotel
+prod_UhLuf1HDIbpJl2,Hospitality Starter,2026-06-13 19:26,,,,,hotel_starter,tier,hotel
+prod_UhLuho6URMwtYS,Property Pro Subscription,2026-06-13 19:26,,,,,property_pro,tier,property
+prod_UhLub6GbOl57Fy,Property Plus Subscription,2026-06-13 19:26,,,,,property_resident_plus,tier,property
+prod_UhLutyH3JzC9lA,Property Basic Subscription,2026-06-13 19:26,,,,,property_basic_building,tier,property
+prod_UhLuUrDH1tZKpb,Venue Pro Subscription,2026-06-13 19:26,,,,,venue_pro,tier,venue
+prod_UhLujcduCS7Eig,Venue Growth Subscription,2026-06-13 19:26,,,,,venue_growth,tier,venue
+prod_UhLuHhif5Pxdlt,Venue Basic Subscription,2026-06-13 19:26,,,,,venue_basic,tier,venue
+prod_UhLuq71ev9yPVm,Tier/venue/Free Listing,2026-06-13 19:26,,,,,venue_free,tier,venue
