@@ -87,6 +87,13 @@ type EntityName =
   | "ReferenceImage"
   | "BatchJob"
   | "ImageExport"
+  | "ContentEntity"
+  | "ContentCollection"
+  | "ContentImageAsset"
+  | "ContentRelationship"
+  | "ContentPublishingWorkflow"
+  | "ContentRevision"
+  | "WalkingRoute"
   | "PartnerOutreachContact"
   | "PartnerOutreachCampaign"
   | "PartnerOutreachStep"
@@ -164,6 +171,13 @@ const entityNames: EntityName[] = [
   "ReferenceImage",
   "BatchJob",
   "ImageExport",
+  "ContentEntity",
+  "ContentCollection",
+  "ContentImageAsset",
+  "ContentRelationship",
+  "ContentPublishingWorkflow",
+  "ContentRevision",
+  "WalkingRoute",
   "PartnerOutreachContact",
   "PartnerOutreachCampaign",
   "PartnerOutreachStep",
@@ -225,10 +239,333 @@ const mapImportSources = {
   intelligenceZip: "/Users/megdude/Downloads/BACKEND/WITH IMAGES downtown-perks-intelligence.zip",
 };
 
+const stage11Attractions = [
+  {
+    name: "Lady Bird Lake",
+    category: "park",
+    district: "Zilker / Barton Springs",
+    description: "Austin's signature lake for paddleboarding, kayaking, trail walks, and skyline views.",
+    hours: "Public access generally 5 a.m.-10 p.m.",
+    photoIdeas: ["Skyline from Lamar Pedestrian Bridge", "Paddleboards on calm water", "Sunset over downtown"],
+    tags: ["water", "skyline", "walks", "outdoor"],
+  },
+  {
+    name: "Barton Springs Pool",
+    category: "park",
+    district: "Zilker",
+    description: "Spring-fed swimming pool with year-round cool water and a classic Austin summer rhythm.",
+    hours: "Usually 5 a.m.-10 p.m.; limited Thursday hours.",
+    photoIdeas: ["Clear spring water", "Limestone edges", "Summer lifestyle scenes"],
+    tags: ["swimming", "families", "outdoor", "summer"],
+  },
+  {
+    name: "Texas State Capitol",
+    category: "museum",
+    district: "Downtown",
+    description: "Historic Texas Capitol with public grounds, architecture, and free tours.",
+    hours: "Mon-Fri 7 a.m.-8 p.m.; Sat-Sun 9 a.m.-8 p.m.",
+    photoIdeas: ["Capitol dome", "Grand staircase", "Congress Avenue exterior"],
+    tags: ["history", "architecture", "civic"],
+  },
+  {
+    name: "Barton Creek Greenbelt",
+    category: "park",
+    district: "South Austin / Barton Creek",
+    description: "Hiking, biking, limestone cliffs, and seasonal swimming close to the city.",
+    hours: "Generally 5 a.m.-10 p.m.",
+    photoIdeas: ["Twin Falls", "Limestone cliffs", "Trail crossing"],
+    tags: ["hiking", "biking", "water", "outdoor"],
+  },
+  {
+    name: "Peter Pan Mini Golf",
+    category: "park",
+    district: "South Lamar / Zilker",
+    description: "Historic miniature golf course known for colorful sculptures and an easy-going Austin feel.",
+    hours: "Sun-Thu 9 a.m.-11 p.m.; Fri-Sat 9 a.m.-midnight.",
+    photoIdeas: ["Giant T-Rex", "Colorful course details", "Night shots"],
+    tags: ["family", "date-night", "play"],
+  },
+  {
+    name: "Chicken Shit Bingo at Little Longhorn Saloon",
+    category: "music",
+    district: "Burnet Road / North Austin",
+    description: "A classic Sunday Austin tradition with live music, a small saloon, and a very local sense of humor.",
+    hours: "Sunday 4 p.m.-8 p.m.",
+    photoIdeas: ["Live country band", "Vintage saloon", "Crowd reactions"],
+    tags: ["country", "local-favorite", "sunday"],
+  },
+  {
+    name: "Congress Avenue Bat Bridge",
+    category: "park",
+    district: "Downtown",
+    description: "A sunset gathering point to watch the urban bat colony emerge over Lady Bird Lake.",
+    hours: "Sunset March-November.",
+    photoIdeas: ["Bats against sunset", "Bridge silhouettes", "Crowd watching"],
+    tags: ["sunset", "wildlife", "visitor-favorite"],
+  },
+  {
+    name: "Austin City Limits Live Taping",
+    category: "music",
+    district: "Downtown",
+    description: "Legendary TV music performances and special tapings in the heart of downtown.",
+    hours: "Varies by taping.",
+    photoIdeas: ["Stage lighting", "Marquee", "Audience atmosphere"],
+    tags: ["live-music", "acl", "downtown"],
+  },
+  {
+    name: "Waterloo Park",
+    category: "park",
+    district: "Downtown",
+    description: "Downtown park with skyline views, Moody Amphitheater, trails, and public programming.",
+    hours: "5 a.m.-10 p.m.",
+    photoIdeas: ["Skyline reflections", "Moody Amphitheater", "Landscaped lawns"],
+    tags: ["park", "events", "waterloo"],
+  },
+  {
+    name: "Zilker Park",
+    category: "park",
+    district: "Zilker",
+    description: "Austin's flagship urban park for festivals, picnics, trail access, and skyline views.",
+    hours: "5 a.m.-10 p.m.",
+    photoIdeas: ["Great Lawn", "Skyline", "Picnic scenes"],
+    tags: ["festival", "family", "outdoor"],
+  },
+  {
+    name: "Pease Park",
+    category: "park",
+    district: "Central Austin",
+    description: "Shaded urban park with trails, play spaces, and public art.",
+    hours: "5 a.m.-10 p.m.",
+    photoIdeas: ["Treehouse", "Troll sculpture", "Shaded trails"],
+    tags: ["family", "art", "walking"],
+  },
+  {
+    name: "Mayfield Park & Preserve",
+    category: "park",
+    district: "West Austin",
+    description: "Historic gardens and preserve known for resident peacocks and quiet paths.",
+    hours: "Typical daylight hours.",
+    photoIdeas: ["Peacocks", "Gardens", "Historic cottage"],
+    tags: ["gardens", "quiet", "photography"],
+  },
+  {
+    name: "Mount Bonnell",
+    category: "park",
+    district: "West Austin",
+    description: "A classic overlook with panoramic views of the Colorado River and the city.",
+    hours: "Generally sunrise to sunset.",
+    photoIdeas: ["Sunset panorama", "River bend", "Overlook portraits"],
+    tags: ["views", "sunset", "visitor-favorite"],
+  },
+  {
+    name: "Austin Central Library",
+    category: "museum",
+    district: "Downtown / Seaholm",
+    description: "Award-winning library with a rooftop garden, public gathering spaces, and downtown views.",
+    hours: "Mon-Thu 9 a.m.-8 p.m.; Fri 9 a.m.-6 p.m.; Sat 10 a.m.-6 p.m.; Sun 12-6 p.m.",
+    photoIdeas: ["Modern architecture", "Rooftop garden", "Interior staircase"],
+    tags: ["architecture", "seaholm", "workday"],
+  },
+  {
+    name: "The Continental Club",
+    category: "music",
+    district: "South Congress",
+    description: "A legendary live music room with intimate shows and a deep Austin history.",
+    hours: "Varies by performance.",
+    photoIdeas: ["Neon sign", "Small stage", "Live performers"],
+    tags: ["live-music", "south-congress", "nightlife"],
+  },
+  {
+    name: "Broken Spoke",
+    category: "music",
+    district: "South Lamar",
+    description: "Historic honky-tonk with dance lessons, country music, and a real Austin dance floor.",
+    hours: "Varies.",
+    photoIdeas: ["Dance floor", "Cowboy boots", "Neon exterior"],
+    tags: ["country", "dancing", "local-favorite"],
+  },
+  {
+    name: "Mohawk Austin",
+    category: "music",
+    district: "Red River District",
+    description: "Indoor and outdoor music venue for touring acts and Austin nightlife.",
+    hours: "Varies by event.",
+    photoIdeas: ["Balcony crowd", "Outdoor stage", "Concert lighting"],
+    tags: ["red-river", "live-music", "nightlife"],
+  },
+  {
+    name: "Paramount Theatre",
+    category: "music",
+    district: "Downtown",
+    description: "Historic 1915 theater hosting concerts, comedy, film, and special performances.",
+    hours: "Varies by show.",
+    photoIdeas: ["Historic marquee", "Ornate interior", "Evening exterior"],
+    tags: ["theater", "downtown", "historic"],
+  },
+  {
+    name: "Antone's Nightclub",
+    category: "music",
+    district: "Downtown",
+    description: "Famous blues club with an intimate room and a long Austin music legacy.",
+    hours: "Varies.",
+    photoIdeas: ["Stage performance", "Blues club interior", "Crowd closeups"],
+    tags: ["blues", "downtown", "nightlife"],
+  },
+  {
+    name: "Hole in the Wall",
+    category: "music",
+    district: "UT Area",
+    description: "Classic campus bar with live music and a casual Austin crowd.",
+    hours: "Varies.",
+    photoIdeas: ["Small stage", "Bar exterior", "College crowd"],
+    tags: ["campus", "live-music", "bar"],
+  },
+  {
+    name: "Donn's Depot",
+    category: "music",
+    district: "Downtown",
+    description: "Beloved piano bar in a converted rail depot.",
+    hours: "Varies.",
+    photoIdeas: ["Train depot exterior", "Live piano", "Vintage details"],
+    tags: ["piano", "local-favorite", "nightlife"],
+  },
+  {
+    name: "The Parish",
+    category: "music",
+    district: "East Austin",
+    description: "Modern live music venue with an intimate feel and strong touring calendar.",
+    hours: "Varies by event.",
+    photoIdeas: ["Concert crowd", "Industrial interior", "Stage lights"],
+    tags: ["east-austin", "live-music", "concerts"],
+  },
+  {
+    name: "Historic Scoot Inn",
+    category: "music",
+    district: "East Austin",
+    description: "Outdoor concert venue with string lights, patio energy, and touring shows.",
+    hours: "Varies.",
+    photoIdeas: ["Outdoor stage", "String lights", "Crowd in courtyard"],
+    tags: ["outdoor", "east-austin", "concerts"],
+  },
+  {
+    name: "Elephant Room",
+    category: "music",
+    district: "Downtown",
+    description: "Underground jazz club with cocktails and intimate nightly music.",
+    hours: "Varies.",
+    photoIdeas: ["Low-light jazz", "Intimate tables", "Band closeups"],
+    tags: ["jazz", "downtown", "cocktails"],
+  },
+  {
+    name: "Bullock Texas State History Museum",
+    category: "museum",
+    district: "Capitol District",
+    description: "Museum exploring Texas history through exhibits, film, and public programming.",
+    hours: "Daily 10 a.m.-5 p.m.; free first Sundays.",
+    photoIdeas: ["Texas star sculpture", "Museum facade", "Exhibit details"],
+    tags: ["history", "museum", "family"],
+  },
+  {
+    name: "Blanton Museum of Art",
+    category: "museum",
+    district: "UT Campus",
+    description: "Major art museum on the University of Texas campus with galleries and Ellsworth Kelly's Austin.",
+    hours: "Tue-Sat 10 a.m.-5 p.m.; Sun 1-5 p.m.",
+    photoIdeas: ["Ellsworth Kelly's Austin", "Gallery interiors", "Museum exterior"],
+    tags: ["art", "museum", "campus"],
+  },
+  {
+    name: "Canopy Austin",
+    category: "museum",
+    district: "East Austin",
+    description: "Creative campus of artist studios, galleries, murals, and local makers.",
+    hours: "Varies by gallery.",
+    photoIdeas: ["Industrial studios", "Murals", "Artists at work"],
+    tags: ["art", "east-austin", "creative"],
+  },
+  {
+    name: "McLennon Pen Co.",
+    category: "museum",
+    district: "Downtown",
+    description: "Contemporary art gallery with rotating exhibitions and a downtown point of view.",
+    hours: "Varies.",
+    photoIdeas: ["Minimal gallery interiors", "Exhibition details", "Street frontage"],
+    tags: ["art", "gallery", "downtown"],
+  },
+  {
+    name: "West Chelsea Contemporary",
+    category: "museum",
+    district: "Downtown",
+    description: "Contemporary art gallery with museum-quality exhibitions and collector-focused programming.",
+    hours: "Varies.",
+    photoIdeas: ["Large-scale artwork", "Gallery walls", "Opening night"],
+    tags: ["art", "gallery", "downtown"],
+  },
+  {
+    name: "Creek Show",
+    category: "museum",
+    district: "Downtown",
+    description: "Seasonal outdoor public art installation along Waller Creek.",
+    hours: "Seasonal fall evenings.",
+    photoIdeas: ["Illuminated installations", "Night walk", "Creek reflections"],
+    tags: ["public-art", "seasonal", "night"],
+  },
+  {
+    name: "Hope Outdoor Gallery",
+    category: "park",
+    district: "Airport Area",
+    description: "Interactive outdoor graffiti park and mural destination.",
+    hours: "Wed-Sun 10 a.m.-6 p.m.",
+    photoIdeas: ["Colorful murals", "Artists painting", "Wide outdoor views"],
+    tags: ["murals", "art", "photography"],
+  },
+] as const;
+
+const stage11Collections = [
+  { id: "collection_best_coffee", title: "Best coffee", filters: ["coffee", "workday", "morning"] },
+  { id: "collection_happy_hour", title: "Happy hour", filters: ["food", "music", "nightlife"] },
+  { id: "collection_dog_friendly", title: "Dog friendly", filters: ["park", "outdoor", "walking"] },
+  { id: "collection_date_night", title: "Date night", filters: ["music", "food", "art"] },
+  { id: "collection_family", title: "Family", filters: ["park", "museum", "family"] },
+  { id: "collection_architecture", title: "Architecture", filters: ["architecture", "historic", "downtown"] },
+  { id: "collection_music", title: "Music", filters: ["music", "live-music", "nightlife"] },
+  { id: "collection_art", title: "Art", filters: ["museum", "art", "gallery", "public-art"] },
+  { id: "collection_hidden_gems", title: "Hidden gems", filters: ["local-favorite", "quiet", "creative"] },
+  { id: "collection_local_favourites", title: "Local favorites", filters: ["local-favorite", "downtown", "visitor-favorite"] },
+];
+
 const pricingImportSources = {
   productsCsv: "/Users/megdude/Downloads/PRODUCTS LIST/UPDATED NEW PRICING/products.csv",
   pricesCsv: "/Users/megdude/Downloads/PRODUCTS LIST/UPDATED NEW PRICING/prices (1).csv",
 };
+
+const partnerOutreachWorkbookPath = "/Users/megdude/Downloads/OUTREACH/downtown_perks_full_map_partner_crm (1).xlsx";
+const partnerOutreachCsvSources = {
+  "Lead List": "/Users/megdude/Downloads/OUTREACH/Lead_List.csv",
+  "Message Templates": "/Users/megdude/Downloads/OUTREACH/Message_Templates.csv",
+  Assumptions: "/Users/megdude/Downloads/OUTREACH/Assumptions.csv",
+  "Master Entity Registry": "/Users/megdude/Downloads/OUTREACH/Master_Entity_Registry.csv",
+  "Contact Directory": "/Users/megdude/Downloads/OUTREACH/Contact_Directory.csv",
+  "Outreach Tracker": "/Users/megdude/Downloads/OUTREACH/Outreach_Tracker.csv",
+  "Perk Campaign Matrix": "/Users/megdude/Downloads/OUTREACH/Perk_Campaign_Matrix.csv",
+  Dashboard: "/Users/megdude/Downloads/OUTREACH/Dashboard.csv",
+  "Source Log": "/Users/megdude/Downloads/OUTREACH/Source_Log.csv",
+};
+const needsVerification = "Needs verification";
+const outreachStatuses = [
+  "Not started",
+  "Needs research",
+  "Ready to contact",
+  "Contacted",
+  "Follow-up needed",
+  "Meeting requested",
+  "Meeting booked",
+  "Interested",
+  "Not now",
+  "Onboarding",
+  "Active partner",
+  "Archived",
+];
 
 function withTimestamps<T extends Record<string, any>>(record: T, id: string): EntityRecord {
   const timestamp = now();
@@ -316,6 +653,107 @@ async function readZipEntryIfExists(zipPath: string, entryName: string) {
   }
 }
 
+function decodeXml(value: string) {
+  return String(value || "")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&apos;/g, "'")
+    .replace(/&#(\d+);/g, (_, code) => String.fromCharCode(Number(code)))
+    .replace(/&#x([a-f0-9]+);/gi, (_, code) => String.fromCharCode(parseInt(code, 16)));
+}
+
+function columnNumber(ref: string) {
+  const letters = String(ref || "").replace(/[^A-Z]/gi, "").toUpperCase();
+  return letters.split("").reduce((sum, letter) => sum * 26 + letter.charCodeAt(0) - 64, 0) - 1;
+}
+
+function parseXmlAttributes(tag: string) {
+  const attrs: Record<string, string> = {};
+  tag.replace(/([\w:]+)="([^"]*)"/g, (_, key, value) => {
+    attrs[key] = decodeXml(value);
+    return "";
+  });
+  return attrs;
+}
+
+function parseSheetRows(xml: string, sharedStrings: string[] = []) {
+  const rows: string[][] = [];
+  const rowMatches = xml.matchAll(/<x:row\b[^>]*>([\s\S]*?)<\/x:row>/g);
+  for (const rowMatch of rowMatches) {
+    const row: string[] = [];
+    const cellMatches = rowMatch[1].matchAll(/<x:c\b([^>]*)>([\s\S]*?)<\/x:c>/g);
+    for (const cellMatch of cellMatches) {
+      const attrs = parseXmlAttributes(cellMatch[1]);
+      const cellIndex = columnNumber(attrs.r || "");
+      const valueMatch = cellMatch[2].match(/<x:v>([\s\S]*?)<\/x:v>/);
+      const inlineMatch = cellMatch[2].match(/<x:t[^>]*>([\s\S]*?)<\/x:t>/);
+      let value = decodeXml(valueMatch?.[1] || inlineMatch?.[1] || "");
+      if (attrs.t === "s") value = sharedStrings[Number(value)] || "";
+      row[cellIndex >= 0 ? cellIndex : row.length] = value.trim();
+    }
+    if (row.some((cell) => String(cell || "").trim())) rows.push(row);
+  }
+  return rows;
+}
+
+function parseSharedStrings(xml: string) {
+  return Array.from(xml.matchAll(/<x:si\b[^>]*>([\s\S]*?)<\/x:si>/g)).map((match) =>
+    decodeXml(Array.from(match[1].matchAll(/<x:t[^>]*>([\s\S]*?)<\/x:t>/g)).map((part) => part[1]).join(""))
+  );
+}
+
+async function readXlsxWorkbook(filePath = partnerOutreachWorkbookPath) {
+  const workbookXml = await readZipEntryIfExists(filePath, "xl/workbook.xml");
+  const relsXml = await readZipEntryIfExists(filePath, "xl/_rels/workbook.xml.rels");
+  const sharedStrings = parseSharedStrings(await readZipEntryIfExists(filePath, "xl/sharedStrings.xml"));
+  if (!workbookXml || !relsXml) return { filePath, sheets: [] as Array<{ name: string; rows: Record<string, string>[]; headers: string[] }> };
+
+  const rels = new Map<string, string>();
+  for (const match of relsXml.matchAll(/<Relationship\b([^>]*)\/>/g)) {
+    const attrs = parseXmlAttributes(match[1]);
+    if (attrs.Id && attrs.Target) rels.set(attrs.Id, attrs.Target.replace(/^\//, ""));
+  }
+
+  const sheets = [];
+  for (const match of workbookXml.matchAll(/<x:sheet\b([^>]*)\/>/g)) {
+    const attrs = parseXmlAttributes(match[1]);
+    const target = rels.get(attrs["r:id"]);
+    if (!target) continue;
+    const sheetXml = await readZipEntryIfExists(filePath, target.startsWith("xl/") ? target : `xl/${target}`);
+    const matrix = parseSheetRows(sheetXml, sharedStrings);
+    const headers = (matrix[0] || []).map((header, index) => String(header || `Column ${index + 1}`).trim());
+    const rows = matrix.slice(1).map((cells) =>
+      Object.fromEntries(headers.map((header, index) => [header, String(cells[index] || "").trim()]))
+    );
+    sheets.push({ name: attrs.name || target, headers, rows: rows.filter((row) => Object.values(row).some(Boolean)) });
+  }
+  return { filePath, sheets };
+}
+
+async function readPartnerOutreachSource() {
+  const csvSheets = await Promise.all(
+    Object.entries(partnerOutreachCsvSources).map(async ([name, filePath]) => {
+      const rows = await readCsvIfExists(filePath);
+      return {
+        name,
+        filePath,
+        headers: rows[0] ? Object.keys(rows[0]) : [],
+        rows,
+      };
+    })
+  );
+  if (csvSheets.some((sheet) => sheet.rows.length > 0)) {
+    return {
+      filePath: "/Users/megdude/Downloads/OUTREACH/*.csv",
+      sourceType: "csv",
+      sheets: csvSheets,
+    };
+  }
+  return { ...(await readXlsxWorkbook(partnerOutreachWorkbookPath)), sourceType: "xlsx" };
+}
+
 async function getMapImportSourceStatus() {
   const entries = await Promise.all(
     Object.entries(mapImportSources).map(async ([key, filePath]) => {
@@ -341,6 +779,644 @@ function normalizeMapEntityType(row: Record<string, any>) {
   if (raw.includes("civic") || raw.includes("district") || raw.includes("area")) return "civic";
   if (raw.includes("fitness") || raw.includes("wellness") || raw.includes("service")) return "service";
   return "venue";
+}
+
+function cleanCrmValue(value: any) {
+  const text = String(value ?? "").trim();
+  if (!text || /^(to verify|verify|n\/a|na|tbd|unknown|null|undefined)$/i.test(text)) return "";
+  return text;
+}
+
+function displayCrmValue(value: any) {
+  return cleanCrmValue(value) || needsVerification;
+}
+
+function pickField(row: Record<string, any>, keys: string[]) {
+  for (const key of keys) {
+    const direct = cleanCrmValue(row[key]);
+    if (direct) return direct;
+    const foundKey = Object.keys(row).find((candidate) => candidate.toLowerCase() === key.toLowerCase());
+    if (foundKey) {
+      const value = cleanCrmValue(row[foundKey]);
+      if (value) return value;
+    }
+  }
+  return "";
+}
+
+function scorePriority(priority: string, leadScore?: string) {
+  const numeric = Number(String(leadScore || "").replace(/[^0-9.]/g, ""));
+  if (Number.isFinite(numeric) && numeric > 0) return Math.min(100, numeric);
+  const raw = String(priority || "").toLowerCase();
+  if (raw.includes("high")) return 90;
+  if (raw.includes("medium")) return 65;
+  if (raw.includes("low")) return 40;
+  return 50;
+}
+
+function normalizeOutreachStage(value: string) {
+  const raw = String(value || "").toLowerCase();
+  if (raw.includes("not contacted") || raw.includes("not started")) return "Not started";
+  if (raw.includes("contacted")) return "Contacted";
+  if (raw.includes("follow")) return "Follow-up needed";
+  if (raw.includes("meeting booked")) return "Meeting booked";
+  if (raw.includes("meeting")) return "Meeting requested";
+  if (raw.includes("interested")) return "Interested";
+  if (raw.includes("not now")) return "Not now";
+  if (raw.includes("onboarding")) return "Onboarding";
+  if (raw.includes("active")) return "Active partner";
+  if (raw.includes("archive")) return "Archived";
+  if (raw.includes("ready")) return "Ready to contact";
+  if (raw.includes("research") || raw.includes("verify")) return "Needs research";
+  return "Not started";
+}
+
+function classifyPartnerType(row: Record<string, any>) {
+  const raw = `${pickField(row, ["Entity Type", "Type"])} ${pickField(row, ["Subtype", "Category"])} ${pickField(row, ["Partner Type"])}`.toLowerCase();
+  if (raw.includes("coffee")) return "Coffee";
+  if (raw.includes("bar") || raw.includes("cocktail") || raw.includes("nightlife")) return "Bars";
+  if (raw.includes("restaurant") || raw.includes("dining") || raw.includes("venue")) return "Restaurants";
+  if (raw.includes("hotel") || raw.includes("hospitality")) return "Hotels";
+  if (raw.includes("residential")) return "Residential Buildings";
+  if (raw.includes("office")) return "Office Buildings";
+  if (raw.includes("property") || raw.includes("building")) return "Properties";
+  if (raw.includes("civic") || raw.includes("community")) return "Civic";
+  if (raw.includes("wellness")) return "Wellness";
+  if (raw.includes("fitness")) return "Fitness";
+  if (raw.includes("service")) return "Services";
+  if (raw.includes("retail") || raw.includes("shop")) return "Retail";
+  if (raw.includes("event")) return "Events";
+  if (raw.includes("brand")) return "Brands";
+  if (raw.includes("real estate") || raw.includes("listing")) return "Real Estate";
+  if (raw.includes("campaign")) return "Campaigns";
+  if (raw.includes("perk")) return "Perks";
+  return pickField(row, ["Partner Type", "Entity Type", "Category"]) || "Partners";
+}
+
+function contactFirstName(contactName: string) {
+  const cleaned = cleanCrmValue(contactName);
+  if (!cleaned || /verify/i.test(cleaned)) return "there";
+  return cleaned.split(/\s+/)[0];
+}
+
+function partnerAngle(type: string) {
+  const raw = String(type || "").toLowerCase();
+  if (raw.includes("hotel")) return "helping guests find better local places nearby without needing another app";
+  if (raw.includes("residential") || raw.includes("property") || raw.includes("building")) return "a resident amenity that helps people find nearby food, events, services, and perks";
+  if (raw.includes("retail")) return "a simple resident offer or featured local campaign";
+  if (raw.includes("civic") || raw.includes("community")) return "making downtown events, civic programs, and local resources easier to find";
+  if (raw.includes("coffee")) return "a morning or workday resident perk";
+  if (raw.includes("bar")) return "a happy hour feature or after-work local route";
+  if (raw.includes("event")) return "connecting event interest to nearby food, drinks, parking, and services";
+  if (raw.includes("brand")) return "a local campaign that reaches downtown residents at the right moment";
+  if (raw.includes("real estate")) return "a neighborhood guide and listings layer that makes downtown feel easier to understand";
+  return "a resident perk or local discovery feature";
+}
+
+function generateOutreachCopy(partner: Record<string, any>, contact: Record<string, any> = {}) {
+  const name = displayCrmValue(partner.name || partner.business_name);
+  const type = partner.type || partner.category || "Partner";
+  const firstName = contactFirstName(contact.name || partner.contact_name);
+  const perk = displayCrmValue(partner.suggested_perk || partner.recommended_perk);
+  const campaign = displayCrmValue(partner.suggested_campaign || partner.recommended_campaign);
+  const reason = cleanCrmValue(partner.partner_fit || partner.resident_value || partner.notes) || `${type} presence in ${displayCrmValue(partner.district)}`;
+  const angle = partnerAngle(type);
+  const subject = `Quick Downtown Perks idea for ${name}`;
+  const shortText = `Hey ${firstName} - I’m building Downtown Perks, a simple local discovery map for downtown residents, guests, and nearby workers. I thought ${name} could be a strong fit for ${angle}. I’d love to set up a quick time to chat. No pressure.`;
+  const body = `Hi ${firstName},
+
+I’m building Downtown Perks, a simple local discovery map for people who live, work, and stay downtown.
+
+I came across ${name} and thought it could be a strong fit because ${reason}.
+
+The idea is simple: help the right people nearby discover you at the moment they’re deciding where to go, what to do, or what to try next.
+
+For ${name}, I’d suggest starting with:
+
+${perk}
+
+That could work well with ${campaign}.
+
+Would you be open to a quick 15-minute chat next week?
+
+Best,
+Meg`;
+  const html = `<div style="margin:0;background:#ffffff;color:#0B1F33;font-family:Inter,Arial,sans-serif"><div style="max-width:620px;margin:0 auto;padding:28px 20px"><p style="margin:0 0 10px;color:#C8A96A;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase">Downtown Perks</p><h1 style="margin:0 0 16px;color:#0B1F33;font-size:26px;line-height:1.15;font-weight:650">A quick local idea for ${name}</h1><div style="font-size:15px;line-height:1.65;color:#24384b;white-space:pre-line">${body.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</div><a href="mailto:" style="display:inline-block;margin-top:22px;background:#C8A96A;color:#0B1F33;text-decoration:none;padding:11px 16px;border-radius:6px;font-size:13px;font-weight:700">Set up a quick chat</a><p style="margin-top:26px;border-top:1px solid rgba(11,31,51,.1);padding-top:14px;color:rgba(11,31,51,.55);font-size:12px">Downtown Perks - local discovery for downtown Austin.</p></div></div>`;
+  return { shortText, subject, body, html };
+}
+
+async function generatePersonalizedOutreachCopy(partner: Record<string, any>, contact: Record<string, any> = {}) {
+  const fallback = generateOutreachCopy(partner, contact);
+  const provider = getProviderManager().primary;
+  if (!provider.configured) return { ...fallback, provider: "local" };
+  try {
+    const prompt = {
+      partner_type: partner.type || partner.partner_type || partner.category,
+      partner_name: partner.name || partner.business_name,
+      district: partner.district,
+      suggested_perk: partner.suggested_perk,
+      suggested_campaign: partner.suggested_campaign,
+      resident_value: partner.resident_value,
+      business_value: partner.business_value,
+      notes: partner.notes || partner.partner_fit,
+      contact_role: contact.role,
+      contact_name: contact.name || contact.contact_name,
+    };
+    const response = await provider.chat([
+      {
+        role: "system",
+        content:
+          "You write Downtown Perks partner outreach. Keep it short, calm, human, local, and low-pressure. Avoid hype, automation tells, exaggerated claims, and generic SaaS language. Return strict JSON with shortText, subject, body. The body should be plain text email copy signed Best, Meg.",
+      },
+      {
+        role: "user",
+        content: `Create unique outreach copy from this partner context. Mention why the partner makes sense, include the suggested perk or campaign, name a practical benefit, and ask for a quick chat without pressure.\n\n${JSON.stringify(prompt, null, 2)}`,
+      },
+    ]);
+    const parsed = JSON.parse(response);
+    const generated = {
+      shortText: cleanCrmValue(parsed.shortText) || fallback.shortText,
+      subject: cleanCrmValue(parsed.subject) || fallback.subject,
+      body: cleanCrmValue(parsed.body) || fallback.body,
+    };
+    const html = generateOutreachCopy({ ...partner, suggested_perk: partner.suggested_perk }, contact).html.replace(fallback.body.replace(/</g, "&lt;").replace(/>/g, "&gt;"), generated.body.replace(/</g, "&lt;").replace(/>/g, "&gt;"));
+    return { ...generated, html, provider: "openai" };
+  } catch (error) {
+    return { ...fallback, provider: "local_fallback", error: error instanceof Error ? error.message : "AI generation failed" };
+  }
+}
+
+function verificationFieldsForPartner(partner: Record<string, any>, contact: Record<string, any> = {}) {
+  const checks = [
+    ["website", partner.website],
+    ["phone", partner.phone],
+    ["contact_name", contact.name || contact.contact_name],
+    ["contact_role", contact.role],
+    ["contact_email", contact.email || contact.contact_route],
+    ["contact_phone", contact.phone],
+    ["linkedin_url", contact.linkedin_url],
+    ["google_maps_url", partner.google_maps_url],
+  ];
+  return checks.filter(([, value]) => displayCrmValue(value) === needsVerification).map(([key]) => key);
+}
+
+function resolvedOutreachStage(partner: Record<string, any>) {
+  const importedStage = partner.source_rows?.master?.["Lead Stage"] || partner.raw_fields?.["Lead Stage"] || "";
+  const current = partner.outreach_stage || partner.status || importedStage;
+  if (String(importedStage || current).toLowerCase().includes("not contacted")) return "Not started";
+  return normalizeOutreachStage(current);
+}
+
+function getOutreachActivities(entities: Database["entities"], partnerId: string) {
+  return entities.PartnerOutreachStep
+    .filter((item) => item.partner_id === partnerId)
+    .sort((a, b) => new Date(b.created_at || b.updated_at || 0).getTime() - new Date(a.created_at || a.updated_at || 0).getTime());
+}
+
+function logOutreachActivity(entities: Database["entities"], input: Record<string, any>) {
+  const id = input.id || `outreach_activity_${slug(input.partner_id || "partner")}_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
+  return ensureRecord(entities.PartnerOutreachStep, id, {
+    partner_id: input.partner_id,
+    contact_id: input.contact_id || "",
+    activity_type: input.activity_type || "update",
+    title: input.title || input.activity_type || "Update",
+    notes: input.notes || "",
+    status: input.status || "",
+    metadata: input.metadata || {},
+    created_at: now(),
+  });
+}
+
+function findSheetRows(workbook: { sheets: Array<{ name: string; rows: Record<string, string>[]; headers: string[] }> }, name: string) {
+  return workbook.sheets.find((sheet) => sheet.name.toLowerCase() === name.toLowerCase())?.rows || [];
+}
+
+function buildOutreachCrmRows(entities: Database["entities"]) {
+  return entities.Partner
+    .filter((partner) => partner.source_type === "partner_outreach_crm")
+    .map((partner) => {
+      const contact = (entities.PartnerOutreachContact.find((item) => item.partner_id === partner.id) || {}) as Record<string, any>;
+      const campaign = (entities.PartnerOutreachCampaign.find((item) => item.partner_id === partner.id) || {}) as Record<string, any>;
+      const message = (entities.PartnerOutreachMessage.find((item) => item.partner_id === partner.id && item.channel === "email") || {}) as Record<string, any>;
+      const smsMessage = (entities.PartnerOutreachMessage.find((item) => item.partner_id === partner.id && item.channel === "sms") || {}) as Record<string, any>;
+      const step = (entities.PartnerOutreachStep.find((item) => item.partner_id === partner.id) || {}) as Record<string, any>;
+      const activities = getOutreachActivities(entities, partner.id);
+      return {
+        ...partner,
+        name: partner.business_name || partner.name,
+        type: partner.partner_type || partner.type || partner.category,
+        contact,
+        campaign,
+        message,
+        sms_message: smsMessage,
+        step,
+        activities,
+        best_contact: displayCrmValue(contact.name || contact.contact_name || contact.role),
+        outreach_stage: resolvedOutreachStage(partner),
+        next_action: step.title || partner.next_action || "Verify contact and send first note",
+        last_contacted: partner.last_contacted || "",
+        verification_fields: verificationFieldsForPartner(partner, contact),
+        verification_status: verificationFieldsForPartner(partner, contact).length ? "Needs verification" : partner.verification_status || "Verified enough",
+      };
+    })
+    .sort((a: Record<string, any>, b: Record<string, any>) => Number(b.priority_score || 0) - Number(a.priority_score || 0));
+}
+
+async function importPartnerOutreachWorkbook(entities: Database["entities"]) {
+  const workbook = await readPartnerOutreachSource();
+  const masterRows = findSheetRows(workbook, "Master Entity Registry");
+  const contactRows = findSheetRows(workbook, "Contact Directory");
+  const trackerRows = findSheetRows(workbook, "Outreach Tracker");
+  const perkRows = findSheetRows(workbook, "Perk Campaign Matrix");
+  const templateRows = findSheetRows(workbook, "Message Templates");
+  const contactsByEntity = new Map(contactRows.map((row) => [pickField(row, ["Entity ID"]), row]));
+  const trackerByEntity = new Map(trackerRows.map((row) => [pickField(row, ["Entity ID"]), row]));
+  const perkByEntity = new Map(perkRows.map((row) => [pickField(row, ["Entity ID"]), row]));
+  const before = buildOutreachCrmRows(entities).length;
+  const imported: string[] = [];
+
+  masterRows.forEach((row, index) => {
+    const entityId = pickField(row, ["Entity ID"]) || `DP-${String(index + 1).padStart(4, "0")}`;
+    const name = pickField(row, ["Pin / Partner Name", "Entity name", "Partner Name", "Company name"]);
+    if (!name) return;
+    const contactRow = contactsByEntity.get(entityId) || {};
+    const trackerRow = trackerByEntity.get(entityId) || {};
+    const perkRow = perkByEntity.get(entityId) || {};
+    const type = classifyPartnerType(row);
+    const partnerId = `partner_outreach_${slug(entityId || name)}`;
+    const suggestedPerk = pickField(row, ["Suggested perk", "Ideal Perk Offer"]) || pickField(perkRow, ["Suggested Perk", "Perk Idea", "Ideal Perk Offer"]);
+    const suggestedCampaign = pickField(row, ["Suggested campaign", "Campaign Idea"]) || pickField(perkRow, ["Campaign Idea", "Suggested Campaign"]);
+    const priority = pickField(row, ["Priority", "Outreach priority"]);
+    const stage = normalizeOutreachStage(pickField(trackerRow, ["Lead Stage", "Outreach Stage", "Status"]) || pickField(row, ["Lead Stage", "Listing Status"]));
+    const partner = ensureRecord(entities.Partner, partnerId, {
+      external_entity_id: entityId,
+      business_name: name,
+      name,
+      type,
+      category: pickField(row, ["Subtype", "Category", "Entity Type"]) || type,
+      partner_type: pickField(row, ["Partner Type"]) || type,
+      district: pickField(row, ["District / neighborhood", "District"]),
+      address: pickField(row, ["Address"]),
+      website: pickField(row, ["Website"]),
+      phone: pickField(row, ["Phone", "Contact Phone"]),
+      google_maps_url: pickField(row, ["Google Maps URL", "Google Maps Url"]),
+      company: pickField(row, ["Company / ownership group", "Company / Parent"]),
+      property_manager: pickField(row, ["Property manager"]),
+      leasing_team: pickField(row, ["Leasing team"]),
+      description: pickField(row, ["Description", "Resident Value"]),
+      partner_fit: pickField(row, ["Downtown Perks fit", "Partner Pitch", "Resident Value"]),
+      resident_value: pickField(row, ["Resident Value"]),
+      business_value: pickField(row, ["Business Value", "Partner Pitch"]),
+      recommended_plan: pickField(row, ["Suggested annual plan", "Recommended Plan"]),
+      suggested_perk: suggestedPerk,
+      suggested_campaign: suggestedCampaign,
+      priority,
+      priority_score: scorePriority(priority, pickField(row, ["Lead score", "Priority score"])),
+      contact_confidence: pickField(row, ["Contact confidence", "Contact Confidence"]),
+      verification_status: pickField(row, ["Verification status", "Listing Status"]),
+      notes: pickField(row, ["Notes"]),
+      source_url: pickField(row, ["Source URL"]),
+      last_updated: pickField(row, ["Last updated"]) || now(),
+      status: stage,
+      outreach_stage: stage,
+      last_contacted: pickField(trackerRow, ["Last Contacted", "Last contacted"]),
+      next_follow_up_date: pickField(trackerRow, ["Next Follow-up Date", "Next follow-up date"]),
+      next_action: pickField(trackerRow, ["Next Action", "Next action"]) || "Verify contact and send first note",
+      source_type: "partner_outreach_crm",
+      source_workbook: workbook.filePath,
+      raw_fields: row,
+      source_rows: { master: row, contact: contactRow, tracker: trackerRow, perk: perkRow },
+    });
+
+    const contactName = pickField(row, ["Contact name", "Contact Name"]) || pickField(contactRow, ["Named Contact"]);
+    const contactRole = pickField(row, ["Contact role", "Best Contact Role"]) || pickField(contactRow, ["Target Role"]);
+    const contactEmail = pickField(row, ["Contact email", "Contact Email / URL"]) || pickField(contactRow, ["Contact Route"]);
+    const contactPhone = pickField(row, ["Contact phone", "Contact Phone"]) || pickField(contactRow, ["Phone"]);
+    const contact = ensureRecord(entities.PartnerOutreachContact, `outreach_contact_${slug(entityId)}`, {
+      partner_id: partner.id,
+      partner_name: name,
+      name: displayCrmValue(contactName),
+      contact_name: displayCrmValue(contactName),
+      role: displayCrmValue(contactRole),
+      email: cleanCrmValue(contactEmail).includes("@") ? contactEmail : "",
+      contact_route: displayCrmValue(contactEmail),
+      phone: displayCrmValue(contactPhone),
+      linkedin_url: pickField(row, ["LinkedIn URL"]),
+      confidence: displayCrmValue(pickField(row, ["Contact Confidence"]) || pickField(contactRow, ["Confidence"])),
+      verification_status: displayCrmValue(pickField(row, ["Verification status", "Listing Status"]) || pickField(contactRow, ["Research Needed"])),
+      source_url: pickField(row, ["Source URL"]),
+      notes: pickField(contactRow, ["Research Needed"]),
+      status: stage,
+      priority,
+      source: "partner_outreach_crm",
+      raw_fields: contactRow,
+    });
+
+    const generated = generateOutreachCopy(partner, contact);
+    const shortBody = pickField(row, ["Suggested message", "Suggested Initial Message"]) || pickField(contactRow, ["Suggested Message"]) || generated.shortText;
+    ensureRecord(entities.PerkLocation, `outreach_perk_${slug(entityId)}`, {
+      partner_id: partner.id,
+      name,
+      title: displayCrmValue(suggestedPerk),
+      perk: displayCrmValue(suggestedPerk),
+      description: displayCrmValue(suggestedPerk),
+      perk_type: type,
+      resident_value: displayCrmValue(partner.resident_value),
+      business_value: displayCrmValue(partner.business_value),
+      status: "draft",
+      source_type: "partner_outreach_crm",
+    });
+    ensureRecord(entities.PartnerOutreachCampaign, `outreach_campaign_${slug(entityId)}`, {
+      partner_id: partner.id,
+      partner_name: name,
+      category: type,
+      campaign_title: displayCrmValue(suggestedCampaign),
+      campaign_description: displayCrmValue(pickField(perkRow, ["Campaign Description"]) || suggestedCampaign),
+      campaign_type: type,
+      recommended_timing: displayCrmValue(pickField(perkRow, ["Recommended Timing"])),
+      target_audience: displayCrmValue(pickField(perkRow, ["Target Audience"]) || "Downtown residents, guests, and nearby workers"),
+      status: "draft",
+      stage,
+      objective: displayCrmValue(partner.partner_fit),
+      recommended_subject: generated.subject,
+      next_action: partner.next_action,
+      raw_fields: perkRow,
+    });
+    ensureRecord(entities.PartnerOutreachMessage, `outreach_message_${slug(entityId)}_sms`, {
+      partner_id: partner.id,
+      contact_id: contact.id,
+      channel: "sms",
+      subject: "Short text / DM",
+      body: shortBody,
+      status: "draft",
+      follow_up_at: partner.next_follow_up_date || "",
+    });
+    ensureRecord(entities.PartnerOutreachMessage, `outreach_message_${slug(entityId)}_email`, {
+      partner_id: partner.id,
+      contact_id: contact.id,
+      channel: "email",
+      subject: generated.subject,
+      body: generated.body,
+      html: generated.html,
+      status: "draft",
+      follow_up_at: partner.next_follow_up_date || "",
+    });
+    ensureRecord(entities.PartnerOutreachStep, `outreach_activity_${slug(entityId)}_next`, {
+      partner_id: partner.id,
+      contact_id: contact.id,
+      activity_type: "next_action",
+      title: partner.next_action,
+      notes: displayCrmValue(pickField(trackerRow, ["Notes"]) || partner.notes),
+      status: stage,
+      created_at: now(),
+      raw_fields: trackerRow,
+    });
+    imported.push(partner.id);
+  });
+
+  templateRows.forEach((template, index) => {
+    const templateType = pickField(template, ["Template Type"]) || `Template ${index + 1}`;
+    ensureRecord(entities.PartnerOutreachMessage, `outreach_template_${slug(templateType)}_${index + 1}`, {
+      channel: "template",
+      type: templateType,
+      title: templateType,
+      subject: pickField(template, ["Use When"]),
+      body: pickField(template, ["Message"]),
+      status: "template",
+      source_type: "partner_outreach_crm",
+    });
+  });
+
+  return {
+    success: true,
+    source: workbook.filePath,
+    source_type: workbook.sourceType,
+    sheets: workbook.sheets.map((sheet) => ({ name: sheet.name, rows: sheet.rows.length, columns: sheet.headers.length })),
+    before,
+    imported_count: imported.length,
+    after: buildOutreachCrmRows(entities).length,
+  };
+}
+
+function crmExportRows(entities: Database["entities"], ids: string[] = []) {
+  const allowedIds = new Set(ids.filter(Boolean));
+  return buildOutreachCrmRows(entities)
+  .filter((partner: Record<string, any>) => allowedIds.size === 0 || allowedIds.has(partner.id))
+  .map((partner: Record<string, any>) => ({
+    "Partner ID": partner.external_entity_id || partner.id,
+    "Company name": partner.name,
+    "Contact name": displayCrmValue(partner.contact?.name || partner.contact?.contact_name),
+    "Contact role": displayCrmValue(partner.contact?.role),
+    Email: displayCrmValue(partner.contact?.email || partner.contact?.contact_route),
+    Phone: displayCrmValue(partner.contact?.phone),
+    Website: displayCrmValue(partner.website),
+    Address: displayCrmValue(partner.address),
+    Type: displayCrmValue(partner.type),
+    District: displayCrmValue(partner.district),
+    "Lead stage": displayCrmValue(partner.outreach_stage),
+    Priority: displayCrmValue(partner.priority || String(partner.priority_score || "")),
+    "Suggested perk": displayCrmValue(partner.suggested_perk),
+    "Suggested campaign": displayCrmValue(partner.suggested_campaign),
+    Message: displayCrmValue(partner.message?.body),
+    Notes: displayCrmValue(partner.notes || partner.step?.notes),
+    "Last contacted": displayCrmValue(partner.last_contacted),
+    "Next follow-up date": displayCrmValue(partner.next_follow_up_date),
+  }));
+}
+
+function canonicalMatchName(value: any) {
+  return String(value || "")
+    .toLowerCase()
+    .replace(/&/g, " and ")
+    .replace(/\b(the|hotel|austin|downtown|tx|texas)\b/g, " ")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim()
+    .replace(/\s+/g, " ");
+}
+
+function isMissingCrmField(value: any) {
+  return displayCrmValue(value) === needsVerification;
+}
+
+function googleMapsSearchUrl(name: string, address = "") {
+  const query = [name, address].filter(Boolean).join(" ");
+  return query ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}` : "";
+}
+
+function buildMapEnrichmentCandidates(entities: Database["entities"]) {
+  const locations = entities.PartnerLocation.map((location) => {
+    const partner = (entities.Partner.find((item) => item.id === location.partner_id) || {}) as Record<string, any>;
+    const mapUrl = location.map_entity_id ? `/map?entity=${encodeURIComponent(location.map_entity_id)}` : "";
+    return {
+      id: location.id,
+      name: location.name || partner.business_name || partner.name,
+      address: location.address || partner.address || "",
+      district: location.district || partner.district || "",
+      website: location.website || partner.website || "",
+      phone: location.phone || partner.phone || partner.contact_phone || "",
+      google_maps_url: location.google_maps_url || partner.google_maps_url || "",
+      downtown_perks_map_url: mapUrl,
+      map_entity_id: location.map_entity_id || "",
+      source_type: location.source_type || partner.source_type || "partner_location",
+    };
+  });
+
+  const partners = entities.Partner
+    .filter((partner) => partner.source_type !== "partner_outreach_crm")
+    .map((partner) => ({
+      id: partner.id,
+      name: partner.business_name || partner.name,
+      address: partner.address || "",
+      district: partner.district || "",
+      website: partner.website || "",
+      phone: partner.phone || partner.contact_phone || "",
+      google_maps_url: partner.google_maps_url || "",
+      downtown_perks_map_url: partner.source_id ? `/map?entity=${encodeURIComponent(partner.source_id)}` : "",
+      map_entity_id: partner.source_id || "",
+      source_type: partner.source_type || "partner",
+    }));
+
+  return [...locations, ...partners].filter((item) => cleanCrmValue(item.name));
+}
+
+function scoreMapCandidate(partner: Record<string, any>, candidate: Record<string, any>) {
+  const partnerName = canonicalMatchName(partner.name || partner.business_name);
+  const candidateName = canonicalMatchName(candidate.name);
+  if (!partnerName || !candidateName) return 0;
+  let score = 0;
+  if (partnerName === candidateName) score += 100;
+  else if (partnerName.includes(candidateName) || candidateName.includes(partnerName)) score += Math.min(partnerName.length, candidateName.length) > 5 ? 78 : 38;
+
+  const partnerAddress = canonicalMatchName(partner.address);
+  const candidateAddress = canonicalMatchName(candidate.address);
+  if (partnerAddress && candidateAddress) {
+    if (partnerAddress === candidateAddress) score += 35;
+    else if (partnerAddress.includes(candidateAddress) || candidateAddress.includes(partnerAddress)) score += 18;
+  }
+
+  const partnerDistrict = canonicalMatchName(partner.district);
+  const candidateDistrict = canonicalMatchName(candidate.district);
+  if (partnerDistrict && candidateDistrict && partnerDistrict === candidateDistrict) score += 10;
+  if (candidate.website) score += 5;
+  if (candidate.phone) score += 5;
+  if (candidate.google_maps_url) score += 5;
+  return score;
+}
+
+async function fetchGooglePlacesVerification(partner: Record<string, any>) {
+  const apiKey = process.env.GOOGLE_MAPS_API_KEY || process.env.GOOGLE_PLACES_API_KEY;
+  if (!apiKey) return null;
+  const textQuery = [partner.name || partner.business_name, partner.address, partner.district, "Austin TX"].filter(Boolean).join(" ");
+  if (!textQuery.trim()) return null;
+  const response = await fetch("https://places.googleapis.com/v1/places:searchText", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Goog-Api-Key": apiKey,
+      "X-Goog-FieldMask": "places.id,places.displayName,places.formattedAddress,places.nationalPhoneNumber,places.websiteUri,places.googleMapsUri,places.location",
+    },
+    body: JSON.stringify({ textQuery, maxResultCount: 1 }),
+  });
+  if (!response.ok) return null;
+  const payload = await response.json();
+  const place = payload?.places?.[0];
+  if (!place) return null;
+  return {
+    name: place.displayName?.text || "",
+    address: place.formattedAddress || "",
+    phone: place.nationalPhoneNumber || "",
+    website: place.websiteUri || "",
+    google_maps_url: place.googleMapsUri || "",
+    latitude: place.location?.latitude,
+    longitude: place.location?.longitude,
+    source_type: "google_places_api",
+    place_id: place.id,
+  };
+}
+
+async function enrichOutreachCrmFromMapSources(entities: Database["entities"], options: Record<string, any> = {}) {
+  const candidates = buildMapEnrichmentCandidates(entities);
+  const updated: Array<Record<string, any>> = [];
+  const skipped: Array<Record<string, any>> = [];
+  const googleEnabled = Boolean(options.google_places && (process.env.GOOGLE_MAPS_API_KEY || process.env.GOOGLE_PLACES_API_KEY));
+
+  for (const partner of entities.Partner.filter((item) => item.source_type === "partner_outreach_crm")) {
+    const ranked = candidates
+      .map((candidate) => ({ candidate, score: scoreMapCandidate(partner, candidate) }))
+      .filter((item) => item.score >= 82)
+      .sort((a, b) => b.score - a.score);
+    const best = ranked[0]?.candidate || null;
+    let google: Record<string, any> | null = null;
+    if (googleEnabled) {
+      try {
+        google = await fetchGooglePlacesVerification(partner);
+      } catch {
+        google = null;
+      }
+    }
+
+    const sources = [google, best].filter(Boolean) as Record<string, any>[];
+    if (!sources.length) {
+      skipped.push({ id: partner.id, name: partner.name || partner.business_name, reason: "no_confident_match" });
+      continue;
+    }
+
+    const changes: Record<string, any> = {};
+    const source = sources[0];
+    const fallback = sources[1] || {};
+    const candidateSource = source.source_type || fallback.source_type || "downtown_perks_map";
+    const fill = (field: string, value: any) => {
+      const cleaned = cleanCrmValue(value);
+      if (cleaned && isMissingCrmField(partner[field])) changes[field] = cleaned;
+    };
+
+    fill("address", source.address || fallback.address);
+    fill("district", source.district || fallback.district);
+    fill("website", source.website || fallback.website);
+    fill("phone", source.phone || fallback.phone);
+    fill("google_maps_url", source.google_maps_url || fallback.google_maps_url);
+    if (isMissingCrmField(partner.google_maps_url) && !changes.google_maps_url && (partner.address || source.address || fallback.address)) {
+      changes.google_maps_url = googleMapsSearchUrl(partner.name || partner.business_name, partner.address || source.address || fallback.address);
+    }
+    if ((source.downtown_perks_map_url || fallback.downtown_perks_map_url) && !partner.downtown_perks_map_url) {
+      changes.downtown_perks_map_url = source.downtown_perks_map_url || fallback.downtown_perks_map_url;
+    }
+    if ((source.map_entity_id || fallback.map_entity_id) && !partner.map_entity_id) {
+      changes.map_entity_id = source.map_entity_id || fallback.map_entity_id;
+    }
+
+    if (!Object.keys(changes).length) {
+      skipped.push({ id: partner.id, name: partner.name || partner.business_name, reason: "matched_but_no_missing_fields", source: candidateSource });
+      continue;
+    }
+
+    Object.assign(partner, changes, {
+      verification_status: "Partially verified",
+      verification_source: candidateSource,
+      updated_at: now(),
+    });
+    logOutreachActivity(entities, {
+      partner_id: partner.id,
+      contact_id: entities.PartnerOutreachContact.find((item) => item.partner_id === partner.id)?.id || "",
+      activity_type: "data_enriched",
+      title: "Verification fields enriched",
+      notes: `Updated ${Object.keys(changes).join(", ")} from ${candidateSource}.`,
+      status: partner.outreach_stage || partner.status || "Not started",
+      metadata: { changes, source: candidateSource, match_score: ranked[0]?.score || null },
+    });
+    updated.push({ id: partner.id, name: partner.name || partner.business_name, changes, source: candidateSource, match_score: ranked[0]?.score || null });
+  }
+
+  return {
+    success: true,
+    google_places_enabled: googleEnabled,
+    google_places_configured: Boolean(process.env.GOOGLE_MAPS_API_KEY || process.env.GOOGLE_PLACES_API_KEY),
+    candidates: candidates.length,
+    updated_count: updated.length,
+    skipped_count: skipped.length,
+    updated,
+    skipped: skipped.slice(0, 40),
+  };
 }
 
 function splitList(value: any) {
@@ -1398,6 +2474,8 @@ function createSeedDatabase(): Database {
 }
 
 function addOperationalDefaults(entities: Database["entities"]) {
+  addContentManagementDefaults(entities);
+
   if (entities.GlobalSettings.length === 0) {
     entities.GlobalSettings.push(
       withTimestamps(
@@ -1816,6 +2894,168 @@ Meg Dude`,
   provisionAllPlatformTenants(entities);
 }
 
+function addContentManagementDefaults(entities: Database["entities"]) {
+  stage11Attractions.forEach((attraction, index) => {
+    const entitySlug = slug(attraction.name).replace(/_/g, "-");
+    const entityId = `attraction_${slug(attraction.name)}`;
+    const lat = 30.2672 + (index % 7) * 0.004;
+    const lng = -97.7431 - (index % 5) * 0.004;
+    ensureRecord(entities.ContentEntity, entityId, {
+      organization_id: "org_downtown_perks",
+      workspace_id: "workspace_downtown_perks",
+      name: attraction.name,
+      title: attraction.name,
+      slug: entitySlug,
+      entity_type: "attraction",
+      category: attraction.category,
+      subcategory: attraction.tags[0] || attraction.category,
+      district: attraction.district,
+      status: "published",
+      published: true,
+      featured: index < 8,
+      verified: true,
+      priority: index + 1,
+      map: {
+        latitude: lat,
+        longitude: lng,
+        pin_icon: attraction.category,
+        pin_colour: attraction.category === "music" ? "gold" : attraction.category === "museum" ? "navy" : "green",
+        map_layer: "downtown_experience",
+        visibility: "public",
+        cluster_group: attraction.category,
+        ordering: index + 1,
+        search_weight: index < 8 ? 90 : 70,
+      },
+      images: {
+        hero: "",
+        gallery: [],
+        thumbnail: "",
+        social: "",
+        mobile: "",
+        night: "",
+        seasonal: "",
+        drone: "",
+        portrait: "",
+        landscape: "",
+        photo_ideas: attraction.photoIdeas,
+        crop_status: "ready_for_upload",
+      },
+      content: {
+        resident_headline: `${attraction.name}, when it fits your day`,
+        resident_body: attraction.description,
+        partner_headline: `${attraction.name} as a Downtown Perks discovery moment`,
+        partner_body: "Use this place as context for nearby offers, campaigns, resident recommendations, and sponsor-ready routes.",
+        highlights: attraction.tags,
+        good_for: attraction.tags,
+        resident_tips: [`Best nearby context: ${attraction.district}.`, "Open the map before you go so nearby perks and events can follow the visit."],
+        accessibility: "Review accessibility details before publishing a resident-facing recommendation.",
+        parking: "Add current parking notes in the CMS before featured placement.",
+        transit: "Add transit and walking guidance in the CMS before featured placement.",
+        pricing: "Varies.",
+        hours: attraction.hours,
+        website: "",
+        phone: "",
+        booking: "",
+      },
+      relationships: {
+        nearby_venues: [],
+        nearby_hotels: [],
+        nearby_parks: attraction.category === "park" ? [entityId] : [],
+        nearby_restaurants: [],
+        nearby_events: [],
+        nearby_buildings: [],
+        nearby_retail: [],
+        nearby_art: attraction.category === "museum" ? [entityId] : [],
+        nearby_music: attraction.category === "music" ? [entityId] : [],
+        nearby_campaigns: [],
+        nearby_perks: [],
+      },
+      publishing: {
+        lifecycle: "published",
+        future_publish_at: "",
+        expires_at: "",
+        seasonality: attraction.tags.map(String).includes("seasonal") ? "seasonal" : "evergreen",
+        version: 1,
+        preview_url: `/map?entity=${entitySlug}`,
+        rollback_revision_id: "",
+      },
+      analytics: {
+        events: ["pin_viewed", "drawer_opened", "save_clicked", "share_clicked", "directions_clicked"],
+        reportable: true,
+      },
+      seo: {
+        title: `${attraction.name} | Downtown Perks`,
+        description: attraction.description,
+        keywords: attraction.tags,
+      },
+      metadata: {
+        source: "Stage 11 attachment",
+        extracted_from: "Austin guide attraction CSV",
+        best_photo_ideas: attraction.photoIdeas,
+      },
+    });
+
+    ensureRecord(entities.ContentPublishingWorkflow, `workflow_${entityId}`, {
+      entity_id: entityId,
+      workflow_type: "content_publishing",
+      state: "published",
+      steps: ["draft", "review", "scheduled", "published", "archived"],
+      current_step: "published",
+      next_action: "Add live image assets and verify current hours.",
+      owner: "platform_admin",
+      automation_status: "ready",
+    });
+
+    ensureRecord(entities.ContentRevision, `revision_${entityId}_v1`, {
+      entity_id: entityId,
+      version: 1,
+      status: "published",
+      summary: "Initial Stage 11 attraction import.",
+      snapshot: { name: attraction.name, category: attraction.category, district: attraction.district },
+      created_by: "system_stage_11",
+    });
+  });
+
+  stage11Collections.forEach((collection) => {
+    const matching = entities.ContentEntity.filter((entity) => {
+      const searchable = `${entity.category || ""} ${(entity.content?.highlights || []).join(" ")} ${(entity.metadata?.best_photo_ideas || []).join(" ")}`.toLowerCase();
+      return collection.filters.some((filter) => searchable.includes(filter));
+    }).map((entity) => entity.id);
+    ensureRecord(entities.ContentCollection, collection.id, {
+      organization_id: "org_downtown_perks",
+      workspace_id: "workspace_downtown_perks",
+      title: collection.title,
+      slug: slug(collection.title).replace(/_/g, "-"),
+      status: "published",
+      pinned: matching.slice(0, 8),
+      hidden: [],
+      schedule: "",
+      rules: { filters: collection.filters, generated: true, editable: true },
+      entity_ids: matching,
+      actions: ["pin", "remove", "override", "feature", "hide", "schedule"],
+    });
+  });
+
+  ensureRecord(entities.WalkingRoute, "route_downtown_first_walk", {
+    title: "Downtown first walk",
+    status: "draft",
+    entity_ids: ["attraction_austin_central_library", "attraction_lady_bird_lake", "attraction_congress_avenue_bat_bridge", "attraction_paramount_theatre"],
+    purpose: "A simple first route from civic downtown to water, music, and evening plans.",
+    estimated_time_minutes: 90,
+    publishing: { lifecycle: "draft", preview_url: "/map?route=downtown-first-walk" },
+  });
+
+  ensureRecord(entities.AutomationRun, "automation_cms_relationship_refresh", {
+    name: "CMS Relationship Refresh",
+    provider: "platform",
+    status: "ready",
+    trigger: "content entity created or updated",
+    action: "Refresh nearby relationships, collection membership, SEO preview, analytics targets, and map visibility.",
+    last_run: "",
+    target: "content_entities",
+  });
+}
+
 async function ensureDatabase(): Promise<Database> {
   await fs.mkdir(dataDir, { recursive: true });
   try {
@@ -1826,6 +3066,9 @@ async function ensureDatabase(): Promise<Database> {
       if (bundled && platformRecordCount(bundled) > platformRecordCount(parsed)) {
         for (const entityName of entityNames) bundled.entities[entityName] ||= [];
         addOperationalDefaults(bundled.entities);
+        if (!bundled.entities.Partner.some((partner) => partner.source_type === "partner_outreach_crm")) {
+          await importPartnerOutreachWorkbook(bundled.entities);
+        }
         await saveDatabase(bundled);
         return bundled;
       }
@@ -1833,6 +3076,9 @@ async function ensureDatabase(): Promise<Database> {
     for (const entityName of entityNames) parsed.entities[entityName] ||= [];
     addOperationalDefaults(parsed.entities);
     await importPricingCatalog(parsed.entities);
+    if (!parsed.entities.Partner.some((partner) => partner.source_type === "partner_outreach_crm")) {
+      await importPartnerOutreachWorkbook(parsed.entities);
+    }
     await saveDatabase(parsed);
     return parsed;
   } catch {
@@ -1841,12 +3087,16 @@ async function ensureDatabase(): Promise<Database> {
       if (bundled) {
         for (const entityName of entityNames) bundled.entities[entityName] ||= [];
         addOperationalDefaults(bundled.entities);
+        if (!bundled.entities.Partner.some((partner) => partner.source_type === "partner_outreach_crm")) {
+          await importPartnerOutreachWorkbook(bundled.entities);
+        }
         await saveDatabase(bundled);
         return bundled;
       }
     }
     const seeded = createSeedDatabase();
     await importPricingCatalog(seeded.entities);
+    await importPartnerOutreachWorkbook(seeded.entities);
     await saveDatabase(seeded);
     return seeded;
   }
@@ -2056,6 +3306,41 @@ function getPartnerName(db: Database, partnerId?: string) {
 }
 
 function mapEntityRows(db: Database) {
+  const fromContent = db.entities.ContentEntity
+    .filter((entity) => entity.deleted_at ? false : entity.map?.latitude || entity.map?.lat || entity.latitude || entity.lat)
+    .map((entity) => ({
+      id: `cms_${entity.id}`,
+      map_entity_id: entity.id,
+      entity_type: entity.entity_type || entity.category || "attraction",
+      entity_id: entity.id,
+      title: entity.name || entity.title,
+      category: entity.category || "",
+      district: entity.district || "",
+      lat: entity.map?.latitude ?? entity.map?.lat ?? entity.latitude ?? entity.lat ?? null,
+      lng: entity.map?.longitude ?? entity.map?.lng ?? entity.longitude ?? entity.lng ?? null,
+      status: entity.status || "draft",
+      visibility: entity.published || entity.status === "published" ? "public" : "admin",
+      partner_id: entity.partner_id || "",
+      property_id: entity.property_id || "",
+      building_id: entity.building_id || "",
+      campaign_id: entity.campaign_id || "",
+      perk_id: entity.perk_id || "",
+      event_id: entity.event_id || "",
+      organization_id: entity.organization_id || "org_downtown_perks",
+      tenant_id: entity.tenant_id || "",
+      workspace_id: entity.workspace_id || "workspace_downtown_perks",
+      analytics_summary: {
+        views: db.entities.AnalyticsEvent.filter((event) => event.entity_id === entity.id && event.event === "pin_viewed").length,
+        saves: db.entities.AnalyticsEvent.filter((event) => event.entity_id === entity.id && event.event === "save_clicked").length,
+        directions: db.entities.AnalyticsEvent.filter((event) => event.entity_id === entity.id && event.event === "directions_clicked").length,
+        redemptions: 0,
+      },
+      content: entity.content || {},
+      seo: entity.seo || {},
+      publishing: entity.publishing || {},
+      last_updated: entity.updated_at || entity.created_at || "",
+    }));
+
   const fromLinks = db.entities.MapEntityLink.map((link) => {
     const locationByEntity = db.entities.PartnerLocation.find((item) => item.map_entity_id === link.entity_id);
     const locationByPartner = link.partner_id ? db.entities.PartnerLocation.find((item) => item.partner_id === link.partner_id) : undefined;
@@ -2128,7 +3413,7 @@ function mapEntityRows(db: Database) {
   }));
 
   const merged = new Map<string, Record<string, any>>();
-  [...fromLinks, ...fromPerks].forEach((record) => {
+  [...fromContent, ...fromLinks, ...fromPerks].forEach((record) => {
     const key = record.map_entity_id || record.id;
     if (!merged.has(key)) merged.set(key, record);
   });
@@ -2150,6 +3435,53 @@ function recordsToCsv(records: Record<string, any>[]) {
     return set;
   }, new Set<string>()));
   return `${columns.join(",")}\n${records.map((record) => columns.map((column) => csvValue(record[column])).join(",")).join("\n")}\n`;
+}
+
+function columnLetters(index: number) {
+  let value = index + 1;
+  let letters = "";
+  while (value > 0) {
+    const remainder = (value - 1) % 26;
+    letters = String.fromCharCode(65 + remainder) + letters;
+    value = Math.floor((value - 1) / 26);
+  }
+  return letters;
+}
+
+function xmlEscape(value: any) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+async function createSimpleXlsx(records: Record<string, any>[], fileName: string) {
+  const tempRoot = path.join(dataDir, `xlsx_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`);
+  const xlDir = path.join(tempRoot, "xl");
+  const relsDir = path.join(tempRoot, "_rels");
+  const xlRelsDir = path.join(xlDir, "_rels");
+  const worksheetsDir = path.join(xlDir, "worksheets");
+  await fs.mkdir(relsDir, { recursive: true });
+  await fs.mkdir(xlRelsDir, { recursive: true });
+  await fs.mkdir(worksheetsDir, { recursive: true });
+  const exportRows = records.length ? records : [{ Status: "No CRM records available" }];
+  const headers = Object.keys(exportRows[0]);
+  const rows = [headers, ...exportRows.map((record) => headers.map((header) => record[header] ?? ""))];
+  const sheetRows = rows
+    .map((row, rowIndex) => {
+      const cells = row.map((cell, cellIndex) => `<c r="${columnLetters(cellIndex)}${rowIndex + 1}" t="inlineStr"><is><t>${xmlEscape(cell)}</t></is></c>`).join("");
+      return `<row r="${rowIndex + 1}">${cells}</row>`;
+    })
+    .join("");
+  await fs.writeFile(path.join(tempRoot, "[Content_Types].xml"), `<?xml version="1.0" encoding="UTF-8"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/></Types>`);
+  await fs.writeFile(path.join(relsDir, ".rels"), `<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>`);
+  await fs.writeFile(path.join(xlDir, "workbook.xml"), `<?xml version="1.0" encoding="UTF-8"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="CRM Export" sheetId="1" r:id="rId1"/></sheets></workbook>`);
+  await fs.writeFile(path.join(xlRelsDir, "workbook.xml.rels"), `<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/></Relationships>`);
+  await fs.writeFile(path.join(worksheetsDir, "sheet1.xml"), `<?xml version="1.0" encoding="UTF-8"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData>${sheetRows}</sheetData></worksheet>`);
+  const outputPath = path.join(dataDir, fileName);
+  await execFileAsync("/usr/bin/zip", ["-qr", outputPath, "."], { cwd: tempRoot, maxBuffer: 1024 * 1024 });
+  return outputPath;
 }
 
 export async function createApp() {
@@ -2364,6 +3696,216 @@ export async function createApp() {
     const result = await importPartnerIntelligenceData(db.entities);
     await saveDatabase(db);
     res.json(result);
+  });
+
+  app.post("/api/outreach-crm/import", async (req, res) => {
+    const result = await importPartnerOutreachWorkbook(db.entities);
+    writeAuditEvent(db, req, { action: "partner_outreach_crm_imported", entity_type: "partner", entity_id: "partner_outreach_crm", after: result });
+    await saveDatabase(db);
+    res.json(result);
+  });
+
+  app.post("/api/outreach-crm/enrich-map-data", async (req, res) => {
+    const refreshMap = req.body?.refresh_map !== false;
+    const mapImport = refreshMap ? await importDowntownPerksMapData(db.entities) : null;
+    const result = await enrichOutreachCrmFromMapSources(db.entities, { google_places: Boolean(req.body?.google_places) });
+    writeAuditEvent(db, req, { action: "partner_outreach_crm_enriched", entity_type: "partner", entity_id: "partner_outreach_crm", after: result });
+    await saveDatabase(db);
+    res.json({ ...result, map_import: mapImport });
+  });
+
+  app.get("/api/outreach-crm", (req, res) => {
+    const partners = buildOutreachCrmRows(db.entities);
+    res.json({
+      partners,
+      statuses: outreachStatuses,
+      filters: ["All", "Restaurants", "Bars", "Coffee", "Retail", "Hotels", "Properties", "Residential Buildings", "Office Buildings", "Civic", "Services", "Wellness", "Fitness", "Events", "Brands", "Real Estate", "Campaigns", "Perks"],
+      counts: partners.reduce((acc: Record<string, number>, partner) => {
+        const type = String(partner.type || "Partners");
+        acc[type] = (acc[type] || 0) + 1;
+        acc.All = (acc.All || 0) + 1;
+        return acc;
+      }, {}),
+      schema: {
+        partners: ["id", "name", "type", "category", "district", "address", "website", "phone", "google_maps_url", "description", "partner_fit", "recommended_plan", "priority_score", "status", "created_at", "updated_at"],
+        contacts: ["id", "partner_id", "name", "role", "email", "phone", "linkedin_url", "confidence", "verification_status", "source_url", "notes"],
+        perks: ["id", "partner_id", "perk_title", "perk_description", "perk_type", "resident_value", "business_value", "status"],
+        campaigns: ["id", "partner_id", "campaign_title", "campaign_description", "campaign_type", "recommended_timing", "target_audience", "status"],
+        outreach_messages: ["id", "partner_id", "contact_id", "channel", "subject", "body", "status", "sent_at", "follow_up_at"],
+        outreach_activity: ["id", "partner_id", "contact_id", "activity_type", "notes", "created_at"],
+      },
+    });
+  });
+
+  app.patch("/api/outreach-crm/partners/:id", async (req, res) => {
+    const partner = findEntityById(db.entities.Partner, req.params.id);
+    if (!partner) return res.status(404).json({ error: "Partner not found" });
+    const beforeStage = partner.outreach_stage || partner.status || "";
+    Object.assign(partner, req.body || {}, { updated_at: now() });
+    const nextStage = partner.outreach_stage || partner.status || "";
+    logOutreachActivity(db.entities, {
+      partner_id: partner.id,
+      contact_id: db.entities.PartnerOutreachContact.find((item) => item.partner_id === partner.id)?.id || "",
+      activity_type: beforeStage !== nextStage ? "status_update" : "partner_update",
+      title: beforeStage !== nextStage ? `Status changed to ${nextStage}` : "Partner details updated",
+      notes: Object.keys(req.body || {}).join(", "),
+      status: nextStage,
+      metadata: { before_stage: beforeStage, changes: req.body || {} },
+    });
+    await saveDatabase(db);
+    res.json(buildOutreachCrmRows(db.entities).find((item) => item.id === partner.id));
+  });
+
+  app.patch("/api/outreach-crm/contacts/:id", async (req, res) => {
+    const contact = findEntityById(db.entities.PartnerOutreachContact, req.params.id);
+    if (!contact) return res.status(404).json({ error: "Contact not found" });
+    Object.assign(contact, req.body || {}, { updated_at: now() });
+    logOutreachActivity(db.entities, {
+      partner_id: contact.partner_id,
+      contact_id: contact.id,
+      activity_type: "contact_update",
+      title: "Contact details updated",
+      notes: Object.keys(req.body || {}).join(", "),
+      status: contact.status || "",
+      metadata: { changes: req.body || {} },
+    });
+    await saveDatabase(db);
+    res.json(contact);
+  });
+
+  app.patch("/api/outreach-crm/messages/:id", async (req, res) => {
+    const message = findEntityById(db.entities.PartnerOutreachMessage, req.params.id);
+    if (!message) return res.status(404).json({ error: "Message not found" });
+    Object.assign(message, req.body || {}, { updated_at: now() });
+    logOutreachActivity(db.entities, {
+      partner_id: message.partner_id,
+      contact_id: message.contact_id || "",
+      activity_type: "message_update",
+      title: `${message.channel === "sms" ? "Short message" : "Email"} edited`,
+      notes: Object.keys(req.body || {}).join(", "),
+      status: message.status || "draft",
+      metadata: { channel: message.channel, changes: req.body || {} },
+    });
+    await saveDatabase(db);
+    res.json(message);
+  });
+
+  app.post("/api/outreach-crm/partners/:id/generate-message", async (req, res) => {
+    const partner = findEntityById(db.entities.Partner, req.params.id);
+    if (!partner) return res.status(404).json({ error: "Partner not found" });
+    const contact = (db.entities.PartnerOutreachContact.find((item) => item.partner_id === partner.id) || {}) as Record<string, any>;
+    const generated = await generatePersonalizedOutreachCopy({ ...partner, ...(req.body || {}) }, contact);
+    const email = ensureRecord(db.entities.PartnerOutreachMessage, `outreach_message_${slug(partner.external_entity_id || partner.id)}_email`, {
+      partner_id: partner.id,
+      contact_id: contact.id || "",
+      channel: "email",
+      subject: generated.subject,
+      body: generated.body,
+      html: generated.html,
+      status: "draft",
+    });
+    const sms = ensureRecord(db.entities.PartnerOutreachMessage, `outreach_message_${slug(partner.external_entity_id || partner.id)}_sms`, {
+      partner_id: partner.id,
+      contact_id: contact.id || "",
+      channel: "sms",
+      subject: "Short text / DM",
+      body: generated.shortText,
+      status: "draft",
+    });
+    logOutreachActivity(db.entities, {
+      partner_id: partner.id,
+      contact_id: contact.id || "",
+      activity_type: "message_generated",
+      title: "Personalized outreach generated",
+      notes: `Generated ${generated.provider || "local"} email and short text draft.`,
+      status: partner.outreach_stage || partner.status || "Not started",
+      metadata: { provider: generated.provider || "local" },
+    });
+    await saveDatabase(db);
+    res.json({ email, sms, generated });
+  });
+
+  app.post("/api/outreach-crm/partners/:id/mark-contacted", async (req, res) => {
+    const partner = findEntityById(db.entities.Partner, req.params.id);
+    if (!partner) return res.status(404).json({ error: "Partner not found" });
+    Object.assign(partner, { outreach_stage: "Contacted", status: "Contacted", last_contacted: now(), updated_at: now() });
+    logOutreachActivity(db.entities, {
+      partner_id: partner.id,
+      contact_id: db.entities.PartnerOutreachContact.find((item) => item.partner_id === partner.id)?.id || "",
+      activity_type: "contacted",
+      title: "Marked contacted",
+      notes: req.body?.notes || "Marked contacted from Outreach CRM.",
+      status: "Contacted",
+    });
+    await saveDatabase(db);
+    res.json(buildOutreachCrmRows(db.entities).find((item) => item.id === partner.id));
+  });
+
+  app.post("/api/outreach-crm/partners/:id/schedule-follow-up", async (req, res) => {
+    const partner = findEntityById(db.entities.Partner, req.params.id);
+    if (!partner) return res.status(404).json({ error: "Partner not found" });
+    const followUpAt = req.body?.follow_up_at || req.body?.date || "";
+    Object.assign(partner, { outreach_stage: "Follow-up needed", status: "Follow-up needed", next_follow_up_date: followUpAt, updated_at: now() });
+    logOutreachActivity(db.entities, {
+      partner_id: partner.id,
+      contact_id: db.entities.PartnerOutreachContact.find((item) => item.partner_id === partner.id)?.id || "",
+      activity_type: "follow_up_scheduled",
+      title: "Follow-up scheduled",
+      notes: followUpAt ? `Next follow-up: ${followUpAt}` : "Follow-up date needs confirmation.",
+      status: "Follow-up needed",
+      metadata: { follow_up_at: followUpAt },
+    });
+    await saveDatabase(db);
+    res.json(buildOutreachCrmRows(db.entities).find((item) => item.id === partner.id));
+  });
+
+  app.post("/api/outreach-crm/batch/status", async (req, res) => {
+    const ids = Array.isArray(req.body?.ids) ? req.body.ids.map((id: any) => String(id)) : [];
+    const status = normalizeOutreachStage(req.body?.status || "");
+    if (!outreachStatuses.includes(status)) return res.status(400).json({ error: "Unsupported outreach status" });
+    const selected = db.entities.Partner.filter((partner) => ids.includes(partner.id) && partner.source_type === "partner_outreach_crm");
+    selected.forEach((partner) => {
+      Object.assign(partner, {
+        outreach_stage: status,
+        status,
+        last_contacted: status === "Contacted" ? now() : partner.last_contacted || "",
+        updated_at: now(),
+      });
+      logOutreachActivity(db.entities, {
+        partner_id: partner.id,
+        contact_id: db.entities.PartnerOutreachContact.find((item) => item.partner_id === partner.id)?.id || "",
+        activity_type: "batch_status_update",
+        title: `Batch status changed to ${status}`,
+        notes: `Updated from batch action for ${selected.length} selected partner${selected.length === 1 ? "" : "s"}.`,
+        status,
+        metadata: { selected_count: selected.length },
+      });
+    });
+    await saveDatabase(db);
+    res.json({
+      success: true,
+      updated_count: selected.length,
+      partners: buildOutreachCrmRows(db.entities).filter((partner) => ids.includes(partner.id)),
+    });
+  });
+
+  app.get("/api/outreach-crm/export.:format", async (req, res) => {
+    const selectedIds = String(req.query.ids || "")
+      .split(",")
+      .map((id) => id.trim())
+      .filter(Boolean);
+    const rows = crmExportRows(db.entities, selectedIds);
+    const format = String(req.params.format || "csv").toLowerCase();
+    const fileBase = selectedIds.length ? `downtown-perks-outreach-selected-${format}` : `downtown-perks-outreach-${format}`;
+    if (format === "xlsx") {
+      const outputPath = await createSimpleXlsx(rows, `${fileBase}.xlsx`);
+      res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+      res.setHeader("Content-Disposition", `attachment; filename="${fileBase}.xlsx"`);
+      return res.sendFile(outputPath);
+    }
+    res.setHeader("Content-Type", "text/csv; charset=utf-8");
+    res.setHeader("Content-Disposition", `attachment; filename="${fileBase}.csv"`);
+    res.send(recordsToCsv(rows));
   });
 
   app.post("/api/products/import-pricing-catalog", async (req, res) => {
@@ -3595,6 +5137,198 @@ export async function createApp() {
     } catch (err: any) {
       res.status(500).json({ error: err.message || "Failed to ingest data.", provider: provider.metadata.name });
     }
+  });
+
+  app.get("/api/cms/entities", (req, res) => {
+    const q = String(req.query.q || "").toLowerCase();
+    const category = String(req.query.category || "").toLowerCase();
+    const status = String(req.query.status || "").toLowerCase();
+    const records = db.entities.ContentEntity
+      .filter((entity) => !entity.deleted_at)
+      .filter((entity) => !q || `${entity.name || ""} ${entity.title || ""} ${entity.description || ""} ${entity.district || ""}`.toLowerCase().includes(q))
+      .filter((entity) => !category || String(entity.category || "").toLowerCase() === category)
+      .filter((entity) => !status || String(entity.status || "").toLowerCase() === status)
+      .sort((a, b) => Number(a.priority || 999) - Number(b.priority || 999));
+    res.json(records);
+  });
+
+  app.post("/api/cms/entities", async (req, res) => {
+    const payload = req.body || {};
+    if (!payload.name && !payload.title) return res.status(400).json({ error: "Name is required." });
+    const record = withTimestamps(
+      {
+        organization_id: payload.organization_id || "org_downtown_perks",
+        workspace_id: payload.workspace_id || "workspace_downtown_perks",
+        status: payload.status || "draft",
+        published: payload.published === true,
+        verified: payload.verified === true,
+        featured: payload.featured === true,
+        priority: Number(payload.priority || db.entities.ContentEntity.length + 1),
+        slug: payload.slug || slug(payload.name || payload.title).replace(/_/g, "-"),
+        entity_type: payload.entity_type || "attraction",
+        category: payload.category || "place",
+        metadata: payload.metadata || {},
+        ...payload,
+      },
+      payload.id || makeId("content")
+    );
+    db.entities.ContentEntity.push(record);
+    writeAuditEvent(db, req, { action: "content_entity_created", entity_type: "content_entity", entity_id: record.id, after: record });
+    writeAnalyticsEvent(db, req, { event: "content_entity_created", entity_type: "content_entity", entity_id: record.id, metadata: { category: record.category } });
+    await saveDatabase(db);
+    res.status(201).json(record);
+  });
+
+  app.get("/api/cms/entities/:id", (req, res) => {
+    const entity = db.entities.ContentEntity.find((item) => item.id === req.params.id || item.slug === req.params.id);
+    if (!entity || entity.deleted_at) return res.status(404).json({ error: "Content entity not found" });
+    const relationships = db.entities.ContentRelationship.filter((item) => item.source_entity_id === entity.id || item.target_entity_id === entity.id);
+    const collections = db.entities.ContentCollection.filter((collection) => Array.isArray(collection.entity_ids) && collection.entity_ids.includes(entity.id));
+    const revisions = db.entities.ContentRevision.filter((revision) => revision.entity_id === entity.id);
+    const workflow = db.entities.ContentPublishingWorkflow.find((item) => item.entity_id === entity.id);
+    const analytics = db.entities.AnalyticsEvent.filter((event) => event.entity_id === entity.id);
+    res.json({ ...entity, relationships, collections, revisions, workflow, analytics });
+  });
+
+  app.patch("/api/cms/entities/:id", async (req, res) => {
+    const entity = db.entities.ContentEntity.find((item) => item.id === req.params.id || item.slug === req.params.id);
+    if (!entity || entity.deleted_at) return res.status(404).json({ error: "Content entity not found" });
+    const before = { ...entity };
+    Object.assign(entity, req.body || {}, { updated_at: now() });
+    const revision = withTimestamps(
+      {
+        entity_id: entity.id,
+        version: db.entities.ContentRevision.filter((item) => item.entity_id === entity.id).length + 1,
+        status: entity.status,
+        summary: req.body?.revision_summary || "Content entity updated.",
+        snapshot: entity,
+        created_by: actorFromRequest(req),
+      },
+      makeId("revision")
+    );
+    db.entities.ContentRevision.push(revision);
+    writeAuditEvent(db, req, { action: "content_entity_updated", entity_type: "content_entity", entity_id: entity.id, before, after: entity });
+    writeAnalyticsEvent(db, req, { event: "content_entity_updated", entity_type: "content_entity", entity_id: entity.id, metadata: { status: entity.status } });
+    await saveDatabase(db);
+    res.json({ entity, revision });
+  });
+
+  app.post("/api/cms/entities/:id/publish", async (req, res) => {
+    const entity = db.entities.ContentEntity.find((item) => item.id === req.params.id || item.slug === req.params.id);
+    if (!entity || entity.deleted_at) return res.status(404).json({ error: "Content entity not found" });
+    const before = { ...entity };
+    entity.status = req.body?.scheduled_at ? "scheduled" : "published";
+    entity.published = !req.body?.scheduled_at;
+    entity.published_at = req.body?.scheduled_at ? "" : now();
+    entity.updated_at = now();
+    const workflow = ensureRecord(db.entities.ContentPublishingWorkflow, `workflow_${entity.id}`, {
+      entity_id: entity.id,
+      workflow_type: "content_publishing",
+      state: entity.status,
+      current_step: entity.status,
+      scheduled_at: req.body?.scheduled_at || "",
+      steps: ["draft", "review", "scheduled", "published", "archived"],
+      next_action: entity.status === "scheduled" ? "Publish when the schedule opens." : "Watch performance and keep details current.",
+    });
+    workflow.state = entity.status;
+    workflow.current_step = entity.status;
+    workflow.updated_at = now();
+    writeAuditEvent(db, req, { action: "content_entity_published", entity_type: "content_entity", entity_id: entity.id, before, after: entity });
+    writeAnalyticsEvent(db, req, { event: "content_entity_published", entity_type: "content_entity", entity_id: entity.id });
+    await saveDatabase(db);
+    res.json({ entity, workflow });
+  });
+
+  app.post("/api/cms/entities/:id/archive", async (req, res) => {
+    const entity = db.entities.ContentEntity.find((item) => item.id === req.params.id || item.slug === req.params.id);
+    if (!entity || entity.deleted_at) return res.status(404).json({ error: "Content entity not found" });
+    const before = { ...entity };
+    entity.status = "archived";
+    entity.published = false;
+    entity.archived_at = now();
+    entity.updated_at = now();
+    writeAuditEvent(db, req, { action: "content_entity_archived", entity_type: "content_entity", entity_id: entity.id, before, after: entity });
+    writeAnalyticsEvent(db, req, { event: "content_entity_archived", entity_type: "content_entity", entity_id: entity.id });
+    await saveDatabase(db);
+    res.json(entity);
+  });
+
+  app.get("/api/cms/collections", (req, res) => {
+    res.json(db.entities.ContentCollection.filter((collection) => !collection.deleted_at));
+  });
+
+  app.post("/api/cms/collections", async (req, res) => {
+    if (!req.body?.title) return res.status(400).json({ error: "Title is required." });
+    const record = withTimestamps(
+      {
+        organization_id: req.body.organization_id || "org_downtown_perks",
+        workspace_id: req.body.workspace_id || "workspace_downtown_perks",
+        status: req.body.status || "draft",
+        slug: req.body.slug || slug(req.body.title).replace(/_/g, "-"),
+        entity_ids: Array.isArray(req.body.entity_ids) ? req.body.entity_ids : [],
+        rules: req.body.rules || {},
+        ...req.body,
+      },
+      req.body.id || makeId("collection")
+    );
+    db.entities.ContentCollection.push(record);
+    writeAuditEvent(db, req, { action: "content_collection_created", entity_type: "content_collection", entity_id: record.id, after: record });
+    await saveDatabase(db);
+    res.status(201).json(record);
+  });
+
+  app.patch("/api/cms/collections/:id", async (req, res) => {
+    const collection = db.entities.ContentCollection.find((item) => item.id === req.params.id || item.slug === req.params.id);
+    if (!collection || collection.deleted_at) return res.status(404).json({ error: "Collection not found" });
+    const before = { ...collection };
+    Object.assign(collection, req.body || {}, { updated_at: now() });
+    writeAuditEvent(db, req, { action: "content_collection_updated", entity_type: "content_collection", entity_id: collection.id, before, after: collection });
+    await saveDatabase(db);
+    res.json(collection);
+  });
+
+  app.post("/api/cms/relationships/generate", async (req, res) => {
+    const sourceId = req.body?.entity_id || req.body?.source_entity_id;
+    const source = db.entities.ContentEntity.find((item) => item.id === sourceId || item.slug === sourceId);
+    if (!source) return res.status(404).json({ error: "Source entity not found" });
+    const candidates = db.entities.ContentEntity
+      .filter((item) => item.id !== source.id && !item.deleted_at)
+      .map((target) => {
+        const sameDistrict = source.district && source.district === target.district;
+        const sameCategory = source.category && source.category === target.category;
+        const score = (sameDistrict ? 50 : 0) + (sameCategory ? 25 : 0) + Math.max(0, 25 - Math.abs(Number(source.priority || 0) - Number(target.priority || 0)));
+        return { target, score };
+      })
+      .filter((item) => item.score > 0)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, Number(req.body?.limit || 8));
+    const relationships = candidates.map(({ target, score }) =>
+      ensureRecord(db.entities.ContentRelationship, `rel_${source.id}_${target.id}`, {
+        source_entity_id: source.id,
+        target_entity_id: target.id,
+        relationship_type: source.category === target.category ? "related_category" : "nearby_context",
+        score,
+        status: "suggested",
+        editable: true,
+      })
+    );
+    writeAuditEvent(db, req, { action: "content_relationships_generated", entity_type: "content_entity", entity_id: source.id, after: { count: relationships.length } });
+    await saveDatabase(db);
+    res.json({ source, relationships });
+  });
+
+  app.get("/api/cms/workflows", (req, res) => {
+    res.json({
+      publishing: db.entities.ContentPublishingWorkflow,
+      automations: db.entities.AutomationRun.filter((item) => String(item.target || "").includes("content") || String(item.name || "").toLowerCase().includes("cms")),
+      requiredStates: ["draft", "review", "scheduled", "published", "archived"],
+      conditionalLogic: [
+        "If status is draft, hide from public map and resident panels.",
+        "If scheduled_at is in the future, keep admin preview active and public visibility off.",
+        "If published, include in map entities, collections, search, analytics, and reports.",
+        "If archived, preserve revisions and analytics while hiding from public surfaces.",
+      ],
+    });
   });
 
   app.get("/api/map/entities", (req, res) => {

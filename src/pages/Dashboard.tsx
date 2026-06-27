@@ -1,148 +1,211 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/Button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Building2, Users, Target, Activity, Zap, TrendingUp, PieChart, Sparkles, Loader2 } from 'lucide-react';
-import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
-import { base44 } from '@/api/base44Client';
+import React, { useEffect, useMemo, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { BarChart3, Building2, Loader2, ShieldCheck, Sparkles, Users } from "lucide-react";
+import { Button } from "@/components/ui/Button";
+import { base44 } from "@/api/base44Client";
+import { useAuth } from "@/components/context/AuthContext";
+
+type DashboardOverview = {
+  partners: number;
+  contacts: number;
+  activePerks: number;
+  campaigns: number;
+};
+
+type PartnerPreview = {
+  id: string;
+  name: string;
+  category: string;
+  status: string;
+  workspacePath: string;
+};
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const [overview, setOverview] = useState({ totalTenants: 0, totalRedemptions: 0, activePerks: 0, propertiesCount: 0 });
-  const [range, setRange] = useState<'Daily' | 'Weekly' | 'Monthly'>('Daily');
-  const [chartData, setChartData] = useState([
-    { name: 'Mon', value: 45 },
-    { name: 'Tue', value: 52 },
-    { name: 'Wed', value: 68 },
-    { name: 'Thu', value: 74 },
-    { name: 'Fri', value: 105 },
-    { name: 'Sat', value: 142 },
-    { name: 'Sun', value: 130 }
-  ]);
+  const { user, loading: authLoading, configured, error } = useAuth();
+  const [overview, setOverview] = useState<DashboardOverview>({ partners: 0, contacts: 0, activePerks: 0, campaigns: 0 });
+  const [partners, setPartners] = useState<PartnerPreview[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
+    let active = true;
+
     async function fetchData() {
+      setLoading(true);
+      setLoadError(null);
       try {
-        const [tenants, perks, redemptions, properties] = await Promise.all([
-          base44.entities.Tenant.list(),
+        const [partnerRows, contacts, perks, campaigns] = await Promise.all([
+          base44.entities.Partner.list(),
+          base44.entities.PartnerOutreachContact.list().catch(() => []),
           base44.entities.PerkLocation.list(),
-          base44.entities.PerkRedemption.list(),
-          base44.entities.Building.list(),
+          base44.entities.Campaign.list(),
         ]);
 
+        if (!active) return;
         setOverview({
-          totalTenants: tenants.length,
-          totalRedemptions: redemptions.length,
-          activePerks: perks.filter((perk: any) => perk.is_active !== false && perk.active !== false).length,
-          propertiesCount: properties.length,
+          partners: partnerRows.length,
+          contacts: contacts.length,
+          activePerks: perks.filter((perk: any) => perk.is_active !== false && perk.active !== false && perk.status !== "archived").length,
+          campaigns: campaigns.length,
         });
-
-        const trendMap = new Map<string, number>();
-        redemptions.forEach((redemption: any) => {
-          const label = new Date(redemption.redeemed_at || redemption.timestamp || Date.now()).toLocaleDateString('en-US', { weekday: 'short' });
-          trendMap.set(label, (trendMap.get(label) || 0) + 1);
-        });
-        const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-        setChartData(days.map((day) => ({ name: day, value: trendMap.get(day) || 0 })));
-      } catch (error) {
-        console.error("Failed to fetch dashboard data:", error);
+        setPartners(
+          partnerRows.slice(0, 8).map((partner: any) => {
+            const name = partner.business_name || partner.name || "Partner";
+            const slug = String(partner.slug || name).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+            return {
+              id: partner.id,
+              name,
+              category: partner.partner_type || partner.category || partner.type || "Partner",
+              status: partner.status || (partner.is_active === false ? "paused" : "active"),
+              workspacePath: partner.workspacePath || `/admin/workspaces/${slug}`,
+            };
+          })
+        );
+      } catch (requestError) {
+        if (!active) return;
+        setLoadError(requestError instanceof Error ? requestError.message : "Dashboard data could not be loaded.");
       } finally {
-        setLoading(false);
+        if (active) setLoading(false);
       }
     }
-    
-    fetchData();
+
+    void fetchData();
+    return () => {
+      active = false;
+    };
   }, []);
 
-  if (loading) {
+  const matrix = useMemo(
+    () => [
+      { label: "Partners", value: overview.partners, note: "Workspaces and profiles ready to open.", to: "/admin/partner" },
+      { label: "Contacts", value: overview.contacts, note: "People to verify, contact, or follow up.", to: "/admin/outreach-crm" },
+      { label: "Perks", value: overview.activePerks, note: "Offers active or ready for residents.", to: "/admin/perks" },
+      { label: "Campaigns", value: overview.campaigns, note: "Notes, offers, and outreach in motion.", to: "/admin/engagement" },
+    ],
+    [overview]
+  );
+
+  if (loading || authLoading) {
     return (
-      <div className="flex h-full items-center justify-center min-h-[600px]">
-        <Loader2 className="w-8 h-8 animate-spin text-[#11182B] " />
+      <div className="flex min-h-[520px] items-center justify-center bg-white">
+        <Loader2 className="h-7 w-7 animate-spin text-[#11182B]" />
       </div>
     );
   }
 
   return (
-    <div className="p-8 max-w-7xl mx-auto space-y-8">
-      <div>
-        <h1 className="text-3xl font-bold text-[#11182B] tracking-tight">How Downtown Perks is doing</h1>
-        <p className="text-slate-500 font-medium mt-1">A live read on residents, partners, perks, and places.</p>
-      </div>
+    <div className="dp-page-surface mx-0 max-w-6xl px-4 py-6 sm:px-6 lg:px-8">
+      <header className="mb-6 max-w-3xl">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[#C5A028]">Performance</p>
+        <h1 className="mt-2 text-2xl font-semibold tracking-normal text-[#11182B] sm:text-3xl">Partner workspace overview</h1>
+        <p className="mt-2 text-sm leading-6 text-[rgba(11,31,51,0.64)]">
+          A clean view of partners, contacts, perks, and campaigns before the full directory table opens here.
+        </p>
+      </header>
 
-      {/* Primary Metrics Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="bg-transparent border-t border-b border-[#EFEFEF] py-4 flex flex-col justify-center transition-colors hover:border-[#11182B]">
-           <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 flex items-center gap-2"><Users className="w-3.5 h-3.5 text-[#11182B]" /> People reached</div>
-           <div className="text-xl font-medium tracking-tight text-[#11182B] ">{overview.totalTenants.toLocaleString()}</div>
-        </div>
-        <div className="bg-transparent border-t border-b border-[#EFEFEF] py-4 flex flex-col justify-center transition-colors hover:border-[#11182B]">
-           <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 flex items-center gap-2"><Target className="w-3.5 h-3.5 text-[#11182B]" /> Redemptions</div>
-           <div className="text-xl font-medium tracking-tight text-[#11182B] ">{overview.totalRedemptions.toLocaleString()}</div>
-        </div>
-        <div className="bg-transparent border-t border-b border-[#EFEFEF] py-4 flex flex-col justify-center transition-colors hover:border-[#11182B]">
-           <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 flex items-center gap-2"><Zap className="w-3.5 h-3.5 text-[#11182B]" /> Active Perks</div>
-           <div className="text-xl font-medium tracking-tight text-[#11182B] ">{overview.activePerks}</div>
-        </div>
-        <div className="bg-transparent border-t border-b border-[#EFEFEF] py-4 flex flex-col justify-center transition-colors hover:border-[#11182B]">
-           <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 flex items-center gap-2"><Building2 className="w-3.5 h-3.5 text-[#11182B]" /> Properties</div>
-           <div className="text-xl font-medium tracking-tight text-[#11182B] ">{overview.propertiesCount}</div>
-        </div>
-      </div>
+      {(error || loadError || !configured) && (
+        <section className="mb-5 bg-[#F9FAFB] px-4 py-3 text-sm leading-6 text-[#11182B]">
+          <div className="flex items-start gap-3">
+            <ShieldCheck className="mt-0.5 h-4 w-4 text-[#C5A028]" />
+            <div>
+              <p className="font-semibold">{configured ? "Workspace notice" : "Firebase setup pending"}</p>
+              <p className="text-[13px] text-[rgba(11,31,51,0.62)]">
+                {error || loadError || "Add the VITE_FIREBASE_* app config to enable Firebase Authentication and Firestore realtime data."}
+              </p>
+            </div>
+          </div>
+        </section>
+      )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        
-        {/* Main Chart */}
-        <div className="lg:col-span-2 bg-white border border-[#EFEFEF] rounded-none p-6 shadow-none">
-          <div className="flex flex-col items-start justify-between gap-4 mb-8 sm:flex-row sm:items-center">
-             <div>
-                <h2 className="text-lg font-bold text-[#11182B] ">What people used</h2>
-                <p className="text-sm text-slate-500">Perk use and saves, shown {range.toLowerCase()}.</p>
-             </div>
-             <div className="flex flex-wrap items-center gap-3 border-b border-[#EFEFEF]">
-                {(['Daily', 'Weekly', 'Monthly'] as const).map((item) => (
-                  <button
-                    key={item}
-                    type="button"
-                    onClick={() => setRange(item)}
-                    className={`pb-2 text-[10px] font-bold uppercase tracking-widest ${range === item ? 'border-b-2 border-[#11182B] text-[#11182B]' : 'text-slate-400 hover:text-[#11182B]'}`}
-                  >
-                    {item}
-                  </button>
+      <section className="mb-6 overflow-hidden bg-white shadow-[0_18px_48px_rgba(11,31,51,0.06)]">
+        <div className="grid grid-cols-2 divide-x divide-y divide-[rgba(11,31,51,0.08)] md:grid-cols-4 md:divide-y-0">
+          {matrix.map((item) => (
+            <Link key={item.label} to={item.to} className="group min-h-[112px] px-4 py-4 text-left transition-colors hover:bg-[#FAFAF8]">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[#C5A028]">{item.label}</p>
+              <p className="mt-2 text-2xl font-semibold text-[#11182B]">{item.value.toLocaleString()}</p>
+              <p className="mt-1 text-[12px] leading-5 text-[rgba(11,31,51,0.58)]">{item.note}</p>
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_280px]">
+        <section className="overflow-hidden bg-white shadow-[0_18px_48px_rgba(11,31,51,0.06)]">
+          <div className="flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[#C5A028]">Partner directory</p>
+              <h2 className="mt-1 text-lg font-semibold text-[#11182B]">Ready for the table build</h2>
+            </div>
+            <Button onClick={() => navigate("/admin/partner")} className="h-9 px-3 text-[10px]">
+              Open partners
+            </Button>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[640px] border-collapse text-left">
+              <thead>
+                <tr className="border-y border-[rgba(11,31,51,0.08)] text-[10px] uppercase tracking-[0.1em] text-[rgba(11,31,51,0.48)]">
+                  <th className="px-4 py-3 font-semibold">Partner</th>
+                  <th className="px-4 py-3 font-semibold">Type</th>
+                  <th className="px-4 py-3 font-semibold">Status</th>
+                  <th className="px-4 py-3 font-semibold">Workspace</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[rgba(11,31,51,0.06)] text-[13px]">
+                {partners.length === 0 && (
+                  <tr>
+                    <td colSpan={4} className="px-4 py-10 text-center text-[13px] text-[rgba(11,31,51,0.58)]">
+                      No partner records are loaded yet. Connect Firestore or import partner data to populate this table.
+                    </td>
+                  </tr>
+                )}
+                {partners.map((partner) => (
+                  <tr key={partner.id} className="align-middle">
+                    <td className="px-4 py-3 font-medium text-[#11182B]">{partner.name}</td>
+                    <td className="px-4 py-3 text-[rgba(11,31,51,0.62)]">{partner.category}</td>
+                    <td className="px-4 py-3 text-[rgba(11,31,51,0.62)]">{partner.status}</td>
+                    <td className="px-4 py-3">
+                      <Link className="text-[12px] font-semibold text-[#11182B] hover:text-[#C5A028]" to={partner.workspacePath}>
+                        Open
+                      </Link>
+                    </td>
+                  </tr>
                 ))}
-             </div>
+              </tbody>
+            </table>
           </div>
-          <div className="h-[300px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#64748B', fontSize: 12, fontWeight: 600}} dy={10} />
-                <YAxis axisLine={false} tickLine={false} tick={{fill: '#64748B', fontSize: 12, fontWeight: 600}} dx={-10} />
-                <Tooltip cursor={{fill: '#F1F5F9'}} contentStyle={{borderRadius: '0px', border: '1px solid #EFEFEF', boxShadow: 'none'}} />
-                <Bar dataKey="value" fill="#11182B" radius={[0, 0, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+        </section>
+
+        <aside className="bg-[#FAFAF8] px-4 py-4">
+          <div className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.1em] text-[#C5A028]">
+            <Sparkles className="h-4 w-4" />
+            Workspace state
           </div>
-        </div>
-
-        {/* Intelligence Agent Panel */}
-        <div className="bg-[#F5F7FA] border border-[#EFEFEF] rounded-none p-6 flex flex-col relative overflow-hidden shadow-none">
-           <div className="flex items-center gap-2 text-[#11182B] mb-6 font-bold uppercase tracking-widest text-[10px]">
-             <Sparkles className="w-4 h-4 text-[#C5A028]" /> Partner Opportunity
-           </div>
-           
-           <h3 className="text-xl font-bold mb-4 leading-tight text-[#11182B]">Weekend demand is surging near The Shore.</h3>
-           <p className="text-slate-500 font-medium text-sm leading-relaxed mb-8 flex-1">
-             Late afternoons near 603 Davis Street are getting busier. The Shore does not have a weekend note running for that moment yet.
-           </p>
-           
-           <Button onClick={() => navigate('/admin/engagement')} className="w-full bg-[#11182B] text-white hover:bg-[#1a243d] py-3 rounded-none font-bold uppercase tracking-widest text-[10px] transition-colors flex items-center justify-center gap-2">
-             <Zap className="w-4 h-4" /> Write a note
-           </Button>
-        </div>
-
+          <div className="mt-4 space-y-4 text-sm leading-6 text-[rgba(11,31,51,0.66)]">
+            <p>
+              {user ? `Signed in as ${user.email || user.displayName || "a workspace user"}.` : "No Firebase user session is active yet."}
+            </p>
+            <p>
+              The next table pass can attach realtime Firestore partners and contacts without changing the page structure.
+            </p>
+          </div>
+          <div className="mt-5 grid grid-cols-3 gap-2 text-center text-[11px]">
+            <div className="bg-white px-2 py-3">
+              <Users className="mx-auto mb-1 h-4 w-4 text-[#C5A028]" />
+              Contacts
+            </div>
+            <div className="bg-white px-2 py-3">
+              <Building2 className="mx-auto mb-1 h-4 w-4 text-[#C5A028]" />
+              Partners
+            </div>
+            <div className="bg-white px-2 py-3">
+              <BarChart3 className="mx-auto mb-1 h-4 w-4 text-[#C5A028]" />
+              Reports
+            </div>
+          </div>
+        </aside>
       </div>
-
     </div>
-  )
+  );
 }

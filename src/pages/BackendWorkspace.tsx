@@ -11,6 +11,7 @@ import {
   FileText,
   Hotel,
   Loader2,
+  MailCheck,
   Megaphone,
   Settings,
   ShieldCheck,
@@ -23,6 +24,7 @@ import { platformArchitecture } from '@/platform/registry';
 
 const moduleRoutes = [
   { label: 'Today downtown', to: '/admin/platform', icon: ShieldCheck },
+  { label: 'Outreach CRM', to: '/admin/outreach-crm', icon: MailCheck },
   { label: 'Partners', to: '/admin/partner', icon: ShoppingBag },
   { label: 'Properties', to: '/admin/properties', icon: Building2 },
   { label: 'Hotels', to: '/admin/partner', icon: Hotel },
@@ -154,7 +156,7 @@ export default function BackendWorkspace() {
   const groupedModules = [
     {
       title: 'Operate',
-      routes: moduleRoutes.filter((route) => ['Today downtown', 'Partners', 'Properties', 'Hotels', 'Venues', 'Brands', 'Civic'].includes(route.label)),
+      routes: moduleRoutes.filter((route) => ['Today downtown', 'Outreach CRM', 'Partners', 'Properties', 'Hotels', 'Venues', 'Brands', 'Civic'].includes(route.label)),
     },
     {
       title: 'Activate',

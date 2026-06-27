@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
-import { Building2, LayoutDashboard, Users, Megaphone, Ticket, Settings, ArrowLeft, BarChart3, Presentation, ListTodo, Menu, X, Home as HomeIcon, CreditCard, Sparkles } from 'lucide-react';
+import { Building2, LayoutDashboard, Users, Megaphone, Ticket, Settings, ArrowLeft, BarChart3, Presentation, ListTodo, Menu, X, Home as HomeIcon, CreditCard, Sparkles, MailCheck } from 'lucide-react';
 
 export default function PartnerDashboardLayout() {
   const navigate = useNavigate();
@@ -23,6 +23,7 @@ export default function PartnerDashboardLayout() {
     { to: '/admin/platform', icon: <ShieldIcon />, label: 'Today downtown' },
 
     { section: 'Network' },
+    { to: '/admin/outreach-crm', icon: <MailCheck className="w-4 h-4" />, label: 'Outreach CRM' },
     { to: '/admin/partner', icon: <Building2 className="w-4 h-4" />, label: 'Partner workspaces' },
     { to: '/admin/properties', icon: <Building2 className="w-4 h-4" />, label: 'Properties' },
     { to: '/admin/buildings', icon: <Users className="w-4 h-4" />, label: 'Buildings' },

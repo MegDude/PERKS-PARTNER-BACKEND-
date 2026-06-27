@@ -260,10 +260,12 @@ export function PartnerWorkspaceTemplate(props: Props) {
     setLeadNotice(`Saved. ${submitted.organizationName} is ready for the next pass.`);
   }
 
-  function toggleFavorite(id: string) {
+  async function toggleFavorite(id: string) {
     const existing = favorites.some((favorite) => favorite.id === id);
     const perk = perks.find((item) => `fav-${item.id.replace('perk-', '')}` === id);
     const event = events.find((item) => `fav-${item.id.replace('event-', '')}` === id);
+    const place = props.trendingLocations.find((item) => `fav-${item.id.replace('trend-', '')}` === id);
+    const currentFavorite = favorites.find((favorite) => favorite.id === id);
     const next = existing
       ? favorites.map((favorite) => (favorite.id === id ? { ...favorite, saved: !favorite.saved } : favorite))
       : [
@@ -286,22 +288,57 @@ export function PartnerWorkspaceTemplate(props: Props) {
                 saved: true,
               }]
             : []),
-          ...props.trendingLocations
-            .filter((place) => `fav-${place.id.replace('trend-', '')}` === id)
-            .map((place) => ({
+          ...(place
+            ? [{
               id,
               type: 'Venue' as const,
               name: place.name,
               detail: `${place.trend} · ${place.distance}`,
               saved: true,
-            })),
+            }]
+            : []),
+          ...(!perk && !event && !place
+            ? [{
+                id,
+                type: (currentFavorite?.type || 'Venue') as FavoriteItem['type'],
+                name: currentFavorite?.name || workspaceName,
+                detail: currentFavorite?.detail || 'Saved from this workspace.',
+                saved: true,
+              }]
+            : []),
         ];
     setFavorites(next);
     saveFavoriteState(next, workspaceSlug);
+    try {
+      await upsertEntity('PartnerSettings', `settings-${workspaceSlug}`, {
+        id: `settings-${workspaceSlug}`,
+        ...entityScope,
+        favorite_items: next,
+        last_favorite_action: id,
+        updated_at: new Date().toISOString(),
+      });
+      setLeadNotice(existing ? 'Favorite updated.' : 'Saved to this workspace.');
+    } catch {
+      setLeadNotice('Saved locally. Backend is not reachable from this browser.');
+    }
   }
 
   async function copyText(text: string) {
-    await navigator.clipboard?.writeText(text);
+    try {
+      await navigator.clipboard?.writeText(text);
+      setLeadNotice('Copied.');
+    } catch {
+      const textArea = document.createElement('textarea');
+      textArea.value = text;
+      textArea.setAttribute('readonly', 'true');
+      textArea.style.position = 'fixed';
+      textArea.style.opacity = '0';
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
+      setLeadNotice('Copied.');
+    }
   }
 
   function updateQrArtwork(qrId: string, key: keyof QrArtwork, value: string) {
@@ -957,14 +994,14 @@ export function PartnerWorkspaceTemplate(props: Props) {
               </div>
             </div>
             <div className="grid content-start gap-2">
-              <button type="button" className="shore-button justify-start" onClick={() => toggleFavorite('fav-van-zandt')}>
+              <button type="button" className="shore-button justify-start" onClick={() => toggleFavorite(buzzInsights[0]?.favoriteId || `fav-${workspaceSlug}`)}>
                 <Heart className="h-4 w-4" /> Save this for later
               </button>
               <a href="/map?mode=resident&tab=map&filter=All" className="shore-button justify-start">
                 <ArrowUpRight className="h-4 w-4" /> Open the neighborhood map
               </a>
               <a href="#perks" className="shore-button justify-start">
-                <ArrowUpRight className="h-4 w-4" /> See The Shore perks
+                <ArrowUpRight className="h-4 w-4" /> See {workspaceName} perks
               </a>
               <a href="#events" className="shore-button justify-start">
                 <ArrowUpRight className="h-4 w-4" /> See what’s coming up

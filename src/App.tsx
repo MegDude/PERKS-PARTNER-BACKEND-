@@ -1,98 +1,104 @@
-import React from 'react';
+import React, { Suspense, lazy } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import MapOS from './pages/MapOS';
-import PartnerDashboardLayout from './components/layout/PartnerDashboardLayout';
-import Dashboard from './pages/Dashboard';
-import BuildingsManagement from './pages/BuildingsManagement';
-import PropertiesManagement from './pages/PropertiesManagement';
-import EngagementHub from './pages/EngagementHub';
-import DowntownPerks from './pages/DowntownPerks';
+import { AuthProvider } from './components/context/AuthContext';
 
-import DeveloperEngagement from './pages/DeveloperEngagement';
-import About from './pages/About';
-import EventDetail from './pages/EventDetail';
+const MapOS = lazy(() => import('./pages/MapOS'));
+const PartnerDashboardLayout = lazy(() => import('./components/layout/PartnerDashboardLayout'));
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const BuildingsManagement = lazy(() => import('./pages/BuildingsManagement'));
+const PropertiesManagement = lazy(() => import('./pages/PropertiesManagement'));
+const EngagementHub = lazy(() => import('./pages/EngagementHub'));
+const DowntownPerks = lazy(() => import('./pages/DowntownPerks'));
+const DeveloperEngagement = lazy(() => import('./pages/DeveloperEngagement'));
+const About = lazy(() => import('./pages/About'));
+const EventDetail = lazy(() => import('./pages/EventDetail'));
+const PartnerDashboard = lazy(() => import('./pages/PartnerDashboard'));
+const PartnerPortal = lazy(() => import('./pages/PartnerPortal'));
+const Residents = lazy(() => import('./pages/Residents'));
+const Segmentation = lazy(() => import('./pages/Segmentation'));
+const PerkAnalytics = lazy(() => import('./pages/PerkAnalytics'));
+const Events = lazy(() => import('./pages/Events'));
+const Home = lazy(() => import('./pages/Home'));
+const WelcomeFlow = lazy(() => import('./pages/WelcomeFlow'));
+const Reports = lazy(() => import('./pages/Reports'));
+const Surveys = lazy(() => import('./pages/Surveys'));
+const AnnouncementManager = lazy(() => import('./pages/AnnouncementManager'));
+const BackendWorkspace = lazy(() => import('./pages/BackendWorkspace'));
+const PlatformCommandCenter = lazy(() => import('./pages/PlatformCommandCenter'));
+const PartnerLifecycle = lazy(() => import('./pages/PartnerLifecycle'));
+const Promotions = lazy(() => import('./pages/Promotions'));
+const PartnerWorkspaceRoute = lazy(() => import('./routes/PartnerWorkspaceRoute'));
+const PlatformModuleAudit = lazy(() => import('./pages/PlatformModuleAudit'));
+const PartnerOutreachCRM = lazy(() => import('./pages/PartnerOutreachCRM'));
 
-import PartnerDashboard from './pages/PartnerDashboard';
-import PartnerPortal from './pages/PartnerPortal';
-import Residents from './pages/Residents';
-import Segmentation from './pages/Segmentation';
-import PerkAnalytics from './pages/PerkAnalytics';
-import Events from './pages/Events';
-
-import Home from './pages/Home';
-import WelcomeFlow from './pages/WelcomeFlow';
-import Reports from './pages/Reports';
-import Surveys from './pages/Surveys';
-import AnnouncementManager from './pages/AnnouncementManager';
-import BackendWorkspace from './pages/BackendWorkspace';
-import PlatformCommandCenter from './pages/PlatformCommandCenter';
-import PartnerLifecycle from './pages/PartnerLifecycle';
-import Promotions from './pages/Promotions';
-import PartnerWorkspaceRoute from './routes/PartnerWorkspaceRoute';
-import PlatformModuleAudit from './pages/PlatformModuleAudit';
+function RouteFallback() {
+  return (
+    <div className="min-h-screen bg-white p-6 text-sm font-semibold text-[#0B1F33]">
+      Loading Downtown Perks.
+    </div>
+  );
+}
 
 export default function App() {
   return (
-    <Routes>
-      <Route path="/" element={<PartnerDashboardLayout />}>
-        <Route index element={<Home />} />
-      </Route>
-      <Route path="/map" element={<MapOS />} />
-      <Route path="/welcome" element={<WelcomeFlow />} />
-      <Route path="/partners" element={<PartnerLifecycle />} />
-      <Route path="/partners/*" element={<PartnerLifecycle />} />
-      <Route path="/workspace" element={<Navigate to="/workspace/home" replace />} />
-      <Route path="/workspace/*" element={<PartnerLifecycle />} />
-      <Route path="/partner/workspace" element={<Navigate to="/workspace/home" replace />} />
-      <Route path="/partner-portal" element={<Navigate to="/admin/partner-portal" replace />} />
-      <Route path="/partner-workspace" element={<Navigate to="/workspace/home" replace />} />
-      <Route path="/partner-workspace/*" element={<Navigate to="/workspace/home" replace />} />
-      <Route path="/the-shore-workspace" element={<PartnerWorkspaceRoute />} />
-      <Route path="/workspaces/:slug" element={<PartnerWorkspaceRoute />} />
-      <Route path="/admin/workspaces/:slug" element={<PartnerWorkspaceRoute />} />
-      <Route path="/admin" element={<PartnerDashboardLayout />}>
-        <Route index element={<BackendWorkspace />} />
-        <Route path="home" element={<Home />} />
-        <Route path="platform" element={<PlatformCommandCenter />} />
-        <Route path="platform/modules" element={<PlatformModuleAudit />} />
-        <Route path="platform/partners" element={<Navigate to="/admin/partner" replace />} />
-        <Route path="platform/buildings" element={<Navigate to="/admin/buildings" replace />} />
-        <Route path="platform/events" element={<Navigate to="/admin/events" replace />} />
-        <Route path="platform/perks" element={<Navigate to="/admin/perks" replace />} />
-        <Route path="platform/campaigns" element={<Navigate to="/admin/engagement" replace />} />
-        <Route path="platform/residents" element={<Navigate to="/admin/residents" replace />} />
-        <Route path="platform/reports" element={<Navigate to="/admin/reports" replace />} />
-        <Route path="platform/settings" element={<Navigate to="/admin/settings" replace />} />
-        <Route path="dashboard" element={<Dashboard />} />
-        
-        {/* Buildings Context Setup if needed */}
-        <Route path="buildings" element={<BuildingsManagement />} />
-        <Route path="properties" element={<PropertiesManagement />} />
-        <Route path="buildings/:tab" element={<BuildingsManagement />} />
-        
-        {/* Direct Building Dashboard equivalent via BuildingManagement or direct access */}
-        <Route path="buildings/:buildingId/*" element={<BuildingsManagement />} />
-        
-        <Route path="buildings-with-residents" element={<Navigate to="/admin/buildings/residents" replace />} />
-        <Route path="engagement" element={<EngagementHub />} />
-        <Route path="perks" element={<DowntownPerks />} />
-        <Route path="about" element={<About />} />
-        <Route path="developer-engagement" element={<DeveloperEngagement />} />
-        <Route path="events" element={<Events />} />
-        <Route path="events/:eventId" element={<EventDetail />} />
-        <Route path="partner" element={<PartnerDashboard />} />
-        <Route path="partner-portal" element={<PartnerPortal />} />
-        <Route path="residents" element={<Residents />} />
-        <Route path="segmentation" element={<Segmentation />} />
-        <Route path="analytics" element={<PerkAnalytics />} />
-        <Route path="settings" element={<BackendWorkspace />} />
-        
-        {/* New Pages */}
-        <Route path="reports" element={<Reports />} />
-        <Route path="surveys" element={<Surveys />} />
-        <Route path="announcements" element={<AnnouncementManager />} />
-        <Route path="promotions" element={<Promotions />} />
-      </Route>
-    </Routes>
+    <AuthProvider>
+      <Suspense fallback={<RouteFallback />}>
+        <Routes>
+        <Route path="/" element={<PartnerDashboardLayout />}>
+          <Route index element={<Home />} />
+        </Route>
+        <Route path="/map" element={<MapOS />} />
+        <Route path="/welcome" element={<WelcomeFlow />} />
+        <Route path="/partners" element={<PartnerLifecycle />} />
+        <Route path="/partners/*" element={<PartnerLifecycle />} />
+        <Route path="/workspace" element={<Navigate to="/workspace/home" replace />} />
+        <Route path="/workspace/*" element={<PartnerLifecycle />} />
+        <Route path="/partner/workspace" element={<Navigate to="/workspace/home" replace />} />
+        <Route path="/partner-portal" element={<Navigate to="/admin/partner-portal" replace />} />
+        <Route path="/partner-workspace" element={<Navigate to="/workspace/home" replace />} />
+        <Route path="/partner-workspace/*" element={<Navigate to="/workspace/home" replace />} />
+        <Route path="/the-shore-workspace" element={<PartnerWorkspaceRoute />} />
+        <Route path="/workspaces/:slug" element={<PartnerWorkspaceRoute />} />
+        <Route path="/admin/workspaces/:slug" element={<PartnerWorkspaceRoute />} />
+        <Route path="/admin" element={<PartnerDashboardLayout />}>
+          <Route index element={<BackendWorkspace />} />
+          <Route path="home" element={<Home />} />
+          <Route path="platform" element={<PlatformCommandCenter />} />
+          <Route path="platform/modules" element={<PlatformModuleAudit />} />
+          <Route path="platform/partners" element={<Navigate to="/admin/partner" replace />} />
+          <Route path="platform/buildings" element={<Navigate to="/admin/buildings" replace />} />
+          <Route path="platform/events" element={<Navigate to="/admin/events" replace />} />
+          <Route path="platform/perks" element={<Navigate to="/admin/perks" replace />} />
+          <Route path="platform/campaigns" element={<Navigate to="/admin/engagement" replace />} />
+          <Route path="platform/residents" element={<Navigate to="/admin/residents" replace />} />
+          <Route path="platform/reports" element={<Navigate to="/admin/reports" replace />} />
+          <Route path="platform/settings" element={<Navigate to="/admin/settings" replace />} />
+          <Route path="dashboard" element={<Dashboard />} />
+          <Route path="buildings" element={<BuildingsManagement />} />
+          <Route path="properties" element={<PropertiesManagement />} />
+          <Route path="buildings/:tab" element={<BuildingsManagement />} />
+          <Route path="buildings/:buildingId/*" element={<BuildingsManagement />} />
+          <Route path="buildings-with-residents" element={<Navigate to="/admin/buildings/residents" replace />} />
+          <Route path="engagement" element={<EngagementHub />} />
+          <Route path="perks" element={<DowntownPerks />} />
+          <Route path="about" element={<About />} />
+          <Route path="developer-engagement" element={<DeveloperEngagement />} />
+          <Route path="events" element={<Events />} />
+          <Route path="events/:eventId" element={<EventDetail />} />
+          <Route path="partner" element={<PartnerDashboard />} />
+          <Route path="outreach-crm" element={<PartnerOutreachCRM />} />
+          <Route path="partner-portal" element={<PartnerPortal />} />
+          <Route path="residents" element={<Residents />} />
+          <Route path="segmentation" element={<Segmentation />} />
+          <Route path="analytics" element={<PerkAnalytics />} />
+          <Route path="settings" element={<BackendWorkspace />} />
+          <Route path="reports" element={<Reports />} />
+          <Route path="surveys" element={<Surveys />} />
+          <Route path="announcements" element={<AnnouncementManager />} />
+          <Route path="promotions" element={<Promotions />} />
+        </Route>
+        </Routes>
+      </Suspense>
+    </AuthProvider>
   );
 }
