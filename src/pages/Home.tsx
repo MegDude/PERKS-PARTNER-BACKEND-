@@ -475,7 +475,7 @@ export default function Home() {
                   Activate district reach <ArrowRight className="h-3.5 w-3.5" />
                 </Link>
                 <p className="mt-2 text-[10px] leading-4 text-[rgba(11,31,51,0.5)]">
-                  Questions? Chat with the DANA partnership team. We are local and here to help.
+                  Questions? Chat with the Downtown Perks partnership team. We are local and here to help.
                 </p>
               </div>
             </aside>
