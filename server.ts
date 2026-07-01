@@ -98,7 +98,14 @@ type EntityName =
   | "PartnerOutreachContact"
   | "PartnerOutreachCampaign"
   | "PartnerOutreachStep"
-  | "PartnerOutreachMessage";
+  | "PartnerOutreachMessage"
+  | "Profile"
+  | "Organization"
+  | "Workspace"
+  | "WorkspaceMember"
+  | "Plan"
+  | "WorkspaceAddon"
+  | "BillingHistory";
 
 type EntityRecord = Record<string, any> & { id: string; created_at?: string; updated_at?: string };
 type Database = {
@@ -183,6 +190,13 @@ const entityNames: EntityName[] = [
   "PartnerOutreachCampaign",
   "PartnerOutreachStep",
   "PartnerOutreachMessage",
+  "Profile",
+  "Organization",
+  "Workspace",
+  "WorkspaceMember",
+  "Plan",
+  "WorkspaceAddon",
+  "BillingHistory",
 ];
 
 const now = () => new Date().toISOString();
@@ -2776,6 +2790,505 @@ function provisionPlatformTenant(entities: Database["entities"], source: Record<
   }
 
   return tenant;
+}
+
+const workspaceModules = [
+  "overview",
+  "profile",
+  "locations",
+  "map",
+  "perks",
+  "events",
+  "campaigns",
+  "qr",
+  "messages",
+  "surveys",
+  "reports",
+  "analytics",
+  "team",
+  "billing",
+  "settings",
+];
+
+const partnerTypeLabels = ["Property", "Hotel", "Venue", "Brand", "Retail", "Restaurant", "Real Estate", "Civic", "Nonprofit", "Agency"];
+
+function normalizePartnerTypeLabel(value: any) {
+  const raw = String(value || "Partner").trim();
+  const match = partnerTypeLabels.find((type) => slug(type) === slug(raw));
+  return match || raw || "Partner";
+}
+
+function hashPassword(password: string, salt = crypto.randomBytes(16).toString("hex")) {
+  const hash = crypto.pbkdf2Sync(password, salt, 120000, 64, "sha512").toString("hex");
+  return { salt, hash, algorithm: "pbkdf2_sha512", iterations: 120000 };
+}
+
+function verifyPassword(password: string, auth: Record<string, any> = {}) {
+  if (!auth.password_hash || !auth.password_salt) return false;
+  const attempt = crypto.pbkdf2Sync(password, auth.password_salt, Number(auth.password_iterations || 120000), 64, "sha512").toString("hex");
+  return crypto.timingSafeEqual(Buffer.from(attempt, "hex"), Buffer.from(auth.password_hash, "hex"));
+}
+
+function buildSessionToken(userId: string) {
+  return crypto.createHash("sha256").update(`${userId}:${now()}:${crypto.randomBytes(16).toString("hex")}`).digest("hex");
+}
+
+function createWorkspaceBundle(entities: Database["entities"], tenant: EntityRecord) {
+  const workspace = entities.TenantWorkspace.find((item) => item.tenant_id === tenant.id);
+  return {
+    organization: entities.Organization.find((item) => item.platform_tenant_id === tenant.id || item.slug === tenant.slug),
+    tenant,
+    workspace,
+    profile: entities.PartnerProfile.find((item) => item.tenant_id === tenant.id),
+    locations: entities.PartnerLocation.filter((item) => item.tenant_id === tenant.id),
+    members: entities.WorkspaceMember.filter((item) => item.organization_id === tenant.id || item.workspace_id === workspace?.id),
+    users: entities.TenantUser.filter((item) => item.tenant_id === tenant.id),
+    subscription: entities.PartnerSubscription.find((item) => item.tenant_id === tenant.id),
+    invoices: entities.PartnerInvoice.filter((item) => item.tenant_id === tenant.id),
+    addons: entities.WorkspaceAddon.filter((item) => item.workspace_id === workspace?.id),
+    campaigns: entities.Campaign.filter((item) => item.tenant_id === tenant.id),
+    perks: entities.PerkLocation.filter((item) => item.tenant_id === tenant.id),
+    events: entities.PartnerEvent.filter((item) => item.tenant_id === tenant.id),
+    qr: entities.PartnerQrExperience.filter((item) => item.tenant_id === tenant.id),
+    reports: entities.PartnerReport.filter((item) => item.tenant_id === tenant.id),
+    analytics: entities.PartnerAnalytics.filter((item) => item.tenant_id === tenant.id),
+    mapLinks: entities.MapEntityLink.filter((item) => item.tenant_id === tenant.id),
+    modules: entities.PartnerWorkspaceModule.filter((item) => item.tenant_id === tenant.id),
+    activity: entities.TenantAuditLog.filter((item) => item.tenant_id === tenant.id),
+  };
+}
+
+function provisionCompletePartnerWorkspace(entities: Database["entities"], payload: Record<string, any>) {
+  const contact = payload.contact || {};
+  const organization = payload.organization || {};
+  const location = payload.location || {};
+  const selectedPlan = payload.plan || {};
+  const billing = payload.billing || payload.checkout || {};
+  const email = String(payload.email || contact.email || organization.billing_email || billing.billing_email || "").trim().toLowerCase();
+  const password = String(payload.password || "");
+  const organizationName = String(payload.organization_name || organization.name || payload.business_name || payload.company || "").trim();
+  const displayName = String(payload.name || contact.name || payload.display_name || email.split("@")[0] || "").trim();
+  const partnerType = normalizePartnerTypeLabel(payload.partner_type || organization.partner_type || organization.type);
+
+  if (!email) throw new Error("Email is required.");
+  if (!organizationName) throw new Error("Organization name is required.");
+
+  const tenantSlug = slug(organizationName).replace(/_/g, "-");
+  const authUserId = `auth_${slug(email)}`;
+  const profileId = `profile_${slug(email)}`;
+  const ownerId = profileId;
+  const tenantType = normalizeTenantType(partnerType);
+  const passwordCredentials = password ? hashPassword(password) : null;
+
+  const profile = ensureRecord(entities.Profile, profileId, {
+    auth_user_id: authUserId,
+    first_name: contact.first_name || displayName.split(" ")[0] || "",
+    last_name: contact.last_name || displayName.split(" ").slice(1).join(" "),
+    display_name: displayName || email,
+    email,
+    avatar: contact.avatar || "",
+    phone: contact.phone || payload.phone || "",
+    timezone: contact.timezone || payload.timezone || "America/Chicago",
+    verification_status: "needs_verification",
+    created_by: authUserId,
+    updated_by: authUserId,
+  });
+
+  const user = ensureRecord(entities.User, authUserId, {
+    profile_id: profile.id,
+    auth_user_id: authUserId,
+    name: profile.display_name,
+    full_name: profile.display_name,
+    email,
+    role: "partner_owner",
+    status: "email_verification_pending",
+    email_verified: false,
+    last_login: "",
+    password_hash: passwordCredentials?.hash || "",
+    password_salt: passwordCredentials?.salt || "",
+    password_algorithm: passwordCredentials?.algorithm || "",
+    password_iterations: passwordCredentials?.iterations || 0,
+    preferences: { active_workspace_slug: tenantSlug },
+    is_demo: false,
+  });
+
+  const tenant = provisionPlatformTenant(entities, {
+    name: organizationName,
+    type: tenantType,
+    category: partnerType,
+    address: location.address || organization.address,
+    status: "provisioning",
+    source_type: "partner_registration",
+    source_id: user.id,
+  });
+  if (!tenant) throw new Error("Workspace setup couldn't be completed.");
+
+  const workspaceId = `workspace_${tenant.slug}`;
+  const organizationRecord = ensureRecord(entities.Organization, `org_${tenant.slug}`, {
+    platform_tenant_id: tenant.id,
+    slug: tenant.slug,
+    name: organizationName,
+    partner_type: partnerType,
+    owner_id: ownerId,
+    billing_email: billing.billing_email || organization.billing_email || email,
+    logo: organization.logo || "",
+    status: "active",
+    verification_status: "needs_verification",
+    created_by: user.id,
+    updated_by: user.id,
+    is_demo: false,
+  });
+
+  const workspace = ensureRecord(entities.Workspace, workspaceId, {
+    organization_id: organizationRecord.id,
+    platform_tenant_id: tenant.id,
+    workspace_name: payload.workspace_name || `${organizationName} Workspace`,
+    workspace_slug: tenant.slug,
+    status: "active",
+    onboarding_complete: false,
+    created_by: user.id,
+    updated_by: user.id,
+    source_file: "partner_registration",
+    verification_status: "needs_verification",
+  });
+
+  ensureRecord(entities.TenantWorkspace, workspaceId, {
+    tenant_id: tenant.id,
+    organization_id: organizationRecord.id,
+    slug: tenant.slug,
+    workspace_name: workspace.workspace_name,
+    path: `/partner-workspace/overview?workspace=${tenant.slug}`,
+    default_route: `/partner-workspace/overview?provisioned=1&workspace=${tenant.slug}`,
+    status: "active",
+    workspace_status: "active",
+    onboarding_complete: false,
+    lifecycle_stage: "workspace_activated",
+    modules: workspaceModules,
+    is_demo: false,
+  });
+
+  ensureRecord(entities.WorkspaceMember, `member_${tenant.slug}_owner`, {
+    workspace_id: workspaceId,
+    organization_id: organizationRecord.id,
+    profile_id: profile.id,
+    user_id: user.id,
+    role: "Owner",
+    status: "active",
+    created_by: user.id,
+    updated_by: user.id,
+    verification_status: "verified",
+  });
+
+  ensureRecord(entities.TenantUser, `tenant_user_${tenant.slug}_owner`, {
+    tenant_id: tenant.id,
+    workspace_id: workspaceId,
+    profile_id: profile.id,
+    auth_user_id: authUserId,
+    name: profile.display_name,
+    email,
+    role: "Owner",
+    status: "active",
+    is_demo: false,
+  });
+
+  const partner = ensureRecord(entities.Partner, `partner_${tenant.slug}`, {
+    tenant_id: tenant.id,
+    organization_id: organizationRecord.id,
+    workspace_id: workspaceId,
+    business_name: organizationName,
+    contact_person: profile.display_name,
+    contact_email: email,
+    contact_phone: profile.phone,
+    address: location.address || organization.address || "",
+    category: partnerType,
+    partner_type: tenantType,
+    status: "active",
+    onboarding_stage: "workspace_created",
+    is_demo: false,
+  });
+
+  const partnerProfile = ensureRecord(entities.PartnerProfile, `profile_${tenant.slug}`, {
+    tenant_id: tenant.id,
+    organization_id: organizationRecord.id,
+    workspace_id: workspaceId,
+    partner_id: partner.id,
+    display_name: organizationName,
+    business_description: organization.description || payload.description || "",
+    website: organization.website || payload.website || "",
+    phone: organization.phone || payload.phone || "",
+    social_links: organization.social_links || payload.social_links || {},
+    operating_hours: organization.operating_hours || payload.operating_hours || {},
+    district: location.district || organization.district || payload.district || "",
+    type: tenantType,
+    category: partnerType,
+    address: location.address || organization.address || "",
+    brand_assets: organization.brand_assets || {},
+    gallery: organization.gallery || [],
+    locations: [],
+    categories: organization.categories || [partnerType],
+    tags: organization.tags || [],
+    partner_settings: { map_visibility: "draft", onboarding_required: true },
+    status: "active",
+    verification_status: "needs_verification",
+    is_demo: false,
+  });
+
+  const latitude = location.lat ?? location.latitude ?? null;
+  const longitude = location.lng ?? location.longitude ?? null;
+  const mapEntityId = `map_${tenant.slug}_primary`;
+  const partnerLocation = ensureRecord(entities.PartnerLocation, `location_${tenant.slug}_primary`, {
+    tenant_id: tenant.id,
+    organization_id: organizationRecord.id,
+    workspace_id: workspaceId,
+    partner_id: partner.id,
+    map_entity_id: mapEntityId,
+    title: location.title || organizationName,
+    name: location.title || organizationName,
+    address: location.address || organization.address || "",
+    lat: latitude,
+    lng: longitude,
+    latitude,
+    longitude,
+    district: location.district || organization.district || "",
+    hero_image: location.hero_image || organization.hero_image || "",
+    active: Boolean(latitude && longitude),
+    status: latitude && longitude ? "active" : "needs_coordinates",
+    map_presence: latitude && longitude ? "enabled" : "pending_coordinates",
+    verification_status: latitude && longitude ? "partially_verified" : "needs_verification",
+    is_demo: false,
+  });
+
+  ensureRecord(entities.MapEntityLink, `map_link_${mapEntityId}`, {
+    tenant_id: tenant.id,
+    organization_id: organizationRecord.id,
+    workspace_id: workspaceId,
+    partner_id: partner.id,
+    location_id: partnerLocation.id,
+    entity_id: mapEntityId,
+    entity_type: tenantType,
+    status: latitude && longitude ? "linked" : "pending_coordinates",
+    source_type: "workspace_provisioning",
+    is_demo: false,
+  });
+
+  const planKey = slug(selectedPlan.key || selectedPlan.name || selectedPlan.label || "starter");
+  const plan = ensureRecord(entities.Plan, `plan_${planKey}`, {
+    key: planKey,
+    name: selectedPlan.name || selectedPlan.label || "Starter",
+    tier: selectedPlan.tier || planKey,
+    cadence: selectedPlan.cadence || "annual",
+    annual_price: Number(selectedPlan.annual_price ?? selectedPlan.amount ?? selectedPlan.price ?? 0),
+    features: selectedPlan.features || [],
+    limits: selectedPlan.limits || {},
+    status: "active",
+    verification_status: "verified",
+  });
+
+  const subscription = ensureRecord(entities.PartnerSubscription, `subscription_${tenant.slug}`, {
+    tenant_id: tenant.id,
+    organization_id: organizationRecord.id,
+    workspace_id: workspaceId,
+    partner_id: partner.id,
+    plan_id: plan.id,
+    plan: plan.key,
+    plan_label: plan.name,
+    status: billing.status || (billing.stripe_subscription ? "active" : "pending_checkout"),
+    stripe_customer: billing.stripe_customer || "",
+    stripe_subscription: billing.stripe_subscription || "",
+    renewal_date: billing.renewal_date || "",
+    trial_end: billing.trial_end || "",
+    cancelled: false,
+    billing_email: organizationRecord.billing_email,
+    provider: billing.provider || (process.env.STRIPE_SECRET_KEY ? "stripe" : "pending_stripe_credentials"),
+    verification_status: "needs_verification",
+  });
+
+  const addons = Array.isArray(payload.add_ons || payload.addons || billing.selected_add_ons)
+    ? (payload.add_ons || payload.addons || billing.selected_add_ons)
+    : [];
+  addons.forEach((addon: any) => {
+    const addonKey = slug(addon.key || addon.name || addon);
+    ensureRecord(entities.WorkspaceAddon, `addon_${tenant.slug}_${addonKey}`, {
+      workspace_id: workspaceId,
+      organization_id: organizationRecord.id,
+      subscription_id: subscription.id,
+      addon_key: addonKey,
+      name: addon.name || addon.label || String(addon),
+      status: "active",
+      price: Number(addon.price || addon.amount || 0),
+      verification_status: "verified",
+    });
+  });
+
+  ensureRecord(entities.BillingHistory, `billing_${tenant.slug}_provisioned`, {
+    workspace_id: workspaceId,
+    organization_id: organizationRecord.id,
+    subscription_id: subscription.id,
+    billing_email: organizationRecord.billing_email,
+    event_type: "subscription_created",
+    status: subscription.status,
+    amount: plan.annual_price,
+    provider: subscription.provider,
+    created_by: user.id,
+    verification_status: subscription.provider === "stripe" ? "verified" : "needs_verification",
+  });
+
+  ensureRecord(entities.PartnerInvoice, `invoice_${tenant.slug}_initial`, {
+    tenant_id: tenant.id,
+    organization_id: organizationRecord.id,
+    workspace_id: workspaceId,
+    partner_id: partner.id,
+    subscription_id: subscription.id,
+    invoice_number: `DP-${tenant.slug.toUpperCase().slice(0, 12)}-${new Date().getFullYear()}`,
+    status: billing.invoice_status || "pending_checkout",
+    billing_status: billing.billing_status || "pending_checkout",
+    provider: subscription.provider,
+    subtotal: plan.annual_price,
+    total: Number(billing.total ?? plan.annual_price),
+    currency: "usd",
+  });
+
+  const defaultPerk = payload.perk || payload.suggested_perk || "";
+  if (defaultPerk) {
+    ensureRecord(entities.PerkLocation, `perk_${tenant.slug}_launch`, {
+      tenant_id: tenant.id,
+      organization_id: organizationRecord.id,
+      workspace_id: workspaceId,
+      partner_id: partner.id,
+      campaign_id: `campaign_${tenant.slug}_launch`,
+      name: organizationName,
+      title: defaultPerk,
+      description: payload.perk_description || defaultPerk,
+      perk_type: payload.perk_type || "Partner launch perk",
+      resident_value: payload.resident_value || "",
+      business_value: payload.business_value || "",
+      status: "draft",
+      active: false,
+      verification_status: "needs_verification",
+    });
+  }
+
+  const campaign = ensureRecord(entities.Campaign, `campaign_${tenant.slug}_launch`, {
+    tenant_id: tenant.id,
+    organization_id: organizationRecord.id,
+    workspace_id: workspaceId,
+    partner_id: partner.id,
+    title: payload.campaign_title || `${organizationName} launch campaign`,
+    description: payload.campaign_description || "Default campaign shell created during workspace provisioning.",
+    type: payload.campaign_type || "launch",
+    status: "draft",
+    target_audience: payload.target_audience || "Downtown residents, guests, and nearby workers",
+    created_from: "workspace_provisioning",
+    verification_status: "needs_verification",
+  });
+
+  ensureRecord(entities.PartnerQrExperience, `qr_${tenant.slug}_welcome`, {
+    tenant_id: tenant.id,
+    organization_id: organizationRecord.id,
+    workspace_id: workspaceId,
+    partner_id: partner.id,
+    campaign_id: campaign.id,
+    label: `${organizationName} welcome QR`,
+    destination_url: `/map?entity=${encodeURIComponent(mapEntityId)}`,
+    status: "draft",
+    scans: 0,
+    conversions: 0,
+    verification_status: "needs_verification",
+  });
+
+  ensureRecord(entities.PartnerReport, `report_${tenant.slug}_overview`, {
+    tenant_id: tenant.id,
+    organization_id: organizationRecord.id,
+    workspace_id: workspaceId,
+    partner_id: partner.id,
+    report_type: "workspace_overview",
+    status: "enabled",
+    metrics: ["views", "saves", "directions", "visits", "redemptions", "scans", "campaigns", "events", "repeat_visits", "district_performance"],
+    verification_status: "verified",
+  });
+
+  ensureRecord(entities.PartnerAnalytics, `analytics_${tenant.slug}`, {
+    tenant_id: tenant.id,
+    organization_id: organizationRecord.id,
+    workspace_id: workspaceId,
+    partner_id: partner.id,
+    views: 0,
+    saves: 0,
+    directions: 0,
+    visits: 0,
+    redemptions: 0,
+    scans: 0,
+    campaigns: 0,
+    events: 0,
+    repeat_visits: 0,
+    district_performance: {},
+    status: "tracking_enabled",
+    verification_status: "verified",
+  });
+
+  workspaceModules.forEach((moduleName) => {
+    ensureRecord(entities.PartnerWorkspaceModule, `module_${tenant.slug}_${moduleName}`, {
+      tenant_id: tenant.id,
+      organization_id: organizationRecord.id,
+      workspace_id: workspaceId,
+      partner_id: partner.id,
+      module: moduleName,
+      status: "ready",
+      route: moduleName === "overview" ? `/partner-workspace/overview?workspace=${tenant.slug}` : `/partner-workspace/${moduleName}?workspace=${tenant.slug}`,
+      is_demo: false,
+    });
+  });
+
+  ensureRecord(entities.PartnerRegistration, `registration_${tenant.slug}`, {
+    tenant_id: tenant.id,
+    organization_id: organizationRecord.id,
+    workspace_id: workspaceId,
+    partner_id: partner.id,
+    profile_id: profile.id,
+    contact: { name: profile.display_name, email, phone: profile.phone },
+    organization: organizationRecord,
+    plan,
+    addons,
+    status: "workspace_provisioned",
+    lifecycle: ["marketing_site", "partner_type", "registration", "authentication", "email_verification", "organization_creation", "workspace_provisioning", "partner_profile", "plan_selection", "checkout", "subscription_created", "workspace_activated", "map_entity_created", "campaign_system_enabled", "reports_enabled", "analytics_enabled", "live_partner_workspace"],
+    redirect: `/partner-workspace/overview?provisioned=1&workspace=${tenant.slug}`,
+    submitted_at: now(),
+    is_demo: false,
+  });
+
+  ensureRecord(entities.TenantAuditLog, `audit_${tenant.slug}_complete_provisioning`, {
+    tenant_id: tenant.id,
+    organization_id: organizationRecord.id,
+    workspace_id: workspaceId,
+    actor_id: user.id,
+    action: "complete_partner_workspace_provisioned",
+    resource: "partner_platform",
+    before: null,
+    after: { organization_id: organizationRecord.id, workspace_id: workspaceId, partner_id: partner.id, subscription_id: subscription.id, map_entity_id: mapEntityId },
+    timestamp: now(),
+  });
+
+  tenant.status = "active";
+  tenant.owner_id = ownerId;
+  tenant.updated_at = now();
+  partnerProfile.locations = [partnerLocation.id];
+
+  return {
+    success: true,
+    redirect: `/partner-workspace/overview?provisioned=1&workspace=${tenant.slug}`,
+    session: { token: buildSessionToken(user.id), user_id: user.id, profile_id: profile.id, workspace_id: workspaceId, organization_id: organizationRecord.id },
+    user: { id: user.id, email: user.email, name: user.name, role: user.role, email_verified: user.email_verified },
+    profile,
+    organization: organizationRecord,
+    tenant,
+    workspace,
+    partner,
+    partnerProfile,
+    subscription,
+    mapEntity: entities.MapEntityLink.find((item) => item.entity_id === mapEntityId),
+    campaign,
+    bundle: createWorkspaceBundle(entities, tenant),
+  };
 }
 
 function provisionAllPlatformTenants(entities: Database["entities"]) {
@@ -5521,6 +6034,168 @@ export async function createApp() {
     res.json(db.entities.User[0] || { id: "user_admin", role: "admin", name: "Demo Admin", email: "admin@downtownperks.local" });
   });
 
+  app.post("/api/auth/signup", async (req, res) => {
+    const snapshot = JSON.parse(JSON.stringify(db)) as Database;
+    try {
+      const email = String(req.body?.email || req.body?.contact?.email || "").trim().toLowerCase();
+      if (!email) return res.status(400).json({ error: "Email is required." });
+      const existing = db.entities.User.find((user) => String(user.email || "").toLowerCase() === email && !user.is_demo);
+      if (existing) return res.status(409).json({ error: "That email already has an account." });
+      const provisioned = provisionCompletePartnerWorkspace(db.entities, req.body || {});
+      writeAuditEvent(db, req, {
+        action: "partner_auth_signup_provisioned",
+        entity_type: "User",
+        entity_id: provisioned.user.id,
+        after: { user_id: provisioned.user.id, organization_id: provisioned.organization.id, workspace_id: provisioned.workspace.id },
+      });
+      writeAnalyticsEvent(db, req, {
+        event: "partner_auth_signup_provisioned",
+        entity_type: "Workspace",
+        entity_id: provisioned.workspace.id,
+        ...organizationContext(provisioned.workspace),
+      });
+      await saveDatabase(db);
+      res.status(201).json(provisioned);
+    } catch (error) {
+      db = snapshot;
+      await saveDatabase(db);
+      res.status(422).json({
+        success: false,
+        error: error instanceof Error ? error.message : "Workspace setup couldn't be completed.",
+        retry_url: "/api/partner-platform/provision",
+      });
+    }
+  });
+
+  app.post("/api/auth/signin", async (req, res) => {
+    const email = String(req.body?.email || "").trim().toLowerCase();
+    const password = String(req.body?.password || "");
+    const user = db.entities.User.find((item) => String(item.email || "").toLowerCase() === email && !item.is_demo);
+    if (!user || !verifyPassword(password, user)) return res.status(401).json({ error: "That email and password did not match an account." });
+    user.last_login = now();
+    user.updated_at = now();
+    const tenantSlug = user.preferences?.active_workspace_slug;
+    const tenant = db.entities.PlatformTenant.find((item) => item.slug === tenantSlug) ||
+      db.entities.PlatformTenant.find((item) => item.owner_id === user.profile_id) ||
+      null;
+    await saveDatabase(db);
+    res.json({
+      success: true,
+      session: { token: buildSessionToken(user.id), user_id: user.id, profile_id: user.profile_id, workspace_id: tenant ? `workspace_${tenant.slug}` : "" },
+      user: { id: user.id, email: user.email, name: user.name, role: user.role, email_verified: user.email_verified },
+      workspace: tenant ? createWorkspaceBundle(db.entities, tenant) : null,
+    });
+  });
+
+  app.post("/api/auth/logout", (_req, res) => {
+    res.json({ success: true });
+  });
+
+  app.post("/api/auth/password-reset", async (req, res) => {
+    const email = String(req.body?.email || "").trim().toLowerCase();
+    const user = db.entities.User.find((item) => String(item.email || "").toLowerCase() === email && !item.is_demo);
+    if (user) {
+      ensureRecord(db.entities.TenantNotification, `notification_password_reset_${slug(email)}_${Date.now()}`, {
+        user_id: user.id,
+        channel: "email",
+        rule: "password_reset",
+        status: process.env.RESEND_API_KEY || process.env.SENDGRID_API_KEY ? "queued" : "pending_email_credentials",
+        title: "Password reset requested",
+        body: "Password reset email requested for Downtown Perks partner workspace.",
+      });
+      await saveDatabase(db);
+    }
+    res.json({ success: true, message: "If that email exists, a reset link will be sent." });
+  });
+
+  app.post("/api/auth/verify-email", async (req, res) => {
+    const userId = String(req.body?.user_id || req.body?.id || "");
+    const email = String(req.body?.email || "").trim().toLowerCase();
+    const user = db.entities.User.find((item) => item.id === userId || String(item.email || "").toLowerCase() === email);
+    if (!user) return res.status(404).json({ error: "User not found." });
+    user.email_verified = true;
+    user.status = "active";
+    user.updated_at = now();
+    await saveDatabase(db);
+    res.json({ success: true, user: { id: user.id, email: user.email, email_verified: true } });
+  });
+
+  app.post("/api/partner-platform/provision", async (req, res) => {
+    const snapshot = JSON.parse(JSON.stringify(db)) as Database;
+    try {
+      const provisioned = provisionCompletePartnerWorkspace(db.entities, req.body || {});
+      writeAuditEvent(db, req, {
+        action: "complete_partner_platform_provisioned",
+        entity_type: "Workspace",
+        entity_id: provisioned.workspace.id,
+        after: { organization_id: provisioned.organization.id, workspace_id: provisioned.workspace.id, partner_id: provisioned.partner.id },
+      });
+      await saveDatabase(db);
+      res.status(201).json(provisioned);
+    } catch (error) {
+      db = snapshot;
+      await saveDatabase(db);
+      res.status(422).json({
+        success: false,
+        error: error instanceof Error ? error.message : "Workspace setup couldn't be completed.",
+        retry_url: "/api/partner-platform/provision",
+      });
+    }
+  });
+
+  app.post("/api/partner-platform/register", async (req, res) => {
+    req.url = "/api/partner-platform/provision";
+    const snapshot = JSON.parse(JSON.stringify(db)) as Database;
+    try {
+      const provisioned = provisionCompletePartnerWorkspace(db.entities, req.body || {});
+      await saveDatabase(db);
+      res.status(201).json(provisioned);
+    } catch (error) {
+      db = snapshot;
+      await saveDatabase(db);
+      res.status(422).json({ success: false, error: error instanceof Error ? error.message : "Workspace setup couldn't be completed." });
+    }
+  });
+
+  app.get("/api/partner-platform/workspaces/:slug", (req, res) => {
+    const tenant = db.entities.PlatformTenant.find((item) => item.slug === req.params.slug || item.id === req.params.slug);
+    if (!tenant || tenant.is_demo) return res.status(404).json({ error: "Workspace not found." });
+    res.json(createWorkspaceBundle(db.entities, tenant));
+  });
+
+  app.get("/api/partner-platform/status/:slug", (req, res) => {
+    const tenant = db.entities.PlatformTenant.find((item) => item.slug === req.params.slug || item.id === req.params.slug);
+    if (!tenant || tenant.is_demo) return res.status(404).json({ error: "Workspace not found." });
+    const bundle = createWorkspaceBundle(db.entities, tenant);
+    res.json({
+      success: true,
+      organization: Boolean(bundle.organization),
+      workspace: Boolean(bundle.workspace),
+      partnerProfile: Boolean(bundle.profile),
+      subscription: Boolean(bundle.subscription),
+      mapEntity: Boolean(bundle.mapLinks.length),
+      campaignShell: Boolean(bundle.campaigns.length),
+      reports: Boolean(bundle.reports.length),
+      analytics: Boolean(bundle.analytics.length),
+      qr: Boolean(bundle.qr.length),
+      modules: bundle.modules.length,
+      redirect: `/partner-workspace/overview?provisioned=1&workspace=${tenant.slug}`,
+    });
+  });
+
+  app.get("/api/partner-platform/schema", (_req, res) => {
+    res.json({
+      source_of_truth: "json_persistence_ready_for_supabase_migration",
+      collections: ["profiles", "organizations", "workspaces", "workspace_members", "partner_profiles", "partner_locations", "plans", "subscriptions", "workspace_addons", "billing_history", "campaigns", "perks", "events", "qr_experiences", "reports", "analytics"],
+      current_entities: ["Profile", "Organization", "Workspace", "WorkspaceMember", "PartnerProfile", "PartnerLocation", "Plan", "PartnerSubscription", "WorkspaceAddon", "BillingHistory", "Campaign", "PerkLocation", "PartnerEvent", "PartnerQrExperience", "PartnerReport", "PartnerAnalytics"],
+      external_integrations: {
+        supabase: process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY ? "configured" : "pending_credentials",
+        stripe: process.env.STRIPE_SECRET_KEY ? "configured" : "pending_credentials",
+        email: process.env.RESEND_API_KEY || process.env.SENDGRID_API_KEY ? "configured" : "pending_credentials",
+      },
+    });
+  });
+
   app.get("/api/billing/invoices", (req, res) => {
     res.json(listEntity(db, "PartnerInvoice", req.query));
   });
@@ -5762,6 +6437,31 @@ export async function createApp() {
       }
 
       if (functionName === "provisionPartnerWorkspace") {
+        const snapshot = JSON.parse(JSON.stringify(db)) as Database;
+        try {
+          const provisioned = provisionCompletePartnerWorkspace(db.entities, body);
+          writeAuditEvent(db, req, {
+            action: "legacy_function_partner_workspace_provisioned",
+            entity_type: "Workspace",
+            entity_id: provisioned.workspace.id,
+            after: { organization_id: provisioned.organization.id, workspace_id: provisioned.workspace.id, partner_id: provisioned.partner.id },
+          });
+          await saveDatabase(db);
+          return res.json({ data: provisioned });
+        } catch (error) {
+          db = snapshot;
+          await saveDatabase(db);
+          return res.status(422).json({
+            data: {
+              success: false,
+              error: error instanceof Error ? error.message : "Workspace setup couldn't be completed.",
+              retry_url: "/api/partner-platform/provision",
+            },
+          });
+        }
+      }
+
+      if (functionName === "provisionPartnerWorkspaceLegacy") {
         const organization = body.organization || {};
         const contact = body.contact || {};
         const location = body.location || {};
