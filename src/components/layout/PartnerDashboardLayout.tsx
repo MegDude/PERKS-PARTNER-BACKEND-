@@ -141,6 +141,7 @@ export default function PartnerDashboardLayout() {
                  <Building2 className="w-3 h-3 text-white" />
               </div>
               <span className="font-bold tracking-tight uppercase text-sm">Downtown Perks</span>
+              <span className="hidden border border-[#C8A96A]/50 px-2 py-1 text-[8px] font-bold uppercase tracking-[0.08em] text-[#0B1F33] sm:inline-flex">Internal admin</span>
            </div>
            <div className="flex items-center gap-2">
              <Button
@@ -275,6 +276,7 @@ export default function PartnerDashboardLayout() {
             >
               <HomeIcon className="w-4 h-4" /> Home
             </Button>
+            <span className="border border-[#C8A96A]/50 px-2 py-1 text-[9px] font-bold uppercase tracking-[0.08em] text-[#0B1F33]">Internal admin</span>
             <div className="relative ml-2 w-full max-w-[680px]">
               <label className="flex min-h-9 items-center gap-2 border border-[rgba(11,31,51,0.08)] bg-white px-3">
                 <Search className="h-3.5 w-3.5 text-[#C8A96A]" />

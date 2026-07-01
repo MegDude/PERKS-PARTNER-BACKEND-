@@ -743,7 +743,10 @@ function Shell({ eyebrow, title, body, children }: { eyebrow: string; title: str
     <main className="min-h-screen bg-white text-left text-[#0B1F33]">
       <div className="w-full max-w-none px-4 py-5 sm:px-5 lg:px-6 lg:py-6">
         <div className="mb-5 flex flex-wrap items-center justify-between gap-3 border-b border-[rgba(11,31,51,0.08)] pb-4">
-          <Link to="/admin" className="text-[13px] font-semibold">Downtown Perks Platform</Link>
+          <div className="flex flex-wrap items-center gap-2">
+            <Link to="/admin" className="text-[13px] font-semibold">Downtown Perks Platform</Link>
+            <span className="border border-[#C8A96A]/50 px-2 py-1 text-[9px] font-bold uppercase tracking-[0.08em] text-[#0B1F33]">Partner workspace</span>
+          </div>
           <nav className="flex flex-wrap gap-2.5 text-[11px] font-semibold text-[rgba(11,31,51,0.62)]">
             <Link to="/partners">Partners</Link>
             <Link to="/partners/register">Register</Link>
@@ -923,10 +926,10 @@ function WorkspaceContextBar({ orgName, tenantId }: { orgName: string; tenantId:
   return (
     <div className="mb-3 flex flex-col gap-1.5 border border-[rgba(11,31,51,0.08)] bg-white px-3 py-2.5 sm:flex-row sm:items-center sm:justify-between">
       <div>
-        <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-[#C8A96A]">Viewing workspace</p>
+        <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-[#C8A96A]">Partner view</p>
         <p className="text-[13px] font-semibold">{orgName}</p>
       </div>
-      <p className="text-[11px] font-semibold text-[rgba(11,31,51,0.54)]">{tenantId ? 'Selected workspace' : 'No workspace selected'}</p>
+      <p className="text-[11px] font-semibold text-[rgba(11,31,51,0.54)]">{tenantId ? `Viewing as ${orgName}` : 'No workspace selected'}</p>
     </div>
   );
 }
