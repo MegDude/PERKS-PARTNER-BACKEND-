@@ -101,11 +101,11 @@ export default function PartnerDashboardLayout() {
            </Link>
         </div>
         
-        <nav className="flex-1 overflow-y-auto px-4 py-5">
+        <nav className="flex-1 overflow-y-auto px-4 py-4">
           {links.map((link: any, idx) => {
             if (link.section) {
               return (
-                <div key={idx} className="mb-1 mt-5 px-3 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#C5A028] first:mt-2">
+                <div key={idx} className="mb-1 mt-4 px-3 text-[9px] font-semibold uppercase tracking-[0.08em] text-[#C5A028] first:mt-2">
                   {link.section}
                 </div>
               );
@@ -115,7 +115,7 @@ export default function PartnerDashboardLayout() {
               <Link 
                 key={link.to} 
                 to={link.to}
-                className={`flex min-h-9 items-center gap-2.5 px-3 py-2 text-[13px] font-semibold leading-5 transition-colors ${isActive ? 'text-[#11182B]' : 'text-[rgba(11,31,51,0.58)] hover:text-[#11182B]'}`}
+                className={`flex min-h-8 items-center gap-2.5 px-3 py-1.5 text-[12px] font-semibold leading-5 transition-colors ${isActive ? 'text-[#11182B]' : 'text-[rgba(11,31,51,0.58)] hover:text-[#11182B]'}`}
               >
                 <span className={isActive ? 'text-[#C5A028]' : 'text-[rgba(11,31,51,0.36)]'}>{link.icon}</span>
                 <span>{link.label}</span>
@@ -126,8 +126,8 @@ export default function PartnerDashboardLayout() {
       </aside>
 
       {/* Main Content */}
-      <main className="min-h-screen flex-1 overflow-x-hidden bg-white">
-        <div className="sticky top-0 z-40 flex items-center justify-between bg-white p-4 lg:hidden">
+      <main className="min-h-screen flex-1 overflow-x-auto bg-white">
+          <div className="sticky top-0 z-40 flex items-center justify-between bg-white px-4 py-3 lg:hidden">
            <div className="flex items-center gap-2 text-[#11182B] ">
               <Button
                 onClick={isLandingPage ? () => navigate('/') : goBack}
@@ -225,11 +225,11 @@ export default function PartnerDashboardLayout() {
                 </Button>
               </div>
 
-              <nav className="flex-1 overflow-y-auto px-4 py-5">
+              <nav className="flex-1 overflow-y-auto px-4 py-4">
                 {links.map((link: any, idx) => {
                   if (link.section) {
                     return (
-                      <div key={idx} className="mb-1 mt-5 px-3 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#C5A028] first:mt-2">
+                      <div key={idx} className="mb-1 mt-4 px-3 text-[9px] font-semibold uppercase tracking-[0.08em] text-[#C5A028] first:mt-2">
                         {link.section}
                       </div>
                     );
@@ -240,7 +240,7 @@ export default function PartnerDashboardLayout() {
                       key={link.to}
                       to={link.to}
                       onClick={() => setMobileOpen(false)}
-                      className={`flex min-h-10 items-center gap-2.5 px-3 py-2 text-[13px] font-semibold transition-colors ${isActive ? 'text-[#11182B]' : 'text-[rgba(11,31,51,0.58)] hover:text-[#11182B]'}`}
+                      className={`flex min-h-9 items-center gap-2.5 px-3 py-1.5 text-[12px] font-semibold transition-colors ${isActive ? 'text-[#11182B]' : 'text-[rgba(11,31,51,0.58)] hover:text-[#11182B]'}`}
                     >
                       <span className={isActive ? 'text-[#C5A028]' : 'text-[rgba(11,31,51,0.36)]'}>{link.icon}</span>
                       <span>{link.label}</span>
@@ -252,7 +252,7 @@ export default function PartnerDashboardLayout() {
           </div>
         )}
 
-        <div className="sticky top-0 z-30 hidden border-b border-[rgba(11,31,51,0.06)] bg-white px-6 py-3 lg:block">
+        <div className="sticky top-0 z-30 hidden border-b border-[rgba(11,31,51,0.06)] bg-white px-6 py-2.5 lg:block">
           <div className="flex items-center gap-4">
             {!isLandingPage && (
               <>
