@@ -26,7 +26,7 @@ export default function PlatformModuleAudit() {
   const liveChecks = [
     { label: "Agent memory", value: createAgentMemoryRecord({ query: "coffee near The Shore", mode: "resident" }).source, detail: "Keeps assistant context tied to the task." },
     { label: "Ask Map", value: parseAskMapIntent("show campaign demand", "partner"), detail: "Turns a plain question into the right map action." },
-    { label: "Pulse read", value: generatePulseSignal({ views: 120, saves: 18, rsvps: 9, district: "Rainey" }).partnerHeadline, detail: "Reads recent activity and suggests the next move." },
+    { label: "Activity read", value: generatePulseSignal({ views: 120, saves: 18, rsvps: 9, district: "Rainey" }).partnerHeadline, detail: "Reads recent activity and suggests the next step." },
     { label: "Events", value: normalizeEventOccurrence("google_calendar", { title: "Resident Mixer", start: "2026-07-11" }).status, detail: "Cleans outside events before they reach the app." },
     { label: "Attribution", value: createAttributionEvent("save", { campaign_id: "shore-welcome" }).table, detail: "Connects saves, clicks, scans, and use to a campaign." },
     { label: "Map check", value: isValidCoordinate(30.268, -97.742) ? "Austin coordinates valid" : "Invalid", detail: "Stops broken coordinates before a pin moves." },

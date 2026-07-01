@@ -143,7 +143,7 @@ export function HomeFooter() {
              <div className="lg:w-[400px]">
                 <div className="font-bold text-[18px] tracking-tight mb-6">Downtown Perks</div>
                 <p className="text-[15px] text-white/70 leading-[1.6]">
-                   A live neighborhood layer for downtown Austin — connecting residents, buildings, and local businesses through a shared interface and real-time intelligence.
+                   A simple downtown guide for Austin, connecting residents, buildings, and local businesses through one easy map.
                 </p>
              </div>
              

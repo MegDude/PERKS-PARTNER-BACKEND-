@@ -168,7 +168,7 @@ export default function Surveys() {
     { key: 'events', label: 'Events', count: (events as any[]).length, detail: 'Event setup, sharing, and RSVP review', to: '/admin/events' },
     { key: 'surveys', label: 'Surveys', count: (surveys as any[]).length, detail: 'Question sets and response review', to: '/admin/surveys' },
     { key: 'passport', label: 'Downtown Passport', count: (passportPrograms as any[]).length, detail: 'QR stamps, rewards, and progress updates', to: '/admin/perks' },
-    { key: 'intelligence', label: 'Partner Intelligence', count: (aiInsights as any[]).length, detail: 'Plain next steps from resident and partner activity', to: '/admin/analytics' },
+    { key: 'intelligence', label: 'Partner notes', count: (aiInsights as any[]).length, detail: 'Plain next steps from resident and partner activity', to: '/admin/analytics' },
     { key: 'workflow', label: 'Workflow routing', count: (automationRuns as any[]).length, detail: 'Handoffs that move work to the right place', to: '/admin/settings' },
     { key: 'campaigns', label: 'Campaigns', count: (campaigns as any[]).length, detail: 'Notes, offers, event pushes, and follow-up', to: '/admin/engagement' },
     { key: 'addons', label: 'Add-ons', count: (crmSegments as any[]).length, detail: 'Resident groups and optional modules ready to use', to: '/admin/promotions' },

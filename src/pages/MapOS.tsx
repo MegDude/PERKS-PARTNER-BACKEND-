@@ -128,7 +128,7 @@ export default function MapOS() {
               onClick={() => { setMode('intelligence'); trackEvent('mode_switched', { mode: 'intelligence' }); }}
               className={`px-4 py-1.5 rounded-none text-xs font-bold transition-all flex items-center gap-1.5 ${mode === 'intelligence' ? 'bg-[#11182B] text-white shadow-none' : 'text-slate-500 hover:text-slate-800'}`}
             >
-              Intelligence
+              Assistant
               {mode === 'intelligence' && <Sparkles className="w-3.5 h-3.5 text-[#11182B] " />}
             </Button>
           </div>
@@ -139,13 +139,13 @@ export default function MapOS() {
           </Button>
         </div>
 
-        {/* Search & Results Panel (Intelligence Only) */}
+        {/* Search & Results Panel */}
         {mode === 'intelligence' && (
           <div className="flex-1 px-4 pb-4 flex flex-col max-w-sm pointer-events-none relative transition-all duration-300">
              <div className={`bg-white rounded-none shadow-none border border-[#EFEFEF] pointer-events-auto flex flex-col transition-all duration-300 overflow-hidden h-full max-h-full`}>
                 {/* Search & Header */}
                 <div className="p-4 border-b border-slate-100 shrink-0">
-                  <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">Market Intel</div>
+                  <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">Map helper</div>
                   <h2 className="text-xl font-bold text-[#11182B] mb-3 leading-tight tracking-tight">
                     Where should we drive more customers?
                   </h2>
@@ -356,7 +356,7 @@ export default function MapOS() {
             <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-[#11182B] text-white ">
               <div>
                 <div className="text-[10px] font-bold text-[#11182B] uppercase tracking-widest mb-1 flex items-center gap-2"><Zap className="w-3 h-3" /> Campaign Engine</div>
-                <h2 className="text-xl font-bold">Deploy a new hyper-local campaign</h2>
+                <h2 className="text-xl font-bold">Create a new local campaign</h2>
               </div>
               <Button variant="ghost" onClick={() => setShowCampaignBuilder(false)} className="text-white bg-transparent hover:text-white hover:bg-white/10 p-2"><X className="w-5 h-5" /></Button>
             </div>

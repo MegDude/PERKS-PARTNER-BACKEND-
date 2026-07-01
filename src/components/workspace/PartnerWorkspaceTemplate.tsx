@@ -307,8 +307,8 @@ export function PartnerWorkspaceTemplate(props: Props) {
 
   const workspaceMatrix = isLegendsResidentialLayer
     ? [
-        { label: 'Workspace Completion', value: `${setupProgress}%`, note: 'Complete your profile to unlock reporting and resident campaigns.', href: '#setup' },
-        { label: 'Resident Reach', value: campaigns.some((campaign) => Number(campaign.opensViews || 0) > 0) ? 'Growing' : 'Not sent', note: 'Publish your first campaign to begin measuring engagement.', href: '#campaigns' },
+        { label: 'Workspace Completion', value: `${setupProgress}%`, note: 'Complete your profile to see reports and resident campaigns.', href: '#setup' },
+        { label: 'Resident Reach', value: campaigns.some((campaign) => Number(campaign.opensViews || 0) > 0) ? 'Growing' : 'Not sent', note: 'Publish your first campaign to start seeing what residents do.', href: '#campaigns' },
         { label: 'Resident Directory', value: residents.some((resident) => !String(resident.email || '').endsWith('@downtownperks.local')) ? 'Added' : 'Needs Import', note: 'Import residents to personalize communications and reporting.', href: '#residents' },
         { label: 'Content Status', value: 'Ready', note: 'Perks, events, and QR materials are ready to review and publish.', href: '#perks' },
         { label: 'Recommended Next Step', value: 'Next Priority', note: 'Publish one QR sign, one resident offer, and one welcome message.', href: '#qr' },
@@ -1604,7 +1604,7 @@ export function PartnerWorkspaceTemplate(props: Props) {
           <div className="shore-read shore-report-panel">
             <div className="shore-report-table" aria-label={`${workspaceName} report quick view`}>
               <div className="shore-report-head" aria-hidden="true">
-                <span>Signal</span>
+                <span>Metric</span>
                 <span>Status</span>
                 <span>What it means</span>
               </div>
