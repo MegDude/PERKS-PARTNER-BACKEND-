@@ -44,6 +44,7 @@ export default function PartnerDashboardLayout() {
     { to: '/admin/partner-portal', icon: <Presentation className="w-4 h-4" />, label: 'Partner preview' },
 
     { section: 'Insights' },
+    { to: '/partner/intelligence', icon: <Sparkles className="w-4 h-4" />, label: 'Intelligence' },
     { to: '/admin/dashboard', icon: <BarChart3 className="w-4 h-4" />, label: 'Performance' },
     { to: '/admin/reports', icon: <Settings className="w-4 h-4" />, label: 'Reports' },
     { to: '/admin/analytics', icon: <BarChart3 className="w-4 h-4" />, label: 'Perk results' },
