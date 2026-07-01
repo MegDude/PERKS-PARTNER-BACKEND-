@@ -20,8 +20,77 @@ const statuses: Record<IntelligenceCompany['status'], string> = {
   renewal: 'Renewal',
 };
 
+const intelligenceModules = [
+  'Dashboard',
+  'Company Intelligence',
+  'Location Intelligence',
+  'Digital Platform Intelligence',
+  'Market Intelligence',
+  'Competitive Intelligence',
+  'Commercial Intelligence',
+  'Contact Intelligence',
+  'AI Research',
+  'Proposal Studio',
+  'Campaign Studio',
+  'Partnership Planner',
+  'Workspace Provisioning',
+  'Implementation',
+  'Success Metrics',
+  'Documents',
+  'Timeline',
+  'AI Assistant',
+];
+
 function money(value: number) {
   return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(value);
+}
+
+function IntelligenceModuleRail() {
+  return (
+    <nav className="mb-5 flex gap-2 overflow-x-auto border-b border-[rgba(11,31,51,0.08)] pb-2 [scrollbar-width:thin]" aria-label="Partner Intelligence OS modules">
+      {intelligenceModules.map((module, index) => (
+        <a
+          key={module}
+          href={`#${module.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`}
+          className={`whitespace-nowrap border px-2.5 py-1.5 text-[11px] font-semibold ${index === 0 ? 'border-[#C8A96A] text-[#0B1F33]' : 'border-[rgba(11,31,51,0.08)] text-[rgba(11,31,51,0.62)] hover:border-[#C8A96A] hover:text-[#0B1F33]'}`}
+        >
+          {module}
+        </a>
+      ))}
+    </nav>
+  );
+}
+
+function OperatingSystemPanel({ company }: { company?: IntelligenceCompany }) {
+  const assessment = company ? getPlatformAssessment(company) : null;
+  const commercialScore = company ? Math.round((companyValue(company) / 1400) * 70 + (company.priority === 'high' ? 20 : company.priority === 'medium' ? 10 : 0)) : 84;
+  const modules = [
+    ['Company profile', company ? company.summary : 'Every target gets a living partner profile.'],
+    ['Digital ecosystem', assessment ? `Maturity ${assessment.digitalMaturityScore}/100; fit ${assessment.strategicFitScore}/100.` : 'Technology stack, capability matrix, and complement strategy.'],
+    ['Commercial score', `${Math.min(100, commercialScore)}/100 opportunity readiness.`],
+    ['Campaign readiness', company ? company.campaignStrategy : 'Resident, workplace, venue, and neighborhood campaign paths.'],
+    ['Proposal studio', 'Executive brief, one-pager, proposal, pricing, and implementation roadmap.'],
+    ['Workspace provisioning', 'Create workspace, users, permissions, map listing, campaign drafts, billing, and reports.'],
+  ];
+  return (
+    <section id="dashboard" className="mb-5 border border-[rgba(11,31,51,0.08)] p-4">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-[#C8A96A]">Commercial Intelligence OS</p>
+          <h2 className="mt-1 text-[17px] font-semibold">From research to launch</h2>
+        </div>
+        <span className="border border-[rgba(11,31,51,0.1)] px-2 py-1 text-[10px] font-semibold">Research · Qualify · Generate · Book · Provision · Launch</span>
+      </div>
+      <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+        {modules.map(([title, body]) => (
+          <div key={title} className="border-t border-[rgba(11,31,51,0.08)] pt-3">
+            <h3 className="text-[13px] font-semibold">{title}</h3>
+            <p className="mt-1 text-[12px] leading-5 text-[rgba(11,31,51,0.66)]">{body}</p>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
 }
 
 function companyValue(company: IntelligenceCompany) {
@@ -232,7 +301,9 @@ function CompaniesView() {
   return (
     <Shell>
       <IntelligenceHeader />
+      <IntelligenceModuleRail />
       <KpiRail />
+      <OperatingSystemPanel />
       <RecommendationPanel />
       <section className="mb-4 flex flex-col gap-2 border-b border-[rgba(11,31,51,0.08)] pb-3 lg:flex-row lg:items-center">
         <label className="flex min-h-9 flex-1 items-center gap-2 border border-[rgba(11,31,51,0.08)] px-3">
@@ -302,6 +373,7 @@ function CompanyWorkspace({ company }: { company: IntelligenceCompany }) {
   return (
     <Shell>
       <IntelligenceHeader title={company.companyName} support={`${company.industry} · ${company.building} · ${statuses[company.status]}`} />
+      <IntelligenceModuleRail />
       <div className="mb-5 flex flex-wrap gap-2">
         <Link to={`/partner/intelligence/proposals/${company.id}`} className="inline-flex min-h-9 items-center gap-2 border border-[#C8A96A] px-3 text-[12px] font-semibold"><FileText className="h-3.5 w-3.5" /> Generate Executive Proposal</Link>
         <Link to={`/partner/intelligence/meetings/book?companyId=${company.id}`} className="inline-flex min-h-9 items-center gap-2 border border-[rgba(11,31,51,0.12)] px-3 text-[12px] font-semibold"><Calendar className="h-3.5 w-3.5" /> Book meeting</Link>
@@ -309,6 +381,7 @@ function CompanyWorkspace({ company }: { company: IntelligenceCompany }) {
       </div>
       <div className="grid gap-4 xl:grid-cols-[1fr_360px]">
         <section className="grid gap-4">
+          <OperatingSystemPanel company={company} />
           <PlatformIntelligenceSection assessment={assessment} />
           {sections.map(([title, body]) => (
             <div key={title} className="border-t border-[rgba(11,31,51,0.08)] pt-3">
@@ -318,8 +391,8 @@ function CompanyWorkspace({ company }: { company: IntelligenceCompany }) {
           ))}
         </section>
         <aside className="border border-[rgba(11,31,51,0.08)] p-4">
-          <h2 className="text-[15px] font-semibold">AI Assistant actions</h2>
-          {['Enrich company', 'Identify decision makers', 'Recommend pricing', 'Create follow-up', 'Prepare launch checklist'].map((action) => (
+          <h2 className="text-[15px] font-semibold">AI Copilot actions</h2>
+          {['Create proposal', 'Suggest campaign', 'Find decision-maker roles', 'Summarize relationship', 'Prepare meeting', 'Generate ROI', 'Compare competitors', 'Create launch checklist'].map((action) => (
             <button key={action} className="mt-2 block w-full border-b border-[rgba(11,31,51,0.08)] py-2 text-left text-[12px] font-semibold hover:text-[#C8A96A]">{action}</button>
           ))}
         </aside>
@@ -338,6 +411,7 @@ function ProposalView({ company }: { company: IntelligenceCompany }) {
         <p className="mt-4 max-w-3xl text-[14px] leading-6 text-[rgba(11,31,51,0.68)]">{company.whyDowntownPerks}</p>
         {[
           ['Executive summary', company.summary],
+          ['Organisation assessment', `${company.companyName} is tracked as a ${company.partnerType.replace('_', ' ')} opportunity with ${company.priority} priority and ${statuses[company.status].toLowerCase()} pipeline status.`],
           ['Current digital ecosystem', `Current platform signals include ${assessment.technologyPartners.join(', ') || 'website and basic business presence'}. The goal is to increase the value of those investments, not replace them.`],
           ['Platform capability assessment', `Digital maturity ${assessment.digitalMaturityScore}/100, experience ${assessment.experienceScore}/100, strategic fit ${assessment.strategicFitScore}/100.`],
           ['Strategic complement analysis', assessment.complementMatrix.map((row) => `${row.existing}: Downtown Perks extends this with ${row.downtownPerks.toLowerCase()} so the combined experience delivers ${row.outcome.toLowerCase()}.`).join(' ')],
@@ -348,6 +422,8 @@ function ProposalView({ company }: { company: IntelligenceCompany }) {
           ['Employee offering', company.employeeValue],
           ['Map presence', `Add or verify the map pin, listing, search result, perk placement, and campaign placement for ${company.companyName}.`],
           ['Campaign launch plan', company.campaignStrategy],
+          ['Implementation roadmap', '30 days: confirm owner, approve map presence, and launch first offer. 60 days: measure engagement and expand campaign placements. 90 days: review reporting and decide which integrations or workspace modules to activate next.'],
+          ['KPIs', 'Views, saves, directions, offer interest, campaign reach, meeting requests, workspace activation, and partner-qualified actions.'],
           ['Pricing summary', `${company.suggestedPricingTier}. Recommended add-ons: ${company.recommendedAddOns.join(', ')}.`],
           ['What happens next', 'Confirm the decision-maker, review the proposal, choose the launch plan, and create the partner workspace.'],
         ].map(([title, body]) => (
