@@ -51,10 +51,10 @@ export function HomeHeader() {
 
         <div className="hidden lg:flex items-center gap-4">
           <button 
-             onClick={() => navigate('/map?mode=resident&tab=map')}
+             onClick={() => navigate('/admin')}
              className="px-5 py-2.5 bg-transparent border border-[rgba(11,31,51,0.08)] text-[#0B1F33] text-[13px] font-medium hover:bg-slate-50 transition-colors"
           >
-             Open map
+             Open platform
           </button>
           <button 
              onClick={() => { const el = document.querySelector('#join'); el?.scrollIntoView({behavior: 'smooth'})}}
@@ -66,10 +66,10 @@ export function HomeHeader() {
 
         <div className="lg:hidden flex items-center gap-3">
           <button 
-             onClick={() => navigate('/map?mode=resident&tab=map')}
+             onClick={() => navigate('/admin')}
              className="px-4 py-2 bg-transparent border border-[rgba(11,31,51,0.08)] text-[#0B1F33] text-[12px] font-medium"
           >
-             Open map
+             Open platform
           </button>
           <button 
              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -99,10 +99,10 @@ export function HomeHeader() {
            </div>
            <div className="flex flex-col gap-3 mt-4">
              <button 
-               onClick={() => { setMobileMenuOpen(false); navigate('/map?mode=resident&tab=map'); }}
+               onClick={() => { setMobileMenuOpen(false); navigate('/admin'); }}
                className="w-full py-4 text-center bg-transparent border border-[rgba(11,31,51,0.08)] text-[#0B1F33] text-[15px] font-medium"
              >
-               Open map
+               Open platform
              </button>
              <button 
                onClick={() => { setMobileMenuOpen(false); const el = document.querySelector('#join'); el?.scrollIntoView({behavior: 'smooth'})}}
@@ -123,11 +123,11 @@ export function HomeHero() {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    navigate(`/map?mode=resident&tab=map&query=${encodeURIComponent(query)}`);
+    navigate(`/admin?query=${encodeURIComponent(query)}`);
   };
 
   const handleChip = (chip: string, filter: string) => {
-    navigate(`/map?mode=resident&tab=map&filter=${filter}&query=${encodeURIComponent(chip)}`);
+    navigate(`/admin?filter=${filter}&query=${encodeURIComponent(chip)}`);
   };
 
   return (
@@ -182,11 +182,11 @@ export function HomeHero() {
          </div>
 
          <div className="mb-20 flex w-full flex-col gap-4 sm:w-auto sm:flex-row">
-            <button onClick={() => navigate('/map?mode=resident&tab=map')} className="px-8 py-4 bg-[#0B1F33] text-white text-[15px] font-medium hover:bg-[#132238] transition-colors w-full sm:w-auto">
-               Open map
+            <button onClick={() => navigate('/admin')} className="px-8 py-4 bg-[#0B1F33] text-white text-[15px] font-medium hover:bg-[#132238] transition-colors w-full sm:w-auto">
+               Open platform
             </button>
-            <button onClick={() => navigate('/map?mode=resident&tab=map')} className="px-8 py-4 bg-transparent border border-[rgba(11,31,51,0.08)] text-[#0B1F33] text-[15px] font-medium hover:bg-[#F1F3F7] transition-colors w-full sm:w-auto">
-               See what is nearby
+            <button onClick={() => navigate('/admin')} className="px-8 py-4 bg-transparent border border-[rgba(11,31,51,0.08)] text-[#0B1F33] text-[15px] font-medium hover:bg-[#F1F3F7] transition-colors w-full sm:w-auto">
+               Open partner tools
             </button>
          </div>
 
@@ -238,8 +238,8 @@ export function HomeSearchLess() {
              <p className="text-[15px] md:text-[18px] leading-[1.6] text-[rgba(11,31,51,0.62)] mb-10 overflow-wrap-anywhere min-w-0">
                 Places, plans, and perks in one view — so deciding what to do next takes seconds, not ten tabs.
              </p>
-             <button onClick={() => navigate('/map?mode=resident&tab=map')} className="w-full md:w-auto px-8 py-4 bg-[#0B1F33] text-white text-[15px] font-medium hover:bg-[#132238] transition-colors">
-                Open the map
+             <button onClick={() => navigate('/admin')} className="w-full md:w-auto px-8 py-4 bg-[#0B1F33] text-white text-[15px] font-medium hover:bg-[#132238] transition-colors">
+                Open the platform
              </button>
           </div>
           <div className="w-full md:w-1/2 flex justify-center">

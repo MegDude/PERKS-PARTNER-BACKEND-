@@ -1246,7 +1246,7 @@ export function PartnerWorkspaceTemplate(props: Props) {
                 <button type="button" className="shore-button" onClick={() => toggleFavorite(buzzInsights[0]?.favoriteId || `fav-${workspaceSlug}`)}>
                   <Heart className="h-3.5 w-3.5" /> Save
                 </button>
-                <a href="/map?mode=resident&tab=map&filter=All" className="shore-button">
+                <a href="/admin" className="shore-button">
                   <ArrowUpRight className="h-3.5 w-3.5" /> Map
                 </a>
                 <a href="#perks" className="shore-button">

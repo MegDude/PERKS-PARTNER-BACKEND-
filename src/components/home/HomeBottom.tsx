@@ -89,7 +89,7 @@ export function HomeJoin() {
                    <li className="flex gap-3 items-center"><span className="w-1.5 h-1.5 rounded-full bg-[#C5A028]" /> If not → sign up and request your building</li>
                 </ul>
 
-                <button onClick={() => navigate('/map?mode=resident')} className="px-8 py-4 bg-[#0B1F33] text-white text-[15px] font-medium hover:bg-[#132238] transition-colors mt-auto flex items-center gap-3 relative z-10 w-full sm:w-auto justify-center">
+                <button onClick={() => navigate('/admin')} className="px-8 py-4 bg-[#0B1F33] text-white text-[15px] font-medium hover:bg-[#132238] transition-colors mt-auto flex items-center gap-3 relative z-10 w-full sm:w-auto justify-center">
                    Check your building <ArrowRight className="w-4 h-4" />
                 </button>
              </OperationalSurface>
@@ -150,9 +150,9 @@ export function HomeFooter() {
              <div className="flex-1 grid grid-cols-2 lg:grid-cols-3 gap-10">
                 <div className="flex flex-col gap-4">
                    <div className="text-[11px] font-mono uppercase tracking-[0.1em] text-[#C5A028] mb-2">Find nearby</div>
-                   <button onClick={() => navigate('/map?mode=resident&tab=map')} className="text-[13px] text-white/70 hover:text-white transition-colors text-left">Live Map</button>
-                   <button onClick={() => navigate('/map?mode=resident&tab=events')} className="text-[13px] text-white/70 hover:text-white transition-colors text-left">Events</button>
-                   <button onClick={() => navigate('/map?mode=resident&tab=saved')} className="text-[13px] text-white/70 hover:text-white transition-colors text-left">Perks</button>
+                   <button onClick={() => navigate('/admin')} className="text-[13px] text-white/70 hover:text-white transition-colors text-left">Platform home</button>
+                   <button onClick={() => navigate('/admin/events')} className="text-[13px] text-white/70 hover:text-white transition-colors text-left">Events</button>
+                   <button onClick={() => navigate('/admin/perks')} className="text-[13px] text-white/70 hover:text-white transition-colors text-left">Perks</button>
                    <button onClick={() => document.querySelector('#join')?.scrollIntoView()} className="text-[13px] text-white/70 hover:text-white transition-colors text-left">Perks Card</button>
                    <button onClick={() => document.querySelector('#about')?.scrollIntoView()} className="text-[13px] text-white/70 hover:text-white transition-colors text-left">About</button>
                 </div>
@@ -172,7 +172,7 @@ export function HomeFooter() {
                    <button onClick={() => navigate('/admin')} className="text-[13px] text-white/70 hover:text-white transition-colors text-left">Partner space</button>
                    <button onClick={() => navigate('/admin/dashboard')} className="text-[13px] text-white/70 hover:text-white transition-colors text-left">How it is going</button>
                    <button onClick={() => navigate('/admin')} className="text-[13px] text-white/70 hover:text-white transition-colors text-left">Start Here</button>
-                   <button onClick={() => navigate('/map')} className="text-[13px] text-white/70 hover:text-white transition-colors text-left">Brand Directory</button>
+                   <button onClick={() => navigate('/admin/partner')} className="text-[13px] text-white/70 hover:text-white transition-colors text-left">Partner Directory</button>
                 </div>
              </div>
           </div>

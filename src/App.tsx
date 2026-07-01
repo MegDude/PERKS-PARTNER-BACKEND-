@@ -2,7 +2,6 @@ import React, { Suspense, lazy } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './components/context/AuthContext';
 
-const MapOS = lazy(() => import('./pages/MapOS'));
 const PartnerDashboardLayout = lazy(() => import('./components/layout/PartnerDashboardLayout'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const BuildingsManagement = lazy(() => import('./pages/BuildingsManagement'));
@@ -47,7 +46,7 @@ export default function App() {
         <Route path="/" element={<PartnerDashboardLayout />}>
           <Route index element={<Home />} />
         </Route>
-        <Route path="/map" element={<MapOS />} />
+        <Route path="/map" element={<Navigate to="/admin" replace />} />
         <Route path="/welcome" element={<WelcomeFlow />} />
         <Route path="/partners" element={<PartnerLifecycle />} />
         <Route path="/partners/*" element={<PartnerLifecycle />} />

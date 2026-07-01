@@ -16,8 +16,8 @@ export function HomeLiveMap() {
           <p className="text-[15px] md:text-[18px] leading-[1.6] text-[rgba(11,31,51,0.62)] mb-10 max-w-[600px] overflow-wrap-anywhere min-w-0">
              Open the map to find events, local perks, and useful spots right around the corner.
           </p>
-          <button onClick={() => navigate('/map?mode=resident&tab=map')} className="px-8 py-4 bg-[#0B1F33] text-white text-[15px] font-medium hover:bg-[#132238] transition-colors mb-16">
-             Open the map
+          <button onClick={() => navigate('/admin')} className="px-8 py-4 bg-[#0B1F33] text-white text-[15px] font-medium hover:bg-[#132238] transition-colors mb-16">
+             Open the platform
           </button>
 
           <OperationalSurface className="grid w-full gap-0 overflow-hidden bg-white text-left md:grid-cols-3">
@@ -43,7 +43,7 @@ export function HomeLiveMap() {
                   <button
                     key={item.title}
                     type="button"
-                    onClick={() => navigate('/map?mode=resident&tab=map')}
+                    onClick={() => navigate('/admin')}
                     className="group flex min-h-[220px] flex-col justify-between border-b border-[rgba(11,31,51,0.08)] bg-white p-8 text-left transition-colors hover:border-[#C8A96A] md:border-b-0 md:border-r last:border-r-0"
                   >
                     <Icon className="h-5 w-5 text-[#C8A96A]" />
@@ -52,7 +52,7 @@ export function HomeLiveMap() {
                       <p className="text-[15px] leading-6 text-[rgba(11,31,51,0.62)]">{item.body}</p>
                     </div>
                     <span className="mt-8 inline-flex items-center gap-2 text-[12px] font-semibold text-[#0B1F33]">
-                      Open real map <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                      Open platform <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                     </span>
                   </button>
                 );
@@ -116,7 +116,7 @@ export function HomePerksCard() {
              </h2>
              <div className="text-[24px] md:text-[30px] text-[#0B1F33] mb-8">$25 / yr</div>
              
-             <button onClick={() => navigate('/map?mode=resident')} className="w-full sm:w-auto px-8 py-4 bg-[#0B1F33] text-white text-[15px] font-medium hover:bg-[#132238] transition-colors mb-6 text-center">
+             <button onClick={() => navigate('/admin')} className="w-full sm:w-auto px-8 py-4 bg-[#0B1F33] text-white text-[15px] font-medium hover:bg-[#132238] transition-colors mb-6 text-center">
                 Complete registration
              </button>
              

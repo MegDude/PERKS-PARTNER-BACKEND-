@@ -8,6 +8,18 @@
       "includeFiles": "data/**"
     }
   },
+  "redirects": [
+    {
+      "source": "/map",
+      "destination": "/admin",
+      "permanent": false
+    },
+    {
+      "source": "/map/(.*)",
+      "destination": "/admin",
+      "permanent": false
+    }
+  ],
   "rewrites": [
     {
       "source": "/api/(.*)",
