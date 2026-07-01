@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   ArrowUpDown,
+  CalendarPlus,
   CheckCircle2,
   Copy,
   Database,
@@ -10,10 +11,12 @@ import {
   RefreshCw,
   Save,
   Search,
+  Send,
   SlidersHorizontal,
   Trash2,
   X,
 } from 'lucide-react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../components/context/AuthContext';
 
 type CrmPartner = {
@@ -46,6 +49,7 @@ type CrmPartner = {
   sms_message?: any;
   step?: any;
   activities?: any[];
+  best_contact?: string;
 };
 
 type SavedView = {
@@ -72,6 +76,32 @@ const exportFormats = [
   { key: 'google-sheets', label: 'Sheets' },
 ];
 const savedViewsKey = 'dp-outreach-crm-saved-views';
+const emailTemplatePresets: Record<string, { label: string; headline: string; subheadline: string; cta: string }> = {
+  restaurant: { label: 'Restaurant outreach', headline: 'A dining idea for downtown residents', subheadline: 'A simple way to bring nearby residents and workers back at the right moment.', cta: 'Review dining setup' },
+  bar: { label: 'Bar outreach', headline: 'A local nightlife idea', subheadline: 'A light resident offer or happy hour feature for people already nearby.', cta: 'Review bar setup' },
+  coffee: { label: 'Coffee outreach', headline: 'A coffee stop residents can remember', subheadline: 'A practical morning or workday perk for downtown routines.', cta: 'Review coffee setup' },
+  hotel: { label: 'Hotel outreach', headline: 'A better local guide for guests', subheadline: 'Help guests find nearby places without asking them to download another app.', cta: 'Review hotel setup' },
+  property: { label: 'Property outreach', headline: 'A resident amenity for local discovery', subheadline: 'A useful way for residents to find nearby food, events, services, and perks.', cta: 'Review property setup' },
+  retail: { label: 'Retail outreach', headline: 'A simple local shopping feature', subheadline: 'Put your shop in front of downtown residents and guests when they are deciding where to go.', cta: 'Review retail setup' },
+  civic: { label: 'Civic outreach', headline: 'A clearer path to local programs', subheadline: 'Make events, resources, and downtown programs easier for people to find.', cta: 'Review community setup' },
+  service: { label: 'Local service outreach', headline: 'A useful local service feature', subheadline: 'Help nearby residents find trusted local services when they need them.', cta: 'Review service setup' },
+  brand: { label: 'Brand campaign outreach', headline: 'A grounded downtown campaign idea', subheadline: 'A focused way to connect with real downtown routines and local moments.', cta: 'Review campaign setup' },
+  default: { label: 'General partner outreach', headline: 'A local idea for Downtown Perks', subheadline: 'A simple way to help the right people nearby discover what you offer.', cta: 'Review partner setup' },
+};
+
+function presetKeyForPartner(partner?: CrmPartner) {
+  const type = String(partner?.type || '').toLowerCase();
+  if (type.includes('restaurant')) return 'restaurant';
+  if (type.includes('bar')) return 'bar';
+  if (type.includes('coffee')) return 'coffee';
+  if (type.includes('hotel')) return 'hotel';
+  if (type.includes('property') || type.includes('residential') || type.includes('building')) return 'property';
+  if (type.includes('retail')) return 'retail';
+  if (type.includes('civic') || type.includes('community')) return 'civic';
+  if (type.includes('service') || type.includes('wellness') || type.includes('fitness')) return 'service';
+  if (type.includes('brand') || type.includes('campaign')) return 'brand';
+  return 'default';
+}
 
 function clean(value: any) {
   return String(value || '').trim() || missing;
@@ -87,6 +117,8 @@ function sortValue(partner: any, key: string) {
 
 export default function PartnerOutreachCRM() {
   const { user, configured, loading: authLoading, signInWithGoogle, logout } = useAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
   const [partners, setPartners] = useState<CrmPartner[]>([]);
   const [statuses, setStatuses] = useState<string[]>([]);
   const [filters, setFilters] = useState<string[]>(['All']);
@@ -106,6 +138,9 @@ export default function PartnerOutreachCRM() {
   const [batchStatus, setBatchStatus] = useState('Ready to contact');
   const [savedViews, setSavedViews] = useState<SavedView[]>([]);
   const [viewName, setViewName] = useState('');
+  const [messageModal, setMessageModal] = useState<{ partner: CrmPartner; email: any; sms: any } | null>(null);
+  const [templateEditorOpen, setTemplateEditorOpen] = useState(false);
+  const [templateDraft, setTemplateDraft] = useState<Record<string, string>>({});
 
   async function load() {
     setLoading(true);
@@ -115,13 +150,41 @@ export default function PartnerOutreachCRM() {
     setStatuses(payload.statuses || []);
     setFilters(payload.filters || ['All']);
     setGooglePlacesConfigured(Boolean(payload.google_places_configured));
-    setSelectedId((current) => current || payload.partners?.[0]?.id || '');
+    const routePartnerId = new URLSearchParams(location.search).get('partner') || '';
+    setSelectedId((current) => routePartnerId || current || payload.partners?.[0]?.id || '');
     setLoading(false);
   }
 
   useEffect(() => {
     load().catch(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    const routePartnerId = new URLSearchParams(location.search).get('partner') || '';
+    if (routePartnerId && routePartnerId !== selectedId) setSelectedId(routePartnerId);
+  }, [location.search, selectedId]);
+
+  const selected = selectedId ? partners.find((partner) => partner.id === selectedId) : undefined;
+
+  useEffect(() => {
+    if (!selected?.message) {
+      setTemplateDraft({});
+      setTemplateEditorOpen(false);
+      return;
+    }
+    setTemplateDraft({
+      subject: selected.message.subject || '',
+      email_headline: selected.message.email_headline || '',
+      email_subheadline: selected.message.email_subheadline || '',
+      banner_image_url: selected.message.banner_image_url || selected.message.partner_image_url || '',
+      logo_url: selected.message.logo_url || '',
+      cta_label: selected.message.cta_label || '',
+      cta_href: selected.message.cta_href || '',
+      secondary_cta_label: selected.message.secondary_cta_label || '',
+      secondary_cta_href: selected.message.secondary_cta_href || '',
+      footer_note: selected.message.footer_note || '',
+    });
+  }, [selected?.id, selected?.message?.id]);
 
   useEffect(() => {
     try {
@@ -132,7 +195,6 @@ export default function PartnerOutreachCRM() {
     }
   }, []);
 
-  const selected = selectedId ? partners.find((partner) => partner.id === selectedId) : undefined;
   const districts = useMemo(() => ['All', ...Array.from(new Set(partners.map((partner) => clean(partner.district)).filter((item) => item !== missing))).sort()], [partners]);
   const filtered = useMemo(() => {
     const needle = query.toLowerCase();
@@ -279,11 +341,70 @@ export default function PartnerOutreachCRM() {
     setSortDirection(key === 'name' ? 'asc' : 'desc');
   }
 
-  async function generateMessage(id: string) {
+  function openPartner(partner: CrmPartner) {
+    setSelectedId(partner.id);
+    const params = new URLSearchParams(location.search);
+    params.set('partner', partner.id);
+    navigate({ pathname: location.pathname, search: params.toString() }, { replace: true });
+  }
+
+  function updatePartnerRow(updated: CrmPartner) {
+    setPartners((items) => items.map((item) => (item.id === updated.id ? updated : item)));
+  }
+
+  async function generateMessage(id: string, openModal = false) {
     setWorking('generate');
-    await fetch(`/api/outreach-crm/partners/${id}/generate-message`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+    const response = await fetch(`/api/outreach-crm/partners/${id}/generate-message`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+    const payload = await response.json();
     await load();
+    if (openModal) {
+      const partner = partners.find((item) => item.id === id) || selected;
+      if (partner) setMessageModal({ partner, email: payload.email, sms: payload.sms });
+    }
     setWorking('');
+  }
+
+  async function markContacted(id: string) {
+    setWorking(`contacted-${id}`);
+    const response = await fetch(`/api/outreach-crm/partners/${id}/mark-contacted`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+    if (response.ok) updatePartnerRow(await response.json());
+    setWorking('');
+  }
+
+  async function scheduleFollowUp(id: string) {
+    const tomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+    const followUpAt = window.prompt('Follow-up date', tomorrow);
+    if (!followUpAt) return;
+    setWorking(`followup-${id}`);
+    const response = await fetch(`/api/outreach-crm/partners/${id}/schedule-follow-up`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ follow_up_at: followUpAt }),
+    });
+    if (response.ok) updatePartnerRow(await response.json());
+    setWorking('');
+  }
+
+  async function saveTemplateEditor() {
+    if (!selected?.message?.id) return;
+    setWorking('template');
+    await patchMessage(selected.message.id, templateDraft);
+    setTemplateEditorOpen(false);
+    setWorking('');
+  }
+
+  function applyTemplatePreset(key: string) {
+    const preset = emailTemplatePresets[key] || emailTemplatePresets.default;
+    setTemplateDraft((draft) => ({
+      ...draft,
+      email_headline: selected?.name ? `${clean(selected.name)}: ${preset.headline}` : preset.headline,
+      email_subheadline: selected?.suggested_perk || selected?.suggested_campaign || preset.subheadline,
+      cta_label: preset.cta,
+      cta_href: draft.cta_href || '/partners/register',
+      secondary_cta_label: draft.secondary_cta_label || 'View map idea',
+      secondary_cta_href: draft.secondary_cta_href || selected?.downtown_perks_map_url || selected?.google_maps_url || '/map',
+    }));
+    setTemplateEditorOpen(true);
   }
 
   async function applyBatchStatus() {
@@ -450,7 +571,7 @@ export default function PartnerOutreachCRM() {
             </div>
           )}
           <div className="dp-crm-table-scroll overflow-x-auto" role="region" aria-label="Scrollable partner directory table" tabIndex={0}>
-            <table className="dp-outreach-crm-table w-full min-w-[1760px] table-fixed text-left">
+            <table className="dp-outreach-crm-table w-full min-w-[1980px] table-fixed text-left">
               <colgroup>
                 <col className="w-[42px]" />
                 <col className="w-[218px]" />
@@ -462,6 +583,7 @@ export default function PartnerOutreachCRM() {
                 <col className="w-[72px]" />
                 <col className="w-[150px]" />
                 <col className="w-[104px]" />
+                <col className="w-[220px]" />
               </colgroup>
               <thead>
                 <tr>
@@ -477,11 +599,12 @@ export default function PartnerOutreachCRM() {
                   <th><SortButton label="Score" sortKey="priority_score" current={sortKey} direction={sortDirection} onClick={toggleSort} /></th>
                   <th>Stage</th>
                   <th><SortButton label="Last contacted" sortKey="last_contacted" current={sortKey} direction={sortDirection} onClick={toggleSort} /></th>
+                  <th>Quick actions</th>
                 </tr>
               </thead>
               <tbody>
                 {filtered.map((partner) => (
-                  <tr key={partner.id} className={`cursor-pointer border-t border-[rgba(11,31,51,0.045)] hover:bg-[#F8F9FB] ${selected?.id === partner.id ? 'bg-[#FBFAF6] outline outline-1 outline-[#C8A96A]/35' : ''}`} onClick={() => setSelectedId(partner.id)}>
+                  <tr key={partner.id} className={`cursor-pointer border-t border-[rgba(11,31,51,0.045)] hover:bg-[#F8F9FB] ${selected?.id === partner.id ? 'bg-[#FBFAF6] outline outline-1 outline-[#C8A96A]/35' : ''}`} onClick={() => openPartner(partner)}>
                     <td onClick={(event) => event.stopPropagation()}>
                       <input type="checkbox" checked={selectedIds.includes(partner.id)} onChange={() => toggleSelected(partner.id)} aria-label={`Select ${clean(partner.name)}`} />
                     </td>
@@ -494,6 +617,31 @@ export default function PartnerOutreachCRM() {
                     <td><span className="dp-crm-score">{Math.round(Number(partner.priority_score || 0))}</span></td>
                     <td><StatusBadge value={partner.outreach_stage} /></td>
                     <td>{formatActivityDate(partner.last_contacted)}</td>
+                    <td onClick={(event) => event.stopPropagation()}>
+                      <div className="flex flex-nowrap items-center gap-1 overflow-x-auto">
+                        <button
+                          type="button"
+                          onClick={() => markContacted(partner.id)}
+                          className="inline-flex min-h-7 shrink-0 items-center gap-1 border border-[rgba(11,31,51,0.08)] px-1.5 text-[8.5px] font-semibold uppercase text-[#0B1F33]"
+                        >
+                          <CheckCircle2 className={`h-3 w-3 ${working === `contacted-${partner.id}` ? 'animate-spin' : ''}`} /> Contacted
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => scheduleFollowUp(partner.id)}
+                          className="inline-flex min-h-7 shrink-0 items-center gap-1 border border-[rgba(11,31,51,0.08)] px-1.5 text-[8.5px] font-semibold uppercase text-[#0B1F33]"
+                        >
+                          <CalendarPlus className={`h-3 w-3 ${working === `followup-${partner.id}` ? 'animate-spin' : ''}`} /> Follow-up
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => generateMessage(partner.id, true)}
+                          className="inline-flex min-h-7 shrink-0 items-center gap-1 border border-[#C8A96A] px-1.5 text-[8.5px] font-semibold uppercase text-[#0B1F33]"
+                        >
+                          <Send className={`h-3 w-3 ${working === 'generate' ? 'animate-spin' : ''}`} /> Generate
+                        </button>
+                      </div>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -585,8 +733,11 @@ export default function PartnerOutreachCRM() {
               )}
               <div className="mt-3 overflow-hidden border border-[rgba(11,31,51,0.08)]">
                 <div className="flex items-center justify-between gap-2 border-b border-[rgba(11,31,51,0.08)] px-3 py-1.5">
-                  <span className="text-[9px] font-bold uppercase text-[rgba(11,31,51,0.52)]">Downtown Perks HTML email</span>
-                  <span className="flex items-center gap-2">
+                  <div>
+                    <span className="text-[9px] font-bold uppercase text-[rgba(11,31,51,0.52)]">Downtown Perks HTML email</span>
+                    <p className="mt-0.5 text-[10px] text-[rgba(11,31,51,0.5)]">Previewed with this partner’s name, type, perk, image, and CTA settings.</p>
+                  </div>
+                  <span className="flex shrink-0 items-center gap-2">
                     <a
                       href={`/api/outreach-crm/partners/${selected.id}/email.html`}
                       target="_blank"
@@ -602,8 +753,71 @@ export default function PartnerOutreachCRM() {
                     >
                       Copy HTML
                     </button>
+                    <button
+                      type="button"
+                      onClick={() => setTemplateEditorOpen((value) => !value)}
+                      className="min-h-6 text-[9px] font-semibold uppercase text-[#0B1F33]"
+                    >
+                      Edit template
+                    </button>
                   </span>
                 </div>
+                <div className="grid gap-2 border-b border-[rgba(11,31,51,0.08)] p-2.5 sm:grid-cols-[150px_1fr_auto] sm:items-end">
+                  <label className="grid gap-1">
+                    <span className="text-[8.5px] font-semibold uppercase text-[rgba(11,31,51,0.46)]">Template</span>
+                    <select
+                      defaultValue={presetKeyForPartner(selected)}
+                      onChange={(event) => applyTemplatePreset(event.target.value)}
+                      className="min-h-7 border border-[rgba(11,31,51,0.1)] bg-white px-2 text-[10.5px] outline-none"
+                    >
+                      {Object.entries(emailTemplatePresets).map(([key, preset]) => (
+                        <option key={key} value={key}>{preset.label}</option>
+                      ))}
+                    </select>
+                  </label>
+                  <p className="text-[10.5px] leading-4 text-[rgba(11,31,51,0.58)]">
+                    The preview uses the saved email body plus template settings. Save changes to rebuild the production HTML.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => generateMessage(selected.id)}
+                    className="inline-flex min-h-7 items-center gap-1 border border-[#C8A96A] px-2 text-[8.5px] font-semibold uppercase text-[#0B1F33]"
+                  >
+                    <RefreshCw className={`h-3 w-3 ${working === 'generate' ? 'animate-spin' : ''}`} /> Refresh copy
+                  </button>
+                </div>
+                {templateEditorOpen && (
+                  <div className="grid gap-2 border-b border-[rgba(11,31,51,0.08)] p-2.5">
+                    <div className="grid gap-2 sm:grid-cols-2">
+                      <TemplateInput label="Subject" value={templateDraft.subject} onChange={(value) => setTemplateDraft((draft) => ({ ...draft, subject: value }))} />
+                      <TemplateInput label="Headline" value={templateDraft.email_headline} onChange={(value) => setTemplateDraft((draft) => ({ ...draft, email_headline: value }))} />
+                      <TemplateInput label="Subheadline" value={templateDraft.email_subheadline} onChange={(value) => setTemplateDraft((draft) => ({ ...draft, email_subheadline: value }))} />
+                      <TemplateInput label="Banner image URL" value={templateDraft.banner_image_url} onChange={(value) => setTemplateDraft((draft) => ({ ...draft, banner_image_url: value }))} />
+                      <TemplateInput label="Logo URL" value={templateDraft.logo_url} onChange={(value) => setTemplateDraft((draft) => ({ ...draft, logo_url: value }))} />
+                      <TemplateInput label="CTA label" value={templateDraft.cta_label} onChange={(value) => setTemplateDraft((draft) => ({ ...draft, cta_label: value }))} />
+                      <TemplateInput label="CTA URL" value={templateDraft.cta_href} onChange={(value) => setTemplateDraft((draft) => ({ ...draft, cta_href: value }))} />
+                      <TemplateInput label="Map link label" value={templateDraft.secondary_cta_label} onChange={(value) => setTemplateDraft((draft) => ({ ...draft, secondary_cta_label: value }))} />
+                      <TemplateInput label="Map link URL" value={templateDraft.secondary_cta_href} onChange={(value) => setTemplateDraft((draft) => ({ ...draft, secondary_cta_href: value }))} />
+                      <TemplateInput label="Footer note" value={templateDraft.footer_note} onChange={(value) => setTemplateDraft((draft) => ({ ...draft, footer_note: value }))} />
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={saveTemplateEditor}
+                        className="inline-flex min-h-7 items-center gap-1 border border-[#C8A96A] px-2 text-[8.5px] font-semibold uppercase text-[#0B1F33]"
+                      >
+                        <Save className={`h-3 w-3 ${working === 'template' ? 'animate-spin' : ''}`} /> Save template
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setTemplateEditorOpen(false)}
+                        className="inline-flex min-h-7 items-center gap-1 border border-[rgba(11,31,51,0.08)] px-2 text-[8.5px] font-semibold uppercase text-[#0B1F33]"
+                      >
+                        Close editor
+                      </button>
+                    </div>
+                  </div>
+                )}
                 <iframe
                   title={`${clean(selected.name)} branded email preview`}
                   srcDoc={selected.message?.html || ''}
@@ -617,6 +831,55 @@ export default function PartnerOutreachCRM() {
           </aside>
         )}
       </section>
+
+      {messageModal && (
+        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-[#0B1F33]/24 p-4 sm:p-6" role="dialog" aria-modal="true" aria-label="Generated outreach message">
+          <button className="fixed inset-0 cursor-default" type="button" aria-label="Close generated message" onClick={() => setMessageModal(null)} />
+          <div className="relative mt-8 w-full max-w-2xl border border-[rgba(11,31,51,0.08)] bg-white p-4 text-left text-[#0B1F33]">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-[9px] font-bold uppercase text-[#C8A96A]">Generated outreach</p>
+                <h2 className="mt-1 text-[18px] font-semibold">{clean(messageModal.partner.name)}</h2>
+                <p className="mt-1 text-[11px] leading-4 text-[rgba(11,31,51,0.58)]">Review, edit, copy, or open this partner to keep tuning before anything is sent.</p>
+              </div>
+              <button type="button" onClick={() => setMessageModal(null)} className="inline-flex h-8 w-8 items-center justify-center border border-[rgba(11,31,51,0.08)]" aria-label="Close generated outreach modal">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="mt-4 grid gap-3">
+              <EditableMessage
+                icon={<MessageSquare className="h-4 w-4" />}
+                title="Short text / DM"
+                body={clean(messageModal.sms?.body)}
+                onCopy={() => copyText(messageModal.sms?.body || '')}
+                onSave={(value) => patchMessage(messageModal.sms?.id, { body: value })}
+              />
+              <EditableMessage
+                icon={<Mail className="h-4 w-4" />}
+                title={clean(messageModal.email?.subject)}
+                body={clean(messageModal.email?.body)}
+                onCopy={() => copyText(messageModal.email?.body || '')}
+                onSave={(value) => patchMessage(messageModal.email?.id, { body: value })}
+              />
+            </div>
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  openPartner(messageModal.partner);
+                  setMessageModal(null);
+                }}
+                className="inline-flex min-h-8 items-center gap-1.5 border border-[#C8A96A] px-2.5 text-[9px] font-semibold uppercase text-[#0B1F33]"
+              >
+                Open partner
+              </button>
+              <button type="button" onClick={() => setMessageModal(null)} className="inline-flex min-h-8 items-center gap-1.5 border border-[rgba(11,31,51,0.08)] px-2.5 text-[9px] font-semibold uppercase text-[#0B1F33]">
+                Done
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -715,6 +978,19 @@ function EditableField({ label, value, needsVerify, onSave }: { label: string; v
         <input value={draft} placeholder={needsVerify ? missing : ''} onChange={(event) => setDraft(event.target.value)} className="min-h-7 flex-1 border border-[rgba(11,31,51,0.1)] px-2 text-[10.5px] leading-4 outline-none placeholder:text-[rgba(11,31,51,0.34)]" />
         <button onClick={() => onSave(draft.trim())} type="button" className="min-h-7 border border-[#C8A96A] px-2 text-[8.5px] font-semibold uppercase">Save</button>
       </div>
+    </label>
+  );
+}
+
+function TemplateInput({ label, value, onChange }: { label: string; value?: string; onChange: (value: string) => void }) {
+  return (
+    <label className="grid gap-1">
+      <span className="text-[8.5px] font-semibold uppercase text-[rgba(11,31,51,0.46)]">{label}</span>
+      <input
+        value={value || ''}
+        onChange={(event) => onChange(event.target.value)}
+        className="min-h-7 border border-[rgba(11,31,51,0.1)] px-2 text-[10.5px] leading-4 outline-none"
+      />
     </label>
   );
 }

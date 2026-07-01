@@ -1687,3 +1687,8 @@ body :where(section.bg-white[class*="border"], article.bg-white[class*="border"]
 .shore-workspace :where(h1)::-webkit-scrollbar {
   display: none;
 }
+
+.dp-admin-shell .dp-admin-home-headline {
+  font-size: clamp(1.18rem, 4.8vw, 1.72rem) !important;
+  line-height: 1.08 !important;
+}

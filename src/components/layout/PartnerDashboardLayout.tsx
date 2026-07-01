@@ -1,12 +1,15 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
-import { Building2, LayoutDashboard, Users, Megaphone, Ticket, Settings, ArrowLeft, BarChart3, Presentation, ListTodo, Menu, X, Home as HomeIcon, CreditCard, Sparkles, MailCheck } from 'lucide-react';
+import { Building2, LayoutDashboard, Users, Megaphone, Ticket, Settings, ArrowLeft, BarChart3, Presentation, ListTodo, Menu, X, Home as HomeIcon, CreditCard, Sparkles, MailCheck, Search } from 'lucide-react';
 
 export default function PartnerDashboardLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [globalQuery, setGlobalQuery] = useState('');
+  const [globalPartners, setGlobalPartners] = useState<any[]>([]);
+  const [searchFocused, setSearchFocused] = useState(false);
   const isLandingPage = location.pathname === '/';
   const goBack = () => {
     if (window.history.length > 1) {
@@ -58,6 +61,30 @@ export default function PartnerDashboardLayout() {
   const isActiveRoute = (to: string) => {
     if (to === '/') return location.pathname === '/';
     return location.pathname === to || location.pathname.startsWith(`${to}/`);
+  };
+
+  useEffect(() => {
+    fetch('/api/outreach-crm')
+      .then((response) => response.ok ? response.json() : Promise.reject(new Error('Search index unavailable')))
+      .then((payload) => setGlobalPartners(payload.partners || []))
+      .catch(() => setGlobalPartners([]));
+  }, []);
+
+  const globalResults = useMemo(() => {
+    const needle = globalQuery.trim().toLowerCase();
+    if (needle.length < 2) return [];
+    return globalPartners
+      .filter((partner) => {
+        const haystack = `${partner.name || ''} ${partner.type || ''} ${partner.partner_type || ''} ${partner.contact?.name || ''} ${partner.best_contact || ''}`.toLowerCase();
+        return haystack.includes(needle);
+      })
+      .slice(0, 8);
+  }, [globalPartners, globalQuery]);
+
+  const openSearchResult = (partner: any) => {
+    setGlobalQuery('');
+    setSearchFocused(false);
+    navigate(`/admin/outreach-crm?partner=${encodeURIComponent(partner.id)}`);
   };
 
   return (
@@ -134,6 +161,47 @@ export default function PartnerDashboardLayout() {
            </div>
         </div>
 
+        <div className="relative border-b border-[rgba(11,31,51,0.06)] bg-white px-4 pb-3 lg:hidden">
+          <label className="flex min-h-9 items-center gap-2 border border-[rgba(11,31,51,0.08)] bg-white px-3">
+            <Search className="h-3.5 w-3.5 text-[#C8A96A]" />
+            <input
+              value={globalQuery}
+              onChange={(event) => setGlobalQuery(event.target.value)}
+              onFocus={() => setSearchFocused(true)}
+              className="w-full bg-transparent text-[12px] font-medium text-[#0B1F33] outline-none placeholder:text-[rgba(11,31,51,0.36)]"
+              placeholder="Search partners"
+              aria-label="Global partner search"
+            />
+            {globalQuery && (
+              <button type="button" onClick={() => setGlobalQuery('')} className="text-[9px] font-semibold uppercase text-[rgba(11,31,51,0.48)]">
+                Clear
+              </button>
+            )}
+          </label>
+          {searchFocused && globalQuery.trim().length >= 2 && (
+            <div className="absolute left-4 right-4 top-[calc(100%-6px)] z-40 border border-[rgba(11,31,51,0.08)] bg-white p-1.5">
+              {globalResults.length === 0 ? (
+                <p className="px-2 py-2 text-[11px] text-[rgba(11,31,51,0.55)]">No partners found.</p>
+              ) : (
+                <div className="grid gap-1">
+                  {globalResults.map((partner) => (
+                    <button
+                      key={partner.id}
+                      type="button"
+                      onMouseDown={(event) => event.preventDefault()}
+                      onClick={() => openSearchResult(partner)}
+                      className="grid gap-0.5 px-2 py-2 text-left hover:bg-[#FBFAF6]"
+                    >
+                      <span className="text-[12px] font-semibold text-[#0B1F33]">{partner.name || 'Needs verification'}</span>
+                      <span className="text-[10px] text-[rgba(11,31,51,0.55)]">{partner.best_contact || partner.contact?.name || 'No contact yet'} · {partner.type || 'Partner'}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
         {mobileOpen && (
           <div className="lg:hidden fixed inset-0 z-50 bg-[#11182B]/30" role="dialog" aria-modal="true">
             <button
@@ -183,7 +251,7 @@ export default function PartnerDashboardLayout() {
           </div>
         )}
 
-        <div className="sticky top-0 z-30 hidden bg-white/96 px-6 py-3 backdrop-blur lg:block">
+        <div className="sticky top-0 z-30 hidden border-b border-[rgba(11,31,51,0.06)] bg-white px-6 py-3 lg:block">
           <div className="flex items-center gap-4">
             {!isLandingPage && (
               <>
@@ -206,6 +274,46 @@ export default function PartnerDashboardLayout() {
             >
               <HomeIcon className="w-4 h-4" /> Home
             </Button>
+            <div className="relative ml-2 w-full max-w-[680px]">
+              <label className="flex min-h-9 items-center gap-2 border border-[rgba(11,31,51,0.08)] bg-white px-3">
+                <Search className="h-3.5 w-3.5 text-[#C8A96A]" />
+                <input
+                  value={globalQuery}
+                  onChange={(event) => setGlobalQuery(event.target.value)}
+                  onFocus={() => setSearchFocused(true)}
+                  className="w-full bg-transparent text-[12px] font-medium text-[#0B1F33] outline-none placeholder:text-[rgba(11,31,51,0.36)]"
+                  placeholder="Search partners by name, contact, or type"
+                  aria-label="Global partner search"
+                />
+                {globalQuery && (
+                  <button type="button" onClick={() => setGlobalQuery('')} className="text-[9px] font-semibold uppercase text-[rgba(11,31,51,0.48)]">
+                    Clear
+                  </button>
+                )}
+              </label>
+              {searchFocused && globalQuery.trim().length >= 2 && (
+                <div className="absolute left-0 top-[calc(100%+6px)] z-40 w-full border border-[rgba(11,31,51,0.08)] bg-white p-1.5">
+                  {globalResults.length === 0 ? (
+                    <p className="px-2 py-2 text-[11px] text-[rgba(11,31,51,0.55)]">No partners found.</p>
+                  ) : (
+                    <div className="grid gap-1">
+                      {globalResults.map((partner) => (
+                        <button
+                          key={partner.id}
+                          type="button"
+                          onMouseDown={(event) => event.preventDefault()}
+                          onClick={() => openSearchResult(partner)}
+                          className="grid gap-0.5 px-2 py-2 text-left hover:bg-[#FBFAF6]"
+                        >
+                          <span className="text-[12px] font-semibold text-[#0B1F33]">{partner.name || 'Needs verification'}</span>
+                          <span className="text-[10px] text-[rgba(11,31,51,0.55)]">{partner.best_contact || partner.contact?.name || 'No contact yet'} · {partner.type || 'Partner'}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         </div>
         

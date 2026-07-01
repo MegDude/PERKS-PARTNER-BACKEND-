@@ -214,7 +214,7 @@ export default function BackendWorkspace() {
         <div className="grid gap-5 xl:grid-cols-[1fr_340px] xl:items-end">
           <div>
             <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-[#C8A96A]">Start here</p>
-            <h1 className="mt-1 text-2xl font-semibold tracking-normal sm:text-3xl">Downtown Perks, ready to run</h1>
+            <h1 className="dp-admin-home-headline mt-1 text-2xl font-semibold tracking-normal sm:text-3xl">Downtown Perks, ready to run</h1>
             <p className="mt-2 max-w-4xl text-[12px] leading-5 text-[rgba(11,31,51,0.62)] sm:text-sm sm:leading-6">
               Open the people, places, perks, events, broadcasts, reports, and plans that keep downtown moving.
             </p>

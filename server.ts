@@ -4621,7 +4621,21 @@ export async function createApp() {
     const message = findEntityById(db.entities.PartnerOutreachMessage, req.params.id);
     if (!message) return res.status(404).json({ error: "Message not found" });
     Object.assign(message, req.body || {}, { updated_at: now() });
-    if (message.channel === "email" && ("body" in (req.body || {}) || "subject" in (req.body || {}))) {
+    const emailTemplateFields = [
+      "body",
+      "subject",
+      "email_headline",
+      "email_subheadline",
+      "banner_image_url",
+      "partner_image_url",
+      "logo_url",
+      "cta_label",
+      "cta_href",
+      "secondary_cta_label",
+      "secondary_cta_href",
+      "footer_note",
+    ];
+    if (message.channel === "email" && emailTemplateFields.some((field) => field in (req.body || {}))) {
       const partner = db.entities.Partner.find((item) => item.id === message.partner_id) || {};
       message.html = buildOutreachEmailHtml(partner, message);
     }
@@ -4657,18 +4671,24 @@ export async function createApp() {
       ? { ...generateOutreachCopy({ ...partner, ...(req.body || {}) }, contact), provider: "local_strategy", intelligence: buildOutreachStrategyBrief({ ...partner, ...(req.body || {}) }, contact) }
       : await generatePersonalizedOutreachCopy({ ...partner, ...(req.body || {}) }, contact);
     const guardrail = "guardrail" in generated ? generated.guardrail || "" : "";
-    const email = ensureRecord(db.entities.PartnerOutreachMessage, `outreach_message_${slug(partner.external_entity_id || partner.id)}_email`, {
+    const emailDraft = {
       partner_id: partner.id,
       contact_id: contact.id || "",
       channel: "email",
       subject: generated.subject,
       body: generated.body,
-      html: generated.html,
+      email_headline: generated.strategy?.angle ? `${partner.name || partner.business_name}: ${generated.strategy.angle}` : "",
+      email_subheadline: generated.strategy?.benefit || "",
+      html: "",
       status: "draft",
       strategy: generated.strategy || {},
       intelligence: generated.intelligence || {},
       provider: generated.provider || "local_strategy",
       guardrail,
+    };
+    const email = ensureRecord(db.entities.PartnerOutreachMessage, `outreach_message_${slug(partner.external_entity_id || partner.id)}_email`, {
+      ...emailDraft,
+      html: buildOutreachEmailHtml(partner, emailDraft),
     });
     const sms = ensureRecord(db.entities.PartnerOutreachMessage, `outreach_message_${slug(partner.external_entity_id || partner.id)}_sms`, {
       partner_id: partner.id,
@@ -6964,31 +6984,35 @@ export async function createApp() {
   });
 
   app.get("/api/integrations/status", (req, res) => {
-    const defaults: Array<[string, string | string[]]> = [
-      ["Tally Webhooks", "TALLY_WEBHOOK_SECRET"],
-      ["Twilio Verify", "TWILIO_VERIFY_SERVICE_SID"],
-      ["Twilio Messaging", "TWILIO_MESSAGING_SERVICE_SID"],
-      ["Supabase Operational Store", "SUPABASE_URL"],
-      ["n8n Workflow Orchestration", "N8N_WEBHOOK_URL"],
-      ["OpenAI Insights", "OPENAI_API_KEY"],
-      ["Email Delivery", "RESEND_API_KEY"],
-      ["Firebase Auth / Firestore", ["VITE_FIREBASE_API_KEY", "VITE_FIREBASE_PROJECT_ID", "VITE_FIREBASE_APP_ID"]],
-      ["Google Sheets / Reports DB", ["GOOGLE_SHEETS_CLIENT_EMAIL", "GOOGLE_SHEETS_PRIVATE_KEY", "GOOGLE_SHEETS_SPREADSHEET_ID"]],
-      ["Google Maps / Places", ["GOOGLE_MAPS_API_KEY", "GOOGLE_PLACES_API_KEY"]],
-      ["Stripe", "STRIPE_SECRET_KEY"],
-      ["Storage Provider", "STORAGE_BUCKET"],
+    const defaults: Array<{ provider: string; groups: string[][] }> = [
+      { provider: "Tally Webhooks", groups: [["TALLY_WEBHOOK_SECRET"]] },
+      { provider: "Twilio Verify", groups: [["TWILIO_ACCOUNT_SID"], ["TWILIO_AUTH_TOKEN"], ["TWILIO_VERIFY_SERVICE_SID"]] },
+      { provider: "Twilio Messaging", groups: [["TWILIO_ACCOUNT_SID"], ["TWILIO_AUTH_TOKEN"], ["TWILIO_PHONE_NUMBER", "TWILIO_MESSAGING_SERVICE_SID"]] },
+      { provider: "Supabase Operational Store", groups: [["SUPABASE_URL", "VITE_SUPABASE_URL"], ["SUPABASE_SERVICE_ROLE_KEY", "SUPABASE_SERVICE_KEY", "SUPABASE_ANON_KEY"]] },
+      { provider: "n8n Workflow Orchestration", groups: [["N8N_WEBHOOK_URL", "N8N_BASE_URL"], ["N8N_API_KEY", "N8N_AUTH_TOKEN"]] },
+      { provider: "OpenAI Insights", groups: [["OPENAI_API_KEY"]] },
+      { provider: "Email Delivery", groups: [["RESEND_API_KEY"]] },
+      { provider: "Firebase Auth / Firestore", groups: [["VITE_FIREBASE_API_KEY", "FIREBASE_API_KEY"], ["VITE_FIREBASE_PROJECT_ID", "FIREBASE_PROJECT_ID"], ["VITE_FIREBASE_APP_ID", "FIREBASE_APP_ID"]] },
+      { provider: "Google Sheets / Reports DB", groups: [["GOOGLE_SHEETS_CLIENT_EMAIL", "GOOGLE_SERVICE_ACCOUNT_EMAIL"], ["GOOGLE_SHEETS_PRIVATE_KEY", "GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY", "GOOGLE_SERVICE_ACCOUNT_JSON"], ["GOOGLE_SHEETS_SPREADSHEET_ID", "GOOGLE_SHEETS_REPORTS_SPREADSHEET_ID"]] },
+      { provider: "Google Maps / Places", groups: [["GOOGLE_MAPS_API_KEY", "GOOGLE_PLACES_API_KEY"]] },
+      { provider: "Stripe", groups: [["STRIPE_SECRET_KEY"]] },
+      { provider: "Storage Provider", groups: [["STORAGE_BUCKET", "BLOB_READ_WRITE_TOKEN", "VERCEL_BLOB_READ_WRITE_TOKEN", "S3_BUCKET", "AWS_S3_BUCKET", "SUPABASE_STORAGE_BUCKET"]] },
     ];
-    const records = defaults.map(([provider, envKey]) => {
-      const envKeys = Array.isArray(envKey) ? envKey : [envKey];
-      const stored = db.entities.IntegrationStatus.find((item) => item.provider === provider) || db.entities.IntegrationEndpoint.find((item) => item.provider === provider || item.name === provider);
-      const configured = provider === "Google Maps / Places"
-        ? envKeys.some((key) => process.env[key])
-        : envKeys.every((key) => process.env[key]);
+    const records = defaults.map(({ provider, groups }) => {
+      const envKeys = groups.flat();
+      const configured = groups.every((group) => group.some((key) => Boolean(process.env[key])));
+      const missingGroups = groups
+        .filter((group) => !group.some((key) => Boolean(process.env[key])))
+        .map((group) => group.join(" or "));
+      const stored = db.entities.IntegrationStatus.find((item) => item.provider === provider)
+        || db.entities.IntegrationEndpoint.find((item) => item.name === provider || item.provider === provider);
       return {
         id: stored?.id || `integration_${slug(provider)}`,
         provider,
         status: configured ? "configured" : stored?.status || "pending_credentials",
         required_env_vars: envKeys,
+        accepted_env_groups: groups,
+        missing_env_groups: missingGroups,
         last_tested: stored?.last_tested || "",
         last_success: stored?.last_success || "",
         logs: stored?.logs || [],
