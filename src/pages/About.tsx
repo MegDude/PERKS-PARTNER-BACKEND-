@@ -48,7 +48,7 @@ const operatingPrinciples = [
   'Residents scan a QR code or open a link. No app download is required.',
   'The map shows nearby places, perks, events, buildings, and useful neighborhood context.',
   'Residents can save a place, RSVP to an event, redeem an offer, or open a property inquiry.',
-  'Partners and properties can see simple signals: views, saves, scans, RSVPs, redemptions, and reports.',
+  'Partners and properties can see simple results: views, saves, scans, RSVPs, redemptions, and reports.',
 ];
 
 const simpleFlow = [
@@ -82,7 +82,7 @@ export default function About() {
           <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-[#C8A96A]">About Downtown Perks</p>
           <h1 className="mt-3 max-w-4xl text-3xl font-semibold tracking-normal md:text-5xl">A better downtown starts close to home.</h1>
           <p className="mt-4 max-w-4xl text-base leading-7 text-[rgba(11,31,51,0.68)]">
-            Downtown Perks is a web-based neighborhood layer for downtown Austin. It connects residents, local businesses, buildings, civic programs, events, and reports through a simple map and QR-powered resident card.
+            Downtown Perks is a web-based guide for downtown Austin. It connects residents, local businesses, buildings, civic programs, events, and reports through a simple map and QR-powered resident card.
           </p>
           <div className="mt-6 flex flex-wrap gap-3">
             <Link to="/admin/home" className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-[#0B1F33] bg-[#0B1F33] px-4 text-xs font-semibold text-white">

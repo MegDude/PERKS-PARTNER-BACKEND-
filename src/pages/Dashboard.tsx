@@ -81,7 +81,7 @@ export default function Dashboard() {
       { label: "Partners", value: overview.partners, note: "Workspaces and profiles ready to open.", to: "/admin/partner" },
       { label: "Contacts", value: overview.contacts, note: "People to verify, contact, or follow up.", to: "/admin/outreach-crm" },
       { label: "Perks", value: overview.activePerks, note: "Offers active or ready for residents.", to: "/admin/perks" },
-      { label: "Campaigns", value: overview.campaigns, note: "Notes, offers, and outreach in motion.", to: "/admin/engagement" },
+      { label: "Campaigns", value: overview.campaigns, note: "Notes, offers, and outreach ready to review.", to: "/admin/engagement" },
     ],
     [overview]
   );

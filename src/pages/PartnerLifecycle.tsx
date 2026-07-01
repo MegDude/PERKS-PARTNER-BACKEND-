@@ -49,9 +49,9 @@ const partnerTypes = [
 const plans = [
   { key: 'property_basic', vertical: 'Properties', partnerType: 'property', label: 'Basic Building', amount: 49, cadence: 'year', summary: 'Get the building on the map with a clean resident entry point.', limits: 'Best for a single building getting started', modules: ['Property profile', 'Map presence', 'Building QR', 'Basic reports'] },
   { key: 'property_resident_plus', vertical: 'Properties', partnerType: 'property', label: 'Resident Plus', amount: 99, cadence: 'year', summary: 'Add resident perks, community notes, and stronger building follow-up.', limits: 'Best for active resident programming', modules: ['Everything in Basic', 'Resident perks', 'Broadcasts', 'Annual readout'] },
-  { key: 'property_pro', vertical: 'Properties', partnerType: 'property', label: 'Property Pro', amount: 199, cadence: 'year', summary: 'Run the full resident layer with campaigns, reporting, and deeper support.', limits: 'Best for high-touch property teams', modules: ['Everything in Plus', 'Campaigns', 'Priority setup', 'Advanced reports'] },
-  { key: 'venue_basic', vertical: 'Venues', partnerType: 'venue', label: 'Basic', amount: 30, cadence: 'year', summary: 'Show up on the map and give locals one clear reason to stop in.', limits: 'Best for getting discovered', modules: ['Venue profile', 'Map listing', 'One starter perk', 'Basic signals'] },
-  { key: 'venue_growth', vertical: 'Venues', partnerType: 'venue', label: 'Growth', amount: 79, cadence: 'year', summary: 'Keep offers and events in the rotation with cleaner performance readouts.', limits: 'Best for steady local activity', modules: ['Everything in Basic', 'Events', 'Campaign notes', 'Readouts'] },
+  { key: 'property_pro', vertical: 'Properties', partnerType: 'property', label: 'Property Pro', amount: 199, cadence: 'year', summary: 'Give residents a useful local guide with campaigns, reporting, and deeper support.', limits: 'Best for high-touch property teams', modules: ['Everything in Plus', 'Campaigns', 'Priority setup', 'Advanced reports'] },
+  { key: 'venue_basic', vertical: 'Venues', partnerType: 'venue', label: 'Basic', amount: 30, cadence: 'year', summary: 'Show up on the map and give locals one clear reason to stop in.', limits: 'Best for getting discovered', modules: ['Venue profile', 'Map listing', 'One starter perk', 'Basic results'] },
+  { key: 'venue_growth', vertical: 'Venues', partnerType: 'venue', label: 'Growth', amount: 79, cadence: 'year', summary: 'Keep offers and events easy to find with clearer reports.', limits: 'Best for steady local activity', modules: ['Everything in Basic', 'Events', 'Campaign notes', 'Reports'] },
   { key: 'venue_pro', vertical: 'Venues', partnerType: 'venue', label: 'Pro', amount: 199, cadence: 'year', summary: 'Stay visible all year with stronger placement, reporting, and support.', limits: 'Best for go-to downtown spots', modules: ['Everything in Growth', 'Priority moments', 'Advanced reports', 'Support'] },
   { key: 'hotel_starter', vertical: 'Hotels', partnerType: 'hotel', label: 'Hotel Starter', amount: 99, cadence: 'year', summary: 'Give guests a simple local guide tied to lobby, room, and concierge moments.', limits: 'Best for one hotel property', modules: ['Hotel profile', 'Guest guide', 'Lobby QR', 'Local perks'] },
   { key: 'hotel_pro', vertical: 'Hotels', partnerType: 'hotel', label: 'Hotel Pro', amount: 199, cadence: 'year', summary: 'Turn guest discovery into measurable campaigns and partner reports.', limits: 'Best for active hospitality teams', modules: ['Everything in Starter', 'Campaigns', 'Guest reporting', 'Concierge support'] },
@@ -493,7 +493,7 @@ export default function PartnerLifecycle() {
             <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-[#C8A96A]">Be where plans are made</p>
             <h2 className="mt-2 text-2xl font-semibold leading-tight">Start with the plan that fits.</h2>
             <p className="mt-3 text-sm leading-6 text-[rgba(11,31,51,0.64)]">
-              Downtown Perks is the digital layer for downtown Austin. Residents scan a code, open the map, find what is nearby, save what looks good, and partners see what worked.
+              Downtown Perks is a simple downtown guide for Austin. Residents scan a code, open the map, find what is nearby, save what looks good, and partners see what worked.
             </p>
             <div className="mt-5 grid gap-3">
               {[
@@ -501,7 +501,7 @@ export default function PartnerLifecycle() {
                 ['For local partners', 'Show up while nearby residents, guests, and workers are deciding where to go.'],
                 ['For civic and real estate teams', 'Connect programs, buildings, listings, inquiries, and follow-up to one map-based workflow.'],
                 ['No app to download', 'Residents open the guide from a QR code, link, or resident card prompt.'],
-                ['Real signal', 'See saves, scans, directions, RSVPs, redemptions, and the next action worth taking.'],
+                ['Real results', 'See saves, scans, directions, RSVPs, redemptions, and the next step worth taking.'],
               ].map(([title, copy]) => (
                 <div key={title} className="border-t border-[rgba(11,31,51,0.06)] pt-3">
                   <p className="text-sm font-semibold">{title}</p>

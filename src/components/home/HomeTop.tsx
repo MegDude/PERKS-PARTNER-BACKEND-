@@ -131,17 +131,17 @@ export function HomeHero() {
   };
 
   return (
-    <section className="relative min-h-[calc(100dvh-68px)] flex flex-col items-center justify-center px-5 pt-[96px] pb-[56px] overflow-hidden bg-[#F7F8FB] z-10 w-full" id="about">
+    <section className="relative min-h-[calc(100dvh-68px)] flex flex-col items-stretch justify-center px-4 pt-[96px] pb-[56px] overflow-hidden bg-[#F7F8FB] z-10 w-full md:px-8" id="about">
       {/* Background elements */}
       <div className="absolute inset-0 z-0 pointer-events-none opacity-20" style={{ backgroundImage: 'linear-gradient(rgba(11,31,51,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(11,31,51,0.04) 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
       <div className="absolute inset-0 z-0 pointer-events-none bg-[radial-gradient(ellipse_at_center,rgba(197,160,40,0.08),transparent_60%)]" />
 
-      <div className="relative z-10 w-full max-w-[760px] mx-auto flex flex-col items-center text-center">
-         <span className="text-[10px] md:text-[12px] uppercase tracking-[0.1em] font-medium text-[rgba(11,31,51,0.62)] mb-6 md:mb-8">Downtown Perks</span>
-         <h1 className="text-[52px] leading-[1.05] md:text-[88px] lg:text-[104px] text-[#0B1F33] mb-6 tracking-[-0.02em] text-balance break-words overflow-wrap-anywhere min-w-0">
+      <div className="relative z-10 flex w-full max-w-[760px] flex-col items-start text-left">
+         <span className="mb-6 text-[10px] font-medium uppercase tracking-[0.1em] text-[rgba(11,31,51,0.62)] md:mb-8 md:text-[12px]">Downtown Perks</span>
+         <h1 className="mb-6 min-w-0 whitespace-nowrap text-[clamp(2rem,8vw,3.25rem)] leading-[1.05] tracking-normal text-[#0B1F33] md:text-[88px] lg:text-[104px]">
            Where downtown meets you.
          </h1>
-         <p className="text-[18px] md:text-[24px] lg:text-[30px] leading-[1.4] text-[rgba(11,31,51,0.62)] max-w-[680px] mb-12 text-balance overflow-wrap-anywhere min-w-0">
+         <p className="mb-12 min-w-0 max-w-[680px] text-left text-[18px] leading-[1.4] text-[rgba(11,31,51,0.62)] md:text-[24px] lg:text-[30px]">
            Built for people who actually live here — and the places that make it feel like home.
            <br/><br/>
            From coffee to dinner, live events, and everything in between — plus the perks you didn't know you had. All in one place. No extra downloads. No friction or guesswork about what matters.
@@ -163,7 +163,7 @@ export function HomeHero() {
             </form>
          </div>
 
-         <div className="flex w-full overflow-x-auto snap-x hide-scrollbar mb-16 pb-2 justify-center gap-3">
+         <div className="mb-16 flex w-full snap-x justify-start gap-3 overflow-x-auto pb-2 hide-scrollbar">
             {[
               {l:'Coffee', f:'Coffee'}, 
               {l:'Dinner', f:'Food'}, 
@@ -181,7 +181,7 @@ export function HomeHero() {
             ))}
          </div>
 
-         <div className="flex flex-col sm:flex-row gap-4 mb-20 w-full sm:w-auto">
+         <div className="mb-20 flex w-full flex-col gap-4 sm:w-auto sm:flex-row">
             <button onClick={() => navigate('/map?mode=resident&tab=map')} className="px-8 py-4 bg-[#0B1F33] text-white text-[15px] font-medium hover:bg-[#132238] transition-colors w-full sm:w-auto">
                Open map
             </button>
@@ -190,8 +190,8 @@ export function HomeHero() {
             </button>
          </div>
 
-         <div className="w-full flex justify-center mt-auto border-t border-[rgba(11,31,51,0.08)] pt-6">
-            <div className="text-[12px] font-mono text-[rgba(11,31,51,0.62)] tracking-[0.15em] uppercase text-center w-full px-4 break-words">
+         <div className="mt-auto flex w-full justify-start border-t border-[rgba(11,31,51,0.08)] pt-6">
+            <div className="w-full break-words px-0 text-left font-mono text-[12px] uppercase tracking-[0.15em] text-[rgba(11,31,51,0.62)]">
                CONGRESS AVE ● RAINEY ST ● 2ND ST ● RED RIVER ● WATERLOO
             </div>
          </div>

@@ -144,7 +144,7 @@ export default function BackendWorkspace() {
     { label: 'Venues', value: tenantTypeCounts.venue || tenantTypeCounts.venue_group || 0, detail: 'Places ready for offers and events', area: 'Venues', to: '/admin/partner' },
     { label: 'Perks', value: activePerks, detail: 'Offers residents can see or use soon', area: 'Perks', to: '/admin/perks' },
     { label: 'Events', value: upcomingEvents, detail: 'Plans coming up downtown', area: 'Events', to: '/admin/events' },
-    { label: 'Broadcasts', value: runningCampaigns, detail: 'Messages and building broadcasts in motion', area: 'Broadcasts', to: '/admin/engagement' },
+    { label: 'Broadcasts', value: runningCampaigns, detail: 'Messages and building notes ready to review', area: 'Broadcasts', to: '/admin/engagement' },
     { label: 'Residents', value: data.residents.length, detail: 'Resident profiles ready for support', area: 'Residents', to: '/admin/residents' },
     { label: 'Saved perks', value: perkSaves, detail: 'What residents wanted to keep', area: 'Perks', to: '/admin/perks' },
     { label: 'Perks used', value: data.redemptions.length, detail: 'Offers people actually used', area: 'Perks', to: '/admin/perks' },

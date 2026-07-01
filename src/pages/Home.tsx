@@ -359,7 +359,7 @@ export default function Home() {
               Downtown Perks helps people find the good stuff.
             </h2>
             <p className="mt-3 text-[13px] leading-6 text-[rgba(11,31,51,0.62)]">
-              Downtown Perks is the digital layer for downtown Austin. It is built by people who live here to help neighbors, guests, and workers find local places, support small businesses, and stay in the loop without another app to manage.
+              Downtown Perks is a simple downtown guide for Austin. It is built by people who live here to help neighbors, guests, and workers find local places, support small businesses, and stay in the loop without another app to manage.
             </p>
           </div>
 
@@ -400,7 +400,7 @@ export default function Home() {
                         ['Properties', 'Resident Plus', '$99/yr', 'Resident perks, notes, and annual reporting.'],
                         ['Properties', 'Property Pro', '$199/yr', 'Campaigns, priority setup, and deeper property reports.'],
                         ['Venues, restaurants, retail', 'Basic', '$30-$49/yr', 'Getting on the map with one clear reason to visit.'],
-                        ['Venues, restaurants, retail', 'Growth', '$79/yr', 'Keeping offers, events, and notes in the rotation.'],
+                        ['Venues, restaurants, retail', 'Growth', '$79/yr', 'Keeping offers, events, and notes easy to find.'],
                         ['Venues, restaurants, retail', 'Pro', '$199/yr', 'Stronger placement, reporting, and support all year.'],
                         ['Hotels', 'Hotel Starter', '$99/yr', 'A guest guide tied to lobby, room, and concierge moments.'],
                         ['Hotels', 'Hotel Pro', '$199/yr', 'Guest campaigns, reporting, and concierge support.'],
@@ -453,7 +453,7 @@ export default function Home() {
                     ['Build your setup', 'Use the calculator to pick your plan and add the boosts you need now.'],
                     ['Verify', 'Drop in your business email so we know you are a local operator.'],
                     ['Go live', 'Once checkout is complete, your workspace and map presence can open.'],
-                    ['Watch the signal', 'Your dashboard shows what is working so you can adjust quickly.'],
+                    ['See what worked', 'Your dashboard shows what people opened, saved, scanned, and used.'],
                   ].map(([title, body], index) => (
                     <div key={title} className="grid grid-cols-[24px_minmax(0,1fr)] gap-2 border-b border-[rgba(11,31,51,0.045)] py-2">
                       <span className="text-[10px] font-semibold text-[#9A7A2F]">{String(index + 1).padStart(2, '0')}</span>
@@ -469,7 +469,7 @@ export default function Home() {
               <div className="mt-5">
                 <p className="text-[9px] font-semibold uppercase text-[#C8A96A]">The technical bits</p>
                 <p className="mt-1 text-[10.5px] leading-5 text-[rgba(11,31,51,0.58)]">
-                  It is fast on Vercel, mobile-first, and runs through a simple secure web link. It should feel like part of your downtown presence, not another ad layer.
+                  It is fast on Vercel, mobile-first, and runs through a simple secure web link. It should feel like part of your downtown presence, not another ad page.
                 </p>
                 <Link to="/partners/start" className="mt-3 inline-flex min-h-8 items-center gap-1.5 border border-[#0B1F33] bg-[#0B1F33] px-3 text-[10px] font-semibold uppercase text-white">
                   Activate district reach <ArrowRight className="h-3.5 w-3.5" />

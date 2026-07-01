@@ -13,6 +13,44 @@ body {
   color: #0b1f33;
 }
 
+body :where(h1) {
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  text-wrap: nowrap;
+  white-space: nowrap !important;
+  word-break: keep-all !important;
+  overflow-wrap: normal !important;
+}
+
+body :where(h1)::-webkit-scrollbar {
+  display: none;
+}
+
+body :where(p, li, label, input, textarea, select, button, a) {
+  line-height: 1.42;
+}
+
+body :where(h1) {
+  line-height: 1.05 !important;
+}
+
+body :where(h2) {
+  line-height: 1.14;
+}
+
+body :where(h3, h4) {
+  line-height: 1.2;
+}
+
+@media (max-width: 640px) {
+  body :where(h1) {
+    font-size: clamp(1.35rem, 8vw, 2.3rem) !important;
+    line-height: 1.08 !important;
+  }
+}
+
 .dp-admin-shell {
   background: #ffffff;
   color: #0b1f33;
