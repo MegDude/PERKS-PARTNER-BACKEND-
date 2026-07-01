@@ -3124,7 +3124,8 @@ function addOperationalDefaults(entities: Database["entities"]) {
       withTimestamps({ name: "Twilio Messaging", provider: "Twilio", layer: "Messaging", purpose: "Resident reminders, event automation, passport messages, and partner intelligence workflows.", status: "pending_credentials", required_env: ["TWILIO_PHONE_NUMBER", "TWILIO_MESSAGING_SERVICE_SID"] }, "integration_twilio_messaging"),
       withTimestamps({ name: "Supabase Operational Store", provider: "Supabase", layer: "Database", purpose: "Persist residents, survey responses, event feedback, redemptions, and partner leads.", status: "pending_credentials", required_env: ["SUPABASE_URL", "SUPABASE_ANON_KEY", "SUPABASE_SERVICE_ROLE_KEY"] }, "integration_supabase"),
       withTimestamps({ name: "n8n Workflow Orchestration", provider: "n8n", layer: "Automation", purpose: "Webhook routing, reminders, report generation, and survey escalation workflows.", status: "pending_credentials", required_env: ["N8N_WEBHOOK_URL", "N8N_API_KEY"] }, "integration_n8n"),
-      withTimestamps({ name: "OpenAI Insights", provider: "OpenAI", layer: "AI Layer", purpose: "Summaries, sentiment, recommendations, SMS concierge, and operator insights.", status: process.env.OPENAI_API_KEY ? "configured" : "pending_credentials", required_env: ["OPENAI_API_KEY"] }, "integration_openai")
+      withTimestamps({ name: "OpenAI Insights", provider: "OpenAI", layer: "AI Layer", purpose: "Summaries, sentiment, recommendations, SMS concierge, and operator insights.", status: process.env.OPENAI_API_KEY ? "configured" : "pending_credentials", required_env: ["OPENAI_API_KEY"] }, "integration_openai"),
+      withTimestamps({ name: "Email Delivery", provider: "Resend", layer: "Messaging", purpose: "Transactional email, partner onboarding, broadcasts, survey sends, and delivery logs.", status: process.env.RESEND_API_KEY ? "configured" : "pending_credentials", required_env: ["RESEND_API_KEY", "RESEND_FROM_EMAIL"] }, "integration_resend_email")
     );
   }
 
@@ -3795,6 +3796,49 @@ function writeAnalyticsEvent(db: Database, req: express.Request, input: Record<s
   );
   db.entities.AnalyticsEvent.push(event);
   return event;
+}
+
+async function sendEmailThroughResend(input: Record<string, any>) {
+  const apiKey = process.env.RESEND_API_KEY || "";
+  if (!apiKey) {
+    return {
+      success: false,
+      status: "pending_credentials",
+      provider: "resend",
+      error: "RESEND_API_KEY is required to send email.",
+    };
+  }
+
+  const to = input.to || input.recipient || input.recipient_email || input.email;
+  const subject = input.subject || input.title || "Downtown Perks";
+  const html = input.html || input.html_body || "";
+  const text = input.text || input.body || input.message || "";
+  if (!to) return { success: false, status: "invalid_request", provider: "resend", error: "Email recipient is required." };
+  if (!subject || (!html && !text)) return { success: false, status: "invalid_request", provider: "resend", error: "Email subject and body are required." };
+
+  const response = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      from: input.from || process.env.RESEND_FROM_EMAIL || "Downtown Perks <hello@downtownperks.com>",
+      to: Array.isArray(to) ? to : [to],
+      subject,
+      ...(html ? { html } : {}),
+      ...(text ? { text } : {}),
+      reply_to: input.reply_to || input.replyTo || process.env.RESEND_REPLY_TO || undefined,
+    }),
+  });
+  const payload = await response.json().catch(() => ({}));
+  return {
+    success: response.ok,
+    status: response.ok ? "sent" : "failed",
+    provider: "resend",
+    provider_response: payload,
+    error: response.ok ? "" : payload?.message || payload?.error || "Resend email request failed.",
+  };
 }
 
 function getPartnerName(db: Database, partnerId?: string) {
@@ -6272,8 +6316,52 @@ export async function createApp() {
     res.json({ file_url: req.body?.file_url || "https://images.unsplash.com/photo-1542204165-65bf26472b9b?auto=format&fit=crop&w=900&q=80" });
   });
 
-  app.post("/api/integrations/send-email", (req, res) => {
-    res.json({ success: true, queued_at: now(), ...req.body });
+  app.post("/api/integrations/send-email", async (req, res) => {
+    const body = req.body || {};
+    const result = await sendEmailThroughResend(body);
+    const notification = withTimestamps(
+      {
+        type: body.type || "email",
+        title: body.subject || body.title || "Downtown Perks email",
+        message: body.text || body.body || body.message || "",
+        html: body.html || body.html_body || "",
+        channel: "email",
+        recipient_email: body.to || body.recipient || body.recipient_email || body.email || "",
+        status: result.status,
+        provider: result.provider,
+        provider_message_id: result.provider_response?.id || "",
+        provider_response: result.provider_response || null,
+        error: result.error || "",
+        queued_at: now(),
+        sent_at: result.status === "sent" ? now() : "",
+        tenant_id: body.tenant_id || body.organization_id || "",
+        partner_id: body.partner_id || "",
+        campaign_id: body.campaign_id || "",
+      },
+      makeId("notification")
+    );
+    db.entities.ManagementNotification.push(notification);
+    writeAuditEvent(db, req, {
+      action: result.status === "sent" ? "email_sent" : "email_send_pending",
+      entity_type: "management_notification",
+      entity_id: notification.id,
+      after: notification,
+      metadata: { provider: result.provider, status: result.status },
+    });
+    writeAnalyticsEvent(db, req, {
+      event: "email_delivery_attempted",
+      entity_type: "management_notification",
+      entity_id: notification.id,
+      metadata: { provider: result.provider, status: result.status, partner_id: body.partner_id || "" },
+    });
+    await saveDatabase(db);
+    res.status(result.status === "invalid_request" ? 400 : result.status === "failed" ? 502 : result.status === "pending_credentials" ? 202 : 200).json({
+      success: result.success,
+      status: result.status,
+      provider: result.provider,
+      notification,
+      error: result.error || "",
+    });
   });
 
   app.get("/api/admin/properties", (req, res) => {
@@ -6883,6 +6971,7 @@ export async function createApp() {
       ["Supabase Operational Store", "SUPABASE_URL"],
       ["n8n Workflow Orchestration", "N8N_WEBHOOK_URL"],
       ["OpenAI Insights", "OPENAI_API_KEY"],
+      ["Email Delivery", "RESEND_API_KEY"],
       ["Firebase Auth / Firestore", ["VITE_FIREBASE_API_KEY", "VITE_FIREBASE_PROJECT_ID", "VITE_FIREBASE_APP_ID"]],
       ["Google Sheets / Reports DB", ["GOOGLE_SHEETS_CLIENT_EMAIL", "GOOGLE_SHEETS_PRIVATE_KEY", "GOOGLE_SHEETS_SPREADSHEET_ID"]],
       ["Google Maps / Places", ["GOOGLE_MAPS_API_KEY", "GOOGLE_PLACES_API_KEY"]],
