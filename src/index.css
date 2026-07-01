@@ -1522,3 +1522,168 @@ body :where(section.bg-white[class*="border"], article.bg-white[class*="border"]
 .shore-workspace :where(img, svg, canvas, video) {
   max-width: 100%;
 }
+
+/* Final alignment and overflow governance.
+   All operational pages should read from the same left margin; wide tools scroll
+   inside their own rail instead of pushing or clipping the page edge. */
+.dp-admin-shell,
+.shore-workspace {
+  text-align: left !important;
+}
+
+.dp-admin-shell :where(main),
+.shore-workspace :where(main) {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+.dp-admin-shell :where(
+  main > div:not([class*="fixed"]):not([class*="absolute"]),
+  main > section:not([class*="fixed"]):not([class*="absolute"]),
+  .dp-page-surface,
+  .dp-admin-page-header,
+  .dp-admin-toolbar,
+  .dp-summary-matrix,
+  .shore-main,
+  .shore-section,
+  .shore-panel
+),
+.shore-workspace :where(
+  main > div:not([class*="fixed"]):not([class*="absolute"]),
+  main > section:not([class*="fixed"]):not([class*="absolute"]),
+  .shore-main,
+  .shore-section,
+  .shore-panel
+) {
+  margin-left: 0 !important;
+  margin-right: auto !important;
+  text-align: left !important;
+}
+
+.dp-admin-shell :where(
+  .mx-auto,
+  [class*="mx-auto"],
+  [class*="items-center"],
+  [class*="justify-center"],
+  [class*="text-center"]
+):not([role="dialog"]):not([aria-modal="true"]):not(.fixed):not([class*="fixed"]):not(.absolute):not([class*="absolute"]):not(.dp-keep-centered),
+.shore-workspace :where(
+  .mx-auto,
+  [class*="mx-auto"],
+  [class*="items-center"],
+  [class*="justify-center"],
+  [class*="text-center"]
+):not([role="dialog"]):not([aria-modal="true"]):not(.fixed):not([class*="fixed"]):not(.absolute):not([class*="absolute"]):not(.dp-keep-centered) {
+  margin-left: 0 !important;
+  margin-right: auto !important;
+  text-align: left !important;
+}
+
+.dp-admin-shell :where(.flex):not(nav):not([role="dialog"]):not([aria-modal="true"]):not(.fixed):not([class*="fixed"]):not(.absolute):not([class*="absolute"]):not(.dp-keep-centered):not([class*="w-4"]):not([class*="w-5"]):not([class*="w-6"]):not([class*="w-7"]):not([class*="w-8"]):not([class*="w-9"]):not([class*="w-10"]):not([class*="w-11"]):not([class*="w-12"]):not([class*="aspect-"]),
+.shore-workspace :where(.flex):not(nav):not([role="dialog"]):not([aria-modal="true"]):not(.fixed):not([class*="fixed"]):not(.absolute):not([class*="absolute"]):not(.dp-keep-centered):not([class*="w-4"]):not([class*="w-5"]):not([class*="w-6"]):not([class*="w-7"]):not([class*="w-8"]):not([class*="w-9"]):not([class*="w-10"]):not([class*="w-11"]):not([class*="w-12"]):not([class*="aspect-"]) {
+  justify-content: flex-start !important;
+}
+
+.dp-admin-shell :where(button, a[role="button"], a[class*="inline-flex"]),
+.shore-workspace :where(button, a[role="button"], a[class*="inline-flex"], .shore-button) {
+  text-align: left !important;
+}
+
+.dp-admin-shell :where(button:not([class*="w-7"]):not([class*="w-8"]):not([class*="w-9"]):not([class*="w-10"]):not([class*="w-11"]):not([class*="w-12"]), a[role="button"], a[class*="inline-flex"]),
+.shore-workspace :where(button:not([class*="w-7"]):not([class*="w-8"]):not([class*="w-9"]):not([class*="w-10"]):not([class*="w-11"]):not([class*="w-12"]), a[role="button"], a[class*="inline-flex"], .shore-button) {
+  justify-content: flex-start !important;
+}
+
+.dp-admin-shell :where(
+  .overflow-x-auto,
+  [class*="overflow-x-auto"],
+  .dp-crm-table-scroll,
+  .dp-crm-action-rail,
+  [role="tablist"],
+  table
+),
+.shore-workspace :where(
+  .overflow-x-auto,
+  [class*="overflow-x-auto"],
+  [role="tablist"],
+  table
+) {
+  max-width: 100%;
+}
+
+.dp-admin-shell :where(
+  .overflow-x-auto,
+  [class*="overflow-x-auto"],
+  .dp-crm-table-scroll,
+  .dp-crm-action-rail,
+  [role="tablist"]
+),
+.shore-workspace :where(
+  .overflow-x-auto,
+  [class*="overflow-x-auto"],
+  [role="tablist"]
+) {
+  overflow-x: auto !important;
+  overflow-y: visible;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-gutter: stable;
+}
+
+.dp-admin-shell :where(.overflow-x-auto > table, [class*="overflow-x-auto"] > table, .dp-crm-table-scroll > table),
+.shore-workspace :where(.overflow-x-auto > table, [class*="overflow-x-auto"] > table) {
+  width: max-content;
+  min-width: 100%;
+  max-width: none !important;
+}
+
+.dp-admin-shell :where(.grid, .flex),
+.shore-workspace :where(.grid, .flex) {
+  min-width: 0;
+}
+
+@media (max-width: 640px) {
+  .dp-admin-shell :where(main > div:not([class*="fixed"]):not([class*="absolute"]), main > section:not([class*="fixed"]):not([class*="absolute"])),
+  .shore-workspace :where(main > div:not([class*="fixed"]):not([class*="absolute"]), main > section:not([class*="fixed"]):not([class*="absolute"])) {
+    padding-left: var(--dp-admin-gutter) !important;
+    padding-right: var(--dp-admin-gutter) !important;
+  }
+
+  .dp-admin-shell :where(table),
+  .shore-workspace :where(table) {
+    table-layout: auto !important;
+  }
+
+  .dp-admin-shell :where(th, td),
+  .shore-workspace :where(th, td) {
+    white-space: normal !important;
+  }
+
+  .dp-admin-shell :where([role="tablist"], .dp-admin-toolbar, .dp-crm-action-rail),
+  .shore-workspace :where([role="tablist"], .shore-toolbar) {
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    max-width: 100%;
+  }
+}
+
+/* Headline lock: primary page headlines stay on one line and scroll when needed. */
+.dp-admin-shell :where(h1),
+.shore-workspace :where(h1) {
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: 0.04em;
+  scrollbar-width: none;
+  text-align: left !important;
+  text-wrap: nowrap;
+  white-space: nowrap !important;
+  word-break: keep-all !important;
+  overflow-wrap: normal !important;
+}
+
+.dp-admin-shell :where(h1)::-webkit-scrollbar,
+.shore-workspace :where(h1)::-webkit-scrollbar {
+  display: none;
+}
