@@ -119,7 +119,7 @@ function Field({ label, value, onChange, required = false, placeholder = '' }: {
 }
 
 function SectionCard({ children, className = '' }: { children: React.ReactNode; className?: string }) {
-  return <section className={`border border-[rgba(11,31,51,0.08)] bg-white p-5 text-left shadow-none sm:p-6 ${className}`}>{children}</section>;
+  return <section className={`border border-[rgba(11,31,51,0.08)] bg-white p-4 text-left shadow-none sm:p-5 ${className}`}>{children}</section>;
 }
 
 function ActionLink({ to, children }: { to: string; children: React.ReactNode }) {
@@ -132,6 +132,14 @@ function ActionLink({ to, children }: { to: string; children: React.ReactNode })
 
 function slugFor(label: string) {
   return label.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+}
+
+function formatWorkspaceActivityLabel(value = '') {
+  return String(value || 'Workspace activity')
+    .replace(/^tenant\s+/i, '')
+    .replace(/^workspace\s+/i, '')
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
 function money(value: number) {
@@ -733,22 +741,22 @@ export default function PartnerLifecycle() {
 function Shell({ eyebrow, title, body, children }: { eyebrow: string; title: string; body: string; children: React.ReactNode }) {
   return (
     <main className="min-h-screen bg-white text-left text-[#0B1F33]">
-      <div className="w-full max-w-none px-4 py-6 sm:px-5 lg:px-6 lg:py-8">
-        <div className="mb-7 flex flex-wrap items-center justify-between gap-3 border-b border-[rgba(11,31,51,0.08)] pb-5">
-          <Link to="/admin" className="text-sm font-semibold">Downtown Perks Platform</Link>
-          <nav className="flex flex-wrap gap-3 text-xs font-semibold text-[rgba(11,31,51,0.62)]">
+      <div className="w-full max-w-none px-4 py-5 sm:px-5 lg:px-6 lg:py-6">
+        <div className="mb-5 flex flex-wrap items-center justify-between gap-3 border-b border-[rgba(11,31,51,0.08)] pb-4">
+          <Link to="/admin" className="text-[13px] font-semibold">Downtown Perks Platform</Link>
+          <nav className="flex flex-wrap gap-2.5 text-[11px] font-semibold text-[rgba(11,31,51,0.62)]">
             <Link to="/partners">Partners</Link>
             <Link to="/partners/register">Register</Link>
             <Link to="/workspace/home">Workspace</Link>
             <Link to="/admin">Admin</Link>
           </nav>
         </div>
-        <header className="mb-7 max-w-5xl text-left">
+        <header className="mb-5 max-w-5xl text-left">
           <div>
-            <p className="text-[11px] font-bold uppercase tracking-[0.1em] text-[#C8A96A]">{eyebrow}</p>
-            <h1 className="mt-3 max-w-4xl text-4xl font-semibold leading-tight tracking-normal sm:text-5xl">{title}</h1>
+            <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-[#C8A96A]">{eyebrow}</p>
+            <h1 className="mt-2 max-w-full truncate text-[28px] font-semibold leading-none tracking-normal sm:text-4xl">{title}</h1>
           </div>
-          <p className="mt-4 max-w-3xl text-sm leading-6 text-[rgba(11,31,51,0.66)]">{body}</p>
+          <p className="mt-3 max-w-3xl text-[13px] leading-5 text-[rgba(11,31,51,0.66)]">{body}</p>
         </header>
         {children}
       </div>
@@ -844,10 +852,10 @@ function WorkspaceView({ state, scoped, data, selectedWorkspace, selectedTenantI
       <WorkspaceContextBar orgName={orgName} tenantId={tenantId} />
       <WorkspaceNav query={workspaceQuery} />
       <WorkspaceMetricStrip metrics={snapshot} />
-      <div className="mt-6 grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
+      <div className="mt-5 grid gap-5 xl:grid-cols-[0.9fr_1.1fr]">
         <SectionCard>
-          <p className="text-lg font-semibold">Quick actions</p>
-          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+          <p className="text-[15px] font-semibold">Quick actions</p>
+          <div className="mt-3 grid gap-2.5 sm:grid-cols-2">
             {[
               ['Create Offer', 'create_offer'],
               ['Create Event', 'create_event'],
@@ -857,7 +865,7 @@ function WorkspaceView({ state, scoped, data, selectedWorkspace, selectedTenantI
               ['Update Profile', 'update_profile'],
               ['Launch Broadcast', 'launch_broadcast'],
             ].map(([action, actionType]) => (
-              <button key={action} onClick={() => runWorkspaceAction(actionType, action)} className="inline-flex min-h-11 items-center justify-between border border-[rgba(11,31,51,0.08)] bg-white px-4 text-sm font-semibold hover:border-[#C8A96A]">
+              <button key={action} onClick={() => runWorkspaceAction(actionType, action)} className="inline-flex min-h-9 items-center justify-between border border-[rgba(11,31,51,0.08)] bg-white px-3 text-[12px] font-semibold hover:border-[#C8A96A]">
                 {action} <Plus className="h-4 w-4" />
               </button>
             ))}
@@ -865,42 +873,42 @@ function WorkspaceView({ state, scoped, data, selectedWorkspace, selectedTenantI
           {actionStatus && <p className="mt-4 text-sm font-semibold text-[#0B1F33]">{actionStatus}</p>}
         </SectionCard>
         <SectionCard>
-          <p className="flex items-center gap-2 text-lg font-semibold"><Sparkles className="h-4 w-4 text-[#C8A96A]" /> Downtown Assistant</p>
-          <p className="mt-3 text-sm leading-6 text-[rgba(11,31,51,0.62)]">Good morning. Your workspace has {scoped.offers?.length || 0} offers, {scoped.events?.length || 0} events, and {scoped.campaigns?.length || 0} campaigns ready to manage. Suggested next action: publish a timely offer, generate QR access, and invite a teammate.</p>
-          <div className="mt-4 grid gap-2 text-sm">
-            {['What should we promote today?', 'Create an event', 'Generate a report', 'Summarize this month'].map((prompt) => <button key={prompt} onClick={() => askAssistant(prompt)} className="border-b border-[rgba(11,31,51,0.08)] py-2 text-left hover:text-[#C8A96A]">{prompt}</button>)}
+          <p className="flex items-center gap-2 text-[15px] font-semibold"><Sparkles className="h-4 w-4 text-[#C8A96A]" /> Downtown Assistant</p>
+          <p className="mt-2 text-[13px] leading-5 text-[rgba(11,31,51,0.62)]">Good morning. Your workspace has {scoped.offers?.length || 0} offers, {scoped.events?.length || 0} events, and {scoped.campaigns?.length || 0} campaigns ready to manage. Suggested next action: publish a timely offer, generate QR access, and invite a teammate.</p>
+          <div className="mt-3 grid gap-1.5 text-[12px]">
+            {['What should we promote today?', 'Create an event', 'Generate a report', 'Summarize this month'].map((prompt) => <button key={prompt} onClick={() => askAssistant(prompt)} className="border-b border-[rgba(11,31,51,0.08)] py-1.5 text-left font-semibold hover:text-[#C8A96A]">{prompt}</button>)}
           </div>
-          {assistantResponse && <p className="mt-4 border-t border-[rgba(11,31,51,0.08)] pt-4 text-sm leading-6 text-[#0B1F33]">{assistantResponse}</p>}
+          {assistantResponse && <p className="mt-3 border-t border-[rgba(11,31,51,0.08)] pt-3 text-[13px] leading-5 text-[#0B1F33]">{assistantResponse}</p>}
         </SectionCard>
       </div>
-      <div className="mt-6 grid gap-6 xl:grid-cols-[1fr_420px]">
+      <div className="mt-5 grid gap-5 xl:grid-cols-[1fr_380px]">
         <SectionCard>
-          <p className="text-lg font-semibold">Workspace areas</p>
-          <div className="mt-5 grid gap-5 md:grid-cols-2">
+          <p className="text-[15px] font-semibold">Workspace areas</p>
+          <div className="mt-4 grid gap-4 md:grid-cols-2">
             {workspaceGroups.map((group) => (
               <div key={group.label}>
-                <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-[#C8A96A]">{group.label}</p>
-                <div className="mt-3 grid gap-2">
-                  {group.items.map((item) => <Link key={item} to={`/workspace/${slugFor(item)}${workspaceQuery}`} className="flex items-center justify-between border-b border-[rgba(11,31,51,0.08)] py-2 text-sm font-semibold hover:text-[#C8A96A]">{item}<ArrowRight className="h-4 w-4" /></Link>)}
+                <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-[#C8A96A]">{group.label}</p>
+                <div className="mt-2 grid gap-1.5">
+                  {group.items.map((item) => <Link key={item} to={`/workspace/${slugFor(item)}${workspaceQuery}`} className="flex items-center justify-between border-b border-[rgba(11,31,51,0.08)] py-1.5 text-[12px] font-semibold hover:text-[#C8A96A]">{item}<ArrowRight className="h-3.5 w-3.5" /></Link>)}
                 </div>
               </div>
             ))}
           </div>
         </SectionCard>
         <SectionCard>
-          <p className="text-lg font-semibold">Onboarding checklist</p>
-          <p className="mt-2 text-sm text-[rgba(11,31,51,0.62)]">Completion 87%</p>
-          <div className="mt-4 grid gap-2">
-            {setupTasks.map((task, index) => <p key={task} className="flex items-center gap-2 text-sm"><CheckCircle2 className={`h-4 w-4 ${index < 7 ? 'text-[#C8A96A]' : 'text-[rgba(11,31,51,0.24)]'}`} /> {task}</p>)}
+          <p className="text-[15px] font-semibold">Onboarding checklist</p>
+          <p className="mt-1 text-[12px] text-[rgba(11,31,51,0.62)]">Completion 87%</p>
+          <div className="mt-3 grid gap-1.5">
+            {setupTasks.map((task, index) => <p key={task} className="flex items-center gap-2 text-[12px]"><CheckCircle2 className={`h-3.5 w-3.5 ${index < 7 ? 'text-[#C8A96A]' : 'text-[rgba(11,31,51,0.24)]'}`} /> {task}</p>)}
           </div>
         </SectionCard>
       </div>
-      <SectionCard className="mt-6">
-        <p className="text-lg font-semibold">Activity</p>
-        <div className="mt-4 grid gap-3">
+      <SectionCard className="mt-5">
+        <p className="text-[15px] font-semibold">Activity</p>
+        <div className="mt-3 grid gap-2.5">
           {(scoped.activity || []).slice(0, 6).map((item: any) => (
-            <div key={item.id} className="border-t border-[rgba(11,31,51,0.08)] pt-3 text-sm">
-              <p className="font-semibold">{String(item.action || item.message || 'Workspace activity').replace(/_/g, ' ')}</p>
+            <div key={item.id} className="border-t border-[rgba(11,31,51,0.08)] pt-2.5 text-[12px]">
+              <p className="font-semibold">{formatWorkspaceActivityLabel(item.action || item.message)}</p>
               <p className="mt-1 text-xs text-[rgba(11,31,51,0.52)]">{new Date(item.timestamp || item.created_at || Date.now()).toLocaleString()}</p>
             </div>
           ))}
@@ -913,12 +921,12 @@ function WorkspaceView({ state, scoped, data, selectedWorkspace, selectedTenantI
 
 function WorkspaceContextBar({ orgName, tenantId }: { orgName: string; tenantId: string }) {
   return (
-    <div className="mb-4 flex flex-col gap-2 border border-[rgba(11,31,51,0.08)] bg-white px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+    <div className="mb-3 flex flex-col gap-1.5 border border-[rgba(11,31,51,0.08)] bg-white px-3 py-2.5 sm:flex-row sm:items-center sm:justify-between">
       <div>
         <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-[#C8A96A]">Viewing workspace</p>
-        <p className="text-sm font-semibold">{orgName}</p>
+        <p className="text-[13px] font-semibold">{orgName}</p>
       </div>
-      <p className="text-xs font-semibold text-[rgba(11,31,51,0.54)]">{tenantId ? 'Selected workspace' : 'No workspace selected'}</p>
+      <p className="text-[11px] font-semibold text-[rgba(11,31,51,0.54)]">{tenantId ? 'Selected workspace' : 'No workspace selected'}</p>
     </div>
   );
 }
@@ -947,12 +955,23 @@ function WorkspaceMetricStrip({ metrics, compact = false }: { metrics: Array<{ l
 }
 
 function WorkspaceNav({ query = '' }: { query?: string }) {
+  const location = useLocation();
   const links = ['home', 'map', 'offers', 'events', 'campaigns', 'reports', 'analytics', 'profile', 'team', 'billing', 'settings'];
+  const activeSlug = location.pathname.replace('/workspace/', '') || 'home';
   return (
-    <div className="mb-6 flex gap-2 overflow-x-auto border-b border-[rgba(11,31,51,0.08)] pb-3">
-      {links.map((link) => (
-        <Link key={link} to={`/workspace/${link}${query}`} className="whitespace-nowrap px-2 py-2 text-xs font-semibold capitalize text-[rgba(11,31,51,0.62)] hover:text-[#C8A96A]">{link}</Link>
-      ))}
+    <div className="mb-4 flex gap-1.5 overflow-x-auto border-b border-[rgba(11,31,51,0.08)] pb-2 [scrollbar-width:thin]">
+      {links.map((link) => {
+        const isActive = activeSlug === link;
+        return (
+          <Link
+            key={link}
+            to={`/workspace/${link}${query}`}
+            className={`whitespace-nowrap border border-transparent px-2.5 py-1.5 text-[11px] font-semibold capitalize ${isActive ? 'border-[#C8A96A] bg-[#F7F8FB] text-[#0B1F33]' : 'text-[rgba(11,31,51,0.62)] hover:text-[#C8A96A]'}`}
+          >
+            {link}
+          </Link>
+        );
+      })}
     </div>
   );
 }
