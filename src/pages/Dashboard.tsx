@@ -109,9 +109,9 @@ export default function Dashboard() {
           <div className="flex items-start gap-3">
             <ShieldCheck className="mt-0.5 h-4 w-4 text-[#C5A028]" />
             <div>
-              <p className="font-semibold">{configured ? "Workspace notice" : "Firebase setup pending"}</p>
+              <p className="font-semibold">{configured ? "Workspace notice" : "Supabase setup pending"}</p>
               <p className="text-[13px] text-[rgba(11,31,51,0.62)]">
-                {error || loadError || "Add the VITE_FIREBASE_* app config to enable Firebase Authentication and Firestore realtime data."}
+                {error || loadError || "Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to enable Supabase Auth and database-backed sessions."}
               </p>
             </div>
           </div>
@@ -184,7 +184,7 @@ export default function Dashboard() {
           </div>
           <div className="mt-4 space-y-4 text-sm leading-6 text-[rgba(11,31,51,0.66)]">
             <p>
-              {user ? `Signed in as ${user.email || user.displayName || "a workspace user"}.` : "No Firebase user session is active yet."}
+              {user ? `Signed in as ${user.email || user.displayName || "a workspace user"}.` : "No Supabase user session is active yet."}
             </p>
             <p>
               The next table pass can attach realtime Firestore partners and contacts without changing the page structure.

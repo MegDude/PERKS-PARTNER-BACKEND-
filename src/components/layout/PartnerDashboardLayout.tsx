@@ -60,6 +60,7 @@ export default function PartnerDashboardLayout() {
 
   const isActiveRoute = (to: string) => {
     if (to === '/') return location.pathname === '/';
+    if (to === '/admin') return location.pathname === '/admin';
     return location.pathname === to || location.pathname.startsWith(`${to}/`);
   };
 

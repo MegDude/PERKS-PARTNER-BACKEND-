@@ -1,26 +1,26 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import {
-  createUserWithEmailAndPassword,
-  GoogleAuthProvider,
-  onAuthStateChanged,
-  sendPasswordResetEmail,
-  signInWithEmailAndPassword,
-  signInWithPopup,
-  signOut,
-  updateProfile,
-  type User,
-} from "firebase/auth";
-import { initializeFirebaseServices, requireFirebaseAuth } from "@/lib/firebase";
+  clearSupabaseSession,
+  getStoredSupabaseSession,
+  hydrateSupabaseSessionFromUrl,
+  resetSupabasePassword,
+  signInWithSupabase,
+  signOutOfSupabase,
+  signUpWithSupabase,
+  startSupabaseGoogleSignIn,
+  supabaseConfigured,
+  type SupabaseUser,
+} from "@/lib/supabaseClient";
 
 type AuthContextValue = {
-  user: User | null;
+  user: SupabaseUser | null;
   loading: boolean;
   initialized: boolean;
   error: string | null;
   configured: boolean;
-  signIn: (email: string, password: string) => Promise<User>;
-  signInWithGoogle: () => Promise<User>;
-  signUp: (email: string, password: string, displayName?: string) => Promise<User>;
+  signIn: (email: string, password: string) => Promise<SupabaseUser>;
+  signInWithGoogle: () => Promise<SupabaseUser>;
+  signUp: (email: string, password: string, displayName?: string) => Promise<SupabaseUser>;
   resetPassword: (email: string) => Promise<void>;
   logout: () => Promise<void>;
   clearError: () => void;
@@ -30,6 +30,7 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 
 function friendlyAuthError(error: unknown) {
   const code = typeof error === "object" && error && "code" in error ? String((error as { code?: unknown }).code) : "";
+  const message = error instanceof Error ? error.message : "";
   if (code.includes("invalid-credential") || code.includes("wrong-password") || code.includes("user-not-found")) {
     return "That email and password did not match an account.";
   }
@@ -37,64 +38,49 @@ function friendlyAuthError(error: unknown) {
   if (code.includes("email-already-in-use")) return "That email already has an account.";
   if (code.includes("weak-password")) return "Please use a stronger password.";
   if (code.includes("network-request-failed")) return "Network connection failed. Please try again.";
-  return error instanceof Error ? error.message : "Authentication failed. Please try again.";
+  if (message.toLowerCase().includes("invalid login")) return "That email and password did not match an account.";
+  return message || "Authentication failed. Please try again.";
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<SupabaseUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [initialized, setInitialized] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [configured, setConfigured] = useState(false);
+  const [configured, setConfigured] = useState(supabaseConfigured);
 
   useEffect(() => {
-    let unsubscribe: undefined | (() => void);
-    initializeFirebaseServices().then((services) => {
-      setConfigured(services.configured);
-      if (!services.configured || !services.auth) {
+    setConfigured(supabaseConfigured);
+    if (!supabaseConfigured) {
       setUser(null);
       setLoading(false);
       setInitialized(true);
       return;
     }
 
-      unsubscribe = onAuthStateChanged(
-      services.auth,
-      (nextUser) => {
-        setUser(nextUser);
-        if (nextUser) {
-          localStorage.setItem("dp_auth_user", JSON.stringify({ uid: nextUser.uid, email: nextUser.email, displayName: nextUser.displayName }));
-        } else {
-          localStorage.removeItem("dp_auth_user");
-        }
+    hydrateSupabaseSessionFromUrl()
+      .then((session) => {
+        setUser(session?.user || getStoredSupabaseSession()?.user || null);
         setError(null);
         setLoading(false);
         setInitialized(true);
-      },
-      (authError) => {
+      })
+      .catch((authError) => {
         setError(friendlyAuthError(authError));
         setUser(null);
+        clearSupabaseSession();
         setLoading(false);
         setInitialized(true);
-      }
-    );
-    }).catch((authError) => {
-      setConfigured(false);
-      setError(friendlyAuthError(authError));
-      setUser(null);
-      setLoading(false);
-      setInitialized(true);
-    });
-
-    return () => unsubscribe?.();
+      });
   }, []);
 
   const signIn = useCallback(async (email: string, password: string) => {
     setLoading(true);
     setError(null);
     try {
-      const credential = await signInWithEmailAndPassword(requireFirebaseAuth(), email.trim(), password);
-      return credential.user;
+      const nextUser = await signInWithSupabase(email.trim(), password);
+      setUser(nextUser);
+      return nextUser;
     } catch (authError) {
       const message = friendlyAuthError(authError);
       setError(message);
@@ -108,9 +94,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setLoading(true);
     setError(null);
     try {
-      const credential = await createUserWithEmailAndPassword(requireFirebaseAuth(), email.trim(), password);
-      if (displayName) await updateProfile(credential.user, { displayName });
-      return credential.user;
+      const nextUser = await signUpWithSupabase(email.trim(), password, displayName);
+      setUser(nextUser);
+      return nextUser;
     } catch (authError) {
       const message = friendlyAuthError(authError);
       setError(message);
@@ -124,10 +110,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setLoading(true);
     setError(null);
     try {
-      const provider = new GoogleAuthProvider();
-      provider.setCustomParameters({ prompt: "select_account" });
-      const credential = await signInWithPopup(requireFirebaseAuth(), provider);
-      return credential.user;
+      startSupabaseGoogleSignIn();
+      return await new Promise<SupabaseUser>(() => undefined);
     } catch (authError) {
       const message = friendlyAuthError(authError);
       setError(message);
@@ -141,7 +125,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setLoading(true);
     setError(null);
     try {
-      await sendPasswordResetEmail(requireFirebaseAuth(), email.trim());
+      await resetSupabasePassword(email.trim());
     } catch (authError) {
       const message = friendlyAuthError(authError);
       setError(message);
@@ -155,7 +139,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setLoading(true);
     setError(null);
     try {
-      await signOut(requireFirebaseAuth());
+      await signOutOfSupabase();
+      setUser(null);
     } catch (authError) {
       const message = friendlyAuthError(authError);
       setError(message);

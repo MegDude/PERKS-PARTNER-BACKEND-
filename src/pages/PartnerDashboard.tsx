@@ -1,5 +1,5 @@
-import React, { useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { H1, Body } from '@/components/ui/Typography';
@@ -11,10 +11,15 @@ import { Badge } from '@/components/ui/badge';
 import { slugify } from '@/data/partnerWorkspaceCatalog';
 
 export default function PartnerDashboard() {
+  const [searchParams] = useSearchParams();
   const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7));
   const [partnerSearch, setPartnerSearch] = useState('');
-  const [partnerType, setPartnerType] = useState('All');
+  const [partnerType, setPartnerType] = useState(() => searchParams.get('type') || 'All');
   const [showAllPartners, setShowAllPartners] = useState(false);
+
+  useEffect(() => {
+    setPartnerType(searchParams.get('type') || 'All');
+  }, [searchParams]);
 
   const { data: user } = useQuery({
     queryKey: ['current_user'],

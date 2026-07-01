@@ -28,10 +28,10 @@ const moduleRoutes = [
   { label: 'Outreach CRM', to: '/admin/outreach-crm', icon: MailCheck },
   { label: 'Partners', to: '/admin/partner', icon: ShoppingBag },
   { label: 'Properties', to: '/admin/properties', icon: Building2 },
-  { label: 'Hotels', to: '/admin/partner', icon: Hotel },
-  { label: 'Venues', to: '/admin/partner', icon: Ticket },
-  { label: 'Brands', to: '/admin/partner', icon: ShoppingBag },
-  { label: 'Civic', to: '/admin/partner', icon: ShieldCheck },
+  { label: 'Hotels', to: '/admin/partner?type=Hotel', icon: Hotel },
+  { label: 'Venues', to: '/admin/partner?type=Venue', icon: Ticket },
+  { label: 'Brands', to: '/admin/partner?type=Brand', icon: ShoppingBag },
+  { label: 'Civic', to: '/admin/partner?type=Civic', icon: ShieldCheck },
   { label: 'Events', to: '/admin/events', icon: CalendarDays },
   { label: 'Perks', to: '/admin/perks', icon: Ticket },
   { label: 'Broadcasts', to: '/admin/engagement', icon: Megaphone },
@@ -39,8 +39,8 @@ const moduleRoutes = [
   { label: 'Pricing', to: '/partners/pricing', icon: DollarSign },
   { label: 'Billing and accounts', to: '/admin/promotions', icon: CreditCard },
   { label: 'People with access', to: '/admin/settings', icon: Users },
-  { label: 'Messages', to: '/admin/settings', icon: Bell },
-  { label: 'Health check', to: '/admin/platform', icon: Activity },
+  { label: 'Messages', to: '/admin/announcements', icon: Bell },
+  { label: 'Health check', to: '/admin/platform/modules', icon: Activity },
 ];
 
 export default function BackendWorkspace() {

@@ -251,7 +251,7 @@ export default function Home() {
           <div className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
             <div>
               <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[#C8A96A]">Start here</p>
-              <h1 className="mt-2 text-3xl font-semibold tracking-normal md:text-4xl">Welcome to Downtown Perks</h1>
+              <h1 className="mt-2 whitespace-nowrap text-[28px] font-semibold tracking-normal sm:text-3xl md:text-4xl">Welcome to Downtown Perks</h1>
               <p className="mt-2 max-w-3xl text-sm leading-6 text-[rgba(11,31,51,0.62)]">
                 Find the partners, buildings, perks, events, notes, reports, invoices, and plans you need without wandering around.
               </p>

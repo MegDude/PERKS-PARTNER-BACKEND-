@@ -534,7 +534,7 @@ export default function PartnerOutreachCRM() {
     navigator.clipboard?.writeText(text || '');
   }
 
-  const authLabel = !configured ? 'Firebase pending' : user ? 'Sign out' : 'Google login';
+  const authLabel = !configured ? 'Supabase pending' : user ? 'Sign out' : 'Google login';
   const authValue = authLoading ? 'Checking' : user ? 'Connected' : configured ? 'Ready' : 'Setup';
 
   if (loading) {
