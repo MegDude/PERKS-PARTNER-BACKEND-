@@ -36,7 +36,7 @@ export default function PartnerDashboardLayout() {
     { section: 'Programs' },
     { to: '/admin/perks', icon: <Ticket className="w-4 h-4" />, label: 'Perks' },
     { to: '/admin/events', icon: <Presentation className="w-4 h-4" />, label: 'Events' },
-    { to: '/admin/engagement', icon: <Megaphone className="w-4 h-4" />, label: 'Campaign notes' },
+    { to: '/admin/engagement', icon: <Megaphone className="w-4 h-4" />, label: 'Broadcasts' },
     { to: '/admin/surveys', icon: <ListTodo className="w-4 h-4" />, label: 'Surveys' },
 
     { section: 'Messages' },

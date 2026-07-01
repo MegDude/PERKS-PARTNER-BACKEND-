@@ -1,13 +1,19 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
+  Archive,
   ArrowUpDown,
   CalendarPlus,
   CheckCircle2,
   Copy,
   Database,
   Download,
+  ExternalLink,
+  Eye,
+  FileText,
   Mail,
+  MapPin,
   MessageSquare,
+  Plus,
   RefreshCw,
   Save,
   Search,
@@ -49,6 +55,9 @@ type CrmPartner = {
   sms_message?: any;
   step?: any;
   activities?: any[];
+  crm_notes?: any[];
+  tasks?: any[];
+  files?: any[];
   best_contact?: string;
 };
 
@@ -69,6 +78,7 @@ const missing = 'Needs verification';
 const exportFormats = [
   { key: 'csv', label: 'CSV' },
   { key: 'xlsx', label: 'XLSX' },
+  { key: 'json', label: 'JSON' },
   { key: 'airtable', label: 'Airtable' },
   { key: 'hubspot', label: 'HubSpot' },
   { key: 'salesforce', label: 'Salesforce' },
@@ -141,6 +151,9 @@ export default function PartnerOutreachCRM() {
   const [messageModal, setMessageModal] = useState<{ partner: CrmPartner; email: any; sms: any } | null>(null);
   const [templateEditorOpen, setTemplateEditorOpen] = useState(false);
   const [templateDraft, setTemplateDraft] = useState<Record<string, string>>({});
+  const [noteDraft, setNoteDraft] = useState('');
+  const [taskDraft, setTaskDraft] = useState({ title: '', due_date: '', priority: 'Normal' });
+  const [fileDraft, setFileDraft] = useState({ title: '', url: '' });
 
   async function load() {
     setLoading(true);
@@ -385,6 +398,99 @@ export default function PartnerOutreachCRM() {
     setWorking('');
   }
 
+  async function archivePartner(id: string) {
+    if (!window.confirm('Archive this partner? You can still keep the historical activity.')) return;
+    setWorking(`archive-${id}`);
+    const response = await fetch(`/api/outreach-crm/partners/${id}/archive`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+    if (response.ok) updatePartnerRow(await response.json());
+    setWorking('');
+  }
+
+  async function deletePartner(id: string) {
+    if (!window.confirm('Remove this partner from the active CRM view? This is a soft delete and preserves history.')) return;
+    setWorking(`delete-${id}`);
+    const response = await fetch(`/api/outreach-crm/partners/${id}`, { method: 'DELETE' });
+    if (response.ok) {
+      setPartners((items) => items.filter((item) => item.id !== id));
+      if (selectedId === id) setSelectedId('');
+    }
+    setWorking('');
+  }
+
+  async function addNote() {
+    if (!selected?.id || !noteDraft.trim()) return;
+    setWorking('note');
+    await fetch(`/api/outreach-crm/partners/${selected.id}/notes`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title: 'Note', notes: noteDraft.trim() }),
+    });
+    setNoteDraft('');
+    await load();
+    setWorking('');
+  }
+
+  async function deleteNote(id: string) {
+    if (!window.confirm('Delete this note?')) return;
+    setWorking(`note-${id}`);
+    await fetch(`/api/outreach-crm/notes/${id}`, { method: 'DELETE' });
+    await load();
+    setWorking('');
+  }
+
+  async function addTask() {
+    if (!selected?.id || !taskDraft.title.trim()) return;
+    setWorking('task');
+    await fetch(`/api/outreach-crm/partners/${selected.id}/tasks`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(taskDraft),
+    });
+    setTaskDraft({ title: '', due_date: '', priority: 'Normal' });
+    await load();
+    setWorking('');
+  }
+
+  async function updateTask(id: string, data: Record<string, any>) {
+    setWorking(`task-${id}`);
+    await fetch(`/api/outreach-crm/tasks/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    await load();
+    setWorking('');
+  }
+
+  async function deleteTask(id: string) {
+    if (!window.confirm('Delete this task?')) return;
+    setWorking(`task-${id}`);
+    await fetch(`/api/outreach-crm/tasks/${id}`, { method: 'DELETE' });
+    await load();
+    setWorking('');
+  }
+
+  async function addFileLink() {
+    if (!selected?.id || !fileDraft.url.trim()) return;
+    setWorking('file');
+    await fetch(`/api/outreach-crm/partners/${selected.id}/files`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(fileDraft),
+    });
+    setFileDraft({ title: '', url: '' });
+    await load();
+    setWorking('');
+  }
+
+  async function deleteFileLink(id: string) {
+    if (!window.confirm('Delete this file link?')) return;
+    setWorking(`file-${id}`);
+    await fetch(`/api/outreach-crm/files/${id}`, { method: 'DELETE' });
+    await load();
+    setWorking('');
+  }
+
   async function saveTemplateEditor() {
     if (!selected?.message?.id) return;
     setWorking('template');
@@ -566,12 +672,13 @@ export default function PartnerOutreachCRM() {
               <div className="flex flex-wrap items-center gap-1.5">
                 <a href={`/api/outreach-crm/export.csv?ids=${encodeURIComponent(selectedIds.join(','))}`} className="inline-flex min-h-8 items-center gap-1 border border-[rgba(11,31,51,0.08)] px-2 text-[9.5px] font-semibold uppercase text-[#0B1F33]"><Download className="h-3 w-3" /> CSV</a>
                 <a href={`/api/outreach-crm/export.xlsx?ids=${encodeURIComponent(selectedIds.join(','))}`} className="inline-flex min-h-8 items-center gap-1 border border-[rgba(11,31,51,0.08)] px-2 text-[9.5px] font-semibold uppercase text-[#0B1F33]"><Download className="h-3 w-3" /> XLSX</a>
+                <a href={`/api/outreach-crm/export.json?ids=${encodeURIComponent(selectedIds.join(','))}`} className="inline-flex min-h-8 items-center gap-1 border border-[rgba(11,31,51,0.08)] px-2 text-[9.5px] font-semibold uppercase text-[#0B1F33]"><Download className="h-3 w-3" /> JSON</a>
                 <button onClick={() => setSelectedIds([])} type="button" className="inline-flex min-h-8 items-center gap-1 border border-[rgba(11,31,51,0.08)] px-2 text-[9.5px] font-semibold uppercase"><X className="h-3 w-3" /> Clear</button>
               </div>
             </div>
           )}
           <div className="dp-crm-table-scroll overflow-x-auto" role="region" aria-label="Scrollable partner directory table" tabIndex={0}>
-            <table className="dp-outreach-crm-table w-full min-w-[1980px] table-fixed text-left">
+            <table className="dp-outreach-crm-table w-full min-w-[2240px] table-fixed text-left">
               <colgroup>
                 <col className="w-[42px]" />
                 <col className="w-[218px]" />
@@ -583,7 +690,7 @@ export default function PartnerOutreachCRM() {
                 <col className="w-[72px]" />
                 <col className="w-[150px]" />
                 <col className="w-[104px]" />
-                <col className="w-[220px]" />
+                <col className="w-[480px]" />
               </colgroup>
               <thead>
                 <tr>
@@ -639,6 +746,55 @@ export default function PartnerOutreachCRM() {
                           className="inline-flex min-h-7 shrink-0 items-center gap-1 border border-[#C8A96A] px-1.5 text-[8.5px] font-semibold uppercase text-[#0B1F33]"
                         >
                           <Send className={`h-3 w-3 ${working === 'generate' ? 'animate-spin' : ''}`} /> Generate
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => copyText(partner.sms_message?.body || '')}
+                          className="inline-flex min-h-7 shrink-0 items-center gap-1 border border-[rgba(11,31,51,0.08)] px-1.5 text-[8.5px] font-semibold uppercase text-[#0B1F33]"
+                        >
+                          <Copy className="h-3 w-3" /> Copy text
+                        </button>
+                        <a
+                          href={`/api/outreach-crm/partners/${partner.id}/email.html`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex min-h-7 shrink-0 items-center gap-1 border border-[rgba(11,31,51,0.08)] px-1.5 text-[8.5px] font-semibold uppercase text-[#0B1F33]"
+                        >
+                          <Eye className="h-3 w-3" /> Email
+                        </a>
+                        {partner.website && (
+                          <a
+                            href={partner.website}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inline-flex min-h-7 shrink-0 items-center gap-1 border border-[rgba(11,31,51,0.08)] px-1.5 text-[8.5px] font-semibold uppercase text-[#0B1F33]"
+                          >
+                            <ExternalLink className="h-3 w-3" /> Site
+                          </a>
+                        )}
+                        {partner.google_maps_url && (
+                          <a
+                            href={partner.google_maps_url}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inline-flex min-h-7 shrink-0 items-center gap-1 border border-[rgba(11,31,51,0.08)] px-1.5 text-[8.5px] font-semibold uppercase text-[#0B1F33]"
+                          >
+                            <MapPin className="h-3 w-3" /> Map
+                          </a>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => archivePartner(partner.id)}
+                          className="inline-flex min-h-7 shrink-0 items-center gap-1 border border-[rgba(11,31,51,0.08)] px-1.5 text-[8.5px] font-semibold uppercase text-[#0B1F33]"
+                        >
+                          <Archive className={`h-3 w-3 ${working === `archive-${partner.id}` ? 'animate-spin' : ''}`} /> Archive
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => deletePartner(partner.id)}
+                          className="inline-flex min-h-7 shrink-0 items-center gap-1 border border-[rgba(11,31,51,0.08)] px-1.5 text-[8.5px] font-semibold uppercase text-[#0B1F33]"
+                        >
+                          <Trash2 className={`h-3 w-3 ${working === `delete-${partner.id}` ? 'animate-spin' : ''}`} /> Remove
                         </button>
                       </div>
                     </td>
@@ -826,6 +982,131 @@ export default function PartnerOutreachCRM() {
                 />
               </div>
             </div>
+
+            <section className="mt-4 border-t border-[rgba(11,31,51,0.08)] pt-3">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-[9px] font-bold uppercase text-[#C8A96A]">Notes</p>
+                  <p className="mt-0.5 text-[9px] font-semibold uppercase text-[rgba(11,31,51,0.42)]">{selected.crm_notes?.length || 0} saved</p>
+                </div>
+              </div>
+              <div className="mt-2 grid gap-1.5">
+                <textarea
+                  value={noteDraft}
+                  onChange={(event) => setNoteDraft(event.target.value)}
+                  placeholder="Add a note for this partner"
+                  className="min-h-[72px] w-full resize-y border border-[rgba(11,31,51,0.1)] p-2 text-[11px] leading-4 outline-none"
+                />
+                <button
+                  type="button"
+                  onClick={addNote}
+                  className="inline-flex min-h-7 w-fit items-center gap-1 border border-[#C8A96A] px-2 text-[8.5px] font-semibold uppercase text-[#0B1F33]"
+                >
+                  <Plus className={`h-3 w-3 ${working === 'note' ? 'animate-spin' : ''}`} /> Add note
+                </button>
+                {(selected.crm_notes || []).map((note) => (
+                  <div key={note.id} className="border border-[rgba(11,31,51,0.08)] p-2">
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="text-[11px] font-semibold text-[#0B1F33]">{clean(note.title)}</p>
+                      <button type="button" onClick={() => deleteNote(note.id)} className="text-[8.5px] font-semibold uppercase text-[rgba(11,31,51,0.48)]">Delete</button>
+                    </div>
+                    <p className="mt-1 whitespace-pre-wrap text-[10.5px] leading-4 text-[rgba(11,31,51,0.62)]">{clean(note.notes)}</p>
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            <section className="mt-4 border-t border-[rgba(11,31,51,0.08)] pt-3">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-[9px] font-bold uppercase text-[#C8A96A]">Tasks</p>
+                  <p className="mt-0.5 text-[9px] font-semibold uppercase text-[rgba(11,31,51,0.42)]">{selected.tasks?.length || 0} active</p>
+                </div>
+              </div>
+              <div className="mt-2 grid gap-1.5">
+                <div className="grid gap-1.5 sm:grid-cols-[1fr_116px_92px_auto]">
+                  <input
+                    value={taskDraft.title}
+                    onChange={(event) => setTaskDraft((draft) => ({ ...draft, title: event.target.value }))}
+                    placeholder="Task title"
+                    className="min-h-7 border border-[rgba(11,31,51,0.1)] px-2 text-[10.5px] outline-none"
+                  />
+                  <input
+                    type="date"
+                    value={taskDraft.due_date}
+                    onChange={(event) => setTaskDraft((draft) => ({ ...draft, due_date: event.target.value }))}
+                    className="min-h-7 border border-[rgba(11,31,51,0.1)] px-2 text-[10.5px] outline-none"
+                  />
+                  <select
+                    value={taskDraft.priority}
+                    onChange={(event) => setTaskDraft((draft) => ({ ...draft, priority: event.target.value }))}
+                    className="min-h-7 border border-[rgba(11,31,51,0.1)] bg-white px-2 text-[10.5px] outline-none"
+                  >
+                    <option>Normal</option>
+                    <option>High</option>
+                    <option>Low</option>
+                  </select>
+                  <button type="button" onClick={addTask} className="inline-flex min-h-7 items-center gap-1 border border-[#C8A96A] px-2 text-[8.5px] font-semibold uppercase text-[#0B1F33]">
+                    <Plus className={`h-3 w-3 ${working === 'task' ? 'animate-spin' : ''}`} /> Add
+                  </button>
+                </div>
+                {(selected.tasks || []).map((task) => (
+                  <div key={task.id} className="border border-[rgba(11,31,51,0.08)] p-2">
+                    <div className="flex flex-wrap items-start justify-between gap-2">
+                      <div>
+                        <p className="text-[11px] font-semibold text-[#0B1F33]">{clean(task.title)}</p>
+                        <p className="mt-1 text-[9.5px] font-semibold uppercase text-[rgba(11,31,51,0.45)]">
+                          {task.metadata?.due_date || 'No date'} · {task.metadata?.priority || 'Normal'} · {task.status || 'open'}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <button type="button" onClick={() => updateTask(task.id, { status: task.status === 'complete' ? 'open' : 'complete' })} className="text-[8.5px] font-semibold uppercase text-[#0B1F33]">
+                          {task.status === 'complete' ? 'Reopen' : 'Complete'}
+                        </button>
+                        <button type="button" onClick={() => deleteTask(task.id)} className="text-[8.5px] font-semibold uppercase text-[rgba(11,31,51,0.48)]">Delete</button>
+                      </div>
+                    </div>
+                    {task.notes && <p className="mt-1 text-[10.5px] leading-4 text-[rgba(11,31,51,0.62)]">{task.notes}</p>}
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            <section className="mt-4 border-t border-[rgba(11,31,51,0.08)] pt-3">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-[9px] font-bold uppercase text-[#C8A96A]">Files</p>
+                  <p className="mt-0.5 text-[9px] font-semibold uppercase text-[rgba(11,31,51,0.42)]">{selected.files?.length || 0} linked</p>
+                </div>
+              </div>
+              <div className="mt-2 grid gap-1.5">
+                <div className="grid gap-1.5 sm:grid-cols-[140px_1fr_auto]">
+                  <input
+                    value={fileDraft.title}
+                    onChange={(event) => setFileDraft((draft) => ({ ...draft, title: event.target.value }))}
+                    placeholder="File label"
+                    className="min-h-7 border border-[rgba(11,31,51,0.1)] px-2 text-[10.5px] outline-none"
+                  />
+                  <input
+                    value={fileDraft.url}
+                    onChange={(event) => setFileDraft((draft) => ({ ...draft, url: event.target.value }))}
+                    placeholder="https://..."
+                    className="min-h-7 border border-[rgba(11,31,51,0.1)] px-2 text-[10.5px] outline-none"
+                  />
+                  <button type="button" onClick={addFileLink} className="inline-flex min-h-7 items-center gap-1 border border-[#C8A96A] px-2 text-[8.5px] font-semibold uppercase text-[#0B1F33]">
+                    <FileText className={`h-3 w-3 ${working === 'file' ? 'animate-spin' : ''}`} /> Link
+                  </button>
+                </div>
+                {(selected.files || []).map((file) => (
+                  <div key={file.id} className="flex items-center justify-between gap-2 border border-[rgba(11,31,51,0.08)] p-2">
+                    <a href={file.metadata?.url || '#'} target="_blank" rel="noreferrer" className="min-w-0 truncate text-[11px] font-semibold text-[#0B1F33] hover:text-[#C8A96A]">
+                      {clean(file.title)}
+                    </a>
+                    <button type="button" onClick={() => deleteFileLink(file.id)} className="shrink-0 text-[8.5px] font-semibold uppercase text-[rgba(11,31,51,0.48)]">Delete</button>
+                  </div>
+                ))}
+              </div>
+            </section>
 
             <ActivityFeed activities={selected.activities || []} />
           </aside>

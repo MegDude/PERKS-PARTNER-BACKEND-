@@ -1310,6 +1310,12 @@ function getOutreachActivities(entities: Database["entities"], partnerId: string
     .sort((a, b) => new Date(b.created_at || b.updated_at || 0).getTime() - new Date(a.created_at || a.updated_at || 0).getTime());
 }
 
+function getOutreachItemsByType(entities: Database["entities"], partnerId: string, types: string[]) {
+  return entities.PartnerOutreachStep
+    .filter((item) => item.partner_id === partnerId && types.includes(String(item.activity_type || "")) && !item.deleted_at)
+    .sort((a, b) => new Date(b.created_at || b.updated_at || 0).getTime() - new Date(a.created_at || a.updated_at || 0).getTime());
+}
+
 function logOutreachActivity(entities: Database["entities"], input: Record<string, any>) {
   const id = input.id || `outreach_activity_${slug(input.partner_id || "partner")}_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
   return ensureRecord(entities.PartnerOutreachStep, id, {
@@ -1330,7 +1336,7 @@ function findSheetRows(workbook: { sheets: Array<{ name: string; rows: Record<st
 
 function buildOutreachCrmRows(entities: Database["entities"]) {
   return entities.Partner
-    .filter((partner) => partner.source_type === "partner_outreach_crm")
+    .filter((partner) => partner.source_type === "partner_outreach_crm" && !partner.deleted_at)
     .map((partner) => {
       const contact = (entities.PartnerOutreachContact.find((item) => item.partner_id === partner.id) || {}) as Record<string, any>;
       const campaign = (entities.PartnerOutreachCampaign.find((item) => item.partner_id === partner.id) || {}) as Record<string, any>;
@@ -1338,6 +1344,9 @@ function buildOutreachCrmRows(entities: Database["entities"]) {
       const smsMessage = (entities.PartnerOutreachMessage.find((item) => item.partner_id === partner.id && item.channel === "sms") || {}) as Record<string, any>;
       const step = (entities.PartnerOutreachStep.find((item) => item.partner_id === partner.id) || {}) as Record<string, any>;
       const activities = getOutreachActivities(entities, partner.id);
+      const crmNotes = getOutreachItemsByType(entities, partner.id, ["note"]);
+      const tasks = getOutreachItemsByType(entities, partner.id, ["task"]);
+      const files = getOutreachItemsByType(entities, partner.id, ["file"]);
       const emailMessage = message.id && !message.html ? { ...message, html: buildOutreachEmailHtml(partner, message) } : message;
       return {
         ...partner,
@@ -1349,6 +1358,9 @@ function buildOutreachCrmRows(entities: Database["entities"]) {
         sms_message: smsMessage,
         step,
         activities,
+        crm_notes: crmNotes,
+        tasks,
+        files,
         best_contact: displayCrmValue(contact.name || contact.contact_name || contact.role),
         outreach_stage: resolvedOutreachStage(partner),
         next_action: step.title || partner.next_action || "Verify contact and send first note",
@@ -4760,6 +4772,182 @@ export async function createApp() {
     res.json(buildOutreachCrmRows(db.entities).find((item) => item.id === partner.id));
   });
 
+  app.post("/api/outreach-crm/partners/:id/archive", async (req, res) => {
+    const partner = findEntityById(db.entities.Partner, req.params.id);
+    if (!partner) return res.status(404).json({ error: "Partner not found" });
+    Object.assign(partner, { outreach_stage: "Archived", status: "Archived", archived_at: now(), updated_at: now() });
+    logOutreachActivity(db.entities, {
+      partner_id: partner.id,
+      contact_id: db.entities.PartnerOutreachContact.find((item) => item.partner_id === partner.id)?.id || "",
+      activity_type: "archived",
+      title: "Partner archived",
+      notes: req.body?.notes || "Archived from Outreach CRM.",
+      status: "Archived",
+    });
+    await saveDatabase(db);
+    res.json(buildOutreachCrmRows(db.entities).find((item) => item.id === partner.id));
+  });
+
+  app.delete("/api/outreach-crm/partners/:id", async (req, res) => {
+    const partner = findEntityById(db.entities.Partner, req.params.id);
+    if (!partner) return res.status(404).json({ error: "Partner not found" });
+    Object.assign(partner, { deleted_at: now(), outreach_stage: "Archived", status: "Archived", updated_at: now() });
+    logOutreachActivity(db.entities, {
+      partner_id: partner.id,
+      contact_id: db.entities.PartnerOutreachContact.find((item) => item.partner_id === partner.id)?.id || "",
+      activity_type: "deleted",
+      title: "Partner removed from active CRM",
+      notes: req.body?.notes || "Soft deleted from Outreach CRM. Historical records remain in storage.",
+      status: "Archived",
+    });
+    await saveDatabase(db);
+    res.json({ success: true, id: partner.id });
+  });
+
+  app.post("/api/outreach-crm/partners/:id/notes", async (req, res) => {
+    const partner = findEntityById(db.entities.Partner, req.params.id);
+    if (!partner) return res.status(404).json({ error: "Partner not found" });
+    const note = logOutreachActivity(db.entities, {
+      partner_id: partner.id,
+      contact_id: db.entities.PartnerOutreachContact.find((item) => item.partner_id === partner.id)?.id || "",
+      activity_type: "note",
+      title: req.body?.title || "Note",
+      notes: req.body?.notes || req.body?.body || "",
+      status: partner.outreach_stage || partner.status || "Not started",
+      metadata: { pinned: Boolean(req.body?.pinned) },
+    });
+    await saveDatabase(db);
+    res.status(201).json(note);
+  });
+
+  app.patch("/api/outreach-crm/notes/:id", async (req, res) => {
+    const note = findEntityById(db.entities.PartnerOutreachStep, req.params.id);
+    if (!note || note.activity_type !== "note") return res.status(404).json({ error: "Note not found" });
+    Object.assign(note, {
+      title: req.body?.title ?? note.title,
+      notes: req.body?.notes ?? req.body?.body ?? note.notes,
+      metadata: { ...(note.metadata || {}), pinned: req.body?.pinned ?? note.metadata?.pinned ?? false },
+      updated_at: now(),
+    });
+    logOutreachActivity(db.entities, {
+      partner_id: note.partner_id,
+      contact_id: note.contact_id || "",
+      activity_type: "note_update",
+      title: "Note updated",
+      notes: note.title || "Note",
+      status: note.status || "",
+      metadata: { note_id: note.id },
+    });
+    await saveDatabase(db);
+    res.json(note);
+  });
+
+  app.delete("/api/outreach-crm/notes/:id", async (req, res) => {
+    const note = findEntityById(db.entities.PartnerOutreachStep, req.params.id);
+    if (!note || note.activity_type !== "note") return res.status(404).json({ error: "Note not found" });
+    Object.assign(note, { deleted_at: now(), updated_at: now() });
+    logOutreachActivity(db.entities, {
+      partner_id: note.partner_id,
+      contact_id: note.contact_id || "",
+      activity_type: "note_deleted",
+      title: "Note deleted",
+      notes: note.title || "Note",
+      status: note.status || "",
+      metadata: { note_id: note.id },
+    });
+    await saveDatabase(db);
+    res.json({ success: true, id: note.id });
+  });
+
+  app.post("/api/outreach-crm/partners/:id/tasks", async (req, res) => {
+    const partner = findEntityById(db.entities.Partner, req.params.id);
+    if (!partner) return res.status(404).json({ error: "Partner not found" });
+    const task = logOutreachActivity(db.entities, {
+      partner_id: partner.id,
+      contact_id: db.entities.PartnerOutreachContact.find((item) => item.partner_id === partner.id)?.id || "",
+      activity_type: "task",
+      title: req.body?.title || "Follow up",
+      notes: req.body?.notes || "",
+      status: req.body?.status || "open",
+      metadata: { due_date: req.body?.due_date || "", priority: req.body?.priority || "Normal" },
+    });
+    await saveDatabase(db);
+    res.status(201).json(task);
+  });
+
+  app.patch("/api/outreach-crm/tasks/:id", async (req, res) => {
+    const task = findEntityById(db.entities.PartnerOutreachStep, req.params.id);
+    if (!task || task.activity_type !== "task") return res.status(404).json({ error: "Task not found" });
+    Object.assign(task, {
+      title: req.body?.title ?? task.title,
+      notes: req.body?.notes ?? task.notes,
+      status: req.body?.status ?? task.status,
+      metadata: { ...(task.metadata || {}), due_date: req.body?.due_date ?? task.metadata?.due_date ?? "", priority: req.body?.priority ?? task.metadata?.priority ?? "Normal" },
+      updated_at: now(),
+    });
+    logOutreachActivity(db.entities, {
+      partner_id: task.partner_id,
+      contact_id: task.contact_id || "",
+      activity_type: "task_update",
+      title: `Task ${task.status === "complete" ? "completed" : "updated"}`,
+      notes: task.title || "Task",
+      status: task.status || "",
+      metadata: { task_id: task.id },
+    });
+    await saveDatabase(db);
+    res.json(task);
+  });
+
+  app.delete("/api/outreach-crm/tasks/:id", async (req, res) => {
+    const task = findEntityById(db.entities.PartnerOutreachStep, req.params.id);
+    if (!task || task.activity_type !== "task") return res.status(404).json({ error: "Task not found" });
+    Object.assign(task, { deleted_at: now(), updated_at: now() });
+    logOutreachActivity(db.entities, {
+      partner_id: task.partner_id,
+      contact_id: task.contact_id || "",
+      activity_type: "task_deleted",
+      title: "Task deleted",
+      notes: task.title || "Task",
+      status: task.status || "",
+      metadata: { task_id: task.id },
+    });
+    await saveDatabase(db);
+    res.json({ success: true, id: task.id });
+  });
+
+  app.post("/api/outreach-crm/partners/:id/files", async (req, res) => {
+    const partner = findEntityById(db.entities.Partner, req.params.id);
+    if (!partner) return res.status(404).json({ error: "Partner not found" });
+    const file = logOutreachActivity(db.entities, {
+      partner_id: partner.id,
+      contact_id: db.entities.PartnerOutreachContact.find((item) => item.partner_id === partner.id)?.id || "",
+      activity_type: "file",
+      title: req.body?.title || req.body?.name || "Linked file",
+      notes: req.body?.notes || "",
+      status: "linked",
+      metadata: { url: req.body?.url || "", file_type: req.body?.file_type || "link" },
+    });
+    await saveDatabase(db);
+    res.status(201).json(file);
+  });
+
+  app.delete("/api/outreach-crm/files/:id", async (req, res) => {
+    const file = findEntityById(db.entities.PartnerOutreachStep, req.params.id);
+    if (!file || file.activity_type !== "file") return res.status(404).json({ error: "File not found" });
+    Object.assign(file, { deleted_at: now(), updated_at: now() });
+    logOutreachActivity(db.entities, {
+      partner_id: file.partner_id,
+      contact_id: file.contact_id || "",
+      activity_type: "file_deleted",
+      title: "File link deleted",
+      notes: file.title || "File",
+      status: "",
+      metadata: { file_id: file.id },
+    });
+    await saveDatabase(db);
+    res.json({ success: true, id: file.id });
+  });
+
   app.post("/api/outreach-crm/batch/status", async (req, res) => {
     const ids = Array.isArray(req.body?.ids) ? req.body.ids.map((id: any) => String(id)) : [];
     const status = normalizeOutreachStage(req.body?.status || "");
@@ -4798,6 +4986,20 @@ export async function createApp() {
     const rows = crmExportRows(db.entities, selectedIds);
     const format = String(req.params.format || "csv").toLowerCase();
     const fileBase = selectedIds.length ? `downtown-perks-outreach-selected-${format}` : `downtown-perks-outreach-${format}`;
+    logOutreachActivity(db.entities, {
+      partner_id: selectedIds[0] || "partner_outreach_crm",
+      activity_type: "export",
+      title: `CRM ${format.toUpperCase()} export`,
+      notes: selectedIds.length ? `Exported ${selectedIds.length} selected partner${selectedIds.length === 1 ? "" : "s"}.` : `Exported ${rows.length} CRM row${rows.length === 1 ? "" : "s"}.`,
+      status: "exported",
+      metadata: { format, selected_ids: selectedIds, row_count: rows.length },
+    });
+    await saveDatabase(db);
+    if (format === "json") {
+      res.setHeader("Content-Type", "application/json; charset=utf-8");
+      res.setHeader("Content-Disposition", `attachment; filename="${fileBase}.json"`);
+      return res.send(JSON.stringify(rows, null, 2));
+    }
     if (format === "xlsx") {
       const outputPath = await createSimpleXlsx(rows, `${fileBase}.xlsx`);
       res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
