@@ -49,6 +49,41 @@ export type IntelligenceCompany = {
   updatedAt: string;
 };
 
+export type CapabilityStatus = 'Available' | 'Partial' | 'Unavailable' | 'Unknown';
+
+export type PlatformAssessment = {
+  partnerId: string;
+  researchDate: string;
+  confidenceScore: number;
+  researchSource: string;
+  website: CapabilityStatus;
+  mobileApps: CapabilityStatus;
+  tenantPortal: CapabilityStatus;
+  employeePlatform: CapabilityStatus;
+  crm: CapabilityStatus;
+  marketingAutomation: CapabilityStatus;
+  emailPlatform: CapabilityStatus;
+  eventPlatform: CapabilityStatus;
+  bookingPlatform: CapabilityStatus;
+  parkingPlatform: CapabilityStatus;
+  loyaltyPlatform: CapabilityStatus;
+  paymentsPlatform: CapabilityStatus;
+  analyticsPlatform: CapabilityStatus;
+  socialChannels: CapabilityStatus;
+  technologyPartners: string[];
+  aiCapabilities: CapabilityStatus;
+  apiAvailability: CapabilityStatus;
+  integrationOpportunities: string[];
+  digitalMaturityScore: number;
+  experienceScore: number;
+  commercialOpportunityScore: number;
+  strategicFitScore: number;
+  capabilities: Array<{ name: string; status: CapabilityStatus }>;
+  complementMatrix: Array<{ existing: string; downtownPerks: string; combined: string; outcome: string }>;
+  opportunities: Array<{ category: string; impact: string; effort: string; value: string; complexity: string }>;
+  recommendations: string[];
+};
+
 const createdAt = '2026-07-01T00:00:00.000Z';
 const frostTowerAddress = '401 Congress Ave, Austin, TX 78701';
 
@@ -139,3 +174,90 @@ export const frostTowerPartnerTargets: IntelligenceCompany[] = [
   target('SoulCycle', 'Fitness', 'venue', 'high', 'After-work ride or wellness perk', 'After Work Ride', roleTargets.venue),
   target('Vista Equity Partners', 'Investment firm', 'employer', 'high', 'Employee and client downtown guide', 'Premium workplace guide', roleTargets.employer),
 ];
+
+export function getPlatformAssessment(company: IntelligenceCompany): PlatformAssessment {
+  const isVenue = company.partnerType === 'venue';
+  const isEmployer = company.partnerType === 'employer';
+  const isRealEstate = company.partnerType === 'real_estate';
+  const isService = company.partnerType === 'service';
+  const isEquiem = /equiem/i.test(company.companyName);
+  const isParking = /parking|metropolis/i.test(`${company.companyName} ${company.industry}`);
+  const isRestaurant = isVenue && /restaurant|taco|market|coffee|juice|fitness/i.test(`${company.industry} ${company.companyName}`);
+  const technologyPartners = [
+    'Google Maps',
+    isEquiem ? 'Equiem' : '',
+    isParking ? 'Metropolis' : '',
+    isRestaurant ? 'Toast / POS likely' : '',
+    isEmployer ? 'Microsoft 365 / Google Workspace likely' : '',
+  ].filter(Boolean);
+  return {
+    partnerId: company.id,
+    researchDate: createdAt,
+    confidenceScore: company.researchConfidence === 'verified' ? 90 : company.priority === 'high' ? 76 : 66,
+    researchSource: 'Frost Tower seed assessment; requires live OpenAI/web refresh in Phase 2',
+    website: 'Unknown',
+    mobileApps: isEquiem ? 'Available' : 'Unknown',
+    tenantPortal: isEquiem || isRealEstate ? 'Partial' : 'Unknown',
+    employeePlatform: isEmployer ? 'Partial' : 'Unknown',
+    crm: 'Unknown',
+    marketingAutomation: isVenue ? 'Partial' : 'Unknown',
+    emailPlatform: 'Unknown',
+    eventPlatform: isVenue ? 'Partial' : 'Unknown',
+    bookingPlatform: isVenue ? 'Partial' : 'Unknown',
+    parkingPlatform: isParking ? 'Available' : 'Unknown',
+    loyaltyPlatform: isVenue ? 'Partial' : 'Unknown',
+    paymentsPlatform: isVenue || isParking ? 'Available' : 'Unknown',
+    analyticsPlatform: 'Partial',
+    socialChannels: isVenue ? 'Partial' : 'Unknown',
+    technologyPartners,
+    aiCapabilities: 'Unknown',
+    apiAvailability: isEquiem || isParking ? 'Partial' : 'Unknown',
+    integrationOpportunities: [
+      'Google Maps placement',
+      'Partner workspace',
+      'OpenAI recommendation layer',
+      isVenue ? 'Offer and campaign publishing' : 'Employee/client downtown guide',
+      isParking ? 'Arrival and parking routing' : 'Launch reporting',
+    ],
+    digitalMaturityScore: isEquiem ? 86 : isParking ? 78 : isEmployer ? 72 : isVenue ? 68 : 62,
+    experienceScore: isVenue ? 78 : isEquiem ? 84 : isEmployer ? 70 : 64,
+    commercialOpportunityScore: company.priority === 'high' ? 88 : company.priority === 'medium' ? 72 : 55,
+    strategicFitScore: isEquiem ? 92 : company.priority === 'high' ? 86 : company.priority === 'medium' ? 74 : 58,
+    capabilities: [
+      { name: 'Events', status: isVenue || isEquiem ? 'Partial' : 'Unknown' },
+      { name: 'Community Feed', status: isEquiem ? 'Available' : 'Unknown' },
+      { name: 'Parking', status: isParking ? 'Available' : 'Unknown' },
+      { name: 'Dining', status: isVenue ? 'Available' : 'Unknown' },
+      { name: 'Notifications', status: isEquiem || isVenue ? 'Partial' : 'Unknown' },
+      { name: 'Business Directory', status: isRealEstate || isEquiem ? 'Partial' : 'Unknown' },
+      { name: 'Maps', status: 'Partial' },
+      { name: 'AI Assistant', status: 'Unknown' },
+    ],
+    complementMatrix: [
+      {
+        existing: isEquiem ? 'Tenant experience platform' : isVenue ? 'Existing customer channels' : isParking ? 'Parking platform' : 'Workplace tools',
+        downtownPerks: isVenue ? 'Local discovery, offers, and resident demand' : 'Neighborhood intelligence layer',
+        combined: isVenue ? 'People nearby discover and act at the right moment' : 'Employees, residents, and guests connect workplace context to downtown options',
+        outcome: isVenue ? 'More qualified visits and trackable campaigns' : 'Better daily experience without replacing current tools',
+      },
+      {
+        existing: 'Website and existing brand presence',
+        downtownPerks: 'Map placement, Ask the Map prompts, and campaign distribution',
+        combined: 'Brand presence becomes actionable inside downtown discovery',
+        outcome: 'More intent, clearer attribution, and easier follow-up',
+      },
+    ],
+    opportunities: [
+      { category: 'Immediate Wins', impact: 'High', effort: 'Low', value: company.proposedPerk, complexity: 'Simple launch setup' },
+      { category: 'Neighborhood Activation', impact: 'High', effort: 'Medium', value: company.campaignStrategy, complexity: 'Campaign assets and approval' },
+      { category: 'Data Opportunities', impact: 'Medium', effort: 'Low', value: 'Track views, saves, directions, and offer interest', complexity: 'Reporting baseline' },
+      { category: 'AI Readiness', impact: 'Medium', effort: 'Medium', value: 'Ask the Map recommendations tied to real partner context', complexity: 'Requires approved data sources' },
+    ],
+    recommendations: [
+      'Increase the value of existing digital channels instead of replacing them.',
+      'Extend the experience into the surrounding downtown neighborhood.',
+      'Launch one measurable campaign before adding more integrations.',
+      'Use AI concierge prompts once map placement and campaign data are approved.',
+    ],
+  };
+}

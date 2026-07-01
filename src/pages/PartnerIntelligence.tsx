@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { ArrowRight, Building2, Calendar, FileText, Search, Sparkles } from 'lucide-react';
-import { frostTowerPartnerTargets, type IntelligenceCompany } from '@/data/intelligence/frostTowerPartnerTargets';
+import { frostTowerPartnerTargets, getPlatformAssessment, type IntelligenceCompany, type PlatformAssessment } from '@/data/intelligence/frostTowerPartnerTargets';
 
 const statuses: Record<IntelligenceCompany['status'], string> = {
   identified: 'Identified',
@@ -102,6 +102,119 @@ function RecommendationPanel() {
   );
 }
 
+function ScoreBar({ label, value }: { label: string; value: number }) {
+  return (
+    <div>
+      <div className="flex items-center justify-between gap-3 text-[11px] font-semibold">
+        <span>{label}</span>
+        <span>{value}/100</span>
+      </div>
+      <div className="mt-1 h-1.5 bg-[rgba(11,31,51,0.08)]">
+        <div className="h-full bg-[#C8A96A]" style={{ width: `${Math.max(0, Math.min(100, value))}%` }} />
+      </div>
+    </div>
+  );
+}
+
+function PlatformIntelligenceSection({ assessment }: { assessment: PlatformAssessment }) {
+  const scores = [
+    ['Digital Experience', assessment.experienceScore],
+    ['Technology Maturity', assessment.digitalMaturityScore],
+    ['Commercial Opportunity', assessment.commercialOpportunityScore],
+    ['Strategic Fit', assessment.strategicFitScore],
+  ] as const;
+  return (
+    <section className="border-t border-[#C8A96A] pt-4">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-[#C8A96A]">Platform Intelligence</p>
+          <h2 className="mt-1 text-[17px] font-semibold">Digital ecosystem assessment</h2>
+        </div>
+        <button className="border border-[rgba(11,31,51,0.12)] px-3 py-2 text-[11px] font-semibold hover:border-[#C8A96A]">Refresh research</button>
+      </div>
+      <p className="mt-2 max-w-3xl text-[13px] leading-5 text-[rgba(11,31,51,0.68)]">
+        This assessment positions Downtown Perks as a complement to existing technology: it extends current systems into local discovery, campaigns, map presence, and AI-guided recommendations.
+      </p>
+
+      <div className="mt-4 grid gap-4 xl:grid-cols-[0.9fr_1.1fr]">
+        <div className="grid gap-3">
+          {scores.map(([label, value]) => <ScoreBar key={label} label={label} value={value} />)}
+          <p className="text-[11px] text-[rgba(11,31,51,0.56)]">Research confidence: {assessment.confidenceScore}/100 · {assessment.researchSource}</p>
+        </div>
+        <div className="overflow-x-auto border border-[rgba(11,31,51,0.08)] [scrollbar-width:thin]">
+          <table className="w-full min-w-[640px] table-fixed text-left">
+            <thead>
+              <tr>
+                {['Existing capability', 'Downtown Perks extension', 'Combined experience', 'Business outcome'].map((header) => (
+                  <th key={header} className="px-3 py-2 text-[9px] font-bold uppercase text-[rgba(11,31,51,0.52)]">{header}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {assessment.complementMatrix.map((row) => (
+                <tr key={row.existing} className="border-t border-[rgba(11,31,51,0.06)]">
+                  <td className="px-3 py-2 text-[12px] font-semibold">{row.existing}</td>
+                  <td className="px-3 py-2 text-[12px]">{row.downtownPerks}</td>
+                  <td className="px-3 py-2 text-[12px]">{row.combined}</td>
+                  <td className="px-3 py-2 text-[12px]">{row.outcome}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div className="mt-4 grid gap-4 lg:grid-cols-3">
+        <div>
+          <h3 className="text-[13px] font-semibold">Technology stack</h3>
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {assessment.technologyPartners.map((item) => <span key={item} className="border border-[rgba(11,31,51,0.08)] px-2 py-1 text-[11px]">{item}</span>)}
+          </div>
+        </div>
+        <div>
+          <h3 className="text-[13px] font-semibold">Capability matrix</h3>
+          <div className="mt-2 grid gap-1.5">
+            {assessment.capabilities.map((capability) => (
+              <p key={capability.name} className="flex justify-between gap-3 border-b border-[rgba(11,31,51,0.06)] pb-1 text-[11px]">
+                <span>{capability.name}</span>
+                <span className="font-semibold">{capability.status}</span>
+              </p>
+            ))}
+          </div>
+        </div>
+        <div>
+          <h3 className="text-[13px] font-semibold">Integration opportunities</h3>
+          <div className="mt-2 grid gap-1.5">
+            {assessment.integrationOpportunities.map((item) => <p key={item} className="border-b border-[rgba(11,31,51,0.06)] pb-1 text-[11px]">{item}</p>)}
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-4 grid gap-3 border-t border-[rgba(11,31,51,0.08)] pt-3 lg:grid-cols-3">
+        {assessment.opportunities.map((item) => (
+          <div key={item.category} className="min-w-0">
+            <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-[#C8A96A]">{item.category}</p>
+            <p className="mt-1 text-[12px] font-semibold">{item.value}</p>
+            <p className="mt-1 text-[11px] text-[rgba(11,31,51,0.58)]">Impact {item.impact} · Effort {item.effort} · {item.complexity}</p>
+          </div>
+        ))}
+      </div>
+
+      <div className="mt-4 border-t border-[rgba(11,31,51,0.08)] pt-3">
+        <h3 className="text-[13px] font-semibold">Customer journey</h3>
+        <div className="mt-2 flex gap-2 overflow-x-auto pb-1 [scrollbar-width:thin]">
+          {['Discover', 'Arrive', 'Enter building', 'Work', 'Lunch', 'Meet', 'Shop', 'Events', 'Home'].map((step, index) => (
+            <div key={step} className="min-w-[118px] border border-[rgba(11,31,51,0.08)] px-2 py-2">
+              <p className="text-[10px] font-bold uppercase text-[#C8A96A]">{index < 3 ? 'Shared' : index < 6 ? 'Downtown Perks' : 'Partner'}</p>
+              <p className="mt-1 text-[12px] font-semibold">{step}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function CompaniesView() {
   const [query, setQuery] = useState('');
   const [priority, setPriority] = useState('all');
@@ -174,6 +287,7 @@ function CompaniesView() {
 }
 
 function CompanyWorkspace({ company }: { company: IntelligenceCompany }) {
+  const assessment = getPlatformAssessment(company);
   const sections = [
     ['Overview', company.summary],
     ['Contacts', company.recommendedDecisionMakerRoles.join(', ')],
@@ -195,6 +309,7 @@ function CompanyWorkspace({ company }: { company: IntelligenceCompany }) {
       </div>
       <div className="grid gap-4 xl:grid-cols-[1fr_360px]">
         <section className="grid gap-4">
+          <PlatformIntelligenceSection assessment={assessment} />
           {sections.map(([title, body]) => (
             <div key={title} className="border-t border-[rgba(11,31,51,0.08)] pt-3">
               <h2 className="text-[15px] font-semibold">{title}</h2>
@@ -214,6 +329,7 @@ function CompanyWorkspace({ company }: { company: IntelligenceCompany }) {
 }
 
 function ProposalView({ company }: { company: IntelligenceCompany }) {
+  const assessment = getPlatformAssessment(company);
   return (
     <Shell>
       <article className="mx-auto max-w-4xl bg-white print:max-w-none">
@@ -222,6 +338,10 @@ function ProposalView({ company }: { company: IntelligenceCompany }) {
         <p className="mt-4 max-w-3xl text-[14px] leading-6 text-[rgba(11,31,51,0.68)]">{company.whyDowntownPerks}</p>
         {[
           ['Executive summary', company.summary],
+          ['Current digital ecosystem', `Current platform signals include ${assessment.technologyPartners.join(', ') || 'website and basic business presence'}. The goal is to increase the value of those investments, not replace them.`],
+          ['Platform capability assessment', `Digital maturity ${assessment.digitalMaturityScore}/100, experience ${assessment.experienceScore}/100, strategic fit ${assessment.strategicFitScore}/100.`],
+          ['Strategic complement analysis', assessment.complementMatrix.map((row) => `${row.existing}: Downtown Perks extends this with ${row.downtownPerks.toLowerCase()} so the combined experience delivers ${row.outcome.toLowerCase()}.`).join(' ')],
+          ['Recommended integration strategy', assessment.integrationOpportunities.join(', ')],
           ['Why now', `${company.building} gives Downtown Perks a clear launch anchor for residents, workers, guests, and nearby services.`],
           ['Opportunity', company.outreachAngle],
           ['Resident offering', company.residentValue],
