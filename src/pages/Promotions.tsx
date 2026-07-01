@@ -218,14 +218,19 @@ export default function Promotions() {
     }
   }
 
-  async function testDude2026() {
+  async function testPromotionCode() {
+    const codeToTest = accountForm.coupon || promotions.find((promotion) => promotion.status === 'active' && promotion.isActive !== false)?.code || '';
+    if (!codeToTest) {
+      setValidationResult({ valid: false, subtotal: plan.amount, discount: 0, total: plan.amount });
+      return;
+    }
     setTesting(true);
     try {
       const result = await fetch('/api/promotions/validate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          code: 'DUDE2026',
+          code: codeToTest,
           subtotal: plan.amount,
           plan: plan.key,
           partner_type: plan.type,
@@ -456,7 +461,7 @@ export default function Promotions() {
                 {planOptions.filter((item) => item.type === accountForm.partnerType).map((option) => <option key={option.key} value={option.key}>{option.label} · {money(option.amount)}/yr</option>)}
               </select>
             </label>
-            <Field label="Credit code" value={accountForm.coupon} onChange={(value: string) => setAccountForm({ ...accountForm, coupon: value.toUpperCase() })} placeholder="DUDE2026" />
+            <Field label="Internal credit code" value={accountForm.coupon} onChange={(value: string) => setAccountForm({ ...accountForm, coupon: value.toUpperCase() })} placeholder="Enter approved code" />
             <div className="border-y border-[rgba(11,31,51,0.06)] py-3">
               <StatusLine label="Selected plan" value={`${plan.label} · ${money(plan.amount)}/yr`} />
               <p className="mt-2 text-xs leading-5 text-[rgba(11,31,51,0.58)]">{plan.note}</p>
@@ -520,8 +525,8 @@ export default function Promotions() {
         <article className="bg-white">
           <SectionTitle eyebrow="Promotion codes" title="Credits for checkout" body="Create codes, test eligibility, pause them, and see how often each one has been used." />
           <div className="mt-4 flex flex-wrap gap-2">
-            <Button onClick={testDude2026} disabled={testing} className="min-h-9 gap-2 bg-white text-[#0B1F33] border border-[rgba(11,31,51,0.14)]">
-              {testing ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />} Test DUDE2026
+            <Button onClick={testPromotionCode} disabled={testing} className="min-h-9 gap-2 bg-white text-[#0B1F33] border border-[rgba(11,31,51,0.14)]">
+              {testing ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />} Test selected code
             </Button>
           </div>
           {validationResult && (

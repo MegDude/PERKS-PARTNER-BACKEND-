@@ -98,7 +98,7 @@ export default function PartnerDashboardLayout() {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 h-screen overflow-y-auto bg-white">
+      <main className="min-h-screen flex-1 overflow-x-hidden bg-white">
         <div className="sticky top-0 z-40 flex items-center justify-between bg-white p-4 lg:hidden">
            <div className="flex items-center gap-2 text-[#11182B] ">
               <Button

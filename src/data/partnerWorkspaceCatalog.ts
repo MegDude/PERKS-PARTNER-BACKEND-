@@ -458,7 +458,7 @@ export function buildPartnerWorkspaceFromSeed(seed: WorkspaceSeed): PartnerWorks
       cadence: 'year',
       addOns: ['QR Kit', 'Monthly Report', 'Campaign Support', 'Partner Directory'],
       conversionState: 'Founding Partner',
-      couponCodes: { DUDE2026: 100 },
+      couponCodes: {},
     },
     trendingLocations: seed.anchors.map((anchor, index) => ({
       id: `trend-${id}-${index}`,

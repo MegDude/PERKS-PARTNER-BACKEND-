@@ -6892,10 +6892,13 @@ export async function createApp() {
     const records = defaults.map(([provider, envKey]) => {
       const envKeys = Array.isArray(envKey) ? envKey : [envKey];
       const stored = db.entities.IntegrationStatus.find((item) => item.provider === provider) || db.entities.IntegrationEndpoint.find((item) => item.provider === provider || item.name === provider);
+      const configured = provider === "Google Maps / Places"
+        ? envKeys.some((key) => process.env[key])
+        : envKeys.every((key) => process.env[key]);
       return {
         id: stored?.id || `integration_${slug(provider)}`,
         provider,
-        status: envKeys.every((key) => process.env[key]) ? "configured" : stored?.status || "pending_credentials",
+        status: configured ? "configured" : stored?.status || "pending_credentials",
         required_env_vars: envKeys,
         last_tested: stored?.last_tested || "",
         last_success: stored?.last_success || "",

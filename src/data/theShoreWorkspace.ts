@@ -86,7 +86,7 @@ export const theShoreWorkspace: PartnerWorkspaceData = {
     cadence: 'year',
     addOns: ['Printed QR signs', 'Monthly resident broadcast', 'Resident event help', 'Clearer monthly report', 'Concierge setup'],
     conversionState: 'Trial',
-    couponCodes: { DUDE2026: 100 },
+    couponCodes: {},
   },
   trendingLocations: [
     { id: 'trend-van-zandt', name: 'Hotel Van Zandt', category: 'Lobby hour', anonymizedCheckIns: 0, trend: 'Ready to watch', distance: '1 min walk' },

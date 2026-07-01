@@ -265,6 +265,8 @@ export default function PartnerLifecycle() {
         ...state,
           checkout: {
             ...state.checkout,
+            coupon: '',
+            promotion_code: '',
             billing_email: state.checkout.billing_email || state.contact.email,
             business_name: state.checkout.business_name || state.organization.name,
             subtotal: totals.firstPayment,
@@ -292,7 +294,7 @@ export default function PartnerLifecycle() {
           checkout: payload.checkout,
           source_type: 'partner_registration',
           metadata: {
-            route: needsConcierge ? 'dana_partnership_concierge' : 'automated_checkout',
+            route: needsConcierge ? 'downtown_perks_partnership_concierge' : 'automated_checkout',
             annual_commitment: totals.annualCommitment,
             first_payment: totals.firstPayment,
             selected_add_ons: totals.selectedAddOns,
@@ -324,7 +326,7 @@ export default function PartnerLifecycle() {
           ...payload.checkout,
           checkout_status: 'concierge_required',
           billing_status: 'concierge',
-          provider: 'dana_partnership_concierge',
+          provider: 'downtown_perks_partnership_concierge',
         };
         setState((current) => ({ ...current, checkout: nextCheckout, provision: { success: false, concierge: true } }));
         navigate('/partners/concierge');
@@ -358,7 +360,6 @@ export default function PartnerLifecycle() {
           plan: payload.plan,
           plan_amount: totals.firstPayment,
           annual_commitment: totals.annualCommitment,
-          coupon: payload.checkout.coupon,
           checkout: payload.checkout,
           line_items: checkoutLineItems,
           success_url: `${window.location.origin}/partners/provision?checkout=success`,
@@ -612,12 +613,11 @@ export default function PartnerLifecycle() {
                   <Field label="Phone" value={state.contact.phone} onChange={(value) => updateGroup('contact', 'phone', value)} />
                   <Field label="Address" value={state.location.address} onChange={(value) => updateGroup('location', 'address', value)} />
                   <Field label="Properties or districts" value={String(state.organization.portfolioCount || '')} onChange={(value) => updateGroup('organization', 'portfolioCount', value)} placeholder="1" />
-                  <Field label="Promotion code" value={state.checkout.coupon} onChange={(value) => updateGroup('checkout', 'coupon', value.toUpperCase())} placeholder="DUDE2026" />
                   <Field label="Billing email" value={state.checkout.billing_email || state.contact.email} onChange={(value) => updateGroup('checkout', 'billing_email', value)} />
                 </div>
                 <button disabled={loading || !state.organization.name || !state.contact.email} onClick={provisionWorkspace} className="mt-6 inline-flex min-h-9 items-center gap-2 bg-[#0B1F33] px-3 text-[11px] font-semibold uppercase text-white disabled:opacity-50">
                   {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <CreditCard className="h-4 w-4" />}
-                  {Number(state.organization.portfolioCount || 0) >= 3 ? 'Send to concierge' : state.checkout.coupon === 'DUDE2026' ? 'Create workspace' : 'Continue to checkout'}
+                  {Number(state.organization.portfolioCount || 0) >= 3 ? 'Send to concierge' : 'Continue to checkout'}
                 </button>
               </SectionCard>
 
@@ -629,10 +629,7 @@ export default function PartnerLifecycle() {
                 <Line label="One-time add-ons" value={money(totals.oneTimeAddOns)} />
                 <Line label="First checkout total" value={money(totals.firstPayment)} strong />
                 {Number(state.organization.portfolioCount || 0) >= 3 && (
-                  <p className="mt-4 text-xs leading-5 text-[#0B1F33]">Portfolio setup is routed to the DANA Partnership Concierge so the team can confirm locations, access, and launch timing before checkout.</p>
-                )}
-                {state.checkout.coupon === 'DUDE2026' && (
-                  <p className="mt-4 text-xs leading-5 text-[#0B1F33]">DUDE2026 gives eligible partners a complimentary first year. No payment is required today, and the workspace opens immediately.</p>
+                  <p className="mt-4 text-xs leading-5 text-[#0B1F33]">Portfolio setup is routed to the Downtown Perks partnership team so the team can confirm locations, access, and launch timing before checkout.</p>
                 )}
                 <div className="mt-4 border-t border-[rgba(11,31,51,0.06)] pt-4">
                   <p className="text-[11px] font-semibold uppercase text-[#C8A96A]">After checkout</p>
@@ -655,7 +652,6 @@ export default function PartnerLifecycle() {
             <div className="grid gap-5 md:grid-cols-2">
               <Field label="Business name" required value={state.checkout.business_name || state.organization.name} onChange={(value) => updateGroup('checkout', 'business_name', value)} />
               <Field label="Billing email" required value={state.checkout.billing_email || state.contact.email} onChange={(value) => updateGroup('checkout', 'billing_email', value)} />
-              <Field label="Coupon" value={state.checkout.coupon} onChange={(value) => updateGroup('checkout', 'coupon', value)} />
               <Field label="Tax" value={String(state.checkout.tax || 0)} onChange={(value) => updateGroup('checkout', 'tax', Number(value || 0))} />
             </div>
             <button disabled={loading} onClick={provisionWorkspace} className="mt-6 inline-flex h-10 items-center gap-2 border border-[rgba(11,31,51,0.12)] bg-white px-4 text-xs font-semibold text-[#0B1F33] hover:border-[#C8A96A] disabled:opacity-60">
@@ -677,9 +673,9 @@ export default function PartnerLifecycle() {
 
   if (location.pathname === '/partners/concierge') {
     return (
-      <Shell eyebrow="DANA Partnership Concierge" title="Your portfolio setup is ready for review." body="Three or more properties or districts need a guided setup so locations, access, billing, QR kits, and launch timing are correct before checkout.">
+      <Shell eyebrow="Downtown Perks partnership team" title="Your portfolio setup is ready for review." body="Three or more properties or districts need a guided setup so locations, access, billing, QR kits, and launch timing are correct before checkout.">
         <SectionCard>
-          <p className="text-sm leading-6 text-[rgba(11,31,51,0.66)]">We saved the signup details and routed the request to the DANA Partnership Concierge. The next step is a quick review of the portfolio, then the team can activate the right annual plan, add-ons, workspace access, map records, and QR package.</p>
+          <p className="text-sm leading-6 text-[rgba(11,31,51,0.66)]">We saved the signup details and routed the request to the Downtown Perks partnership team. The next step is a quick review of the portfolio, then the team can activate the right annual plan, add-ons, workspace access, map records, and QR package.</p>
           <div className="mt-6 flex flex-wrap gap-3">
             <ActionLink to="/admin/outreach-crm">Open concierge intake</ActionLink>
             <ActionLink to="/partners/pricing">Adjust setup</ActionLink>
