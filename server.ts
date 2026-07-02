@@ -8,14 +8,6 @@ import crypto from "crypto";
 import { execFile } from "child_process";
 import { promisify } from "util";
 import { enterpriseComponents, platformArchitecture, platformDomains, serializePlatformDomain } from "./src/platform/registry.js";
-import {
-  buildRegistryEntities,
-  buildRegistryRelationships,
-  filterRegistryEntities,
-  normalizeImportRow,
-  previewRegistryImport,
-  type RegistryImportRow,
-} from "./src/platform/master-registry/index.js";
 import { createAgentStreamEnvelope, getProviderManager, listAgentTools, logOpenAIStatusOnce, routeAgentQuery } from "./backend/modules/ai/index.js";
 import { getIntelligenceCredentialStatus, runIntelligenceAgent, type IntelligenceAgentAction } from "./src/services/intelligence/intelligenceAgent.js";
 import { streamLaunchDeskAgent } from "./src/services/launchDesk/launchDeskAgent.js";
@@ -4765,6 +4757,154 @@ function mapEntityRows(db: Database) {
   return [...merged.values()];
 }
 
+function registryEntityRows(db: Database) {
+  return mapEntityRows(db).map((row) => ({
+    id: String(row.entity_id || row.map_entity_id || row.id),
+    slug: slug(String(row.title || row.name || row.entity_id || row.id)).replace(/_/g, "-"),
+    name: row.title || row.name || row.entity_id || row.id,
+    status: row.status || "draft",
+    active: row.status !== "archived",
+    entityType: row.entity_type || "entity",
+    primaryCategory: row.category || "",
+    secondaryCategory: row.secondary_category || "",
+    subcategory: row.subcategory || "",
+    summary: row.description || row.panel_body || "",
+    description: row.description || row.drawer_copy || row.panel_body || "",
+    address: row.address || "",
+    suite: row.suite || "",
+    building: row.building || "",
+    district: row.district || "",
+    neighbourhood: row.neighbourhood || row.neighborhood || "",
+    city: row.city || "Austin",
+    state: row.state || "TX",
+    postcode: row.postcode || row.zip || "",
+    country: row.country || "US",
+    latitude: Number.isFinite(Number(row.lat ?? row.latitude)) ? Number(row.lat ?? row.latitude) : null,
+    longitude: Number.isFinite(Number(row.lng ?? row.longitude)) ? Number(row.lng ?? row.longitude) : null,
+    phone: row.phone || "",
+    website: row.website || "",
+    image: row.image_url || row.image || "",
+    logo: row.logo_url || row.logo || "",
+    partnerId: row.partner_id || "",
+    source: row.source || row.source_file || row.id || "map_entity",
+    sourceRecordType: String(row.id || "").startsWith("cms_") ? "ContentEntity" : "MapEntityLink",
+    createdAt: row.created_at || "",
+    updatedAt: row.last_updated || row.updated_at || row.created_at || "",
+    analytics: {
+      views: Number(row.analytics_summary?.views || 0),
+      clicks: Number(row.analytics_summary?.clicks || 0),
+      directions: Number(row.analytics_summary?.directions || 0),
+      saves: Number(row.analytics_summary?.saves || 0),
+      conversions: Number(row.analytics_summary?.redemptions || row.analytics_summary?.conversions || 0),
+    },
+    routes: {
+      entityRoute: `/registry/entity/${encodeURIComponent(row.entity_id || row.map_entity_id || row.id)}`,
+      partnerRoute: row.partner_id ? `/partners/${encodeURIComponent(row.partner_id)}` : "",
+      campaignRoute: row.campaign_id ? `/campaigns/${encodeURIComponent(row.campaign_id)}` : "",
+      publicUrl: `/map?entity=${encodeURIComponent(row.entity_id || row.map_entity_id || row.id)}`,
+      deeplink: `/map?entity=${encodeURIComponent(row.entity_id || row.map_entity_id || row.id)}`,
+      mobileRoute: `/map?entity=${encodeURIComponent(row.entity_id || row.map_entity_id || row.id)}`,
+    },
+    raw: row,
+  }));
+}
+
+function filterRegistryEntities(records: Record<string, any>[], filters: Record<string, any> = {}) {
+  const q = String(filters.q || "").toLowerCase();
+  const type = String(filters.type || "").toLowerCase();
+  const category = String(filters.category || "").toLowerCase();
+  const district = String(filters.district || "").toLowerCase();
+  const status = String(filters.status || "").toLowerCase();
+  const limit = Math.min(Math.max(Number(filters.limit || 250), 1), 1000);
+  return records
+    .filter((entity) => !q || `${entity.name} ${entity.summary} ${entity.description} ${entity.primaryCategory} ${entity.district} ${entity.website}`.toLowerCase().includes(q))
+    .filter((entity) => !type || String(entity.entityType || "").toLowerCase() === type)
+    .filter((entity) => !category || String(entity.primaryCategory || "").toLowerCase() === category)
+    .filter((entity) => !district || String(entity.district || "").toLowerCase() === district)
+    .filter((entity) => !status || String(entity.status || "").toLowerCase() === status)
+    .slice(0, limit);
+}
+
+function registryRelationships(db: Database) {
+  return db.entities.ContentRelationship.map((relationship) => ({
+    id: relationship.id,
+    sourceEntityId: relationship.source_entity_id || relationship.sourceEntityId,
+    targetEntityId: relationship.target_entity_id || relationship.targetEntityId,
+    relationshipType: relationship.relationship_type || relationship.relationshipType || "related",
+    weight: Number(relationship.weight || relationship.score || 1),
+    status: relationship.status || "active",
+  }));
+}
+
+function importRowValue(row: Record<string, any>, keys: string[]) {
+  const normalized = Object.entries(row).reduce<Record<string, any>>((acc, [key, value]) => {
+    acc[key.toLowerCase().replace(/[^a-z0-9]+/g, "_")] = value;
+    return acc;
+  }, {});
+  for (const key of keys) {
+    const value = normalized[key.toLowerCase().replace(/[^a-z0-9]+/g, "_")];
+    if (value != null && String(value).trim()) return value;
+  }
+  return "";
+}
+
+function normalizeRegistryImportRow(row: Record<string, any>) {
+  const name = String(importRowValue(row, ["name", "entity name", "title", "company", "business name"]) || "").trim();
+  const latitude = Number(importRowValue(row, ["latitude", "lat"]));
+  const longitude = Number(importRowValue(row, ["longitude", "lng", "lon"]));
+  return {
+    id: String(importRowValue(row, ["id", "entity id", "map entity id"]) || "").trim(),
+    slug: String(importRowValue(row, ["slug"]) || slug(name).replace(/_/g, "-")).trim(),
+    name,
+    status: String(importRowValue(row, ["status"]) || "draft").trim(),
+    entityType: String(importRowValue(row, ["entity type", "type", "partner type"]) || "entity").trim(),
+    primaryCategory: String(importRowValue(row, ["primary category", "category"]) || "").trim(),
+    subcategory: String(importRowValue(row, ["subcategory"]) || "").trim(),
+    summary: String(importRowValue(row, ["summary", "description", "notes"]) || "").trim(),
+    description: String(importRowValue(row, ["description", "notes"]) || "").trim(),
+    address: String(importRowValue(row, ["address"]) || "").trim(),
+    suite: String(importRowValue(row, ["suite"]) || "").trim(),
+    building: String(importRowValue(row, ["building", "property"]) || "").trim(),
+    district: String(importRowValue(row, ["district", "neighborhood", "neighbourhood"]) || "").trim(),
+    city: String(importRowValue(row, ["city"]) || "Austin").trim(),
+    state: String(importRowValue(row, ["state"]) || "TX").trim(),
+    postcode: String(importRowValue(row, ["postcode", "zip"]) || "").trim(),
+    country: String(importRowValue(row, ["country"]) || "US").trim(),
+    phone: String(importRowValue(row, ["phone"]) || "").trim(),
+    website: String(importRowValue(row, ["website", "url"]) || "").trim(),
+    image: String(importRowValue(row, ["image", "image url", "hero image"]) || "").trim(),
+    logo: String(importRowValue(row, ["logo", "logo url"]) || "").trim(),
+    partnerId: String(importRowValue(row, ["partner id", "partner_id"]) || "").trim(),
+    source: String(importRowValue(row, ["source", "source file"]) || "registry_import").trim(),
+    latitude: Number.isFinite(latitude) ? latitude : null,
+    longitude: Number.isFinite(longitude) ? longitude : null,
+    raw: row,
+  };
+}
+
+function previewRegistryRows(existing: Record<string, any>[], rows: Record<string, any>[], source = "registry_import") {
+  const byName = new Map(existing.map((entity) => [String(entity.name || "").toLowerCase(), entity]));
+  const byWebsite = new Map(existing.filter((entity) => entity.website).map((entity) => [String(entity.website).toLowerCase(), entity]));
+  const previewRows = rows.map((row, index) => {
+    const entity = normalizeRegistryImportRow({ ...row, source });
+    if (!entity.name) return { rowIndex: index, action: "skip", entity, reason: "Missing name" };
+    const match = byWebsite.get(String(entity.website).toLowerCase()) || byName.get(String(entity.name).toLowerCase());
+    if (match) return { rowIndex: index, action: "update", entity, matchedEntityId: match.id, reason: match.website === entity.website ? "Matched website" : "Matched name" };
+    return { rowIndex: index, action: "create", entity };
+  });
+  return {
+    source,
+    totalRows: rows.length,
+    creates: previewRows.filter((row) => row.action === "create").length,
+    updates: previewRows.filter((row) => row.action === "update").length,
+    skipped: previewRows.filter((row) => row.action === "skip").length,
+    duplicates: previewRows
+      .filter((row) => row.action === "update")
+      .map((row) => ({ rowIndex: row.rowIndex, matchedEntityId: row.matchedEntityId || "", name: row.entity.name, reason: row.reason || "Matched existing entity" })),
+    rows: previewRows,
+  };
+}
+
 function mapSourceForRow(db: Database, row: Record<string, any>): { entityName: EntityName; id: string } | null {
   if (row.perk_id) return { entityName: "PerkLocation", id: row.perk_id };
   if (row.event_id) return { entityName: "Event", id: row.event_id };
@@ -7901,7 +8041,7 @@ export async function createApp() {
   });
 
   app.get("/api/registry/entities", (req, res) => {
-    const records = filterRegistryEntities(buildRegistryEntities(db, mapEntityRows(db)), {
+    const records = filterRegistryEntities(registryEntityRows(db), {
       q: String(req.query.q || ""),
       type: String(req.query.type || ""),
       category: String(req.query.category || ""),
@@ -7918,7 +8058,7 @@ export async function createApp() {
   });
 
   app.get("/api/registry/search", (req, res) => {
-    const records = filterRegistryEntities(buildRegistryEntities(db, mapEntityRows(db)), {
+    const records = filterRegistryEntities(registryEntityRows(db), {
       q: String(req.query.q || ""),
       type: String(req.query.type || ""),
       category: String(req.query.category || ""),
@@ -7930,10 +8070,10 @@ export async function createApp() {
   });
 
   app.get("/api/registry/entity/:id", (req, res) => {
-    const entities = buildRegistryEntities(db, mapEntityRows(db));
+    const entities = registryEntityRows(db);
     const entity = entities.find((item) => item.id === req.params.id || item.slug === req.params.id);
     if (!entity) return res.status(404).json({ error: "Registry entity not found." });
-    const relationships = buildRegistryRelationships(db).filter((item) => item.sourceEntityId === entity.id || item.targetEntityId === entity.id);
+    const relationships = registryRelationships(db).filter((item) => item.sourceEntityId === entity.id || item.targetEntityId === entity.id);
     const campaigns = db.entities.Campaign.filter((campaign) => campaign.related_entity_id === entity.id || campaign.partner_id === entity.partnerId);
     const perks = db.entities.PerkLocation.filter((perk) => perk.partner_id === entity.partnerId || perk.related_entity_id === entity.id);
     const events = db.entities.Event.filter((event) => event.partner_id === entity.partnerId || event.related_entity_id === entity.id);
@@ -7960,11 +8100,11 @@ export async function createApp() {
   });
 
   app.get("/api/registry/relationships", (_req, res) => {
-    res.json(buildRegistryRelationships(db));
+    res.json(registryRelationships(db));
   });
 
   app.post("/api/registry/entity", async (req, res) => {
-    const normalized = normalizeImportRow(req.body || {});
+    const normalized = normalizeRegistryImportRow(req.body || {});
     if (!normalized.name) return res.status(400).json({ error: "Name is required." });
     const recordId = normalized.id || `registry_${slug(String(normalized.name))}`;
     const before = db.entities.ContentEntity.find((item) => item.id === recordId);
@@ -8012,7 +8152,7 @@ export async function createApp() {
     const record = db.entities.ContentEntity.find((item) => item.id === req.params.id || item.slug === req.params.id);
     if (!record || record.deleted_at) return res.status(404).json({ error: "Registry entity not found." });
     const before = { ...record };
-    const normalized = normalizeImportRow({ ...record, ...req.body });
+    const normalized = normalizeRegistryImportRow({ ...record, ...req.body });
     Object.assign(record, {
       ...req.body,
       name: normalized.name || record.name,
@@ -8052,13 +8192,13 @@ export async function createApp() {
 
   app.post("/api/registry/import", async (req, res) => {
     const source = String(req.body?.source || req.body?.filename || "registry_import");
-    const rows: RegistryImportRow[] = Array.isArray(req.body?.rows)
+    const rows: Record<string, any>[] = Array.isArray(req.body?.rows)
       ? req.body.rows
       : typeof req.body?.csv === "string"
         ? parseCsv(req.body.csv)
         : [];
-    const existing = buildRegistryEntities(db, mapEntityRows(db));
-    const preview = previewRegistryImport(existing, rows, source);
+    const existing = registryEntityRows(db);
+    const preview = previewRegistryRows(existing, rows, source);
     if (req.body?.preview !== false && req.body?.commit !== true) return res.json(preview);
 
     const imported: EntityRecord[] = [];
