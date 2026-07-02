@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
+import { QuickViewTable } from '@/components/QuickViewTable';
 import { Button } from '@/components/ui/Button';
 import {
   ArrowRight,
@@ -601,16 +602,8 @@ function SectionTitle({ eyebrow, title, body }: { eyebrow: string; title: string
 
 function SummaryGrid({ rows }: { rows: Array<{ label: string; value: React.ReactNode; detail: string }> }) {
   return (
-    <section className="dp-summary-matrix">
-      <div className="dp-summary-matrix__grid">
-        {rows.map((row) => (
-          <div key={row.label} className="dp-summary-matrix__item">
-            <p className="dp-summary-matrix__label">{row.label}</p>
-            <strong className="dp-summary-matrix__value">{row.value}</strong>
-            <p className="dp-summary-matrix__detail">{row.detail}</p>
-          </div>
-        ))}
-      </div>
+    <section>
+      <QuickViewTable label="Billing and promotion quick view" metrics={rows} />
     </section>
   );
 }

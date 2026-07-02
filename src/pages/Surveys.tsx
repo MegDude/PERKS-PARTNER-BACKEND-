@@ -9,6 +9,7 @@ import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import SurveyForm from '@/components/surveys/SurveyForm';
 import SurveyResults from '@/components/surveys/SurveyResults';
+import { QuickViewTable } from '@/components/QuickViewTable';
 
 const statusConfig: any = {
   draft: { icon: Clock, color: 'text-[#11182B] ', bg: 'bg-white', label: 'Draft' },
@@ -538,14 +539,16 @@ export default function Surveys() {
 
         <section className="mb-8 bg-white">
           <p className="text-[10px] font-semibold uppercase text-[#C8A96A]">Quick look</p>
-          <div className="dp-summary-matrix mt-2">
-            <div className="dp-summary-matrix__grid">
-            <StatTile label="Feedback templates" value={surveyTemplates.length} />
-            <StatTile label="Follow-up journeys" value={(messagingJourneys as any[]).length} />
-            <StatTile label="CRM segments" value={(crmSegments as any[]).length} />
-            <StatTile label="Workflows" value={(automationRuns as any[]).length} />
-            </div>
-          </div>
+          <QuickViewTable
+            label="Survey quick view"
+            className="mt-2"
+            metrics={[
+              { label: 'Feedback templates', value: surveyTemplates.length, detail: 'Reusable survey formats' },
+              { label: 'Follow-up journeys', value: (messagingJourneys as any[]).length, detail: 'Message flows connected' },
+              { label: 'CRM segments', value: (crmSegments as any[]).length, detail: 'Audiences ready to target' },
+              { label: 'Workflows', value: (automationRuns as any[]).length, detail: 'Automations on file' },
+            ]}
+          />
         </section>
 
         <section className="mb-8 bg-white">
@@ -749,15 +752,6 @@ function OperationalRow({ title, meta, detail, extra, actions }: any) {
       </div>
       <p className="mt-2 text-sm leading-6 text-[rgba(11,31,51,0.62)]">{detail}</p>
       {extra ? <p className="mt-1 text-xs leading-5 text-[rgba(11,31,51,0.48)]">{extra}</p> : null}
-    </div>
-  );
-}
-
-function StatTile({ label, value }: any) {
-  return (
-    <div className="dp-summary-matrix__item">
-      <p className="dp-summary-matrix__label">{label}</p>
-      <strong className="dp-summary-matrix__value">{value}</strong>
     </div>
   );
 }

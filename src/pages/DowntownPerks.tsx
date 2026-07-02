@@ -334,7 +334,7 @@ export default function DowntownPerks() {
             <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[#C8A96A]">Partner offers</p>
             <h1 className="mt-1.5 text-2xl font-semibold tracking-normal sm:text-3xl">Offers partners can manage</h1>
             <p className="mt-2 max-w-3xl text-[13px] leading-5 text-[rgba(11,31,51,0.64)]">
-              Create offers residents can understand, save, scan, and use. Keep the partner, dates, results, and next move close at hand.
+              Create offers residents can understand, save, scan, and use. Keep the partner, dates, results, and next step close at hand.
             </p>
           </div>
           <div className="flex flex-row flex-wrap items-center gap-2">

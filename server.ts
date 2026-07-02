@@ -113,7 +113,14 @@ type EntityName =
   | "BookingLink"
   | "BoardMeeting"
   | "BoardDecision"
-  | "BoardActionItem";
+  | "BoardActionItem"
+  | "Stakeholder"
+  | "StakeholderOrganization"
+  | "StakeholderRelationship"
+  | "StakeholderInteraction"
+  | "StakeholderCampaign"
+  | "StakeholderResearchSource"
+  | "CivicInsight";
 
 type EntityRecord = Record<string, any> & { id: string; created_at?: string; updated_at?: string };
 type Database = {
@@ -211,6 +218,13 @@ const entityNames: EntityName[] = [
   "BoardMeeting",
   "BoardDecision",
   "BoardActionItem",
+  "Stakeholder",
+  "StakeholderOrganization",
+  "StakeholderRelationship",
+  "StakeholderInteraction",
+  "StakeholderCampaign",
+  "StakeholderResearchSource",
+  "CivicInsight",
 ];
 
 const now = () => new Date().toISOString();
@@ -604,6 +618,12 @@ const partnerOutreachCsvSources = {
   Dashboard: "/Users/megdude/Downloads/OUTREACH/Dashboard.csv",
   "Source Log": "/Users/megdude/Downloads/OUTREACH/Source_Log.csv",
 };
+
+const stakeholderSourceArchives = {
+  civicDataZip: "/Users/megdude/Downloads/PERKS BAC/AUSTIN CIVIC DATA.zip",
+  masterMapInventoryZip: "/Users/megdude/Downloads/x MASTER MAP INVENTORY .zip",
+};
+
 const needsVerification = "Needs verification";
 const outreachStatuses = [
   "Not started",
@@ -703,6 +723,16 @@ async function readZipEntryIfExists(zipPath: string, entryName: string) {
     return stdout;
   } catch {
     return "";
+  }
+}
+
+async function listZipEntries(zipPath: string) {
+  try {
+    await fs.stat(zipPath);
+    const { stdout } = await execFileAsync("/usr/bin/unzip", ["-Z1", zipPath], { maxBuffer: 20 * 1024 * 1024 });
+    return stdout.split(/\r?\n/).map((entry) => entry.trim()).filter(Boolean);
+  } catch {
+    return [];
   }
 }
 
@@ -2863,6 +2893,110 @@ function draftBoardMinutes(input: { meeting: Record<string, any>; notes?: string
       status: "open",
       notes: line,
     })),
+  };
+}
+
+function stakeholderName(row: Record<string, any>) {
+  return cleanCrmValue(row["Stakeholder Name"] || row.name || row.Name || row.contact_name || row.Contact || row["Contact Name"] || row.person || row.Person);
+}
+
+function stakeholderOrganization(row: Record<string, any>) {
+  return cleanCrmValue(row.Organization || row.organization || row.Company || row.company || row.business_name || row.name || row.Name);
+}
+
+function stakeholderCategory(row: Record<string, any>) {
+  return cleanCrmValue(row.Category || row.category || row.Type || row.type || row.entity_type || row.partner_type) || "Potential Partner";
+}
+
+function stakeholderScore(row: Record<string, any>) {
+  const raw = Number(row.Priority || row.priority || row.Score || row.score || row.influence_score || 50);
+  return Number.isFinite(raw) ? Math.max(0, Math.min(100, raw)) : 50;
+}
+
+function normalizeStakeholderRecord(row: Record<string, any>, source: string) {
+  const person = stakeholderName(row);
+  const organization = stakeholderOrganization(row);
+  const fallbackName = person || organization;
+  if (!fallbackName) return null;
+  const idSeed = slug(`${person || "org"}_${organization || fallbackName}_${source}`).slice(0, 120);
+  return {
+    id: `stakeholder_${idSeed}`,
+    stakeholder_name: person,
+    organization,
+    entity_type: stakeholderCategory(row),
+    role_title: cleanCrmValue(row["Role/Title"] || row.title || row.Title || row.role || row.Role),
+    influence_area: cleanCrmValue(row["Influence Area"] || row.influence_area || row.district || row.District || row.category),
+    dana_alignment: cleanCrmValue(row["Alignment to DANA"] || row.dana_alignment || row.notes),
+    downtown_perks_alignment: cleanCrmValue(row["Alignment to Downtown Perks"] || row.downtown_perks_alignment || row.suggested_perk),
+    priority: cleanCrmValue(row.Priority || row.priority || row.Tier || row.tier) || "Tier 3",
+    influence_score: stakeholderScore(row),
+    commercial_score: stakeholderScore({ score: row.commercial_score || row.priority_score || row.Score }),
+    contact_email: cleanCrmValue(row.Email || row.email || row["Contact Email"] || row.contact_email),
+    contact_phone: cleanCrmValue(row.Phone || row.phone || row["Contact Phone"] || row.contact_phone),
+    website: cleanCrmValue(row.Website || row.website),
+    linkedin: cleanCrmValue(row.LinkedIn || row.linkedin),
+    next_action: cleanCrmValue(row["Next action"] || row.next_action || row.next_step),
+    status: cleanCrmValue(row.Status || row.status) || "Needs research",
+    verification_status: "needs_review",
+    source_file: source,
+    raw_metadata: row,
+  };
+}
+
+function civicMetricName(entry: string) {
+  return path.basename(entry).replace(/\.csv$/i, "").replace(/-tracts-selected=\d.*/i, "").replace(/_/g, " ");
+}
+
+async function buildAustinCivicInsightsPreview(limit = 80) {
+  const zipPath = stakeholderSourceArchives.civicDataZip;
+  const entries = (await listZipEntries(zipPath)).filter((entry) => entry.endsWith(".csv") && !entry.includes("__MACOSX/"));
+  const insights = [];
+  for (const entry of entries.slice(0, limit)) {
+    const rows = parseCsv(await readZipEntryIfExists(zipPath, entry)).slice(0, 20);
+    insights.push({
+      id: `civic_insight_${slug(entry).slice(0, 120)}`,
+      title: civicMetricName(entry),
+      geography: entry.includes("/DOWNTOWN/") ? "Downtown Austin" : "Austin",
+      source_file: entry,
+      source_archive: zipPath,
+      record_count: rows.length,
+      summary: `${civicMetricName(entry)} dataset for ${entry.includes("/DOWNTOWN/") ? "Downtown Austin" : "Austin"} civic context.`,
+      insight_type: "civic_economic_context",
+      status: "imported",
+      verification_status: "source_file",
+      sample_rows: rows.slice(0, 5),
+    });
+  }
+  return insights;
+}
+
+async function buildStakeholderImportPreview(limit = 500) {
+  const rows: Array<Record<string, any> & { __source?: string }> = [];
+  for (const [sheetName, filePath] of Object.entries(partnerOutreachCsvSources)) {
+    (await readCsvIfExists(filePath)).forEach((row) => rows.push({ ...row, __source: sheetName }));
+  }
+  const inventoryRows = parseCsv(await readZipEntryIfExists(stakeholderSourceArchives.masterMapInventoryZip, "x MASTER MAP INVENTORY /frost_tower_partner_intelligence.csv"));
+  inventoryRows.forEach((row) => rows.push({ ...row, __source: "frost_tower_partner_intelligence.csv" }));
+  const normalized = rows
+    .map((row) => normalizeStakeholderRecord(row, row.__source || "stakeholder_import"))
+    .filter(Boolean)
+    .slice(0, limit) as Record<string, any>[];
+  const unique = new Map<string, Record<string, any>>();
+  normalized.forEach((record) => {
+    if (!unique.has(record.id)) unique.set(record.id, record);
+  });
+  return Array.from(unique.values());
+}
+
+function stakeholderMetrics(db: Database) {
+  const stakeholders = db.entities.Stakeholder;
+  return {
+    stakeholders: stakeholders.length,
+    organizations: db.entities.StakeholderOrganization.length,
+    relationships: db.entities.StakeholderRelationship.length,
+    civicInsights: db.entities.CivicInsight.length,
+    needsVerification: stakeholders.filter((item) => String(item.verification_status || "").includes("needs")).length,
+    tier1: stakeholders.filter((item) => String(item.priority || "").toLowerCase().includes("tier 1") || Number(item.influence_score || 0) >= 85).length,
   };
 }
 
@@ -5459,6 +5593,136 @@ export async function createApp() {
 
   app.get("/api/board-meetings/integrations/status", (_req, res) => {
     res.json(civicOperationsStatus());
+  });
+
+  app.get("/api/stakeholder-intelligence", (req, res) => {
+    const query = String(req.query.q || "").toLowerCase();
+    const type = String(req.query.type || "").toLowerCase();
+    const stakeholders = db.entities.Stakeholder
+      .filter((item) => !type || String(item.entity_type || "").toLowerCase().includes(type))
+      .filter((item) => {
+        if (!query) return true;
+        return [item.stakeholder_name, item.organization, item.role_title, item.influence_area, item.tags, item.notes]
+          .join(" ")
+          .toLowerCase()
+          .includes(query);
+      })
+      .sort((a, b) => Number(b.influence_score || 0) - Number(a.influence_score || 0));
+    res.json({
+      stakeholders,
+      organizations: db.entities.StakeholderOrganization,
+      relationships: db.entities.StakeholderRelationship,
+      campaigns: db.entities.StakeholderCampaign,
+      civicInsights: db.entities.CivicInsight,
+      metrics: stakeholderMetrics(db),
+    });
+  });
+
+  app.get("/api/stakeholder-intelligence/import-preview", async (_req, res) => {
+    const [stakeholders, civicInsights] = await Promise.all([
+      buildStakeholderImportPreview(500),
+      buildAustinCivicInsightsPreview(120),
+    ]);
+    res.json({
+      stakeholders,
+      civicInsights,
+      counts: {
+        stakeholders: stakeholders.length,
+        civicInsights: civicInsights.length,
+      },
+      sources: stakeholderSourceArchives,
+    });
+  });
+
+  app.post("/api/stakeholder-intelligence/import", async (req, res) => {
+    const includeCivicInsights = req.body?.includeCivicInsights !== false;
+    const stakeholders = await buildStakeholderImportPreview(700);
+    const civicInsights = includeCivicInsights ? await buildAustinCivicInsightsPreview(160) : [];
+    let created = 0;
+    let updated = 0;
+    const orgs = new Map<string, Record<string, any>>();
+    stakeholders.forEach((record) => {
+      const existing = db.entities.Stakeholder.find((item) => item.id === record.id);
+      if (existing) {
+        Object.assign(existing, { ...record, updated_at: now() });
+        updated += 1;
+      } else {
+        db.entities.Stakeholder.push(withTimestamps(record, record.id));
+        created += 1;
+      }
+      if (record.organization) {
+        const orgId = `stakeholder_org_${slug(record.organization)}`;
+        orgs.set(orgId, {
+          id: orgId,
+          name: record.organization,
+          organization_type: record.entity_type || "Organization",
+          current_dana_relationship: record.dana_alignment || "",
+          current_downtown_perks_relationship: record.downtown_perks_alignment || "",
+          verification_status: "needs_review",
+          source_file: record.source_file,
+        });
+      }
+    });
+    orgs.forEach((org, id) => ensureRecord(db.entities.StakeholderOrganization, id, org));
+    civicInsights.forEach((insight) => ensureRecord(db.entities.CivicInsight, insight.id, insight));
+    const importLog = withTimestamps({
+      name: "DANA stakeholder intelligence import",
+      status: "completed",
+      trigger: "manual_import",
+      action: "normalize_stakeholders_and_civic_insights",
+      target: "stakeholder_intelligence",
+      logs: [{ at: now(), message: `Imported ${created} stakeholders, updated ${updated}, loaded ${civicInsights.length} civic insight datasets.` }],
+    }, makeId("automation"));
+    db.entities.AutomationRun.push(importLog);
+    writeAuditEvent(db, req, { action: "stakeholder_intelligence_imported", entity_type: "stakeholder_import", entity_id: importLog.id, after: importLog });
+    await saveDatabase(db);
+    res.json({ created, updated, organizations: orgs.size, civicInsights: civicInsights.length, metrics: stakeholderMetrics(db), import_log_id: importLog.id });
+  });
+
+  app.post("/api/stakeholder-intelligence/agent", async (req, res) => {
+    const action = String(req.body?.action || "recommend_next_action") as IntelligenceAgentAction;
+    const allowedActions: IntelligenceAgentAction[] = ["generate_partner_strategy", "generate_meeting_agenda", "generate_follow_up", "recommend_next_action"];
+    if (!allowedActions.includes(action)) return res.status(400).json({ error: "Unsupported stakeholder intelligence action." });
+    const stakeholderId = String(req.body?.stakeholderId || "");
+    const stakeholder = (db.entities.Stakeholder.find((item) => item.id === stakeholderId) || db.entities.Stakeholder[0] || {}) as Record<string, any>;
+    const relatedOrg = (db.entities.StakeholderOrganization.find((org) => org.name === stakeholder.organization) || {}) as Record<string, any>;
+    const civicInsights = db.entities.CivicInsight.slice(0, 20);
+    const result = await runIntelligenceAgent(action, {
+      company: {
+        id: stakeholder.id,
+        companyName: stakeholder.organization || stakeholder.stakeholder_name || "DANA stakeholder",
+        partnerType: stakeholder.entity_type || "civic",
+        status: stakeholder.status || "Needs research",
+      },
+      contacts: stakeholder.stakeholder_name ? [stakeholder] : [],
+      building: relatedOrg,
+      campaignCatalog: db.entities.StakeholderCampaign.slice(0, 20),
+      platformCapabilities: {
+        module: "DANA Stakeholder Intelligence",
+        civicEconomicContext: civicInsights,
+        capabilities: ["relationship_crm", "influence_scoring", "civic_research", "downtown_perks_alignment", "campaign_targeting"],
+      },
+      workspaceStatus: {
+        metrics: stakeholderMetrics(db),
+        stakeholder,
+        organization: relatedOrg,
+      },
+      notes: req.body?.notes || "Use Austin civic insight records to consider downtown economy, housing, access, transit, community, and events context.",
+    });
+    const insight = withTimestamps({
+      title: `Stakeholder Intelligence: ${stakeholder.organization || stakeholder.stakeholder_name || action}`,
+      provider: "openai",
+      status: result.ok ? "generated" : "failed",
+      prompt_type: action,
+      source_module: "stakeholder_intelligence",
+      stakeholder_id: stakeholder.id || "",
+      result: result.ok && "data" in result ? result.data : null,
+      error: result.ok ? "" : result.error,
+    }, makeId("ai_insight"));
+    db.entities.AiInsight.push(insight);
+    writeAuditEvent(db, req, { action: "stakeholder_intelligence_generated", entity_type: "stakeholder", entity_id: stakeholder.id || insight.id, after: insight });
+    await saveDatabase(db);
+    res.status(result.ok ? 200 : result.status || 500).json({ ...result, insight_id: insight.id });
   });
 
   app.post("/api/board-meetings", async (req, res) => {
@@ -8126,8 +8390,27 @@ export async function createApp() {
     res.sendFile(path.join(dataDir, req.params.file));
   });
 
-  app.post("/api/integrations/upload-file", (req, res) => {
-    res.json({ file_url: req.body?.file_url || "https://images.unsplash.com/photo-1542204165-65bf26472b9b?auto=format&fit=crop&w=900&q=80" });
+  app.get("/api/uploads/:file", async (req, res) => {
+    res.sendFile(path.join(dataDir, "uploads", req.params.file));
+  });
+
+  app.post("/api/integrations/upload-file", async (req, res) => {
+    const fileName = String(req.body?.file_name || req.body?.name || "asset").replace(/[^a-zA-Z0-9._-]+/g, "-").slice(0, 90);
+    const dataUrl = String(req.body?.data_url || "");
+    const existingUrl = String(req.body?.file_url || "");
+    if (!dataUrl && existingUrl) return res.json({ file_url: existingUrl, status: "linked" });
+    const match = dataUrl.match(/^data:([a-zA-Z0-9/+.-]+);base64,(.+)$/);
+    if (!match) return res.status(400).json({ error: "Upload requires a base64 data_url or file_url." });
+    const mime = match[1].toLowerCase();
+    const allowed = new Set(["image/png", "image/jpeg", "image/webp", "image/gif", "application/pdf"]);
+    if (!allowed.has(mime)) return res.status(400).json({ error: "Only PNG, JPG, WebP, GIF, and PDF assets are supported." });
+    const buffer = Buffer.from(match[2], "base64");
+    if (buffer.length > 4 * 1024 * 1024) return res.status(413).json({ error: "Asset must be under 4MB." });
+    const extension = mime === "image/jpeg" ? "jpg" : mime.split("/")[1].replace("svg+xml", "svg");
+    const storedName = `${Date.now()}-${crypto.randomBytes(4).toString("hex")}-${fileName.replace(/\.[^.]+$/, "")}.${extension}`;
+    await fs.mkdir(path.join(dataDir, "uploads"), { recursive: true });
+    await fs.writeFile(path.join(dataDir, "uploads", storedName), buffer);
+    res.status(201).json({ file_url: `/api/uploads/${storedName}`, file_name: storedName, content_type: mime, bytes: buffer.length, status: "uploaded" });
   });
 
   app.post("/api/integrations/send-email", async (req, res) => {

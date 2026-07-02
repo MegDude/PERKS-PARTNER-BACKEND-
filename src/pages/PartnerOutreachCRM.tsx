@@ -20,6 +20,7 @@ import {
   Send,
   SlidersHorizontal,
   Trash2,
+  Upload,
   X,
 } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -154,6 +155,7 @@ export default function PartnerOutreachCRM() {
   const [noteDraft, setNoteDraft] = useState('');
   const [taskDraft, setTaskDraft] = useState({ title: '', due_date: '', priority: 'Normal' });
   const [fileDraft, setFileDraft] = useState({ title: '', url: '' });
+  const [actionNotice, setActionNotice] = useState('');
 
   async function load() {
     setLoading(true);
@@ -246,6 +248,7 @@ export default function PartnerOutreachCRM() {
 
   const visibleIds = useMemo(() => filtered.map((partner) => partner.id), [filtered]);
   const allVisibleSelected = visibleIds.length > 0 && visibleIds.every((id) => selectedIds.includes(id));
+  const exportQuery = selectedIds.length ? `?ids=${encodeURIComponent(selectedIds.join(','))}` : '';
 
   function persistSavedViews(next: SavedView[]) {
     setSavedViews(next);
@@ -299,20 +302,38 @@ export default function PartnerOutreachCRM() {
 
   async function importData() {
     setWorking('import');
-    await fetch('/api/outreach-crm/import', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
-    await load();
-    setWorking('');
+    setActionNotice('');
+    try {
+      const response = await fetch('/api/outreach-crm/import', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+      if (!response.ok) throw new Error('Import failed');
+      const payload = await response.json();
+      await load();
+      setActionNotice(`Import complete: ${Number(payload.imported_count || 0).toLocaleString()} records processed.`);
+    } catch {
+      setActionNotice('Import could not finish. Check the source files and try again.');
+    } finally {
+      setWorking('');
+    }
   }
 
   async function enrichMapData() {
     setWorking('enrich');
-    await fetch('/api/outreach-crm/enrich-map-data', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ refresh_map: true, google_places: true }),
-    });
-    await load();
-    setWorking('');
+    setActionNotice('');
+    try {
+      const response = await fetch('/api/outreach-crm/enrich-map-data', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refresh_map: true, google_places: true }),
+      });
+      if (!response.ok) throw new Error('Verification failed');
+      const payload = await response.json();
+      await load();
+      setActionNotice(`Verification complete: ${Number(payload.updated_count || payload.enriched_count || 0).toLocaleString()} records updated.`);
+    } catch {
+      setActionNotice('Verification could not finish. Check map and Google Places configuration.');
+    } finally {
+      setWorking('');
+    }
   }
 
   async function patchPartner(id: string, data: Record<string, any>) {
@@ -483,6 +504,38 @@ export default function PartnerOutreachCRM() {
     setWorking('');
   }
 
+  async function uploadAsset(file?: File | null) {
+    if (!selected?.id || !file) return;
+    setWorking('asset-upload');
+    setActionNotice('');
+    try {
+      const dataUrl = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result || ''));
+        reader.onerror = () => reject(new Error('Could not read file'));
+        reader.readAsDataURL(file);
+      });
+      const uploadResponse = await fetch('/api/integrations/upload-file', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ file_name: file.name, data_url: dataUrl }),
+      });
+      const upload = await uploadResponse.json();
+      if (!uploadResponse.ok) throw new Error(upload.error || 'Upload failed');
+      await fetch(`/api/outreach-crm/partners/${selected.id}/files`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: file.name, url: upload.file_url, file_type: upload.content_type || 'asset' }),
+      });
+      setActionNotice(`${file.name} uploaded and linked.`);
+      await load();
+    } catch {
+      setActionNotice('Asset upload failed. Use PNG, JPG, WebP, GIF, or PDF under 4MB.');
+    } finally {
+      setWorking('');
+    }
+  }
+
   async function deleteFileLink(id: string) {
     if (!window.confirm('Delete this file link?')) return;
     setWorking(`file-${id}`);
@@ -566,11 +619,12 @@ export default function PartnerOutreachCRM() {
               <Database className="h-3.5 w-3.5 text-[#C8A96A]" /> Export
             </span>
             {exportFormats.map((format) => (
-              <a key={format.key} href={`/api/outreach-crm/export.${format.key}`} className="inline-flex min-h-8 items-center gap-1 border border-[rgba(11,31,51,0.08)] px-2 text-[9.5px] font-semibold uppercase text-[#0B1F33] hover:border-[#C8A96A]">
+              <a key={format.key} href={`/api/outreach-crm/export.${format.key}${exportQuery}`} className="inline-flex min-h-8 items-center gap-1 border border-[rgba(11,31,51,0.08)] px-2 text-[9.5px] font-semibold uppercase text-[#0B1F33] hover:border-[#C8A96A]">
                 <Download className="h-3 w-3" /> {format.label}
               </a>
             ))}
           </div>
+          {actionNotice && <p className="mt-1 text-[10px] font-semibold text-[rgba(11,31,51,0.58)]">{actionNotice}</p>}
         </div>
       </section>
 
@@ -1076,8 +1130,12 @@ export default function PartnerOutreachCRM() {
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <p className="text-[9px] font-bold uppercase text-[#C8A96A]">Files</p>
-                  <p className="mt-0.5 text-[9px] font-semibold uppercase text-[rgba(11,31,51,0.42)]">{selected.files?.length || 0} linked</p>
+                  <p className="mt-0.5 text-[9px] font-semibold uppercase text-[rgba(11,31,51,0.42)]">{selected.files?.length || 0} assets linked</p>
                 </div>
+                <label className="inline-flex min-h-7 cursor-pointer items-center gap-1 border border-[rgba(11,31,51,0.1)] px-2 text-[8.5px] font-semibold uppercase text-[#0B1F33] hover:border-[#C8A96A]">
+                  <Upload className={`h-3 w-3 ${working === 'asset-upload' ? 'animate-spin' : ''}`} /> Upload
+                  <input type="file" accept="image/png,image/jpeg,image/webp,image/gif,application/pdf" className="sr-only" onChange={(event) => void uploadAsset(event.target.files?.[0])} />
+                </label>
               </div>
               <div className="mt-2 grid gap-1.5">
                 <div className="grid gap-1.5 sm:grid-cols-[140px_1fr_auto]">

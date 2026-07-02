@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowRight, Calendar, Check, Download, Eye, Loader2, Megaphone, Plus, Send, Share2, Users } from 'lucide-react';
 import { toast } from 'sonner';
 import { base44 } from '@/api/base44Client';
+import { QuickViewTable } from '@/components/QuickViewTable';
 
 type EventRecord = {
   id: string;
@@ -295,14 +296,15 @@ export default function Events() {
               Create resident and partner events, take them live, track RSVPs, queue follow-up, and save reports from one workspace.
             </p>
           </div>
-          <div className="dp-summary-matrix">
-            <div className="dp-summary-matrix__grid">
-              <Metric label="Events" value={events.length} detail="Total event records" />
-              <Metric label="Live soon" value={activeEvents} detail="Active or scheduled" />
-              <Metric label="RSVPs" value={rsvps.length} detail="People who said yes" />
-              <Metric label="Capacity" value={totalCapacity} detail="Seats or spots on file" />
-            </div>
-          </div>
+          <QuickViewTable
+            label="Event quick view"
+            metrics={[
+              { label: 'Events', value: events.length, detail: 'Total event records' },
+              { label: 'Live soon', value: activeEvents, detail: 'Active or scheduled' },
+              { label: 'RSVPs', value: rsvps.length, detail: 'People who said yes' },
+              { label: 'Capacity', value: totalCapacity, detail: 'Seats or spots on file' },
+            ]}
+          />
         </header>
 
         {isLoading ? (
@@ -415,14 +417,16 @@ export default function Events() {
                 <aside className="bg-white">
                   <p className="text-[11px] font-bold uppercase text-[#C8A96A]">Event read</p>
                   <h2 className="mt-2 text-xl font-semibold leading-tight">{eventTitle(selectedEvent)}</h2>
-                  <div className="dp-summary-matrix mt-4">
-                    <div className="dp-summary-matrix__grid">
-                      <Metric label="RSVPs" value={eventRsvps.length} detail="Registered residents" />
-                      <Metric label="Checked in" value={checkedIn} detail="Attendance recorded" />
-                      <Metric label="Capacity" value={selectedEvent.capacity || 0} detail="Configured spots" />
-                      <Metric label="Fill" value={selectedEvent.capacity ? `${Math.round((eventRsvps.length / Number(selectedEvent.capacity)) * 100)}%` : 'Open'} detail="RSVP rate" />
-                    </div>
-                  </div>
+                  <QuickViewTable
+                    label="Selected event quick view"
+                    className="mt-4"
+                    metrics={[
+                      { label: 'RSVPs', value: eventRsvps.length, detail: 'Registered residents' },
+                      { label: 'Checked in', value: checkedIn, detail: 'Attendance recorded' },
+                      { label: 'Capacity', value: selectedEvent.capacity || 0, detail: 'Configured spots' },
+                      { label: 'Fill', value: selectedEvent.capacity ? `${Math.round((eventRsvps.length / Number(selectedEvent.capacity)) * 100)}%` : 'Open', detail: 'RSVP rate' },
+                    ]}
+                  />
                   <div className="mt-5 grid gap-2">
                     {eventRsvps.slice(0, 6).map((rsvp: any) => (
                       <div key={rsvp.id} className="grid grid-cols-[minmax(0,1fr)_88px] gap-3 py-1 text-[11px]">
@@ -440,16 +444,6 @@ export default function Events() {
           </main>
         )}
       </div>
-    </div>
-  );
-}
-
-function Metric({ label, value, detail }: { label: string; value: any; detail: string }) {
-  return (
-    <div className="dp-summary-matrix__item">
-      <p className="dp-summary-matrix__label">{label}</p>
-      <strong className="dp-summary-matrix__value">{typeof value === 'number' ? value.toLocaleString() : value}</strong>
-      <p className="dp-summary-matrix__detail">{detail}</p>
     </div>
   );
 }

@@ -98,7 +98,7 @@ export default function EngagementHub() {
       <div className="flex justify-between items-end">
         <div>
           <h1 className="text-3xl font-bold text-[#11182B] tracking-tight">Broadcasts</h1>
-          <p className="text-slate-500 font-medium mt-1">Write to residents, share events, and keep building messages moving.</p>
+          <p className="text-slate-500 font-medium mt-1">Write to residents, share events, and manage building messages.</p>
         </div>
         <Button onClick={() => setShowBroadcastModal(true)} className="px-5 py-2.5 bg-[#11182B] text-white rounded-none font-bold text-xs uppercase hover:bg-white hover:text-[#11182B] border border-[#11182B] transition-colors flex items-center gap-2">
           <Zap className="w-4 h-4" /> New broadcast

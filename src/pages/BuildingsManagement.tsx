@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { base44 } from '@/api/base44Client';
+import { QuickViewTable } from '@/components/QuickViewTable';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
@@ -815,13 +816,11 @@ export default function BuildingsManagement() {
 
           <TabsContent value="access">
             <SectionShell eyebrow="Access" title="Resident and staff access" description="Review invite status, QR access, resident cards, building rules, partner access, and staff groups.">
-              <div className="dp-summary-matrix">
-                <div className="dp-summary-matrix__grid">
-                <Metric label="Invited" value={buildingResidents.filter((r: any) => r.resident_status === 'invited').length} detail="Pending residents" />
-                <Metric label="Activated" value={activeAccess} detail="Cards or perks active" />
-                <Metric label="Disabled" value={buildingResidents.filter((r: any) => r.access_status === 'disabled').length} detail="Access blocked" />
-                </div>
-              </div>
+              <QuickViewTable label="Access quick view" metrics={[
+                { label: 'Invited', value: buildingResidents.filter((r: any) => r.resident_status === 'invited').length, detail: 'Pending residents' },
+                { label: 'Activated', value: activeAccess, detail: 'Cards or perks active' },
+                { label: 'Disabled', value: buildingResidents.filter((r: any) => r.access_status === 'disabled').length, detail: 'Access blocked' },
+              ]} />
               <div className="mt-5 grid gap-3">
                 {buildingResidents.map((resident: any) => (
                   <Row key={resident.id} title={resident.name} detail={`${resident.email} • Access: ${resident.access_status || 'pending'} • Card: ${resident.card_status || 'not issued'}`} actions={<><Button variant="secondary" onClick={() => updateResidentAccess(resident, 'active')}>Activate</Button><Button variant="secondary" onClick={() => updateResidentAccess(resident, 'disabled')}>Disable</Button></>} />
@@ -832,16 +831,14 @@ export default function BuildingsManagement() {
 
           <TabsContent value="engagement">
             <SectionShell eyebrow="Participation" title="What residents are doing" description="Building activity from residents, perk use, surveys, events, and messages.">
-              <div className="dp-summary-matrix">
-                <div className="dp-summary-matrix__grid">
-                <Metric label="Residents invited" value={buildingResidents.length} detail="CRM records" />
-                <Metric label="Residents active" value={activeResidents} detail="Active resident status" />
-                <Metric label="Perks redemptions" value={buildingRedemptions.length} detail="Verified actions" />
-                <Metric label="Survey responses" value={buildingSurveyResponses.length} detail="Completed feedback" />
-                <Metric label="Broadcasts" value={buildingBroadcasts.length} detail="Messages sent" />
-                <Metric label="Participation" value={`${activeResidents ? Math.round(((buildingRedemptions.length + buildingSurveyResponses.length) / activeResidents) * 100) : 0}%`} detail="Actions per active resident" />
-                </div>
-              </div>
+              <QuickViewTable label="Resident participation quick view" metrics={[
+                { label: 'Residents invited', value: buildingResidents.length, detail: 'CRM records' },
+                { label: 'Residents active', value: activeResidents, detail: 'Active resident status' },
+                { label: 'Perk redemptions', value: buildingRedemptions.length, detail: 'Verified actions' },
+                { label: 'Survey responses', value: buildingSurveyResponses.length, detail: 'Completed feedback' },
+                { label: 'Broadcasts', value: buildingBroadcasts.length, detail: 'Messages sent' },
+                { label: 'Participation', value: `${activeResidents ? Math.round(((buildingRedemptions.length + buildingSurveyResponses.length) / activeResidents) * 100) : 0}%`, detail: 'Actions per active resident' },
+              ]} />
             </SectionShell>
           </TabsContent>
 
@@ -858,16 +855,14 @@ export default function BuildingsManagement() {
 
           <TabsContent value="reporting">
             <SectionShell eyebrow="Reports" title="Share a clean building report" description="Export the building, unit, resident, survey, amenity, and participation details." action={<Button onClick={exportReport}><Download className="h-4 w-4" /> Export CSV</Button>}>
-              <div className="dp-summary-matrix">
-                <div className="dp-summary-matrix__grid">
-                <Metric label="Buildings" value={buildings.length} detail="Properties in the program" />
-                <Metric label="Units" value={buildingUnits.length} detail={`${occupancy}% occupied`} />
-                <Metric label="Residents" value={buildingResidents.length} detail={`${activeAccess} access active`} />
-                <Metric label="Amenities" value={buildingAmenities.length} detail="Building amenities" />
-                <Metric label="Surveys" value={buildingSurveys.length} detail={`${buildingSurveyResponses.length} responses`} />
-                <Metric label="Reports" value={buildingAuditLogs.filter((log: any) => String(log.action).includes('report')).length} detail="Generated exports" />
-                </div>
-              </div>
+              <QuickViewTable label="Building report quick view" metrics={[
+                { label: 'Buildings', value: buildings.length, detail: 'Properties in the program' },
+                { label: 'Units', value: buildingUnits.length, detail: `${occupancy}% occupied` },
+                { label: 'Residents', value: buildingResidents.length, detail: `${activeAccess} access active` },
+                { label: 'Amenities', value: buildingAmenities.length, detail: 'Building amenities' },
+                { label: 'Surveys', value: buildingSurveys.length, detail: `${buildingSurveyResponses.length} responses` },
+                { label: 'Reports', value: buildingAuditLogs.filter((log: any) => String(log.action).includes('report')).length, detail: 'Generated exports' },
+              ]} />
             </SectionShell>
           </TabsContent>
         </Tabs>
@@ -916,16 +911,6 @@ function ModuleBrief({ label, detail }: any) {
     <div className="min-w-0">
       <div className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[#C5A028]">{label}</div>
       <p className="mt-1 text-[12px] leading-5 text-[#5f6b7a]">{detail}</p>
-    </div>
-  );
-}
-
-function Metric({ label, value, detail }: any) {
-  return (
-    <div className="dp-summary-matrix__item">
-      <div className="dp-summary-matrix__label">{label}</div>
-      <div className="dp-summary-matrix__value">{value}</div>
-      <div className="dp-summary-matrix__detail">{detail}</div>
     </div>
   );
 }

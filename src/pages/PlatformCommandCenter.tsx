@@ -69,7 +69,7 @@ export default function PlatformCommandCenter() {
     { label: 'Surveys', value: data.surveys.length, detail: 'Questions that help you hear what people need.', area: 'Surveys', to: '/admin/surveys' },
     { label: 'Reports', value: data.reports.length, detail: 'Plain summaries for partners, properties, and activity.', area: 'Reports', to: '/admin/reports' },
     { label: 'Connected work', value: data.integrations.length, detail: 'Forms, notes, and reports that are ready to work together.', area: 'Tools', to: '/admin/settings' },
-    { label: 'Follow-ups', value: data.automations.length, detail: 'Reminders and handoffs ready for the next move.', area: 'Follow-ups', to: '/admin/home' },
+    { label: 'Follow-ups', value: data.automations.length, detail: 'Reminders and handoffs ready for review.', area: 'Follow-ups', to: '/admin/home' },
     { label: 'Message paths', value: data.journeys.length, detail: 'Resident, event, passport, and partner notes in progress.', area: 'Messages', to: '/admin/engagement' },
     { label: 'Next steps', value: data.insights.length, detail: 'Useful suggestions ready to review.', area: 'Suggestions', to: '/admin/analytics' },
   ];
@@ -87,7 +87,7 @@ export default function PlatformCommandCenter() {
       <div className="mx-auto max-w-[1180px] px-5 py-7 sm:px-8">
         <section className="bg-white py-4 md:py-7">
           <p className="text-[11px] font-semibold uppercase text-[#C8A96A]">Today downtown</p>
-          <h1 className="mt-3 text-[2rem] font-semibold leading-[1.08] md:text-[3.4rem]">A useful read on what is moving.</h1>
+          <h1 className="mt-3 text-[2rem] font-semibold leading-[1.08] md:text-[3.4rem]">See what needs attention today.</h1>
           <p className="mt-4 max-w-3xl text-[15px] leading-7 text-[rgba(11,31,51,0.68)]">
             Start here to open partners, buildings, residents, events, perks, broadcasts, surveys, and reports without hunting around.
           </p>
@@ -96,7 +96,7 @@ export default function PlatformCommandCenter() {
         <section className="py-7">
           <SummaryRows
             eyebrow="Quick read"
-            title="What is active right now"
+            title="What is active now"
             description="Tap a row to open the area."
             rows={metrics}
           />
@@ -105,8 +105,8 @@ export default function PlatformCommandCenter() {
         <section className="grid gap-8 py-8 xl:grid-cols-[0.62fr_1fr]">
           <div>
             <p className="text-[11px] font-semibold uppercase text-[#C8A96A]">Main areas</p>
-            <h2 className="mt-2 text-[1.45rem] font-semibold leading-tight">Open the right place.</h2>
-            <p className="mt-2 max-w-sm text-sm leading-6 text-[rgba(11,31,51,0.62)]">A short guide to where each piece of the day lives.</p>
+            <h2 className="mt-2 text-[1.45rem] font-semibold leading-tight">Go to the right area.</h2>
+            <p className="mt-2 max-w-sm text-sm leading-6 text-[rgba(11,31,51,0.62)]">Use this guide to find the work you need.</p>
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             {platformRoutes.map((route) => {

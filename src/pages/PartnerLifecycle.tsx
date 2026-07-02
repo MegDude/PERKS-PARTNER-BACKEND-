@@ -21,6 +21,7 @@ import {
   Users,
 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
+import { QuickViewTable } from '@/components/QuickViewTable';
 
 type LifecycleState = {
   organizationType: string;
@@ -962,23 +963,15 @@ function WorkspaceContextBar({ orgName, tenantId }: { orgName: string; tenantId:
 
 function WorkspaceMetricStrip({ metrics, compact = false }: { metrics: Array<{ label: string; value: any; note: string }>; compact?: boolean }) {
   return (
-    <section className={`dp-summary-matrix mb-6 ${compact ? 'mt-0' : ''}`}>
+    <section className={`mb-6 border border-[rgba(11,31,51,0.08)] bg-white ${compact ? 'mt-0' : ''}`}>
       <div className="flex flex-col gap-1 border-b border-[rgba(11,31,51,0.06)] px-3 py-2.5 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <p className="text-[10px] font-bold uppercase text-[#C8A96A]">Today at a glance</p>
-          <h2 className="text-sm font-semibold">A quick read on what people are doing.</h2>
+          <h2 className="text-sm font-semibold">What people are doing today</h2>
         </div>
         <p className="text-xs leading-5 text-[rgba(11,31,51,0.56)]">Shown on each workspace tab.</p>
       </div>
-      <div className="dp-summary-matrix__grid">
-        {metrics.map((metric) => (
-          <div key={metric.label} className="dp-summary-matrix__item">
-            <p className="dp-summary-matrix__label">{metric.label}</p>
-            <strong className="dp-summary-matrix__value">{Number(metric.value || 0).toLocaleString()}</strong>
-            <p className="dp-summary-matrix__detail">{metric.note}</p>
-          </div>
-        ))}
-      </div>
+      <QuickViewTable label="Workspace quick view" metrics={metrics.map((metric) => ({ label: metric.label, value: Number(metric.value || 0), detail: metric.note }))} />
     </section>
   );
 }

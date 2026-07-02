@@ -18,11 +18,11 @@ export function generatePulseSignal(input: PulseInput = {}) {
 
   return {
     district,
-    residentHeadline: actions > 0 ? `${district} activity is moving` : `${district} is live`,
-    partnerHeadline: responseRate > 0 ? `${district} response is ${responseRate}%` : `${district} demand signal nearby`,
-    demandSignal: actions >= 10 ? "Demand rising nearby" : "Demand signal nearby",
-    coverageSignal: responseRate < 8 ? "Coverage gap nearby" : "Coverage holding",
-    campaignSignal: input.campaignClicks ? "Campaign clicks active" : "Campaign opportunity nearby",
+    residentHeadline: actions > 0 ? `${district} has recent activity` : `${district} is ready`,
+    partnerHeadline: responseRate > 0 ? `${district} response rate is ${responseRate}%` : `${district} has nearby interest`,
+    demandSignal: actions >= 10 ? "More people are interested nearby" : "Some nearby interest",
+    coverageSignal: responseRate < 8 ? "More coverage needed nearby" : "Coverage looks healthy",
+    campaignSignal: input.campaignClicks ? "People are clicking this campaign" : "A campaign could help here",
     responseRate,
     updatedAt: new Date().toISOString(),
   };
