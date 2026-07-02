@@ -12,13 +12,67 @@ import { useQuery } from '@tanstack/react-query';
 
 type Mode = 'resident' | 'intelligence';
 
-const filters = ['All', 'Property', 'Real Estate', 'Venue', 'Hotel', 'Brand', 'Event', 'Campaign', 'Perk', 'Civic', 'Service'];
+const filters = ['All', 'Coffee', 'Happy Hour', 'Property', 'Real Estate', 'Venue', 'Hotel', 'Brand', 'Event', 'Campaign', 'Perk', 'Civic', 'Service'];
+
+function getInitialMapParam(name: string, fallback = '') {
+  if (typeof window === 'undefined') return fallback;
+  return new URLSearchParams(window.location.search).get(name) || fallback;
+}
+
+function normalizeFilterLabel(value: string) {
+  const raw = String(value || '').trim();
+  const lower = raw.toLowerCase();
+  if (!raw) return 'All';
+  if (lower === 'properties' || lower === 'real estate') return 'Property';
+  if (lower === 'events') return 'Event';
+  if (lower === 'perks') return 'Perk';
+  if (lower === 'hotels') return 'Hotel';
+  if (lower === 'brands') return 'Brand';
+  if (lower.includes('happy')) return 'Happy Hour';
+  if (lower.includes('coffee') || lower.includes('cafe')) return 'Coffee';
+  return filters.includes(raw) ? raw : 'All';
+}
+
+function entitySearchText(entity: any) {
+  return [
+    entity.name,
+    entity.type,
+    entity.category,
+    entity.intent,
+    entity.address,
+    entity.description,
+    entity.perk,
+    entity.perkTiming,
+    entity.perkEligibility,
+  ].filter(Boolean).join(' ').toLowerCase();
+}
+
+function entityMatchesFilter(entity: any, filter: string) {
+  const normalized = normalizeFilterLabel(filter);
+  if (normalized === 'All') return true;
+  const text = entitySearchText(entity);
+  if (normalized === 'Coffee') return /\b(coffee|cafe|espresso|morning)\b/.test(text);
+  if (normalized === 'Happy Hour') return /\b(happy hour|cocktail|drink|bar|evening|appetizer)\b/.test(text) && !/\b(property|real estate|hotel)\b/.test(String(entity.type || '').toLowerCase());
+  if (normalized === 'Real Estate') return entity.type === 'Property' || /\b(real estate|legends|listing|residential|building|property)\b/.test(text);
+  return entity.type === normalized || entity.category === normalized || text.includes(normalized.toLowerCase());
+}
+
+function entityMatchesQuery(entity: any, query: string) {
+  const q = String(query || '').trim().toLowerCase();
+  if (!q) return true;
+  const text = entitySearchText(entity);
+  if (/\bcoffee|cafe|espresso\b/.test(q)) return entityMatchesFilter(entity, 'Coffee');
+  if (/\bhappy hour|drinks|cocktail\b/.test(q)) return entityMatchesFilter(entity, 'Happy Hour');
+  if (/\bproperty|properties|real estate|listing|apartment|condo\b/.test(q)) return entityMatchesFilter(entity, 'Property') || entityMatchesFilter(entity, 'Real Estate');
+  if (/\bevent|events|tonight|rsvp\b/.test(q)) return entityMatchesFilter(entity, 'Event');
+  return q.split(/\s+/).filter((token) => token.length > 2 && !['nearby', 'near', 'show', 'find'].includes(token)).every((token) => text.includes(token));
+}
 
 export default function MapOS() {
   const navigate = useNavigate();
   const [mode, setMode] = useState<Mode>('resident');
-  const [selectedFilter, setSelectedFilter] = useState('All');
-  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedFilter, setSelectedFilter] = useState(() => normalizeFilterLabel(getInitialMapParam('filter', 'All')));
+  const [searchQuery, setSearchQuery] = useState(() => getInitialMapParam('query', ''));
   const [panelCollapsed, setPanelCollapsed] = useState(false);
   const [selectedEntity, setSelectedEntity] = useState<any | null>(null);
   
@@ -98,8 +152,8 @@ export default function MapOS() {
     .filter((entity: any) => Number.isFinite(entity.lat) && Number.isFinite(entity.lng));
 
   const filteredEntities = liveEntities.filter(e => {
-    if (selectedFilter !== 'All' && e.type !== selectedFilter && e.category !== selectedFilter) return false;
-    if (searchQuery && !e.name.toLowerCase().includes(searchQuery.toLowerCase()) && !e.category.toLowerCase().includes(searchQuery.toLowerCase())) return false;
+    if (!entityMatchesFilter(e, selectedFilter)) return false;
+    if (!entityMatchesQuery(e, searchQuery)) return false;
     return true;
   });
 

@@ -2,8 +2,6 @@ import React, { useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap, ZoomControl } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
-import { MapPin } from 'lucide-react';
-import { renderToStaticMarkup } from 'react-dom/server';
 
 // Fallback for marker icons in Leaflet
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -16,65 +14,39 @@ L.Icon.Default.mergeOptions({
 function getMapIconSvg(entity: any, isSelected: boolean) {
   const isPerk = entity.perk || entity.category === 'perk';
   const type = (entity.type || '').toLowerCase();
-  
-  if (isPerk) {
-    return `<div style="position:relative;display:flex;align-items:center;justify-content:center;width:28px;height:36px;transform:translateY(0) ${isSelected ? 'scale(1.15)' : 'scale(1)'};transition:all .2s ease;">
-      <svg width="28" height="36" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:block;filter:drop-shadow(0 8px 16px rgba(11,31,51,0.18))">
-        <path d="M12 21C12 21 18 15.6 18 10.5C18 7.46243 15.3137 5 12 5C8.68629 5 6 7.46243 6 10.5C6 15.6 12 21 12 21Z" fill="rgba(212,175,55,0.98)" stroke="#FFFFFF" stroke-width="1.2"></path>
-        <path d="M12 8.2L13.35 10.95L16.4 11.4L14.2 13.55L14.72 16.55L12 15.12L9.28 16.55L9.8 13.55L7.6 11.4L10.65 10.95L12 8.2Z" fill="#0B1F33"></path>
-      </svg>
-    </div>`;
-  }
-  
-  if (type === 'dining') {
-    return `<div style="position:relative;display:flex;align-items:center;justify-content:center;width:28px;height:36px;transform:translateY(0) ${isSelected ? 'scale(1.15)' : 'scale(1)'};transition:all .2s ease;">
-      <svg width="28" height="36" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:block;filter:drop-shadow(0 8px 16px rgba(11,31,51,0.18))">
-        <path d="M12 21C12 21 18 15.6 18 10.5C18 7.46243 15.3137 5 12 5C8.68629 5 6 7.46243 6 10.5C6 15.6 12 21 12 21Z" fill="rgba(15,38,66,0.98)" stroke="#FFFFFF" stroke-width="1.2"></path>
-        <path d="M10 8.2V12.7" stroke="#F4D78A" stroke-width="1.4" stroke-linecap="round"></path>
-        <path d="M12 8.2V12.7" stroke="#F4D78A" stroke-width="1.4" stroke-linecap="round"></path>
-        <path d="M14.6 8.2C14.6 9.7 13.8 10.5 13.1 10.9V12.8" stroke="#F4D78A" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"></path>
-      </svg>
+  const text = [entity.name, entity.category, entity.intent, entity.description].filter(Boolean).join(' ').toLowerCase();
+  const isLegends = /\blegends\b/.test(text);
+  const size = 34;
+  const fill = isSelected ? '#C8A96A' : '#0B1F33';
+  const border = isSelected ? '#0B1F33' : '#C8A96A';
+  const icon = isSelected ? '#0B1F33' : '#C8A96A';
+  const scale = isSelected ? 'scale(1.06)' : 'scale(1)';
+
+  if (isLegends) {
+    return `<div style="width:${size}px;height:${size}px;display:grid;place-items:center;transform:${scale};transition:transform .18s ease;">
+      <div style="width:${size}px;height:${size}px;border-radius:999px;background:#FFFFFF;border:3px solid #C8A96A;display:grid;place-items:center;box-shadow:0 8px 18px rgba(11,31,51,.18);overflow:hidden;">
+        <img src="/pins/downtown-perks/legends-logo.png" alt="" style="width:25px;height:25px;object-fit:contain;display:block;" />
+      </div>
     </div>`;
   }
 
-  if (type === 'hotel') {
-    return `<div style="position:relative;display:flex;align-items:center;justify-content:center;width:28px;height:36px;transform:translateY(0) ${isSelected ? 'scale(1.15)' : 'scale(1)'};transition:all .2s ease;">
-      <svg width="28" height="36" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:block;filter:drop-shadow(0 8px 16px rgba(11,31,51,0.18))">
-        <path d="M12 21C12 21 18 15.6 18 10.5C18 7.46243 15.3137 5 12 5C8.68629 5 6 7.46243 6 10.5C6 15.6 12 21 12 21Z" fill="rgba(212,175,55,0.98)" stroke="#FFFFFF" stroke-width="1.2"></path>
-        <path d="M10 8.3V12.8" stroke="#0B1F33" stroke-width="1.9" stroke-linecap="round"></path>
-        <path d="M14 8.3V12.8" stroke="#0B1F33" stroke-width="1.9" stroke-linecap="round"></path>
-        <path d="M10 10.55H14" stroke="#0B1F33" stroke-width="1.9" stroke-linecap="round"></path>
-      </svg>
-    </div>`;
-  }
-  
-  if (type === 'event') {
-    return `<div style="position:relative;display:flex;align-items:center;justify-content:center;width:28px;height:36px;transform:translateY(0) ${isSelected ? 'scale(1.15)' : 'scale(1)'};transition:all .2s ease;">
-      <svg width="28" height="36" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:block;filter:drop-shadow(0 8px 16px rgba(11,31,51,0.18))">
-        <path d="M12 21C12 21 18 15.6 18 10.5C18 7.46243 15.3137 5 12 5C8.68629 5 6 7.46243 6 10.5C6 15.6 12 21 12 21Z" fill="rgba(212,175,55,0.98)" stroke="#FFFFFF" stroke-width="1.2"></path>
-        <rect x="8.2" y="9.4" width="7.6" height="5.8" rx="1.4" fill="#0B1F33"></rect>
-        <path d="M9 7.8V10.2" stroke="#0B1F33" stroke-width="1.4" stroke-linecap="round"></path>
-        <path d="M15 7.8V10.2" stroke="#0B1F33" stroke-width="1.4" stroke-linecap="round"></path>
-      </svg>
-    </div>`;
-  }
-  
-  if (type === 'building' || type === 'property' || type === 'real estate') {
-    return `<div style="position:relative;display:flex;align-items:center;justify-content:center;width:28px;height:36px;transform:translateY(0) ${isSelected ? 'scale(1.15)' : 'scale(1)'};transition:all .2s ease;">
-      <svg width="28" height="36" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:block;filter:drop-shadow(0 8px 16px rgba(11,31,51,0.18))">
-        <path d="M12 21C12 21 18 15.6 18 10.5C18 7.46243 15.3137 5 12 5C8.68629 5 6 7.46243 6 10.5C6 15.6 12 21 12 21Z" fill="rgba(212,175,55,0.98)" stroke="#FFFFFF" stroke-width="1.2"></path>
-        <circle cx="12" cy="10.5" r="2.5" fill="#0B1F33"></circle>
-      </svg>
-    </div>`;
-  }
-  
-  // place-marker-icon default
-  return `<div style="position:relative;display:flex;align-items:center;justify-content:center;width:28px;height:36px;transform:translateY(0) ${isSelected ? 'scale(1.15)' : 'scale(1)'};transition:all .2s ease;">
-      <svg width="28" height="36" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:block;filter:drop-shadow(0 8px 16px rgba(11,31,51,0.18))">
-        <path d="M12 21C12 21 18 15.6 18 10.5C18 7.46243 15.3137 5 12 5C8.68629 5 6 7.46243 6 10.5C6 15.6 12 21 12 21Z" fill="rgba(212,175,55,0.98)" stroke="#FFFFFF" stroke-width="1.2"></path>
-        <circle cx="12" cy="10.5" r="3.1" fill="#0B1F33"></circle>
-        <circle cx="12" cy="10.5" r="1.15" fill="rgba(255,255,255,0.92)"></circle>
-      </svg>
+  const iconMarkup = type === 'hotel'
+    ? `<path d="M8 8v9M16 8v9M8 12h8" stroke="${icon}" stroke-width="2.2" stroke-linecap="round"/>`
+    : type === 'event'
+      ? `<rect x="7" y="8" width="10" height="9" rx="2" stroke="${icon}" stroke-width="2"/><path d="M9 6v4M15 6v4M7 11h10" stroke="${icon}" stroke-width="2" stroke-linecap="round"/>`
+      : type === 'property' || type === 'real estate' || type === 'building'
+        ? `<path d="M8 18V6h8v12M10 9h.01M14 9h.01M10 13h.01M14 13h.01" stroke="${icon}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>`
+        : type === 'brand' && /\b(coffee|cafe|espresso|jo's)\b/.test(text)
+          ? `<path d="M7 9h8v4a4 4 0 0 1-4 4h0a4 4 0 0 1-4-4Z" stroke="${icon}" stroke-width="2"/><path d="M15 10h1.5a2 2 0 0 1 0 4H15M9 6v1M12 6v1" stroke="${icon}" stroke-width="2" stroke-linecap="round"/>`
+          : isPerk
+            ? `<path d="M17 7 7 17M8.5 8.5h.01M15.5 15.5h.01" stroke="${icon}" stroke-width="2.4" stroke-linecap="round"/><circle cx="8.5" cy="8.5" r="1.7" stroke="${icon}" stroke-width="1.8"/><circle cx="15.5" cy="15.5" r="1.7" stroke="${icon}" stroke-width="1.8"/>`
+            : `<circle cx="12" cy="12" r="4" stroke="${icon}" stroke-width="2.2"/><circle cx="12" cy="12" r="1.4" fill="${icon}"/>`;
+
+  return `<div style="width:${size}px;height:${size}px;display:grid;place-items:center;transform:${scale};transition:transform .18s ease;">
+    <svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:block;filter:drop-shadow(0 8px 18px rgba(11,31,51,.18));">
+      <circle cx="12" cy="12" r="10" fill="${fill}" stroke="${border}" stroke-width="2.2"/>
+      ${iconMarkup}
+    </svg>
   </div>`;
 }
 
@@ -82,9 +54,9 @@ function createMarker(entity: any) {
   return L.divIcon({
     className: "dp-pin-custom",
     html: getMapIconSvg(entity, entity.isSelected),
-    iconSize: [28, 36],
-    iconAnchor: [14, 36],
-    popupAnchor: [0, -36],
+    iconSize: [34, 34],
+    iconAnchor: [17, 17],
+    popupAnchor: [0, -17],
   });
 }
 
