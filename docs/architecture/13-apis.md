@@ -41,7 +41,7 @@ Production page modules should call typed domain clients in `src/services/domain
 Initial contracts:
 
 - `apiClient`: shared JSON request helper with query-string support and consistent error handling.
-- `boardMeetingsService`: board meetings, minutes drafts, decisions, and action items.
+- `boardMeetingsService`: board meetings, minutes drafts, decisions, action items, civic integration status, OpenAI board intelligence, and Google Sheets meeting export.
 - `eventsService`: event CRUD, RSVP, check-in, and follow-up actions.
 - `propertiesService`: property portfolio reads, writes, deletes, and ingest actions.
 - `reportsService`: report listing, report runs, and export URL generation.

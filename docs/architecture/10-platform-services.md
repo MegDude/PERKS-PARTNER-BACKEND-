@@ -73,9 +73,12 @@ Core records:
 - `POST /api/board-meetings`
 - `PATCH /api/board-meetings/:id`
 - `POST /api/board-meetings/:id/minutes`
+- `POST /api/board-meetings/:id/intelligence`
+- `POST /api/board-meetings/:id/export-google-sheets`
 - `POST /api/board-meetings/:id/decisions`
 - `POST /api/board-meetings/:id/action-items`
 - `PATCH /api/board-action-items/:id`
+- `GET /api/board-meetings/integrations/status`
 
 ### Rules
 
@@ -83,3 +86,5 @@ Core records:
 - Draft minutes must remain editable before use.
 - Every change creates an audit event.
 - Exports must include meeting title, date, board/group, attendees, summary, decisions, and action items.
+- OpenAI intelligence must run server-side through the shared Intelligence agent and return editable recommendations.
+- Google Sheets export must use the shared service-account append pipeline and show pending credentials instead of pretending to sync.

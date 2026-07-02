@@ -23,6 +23,7 @@ export type IntelligenceAgentContext = {
   existingPerks?: Array<Record<string, unknown>>;
   pricingCatalog?: Array<Record<string, unknown>>;
   campaignCatalog?: Array<Record<string, unknown>>;
+  calendarContext?: Record<string, unknown>;
   platformCapabilities?: Array<Record<string, unknown>> | Record<string, unknown>;
   workspaceStatus?: Record<string, unknown>;
   notes?: string;

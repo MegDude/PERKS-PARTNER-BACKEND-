@@ -2866,6 +2866,46 @@ function draftBoardMinutes(input: { meeting: Record<string, any>; notes?: string
   };
 }
 
+function boardMeetingSheetPayload(meeting: Record<string, any>, related: { decisions: Record<string, any>[]; actionItems: Record<string, any>[] }, range?: string) {
+  return {
+    type: "board_meeting",
+    range,
+    record: {
+      id: meeting.id,
+      name: boardMeetingTitle(meeting),
+      board: meeting.board_name || "",
+      meeting_date: meeting.meeting_date || "",
+      location: meeting.location || "",
+      status: meeting.status || "",
+      summary: meeting.summary || "",
+      minutes: meeting.minutes || "",
+      attendees: Array.isArray(meeting.attendees) ? meeting.attendees.join(" | ") : meeting.attendees || "",
+      agenda: Array.isArray(meeting.agenda) ? meeting.agenda.join(" | ") : meeting.agenda || "",
+      decisions: related.decisions.map((decision) => decision.decision || decision.title).filter(Boolean).join(" | "),
+      action_items: related.actionItems.map((item) => `${item.title || "Action item"} — ${item.owner || "Needs verification"} — ${item.status || "open"}`).join(" | "),
+    },
+  };
+}
+
+function civicOperationsStatus() {
+  const sheetsConfig = googleSheetsConfig();
+  return {
+    openai: getIntelligenceCredentialStatus().openai,
+    google_sheets: {
+      provider: "Google Sheets",
+      status: googleSheetsReady() ? "configured" : "pending_credentials",
+      spreadsheet_id: sheetsConfig.spreadsheetId ? "configured" : "",
+      default_range: sheetsConfig.defaultRange,
+      missing_env_vars: [
+        !sheetsConfig.clientEmail ? "GOOGLE_SHEETS_CLIENT_EMAIL" : "",
+        !sheetsConfig.privateKey ? "GOOGLE_SHEETS_PRIVATE_KEY" : "",
+        !sheetsConfig.spreadsheetId ? "GOOGLE_SHEETS_SPREADSHEET_ID" : "",
+      ].filter(Boolean),
+    },
+    calendar: getCalendarConfigurationStatus(),
+  };
+}
+
 function provisionPlatformTenant(entities: Database["entities"], source: Record<string, any>) {
   const name = source.name || source.business_name || source.title;
   if (!name) return null;
@@ -5417,6 +5457,10 @@ export async function createApp() {
     res.json({ meetings, metrics: boardMeetingMetrics(db) });
   });
 
+  app.get("/api/board-meetings/integrations/status", (_req, res) => {
+    res.json(civicOperationsStatus());
+  });
+
   app.post("/api/board-meetings", async (req, res) => {
     const body = req.body || {};
     if (!body.title) return res.status(400).json({ error: "Meeting title is required." });
@@ -5494,6 +5538,91 @@ export async function createApp() {
     writeAuditEvent(db, req, { action: "board_minutes_drafted", entity_type: "board_meeting", entity_id: meeting.id, before, after: meeting, metadata: { action_items: createdActionItems.length } });
     await saveDatabase(db);
     res.json({ ...meeting, ...boardMeetingRelated(db, meeting.id), draft });
+  });
+
+  app.post("/api/board-meetings/:id/intelligence", async (req, res) => {
+    const meeting = db.entities.BoardMeeting.find((item) => item.id === req.params.id);
+    if (!meeting) return res.status(404).json({ error: "Board meeting not found." });
+    const related = boardMeetingRelated(db, meeting.id);
+    const action = String(req.body?.action || "recommend_next_action") as IntelligenceAgentAction;
+    const allowedActions: IntelligenceAgentAction[] = ["generate_meeting_agenda", "generate_follow_up", "recommend_next_action"];
+    if (!allowedActions.includes(action)) return res.status(400).json({ error: "Unsupported civic intelligence action." });
+
+    const result = await runIntelligenceAgent(action, {
+      company: {
+        id: meeting.organization_id || "org_downtown_perks",
+        companyName: meeting.board_name || "Civic board",
+        partnerType: "civic",
+        status: meeting.status || "draft",
+      },
+      contacts: [],
+      existingPerks: [],
+      campaignCatalog: db.entities.Campaign.filter((campaign) => String(campaign.type || campaign.campaignType || "").toLowerCase().includes("civic")).slice(0, 10),
+      calendarContext: getCalendarContext(db.entities, String(meeting.workspace_id || "workspace_downtown_perks")),
+      platformCapabilities: {
+        module: "Civic Board Meetings",
+        capabilities: ["agenda", "minutes", "decisions", "action_items", "google_sheets_export", "board_follow_up", "reports"],
+      },
+      workspaceStatus: {
+        meeting,
+        decisions: related.decisions,
+        actionItems: related.actionItems,
+        integrationStatus: civicOperationsStatus(),
+      },
+      notes: [
+        `Meeting: ${boardMeetingTitle(meeting)}`,
+        `Board: ${meeting.board_name || "Needs verification"}`,
+        `Meeting date: ${meeting.meeting_date || "Needs verification"}`,
+        `Agenda: ${Array.isArray(meeting.agenda) ? meeting.agenda.join("; ") : meeting.agenda || "Needs verification"}`,
+        `Notes: ${req.body?.notes || meeting.notes || "Needs verification"}`,
+        `Minutes: ${meeting.minutes || "Needs verification"}`,
+      ].join("\n"),
+    });
+
+    const insight = withTimestamps(
+      {
+        title: `Civic board intelligence: ${boardMeetingTitle(meeting)}`,
+        provider: "openai",
+        status: result.ok ? "generated" : "failed",
+        prompt_type: action,
+        source_module: "board_meetings",
+        meeting_id: meeting.id,
+        board_name: meeting.board_name || "",
+        result: result.ok && "data" in result ? result.data : null,
+        error: result.ok ? "" : result.error,
+      },
+      makeId("ai_insight")
+    );
+    db.entities.AiInsight.push(insight);
+    writeAuditEvent(db, req, { action: "board_meeting_intelligence_generated", entity_type: "board_meeting", entity_id: meeting.id, after: insight });
+    await saveDatabase(db);
+    res.status(result.ok ? 200 : result.status || 500).json({ ...result, insight_id: insight.id });
+  });
+
+  app.post("/api/board-meetings/:id/export-google-sheets", async (req, res) => {
+    const meeting = db.entities.BoardMeeting.find((item) => item.id === req.params.id);
+    if (!meeting) return res.status(404).json({ error: "Board meeting not found." });
+    const related = boardMeetingRelated(db, meeting.id);
+    const result = await appendRowsToGoogleSheet(boardMeetingSheetPayload(meeting, related, req.body?.range));
+    Object.assign(meeting, {
+      google_sheets_export_status: result.status === "success" ? "success" : result.status === "pending_configuration" ? "pending_credentials" : "failed",
+      google_sheets_row_id: googleSheetExportRowId(result),
+      google_sheets_error: result.error || "",
+      updated_at: now(),
+    });
+    db.entities.SurveyExportLog.push(withTimestamps({
+      survey_response_id: meeting.id,
+      status: result.status === "success" ? "success" : result.status === "pending_configuration" ? "pending" : "failed",
+      destination: "google-sheets",
+      attempted_at: now(),
+      completed_at: result.status === "success" ? now() : "",
+      row_id: googleSheetExportRowId(result),
+      error: result.error || "",
+      payload_type: "board_meeting",
+    }, makeId("board_sheets_export")));
+    writeAuditEvent(db, req, { action: "board_meeting_exported_google_sheets", entity_type: "board_meeting", entity_id: meeting.id, after: result });
+    await saveDatabase(db);
+    res.status(result.status === "failed" ? 502 : 200).json({ meeting: { ...meeting, ...related }, google_sheets: result });
   });
 
   app.post("/api/board-meetings/:id/decisions", async (req, res) => {

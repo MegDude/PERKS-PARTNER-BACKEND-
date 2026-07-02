@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { CalendarDays, CheckCircle2, Download, FileText, Loader2, Plus, Users } from 'lucide-react';
+import { CalendarDays, CheckCircle2, Download, FileSpreadsheet, FileText, Loader2, Plus, Sparkles, Users } from 'lucide-react';
 import { toast } from 'sonner';
-import { boardMeetingsService, type BoardActionItem, type BoardMeeting, type BoardMeetingMetrics } from '@/services/domain/boardMeetingsService';
+import { boardMeetingsService, type BoardActionItem, type BoardIntelligenceResult, type BoardMeeting, type BoardMeetingMetrics, type CivicOperationsStatus } from '@/services/domain/boardMeetingsService';
 
 const emptyMetrics: BoardMeetingMetrics = { meetings: 0, upcoming: 0, openActionItems: 0, decisions: 0 };
 
@@ -32,7 +32,10 @@ export default function BoardMeetings() {
   const [selectedId, setSelectedId] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [intelligenceLoading, setIntelligenceLoading] = useState(false);
   const [statusFilter, setStatusFilter] = useState('all');
+  const [integrationStatus, setIntegrationStatus] = useState<CivicOperationsStatus | null>(null);
+  const [intelligenceResult, setIntelligenceResult] = useState<BoardIntelligenceResult | null>(null);
   const [createForm, setCreateForm] = useState({
     title: '',
     board_name: 'Civic board',
@@ -58,6 +61,7 @@ export default function BoardMeetings() {
 
   useEffect(() => {
     refresh();
+    refreshIntegrationStatus();
   }, []);
 
   useEffect(() => {
@@ -90,6 +94,14 @@ export default function BoardMeetings() {
       toast.error('Could not load board meetings.');
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function refreshIntegrationStatus() {
+    try {
+      setIntegrationStatus(await boardMeetingsService.integrationStatus());
+    } catch {
+      setIntegrationStatus(null);
     }
   }
 
@@ -138,6 +150,37 @@ export default function BoardMeetings() {
       await refresh();
     } catch {
       toast.error('Could not create the minutes draft.');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function generateBoardIntelligence(action: 'generate_meeting_agenda' | 'generate_follow_up' | 'recommend_next_action' = 'recommend_next_action') {
+    if (!selectedMeeting) return;
+    setIntelligenceLoading(true);
+    try {
+      const result = await boardMeetingsService.generateIntelligence(selectedMeeting.id, { action, notes: workForm.notes });
+      setIntelligenceResult(result);
+      if (result.ok) toast.success('Board intelligence generated.');
+      else toast.error(result.error || 'Board intelligence needs OpenAI credentials.');
+    } catch {
+      toast.error('Could not generate board intelligence.');
+    } finally {
+      setIntelligenceLoading(false);
+    }
+  }
+
+  async function exportMeetingToSheets() {
+    if (!selectedMeeting) return;
+    setSaving(true);
+    try {
+      const result = await boardMeetingsService.exportGoogleSheets(selectedMeeting.id);
+      if (result.google_sheets?.status === 'success') toast.success('Meeting exported to Google Sheets.');
+      else toast.error(String(result.google_sheets?.error || 'Google Sheets credentials are not configured yet.'));
+      await refresh();
+      await refreshIntegrationStatus();
+    } catch {
+      toast.error('Could not export this meeting to Google Sheets.');
     } finally {
       setSaving(false);
     }
@@ -220,6 +263,14 @@ export default function BoardMeetings() {
               <Download className="h-3.5 w-3.5" />
               Export minutes
             </button>
+          </div>
+          <div className="mt-4 flex flex-wrap gap-2 text-[10px] font-semibold uppercase tracking-[0.08em]">
+            <span className="border border-[rgba(11,31,51,0.08)] px-2 py-1 text-[rgba(11,31,51,0.62)]">
+              OpenAI {integrationStatus?.openai?.configured ? 'configured' : 'pending'}
+            </span>
+            <span className="border border-[rgba(11,31,51,0.08)] px-2 py-1 text-[rgba(11,31,51,0.62)]">
+              Google Sheets {integrationStatus?.google_sheets?.status === 'configured' ? 'configured' : 'pending'}
+            </span>
           </div>
         </header>
 
@@ -404,6 +455,53 @@ export default function BoardMeetings() {
                     />
                   </div>
 
+                  <div className="mt-5 border border-[rgba(11,31,51,0.08)] p-4">
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <div>
+                        <h3 className="text-[14px] font-semibold">Board intelligence</h3>
+                        <p className="mt-1 text-[12px] leading-5 text-[rgba(11,31,51,0.58)]">Create a meeting brief, next steps, or follow-up draft from the meeting record.</p>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        <button
+                          type="button"
+                          onClick={() => generateBoardIntelligence('recommend_next_action')}
+                          disabled={intelligenceLoading}
+                          className="inline-flex min-h-8 items-center gap-2 bg-[#0B1F33] px-2.5 text-[10px] font-semibold uppercase text-white disabled:opacity-45"
+                        >
+                          {intelligenceLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
+                          Next steps
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => generateBoardIntelligence('generate_meeting_agenda')}
+                          disabled={intelligenceLoading}
+                          className="inline-flex min-h-8 items-center gap-2 border border-[rgba(11,31,51,0.12)] px-2.5 text-[10px] font-semibold uppercase disabled:opacity-45"
+                        >
+                          Meeting brief
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => generateBoardIntelligence('generate_follow_up')}
+                          disabled={intelligenceLoading}
+                          className="inline-flex min-h-8 items-center gap-2 border border-[rgba(11,31,51,0.12)] px-2.5 text-[10px] font-semibold uppercase disabled:opacity-45"
+                        >
+                          Follow-up
+                        </button>
+                      </div>
+                    </div>
+                    {intelligenceResult && (
+                      <div className="mt-4 grid gap-3 border-t border-[rgba(11,31,51,0.08)] pt-3">
+                        <p className="text-[13px] font-semibold">{intelligenceResult.data?.title || (intelligenceResult.ok ? 'Board intelligence ready' : 'OpenAI setup needed')}</p>
+                        <p className="text-[12px] leading-5 text-[rgba(11,31,51,0.68)]">{intelligenceResult.data?.summary || intelligenceResult.error}</p>
+                        {Boolean(intelligenceResult.data?.recommendations?.length) && (
+                          <ul className="grid gap-1 text-[12px] leading-5 text-[rgba(11,31,51,0.68)]">
+                            {intelligenceResult.data?.recommendations?.slice(0, 4).map((item) => <li key={item}>- {item}</li>)}
+                          </ul>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
                   <div className="mt-5">
                     <div className="mb-2 flex items-center justify-between gap-3">
                       <label className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[rgba(11,31,51,0.52)]">Minutes</label>
@@ -425,6 +523,31 @@ export default function BoardMeetings() {
                 </div>
 
                 <aside className="border-t border-[rgba(11,31,51,0.08)] p-4 lg:border-l lg:border-t-0">
+                  <div className="mb-4 border border-[rgba(11,31,51,0.08)] p-3">
+                    <h3 className="flex items-center gap-2 text-[14px] font-semibold">
+                      <FileSpreadsheet className="h-4 w-4 text-[#C8A96A]" />
+                      Google Sheets
+                    </h3>
+                    <p className="mt-2 text-[12px] leading-5 text-[rgba(11,31,51,0.58)]">
+                      {integrationStatus?.google_sheets?.status === 'configured'
+                        ? 'Export meeting records into the connected operations sheet.'
+                        : 'Add Google Sheets service-account credentials in Vercel to enable live exports.'}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={exportMeetingToSheets}
+                      disabled={saving}
+                      className="mt-3 inline-flex min-h-8 items-center gap-2 border border-[#C8A96A] px-2.5 text-[10px] font-semibold uppercase disabled:opacity-45"
+                    >
+                      <FileSpreadsheet className="h-3.5 w-3.5" />
+                      Export to Sheets
+                    </button>
+                    {selectedMeeting.google_sheets_export_status && (
+                      <p className="mt-2 text-[10px] uppercase tracking-[0.08em] text-[rgba(11,31,51,0.5)]">
+                        Last export: {selectedMeeting.google_sheets_export_status}
+                      </p>
+                    )}
+                  </div>
                   <div className="mb-4">
                     <h3 className="flex items-center gap-2 text-[14px] font-semibold">
                       <Users className="h-4 w-4 text-[#C8A96A]" />

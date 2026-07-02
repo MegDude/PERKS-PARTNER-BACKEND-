@@ -33,6 +33,9 @@ export type BoardMeeting = {
   summary?: string;
   minutes?: string;
   follow_up_status?: string;
+  google_sheets_export_status?: string;
+  google_sheets_row_id?: string;
+  google_sheets_error?: string;
   decisions?: BoardDecision[];
   actionItems?: BoardActionItem[];
 };
@@ -58,9 +61,42 @@ export type CreateBoardMeetingInput = {
   agenda?: string | string[];
 };
 
+export type CivicOperationsStatus = {
+  openai?: { configured?: boolean; model?: string };
+  google_sheets?: {
+    status?: string;
+    spreadsheet_id?: string;
+    default_range?: string;
+    missing_env_vars?: string[];
+  };
+  calendar?: Record<string, unknown>;
+};
+
+export type BoardIntelligenceResult = {
+  ok: boolean;
+  configured?: boolean;
+  provider?: string;
+  model?: string;
+  data?: {
+    title?: string;
+    summary?: string;
+    recommendations?: string[];
+    generatedCopy?: string;
+    nextActions?: Array<{ action?: string; owner?: string; priority?: string }>;
+    missingData?: string[];
+    confidence?: string;
+    editableFields?: Record<string, unknown>;
+  };
+  error?: string;
+  insight_id?: string;
+};
+
 export const boardMeetingsService = {
   list: (filters: { status?: string; board?: string } = {}) =>
     apiRequest<BoardMeetingsResponse>('/api/board-meetings', { query: filters }),
+
+  integrationStatus: () =>
+    apiRequest<CivicOperationsStatus>('/api/board-meetings/integrations/status'),
 
   create: (input: CreateBoardMeetingInput) =>
     apiRequest<BoardMeeting>('/api/board-meetings', { method: 'POST', body: input }),
@@ -82,4 +118,13 @@ export const boardMeetingsService = {
 
   updateActionItem: (itemId: string, patch: Partial<BoardActionItem>) =>
     apiRequest<BoardActionItem>(`/api/board-action-items/${encodeURIComponent(itemId)}`, { method: 'PATCH', body: patch }),
+
+  generateIntelligence: (meetingId: string, input: { action?: 'generate_meeting_agenda' | 'generate_follow_up' | 'recommend_next_action'; notes?: string } = {}) =>
+    apiRequest<BoardIntelligenceResult>(`/api/board-meetings/${encodeURIComponent(meetingId)}/intelligence`, { method: 'POST', body: input }),
+
+  exportGoogleSheets: (meetingId: string, input: { range?: string } = {}) =>
+    apiRequest<{ meeting: BoardMeeting; google_sheets: Record<string, unknown> }>(`/api/board-meetings/${encodeURIComponent(meetingId)}/export-google-sheets`, {
+      method: 'POST',
+      body: input,
+    }),
 };
