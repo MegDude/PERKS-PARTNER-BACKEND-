@@ -813,7 +813,7 @@ function WorkspaceView({ state, scoped, data, selectedWorkspace, selectedTenantI
     return (
       <Shell eyebrow="Workspace area" title={moduleTitle(moduleSlug)} body={`Showing only ${orgName}, so each partner space stays easy to follow as you move through tabs.`}>
         <WorkspaceContextBar orgName={orgName} tenantId={tenantId} />
-        <WorkspaceMetricStrip metrics={snapshot} compact />
+        <WorkspaceQuickLookTable metrics={snapshot} />
         <WorkspaceNav query={workspaceQuery} />
         <ModuleTable slug={moduleSlug} scoped={scoped} />
       </Shell>
@@ -952,6 +952,40 @@ function WorkspaceMetricStrip({ metrics, compact = false }: { metrics: Array<{ l
             <p className="dp-summary-matrix__detail">{metric.note}</p>
           </div>
         ))}
+      </div>
+    </section>
+  );
+}
+
+function WorkspaceQuickLookTable({ metrics }: { metrics: Array<{ label: string; value: any; note: string }> }) {
+  return (
+    <section className="mb-4 border border-[rgba(11,31,51,0.08)] bg-white">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[rgba(11,31,51,0.06)] px-3 py-2">
+        <div>
+          <p className="text-[9px] font-bold uppercase tracking-[0.08em] text-[#C8A96A]">Quick look</p>
+          <h2 className="text-[13px] font-semibold leading-5">Workspace activity</h2>
+        </div>
+        <p className="text-[10px] font-semibold text-[rgba(11,31,51,0.52)]">Current tab scope</p>
+      </div>
+      <div className="overflow-x-auto [scrollbar-width:thin]">
+        <table className="w-full min-w-[680px] table-fixed text-left">
+          <thead>
+            <tr className="border-b border-[rgba(11,31,51,0.06)]">
+              {['Metric', 'Value', 'Meaning'].map((header) => (
+                <th key={header} className="px-3 py-2 text-[9px] font-bold uppercase tracking-[0.06em] text-[rgba(11,31,51,0.5)]">{header}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {metrics.map((metric) => (
+              <tr key={metric.label} className="border-b border-[rgba(11,31,51,0.04)] last:border-b-0">
+                <td className="px-3 py-2 text-[11px] font-semibold text-[#0B1F33]">{metric.label}</td>
+                <td className="px-3 py-2 text-[12px] font-semibold text-[#0B1F33]">{Number(metric.value || 0).toLocaleString()}</td>
+                <td className="px-3 py-2 text-[11px] leading-4 text-[rgba(11,31,51,0.62)]">{metric.note}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </section>
   );
