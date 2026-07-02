@@ -10,6 +10,7 @@ import { promisify } from "util";
 import { enterpriseComponents, platformArchitecture, platformDomains, serializePlatformDomain } from "./src/platform/registry.js";
 import { createAgentStreamEnvelope, getProviderManager, listAgentTools, logOpenAIStatusOnce, routeAgentQuery } from "./backend/modules/ai/index.js";
 import { getIntelligenceCredentialStatus, runIntelligenceAgent, type IntelligenceAgentAction } from "./src/services/intelligence/intelligenceAgent.js";
+import { streamLaunchDeskAgent } from "./src/services/launchDesk/launchDeskAgent.js";
 
 dotenv.config({ path: ".env.local" });
 dotenv.config();
@@ -4994,6 +4995,25 @@ export async function createApp() {
       domains: platformDomains.map(serializePlatformDomain),
       enterpriseComponents,
     });
+  });
+
+  app.post("/api/launch-desk/stream", async (req, res) => {
+    res.setHeader("Content-Type", "text/event-stream");
+    res.setHeader("Cache-Control", "no-cache, no-transform");
+    res.setHeader("Connection", "keep-alive");
+    try {
+      await streamLaunchDeskAgent({
+        productBrief: String(req.body?.productBrief || ""),
+        audience: String(req.body?.audience || ""),
+        launchDate: String(req.body?.launchDate || ""),
+        constraints: String(req.body?.constraints || ""),
+        assets: String(req.body?.assets || ""),
+      }, (chunk) => res.write(chunk));
+    } catch (error) {
+      res.write(`event: error\ndata: ${JSON.stringify({ error: error instanceof Error ? error.message : "Launch Desk stream failed." })}\n\n`);
+    } finally {
+      res.end();
+    }
   });
 
   app.get("/api/intelligence/config-status", (_req, res) => {

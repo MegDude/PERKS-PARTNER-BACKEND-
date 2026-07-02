@@ -31,6 +31,7 @@ const PlatformModuleAudit = lazy(() => import('./pages/PlatformModuleAudit'));
 const PartnerOutreachCRM = lazy(() => import('./pages/PartnerOutreachCRM'));
 const PartnerIntelligence = lazy(() => import('./pages/PartnerIntelligence'));
 const PartnerCalendar = lazy(() => import('./pages/PartnerCalendar'));
+const LaunchDesk = lazy(() => import('./pages/LaunchDesk'));
 
 function RouteFallback() {
   return (
@@ -63,6 +64,9 @@ export default function App() {
         </Route>
         <Route path="/partner/calendar" element={<PartnerDashboardLayout />}>
           <Route index element={<PartnerCalendar />} />
+        </Route>
+        <Route path="/launch-desk" element={<PartnerDashboardLayout />}>
+          <Route index element={<LaunchDesk />} />
         </Route>
         <Route path="/proposals/:shareToken" element={<PartnerIntelligence />} />
         <Route path="/partner-workspace" element={<Navigate to="/workspace/home" replace />} />

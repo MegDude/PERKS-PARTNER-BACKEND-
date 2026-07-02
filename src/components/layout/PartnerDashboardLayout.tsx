@@ -46,6 +46,7 @@ export default function PartnerDashboardLayout() {
 
     { section: 'Insights' },
     { to: '/partner/intelligence', icon: <Sparkles className="w-4 h-4" />, label: 'Intelligence' },
+    { to: '/launch-desk', icon: <Sparkles className="w-4 h-4" />, label: 'Launch Desk' },
     { to: '/admin/dashboard', icon: <BarChart3 className="w-4 h-4" />, label: 'Performance' },
     { to: '/admin/reports', icon: <Settings className="w-4 h-4" />, label: 'Reports' },
     { to: '/admin/analytics', icon: <BarChart3 className="w-4 h-4" />, label: 'Perk results' },
