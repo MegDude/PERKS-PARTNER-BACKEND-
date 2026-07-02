@@ -27,7 +27,7 @@ export type IntelligenceCompany = {
   latitude: number;
   longitude: number;
   officeType: 'tenant' | 'retail' | 'restaurant' | 'service' | 'property' | 'hotel' | 'civic' | 'brand';
-  partnerType: 'property' | 'hotel' | 'venue' | 'brand' | 'civic' | 'real_estate' | 'employer';
+  partnerType: 'property' | 'hotel' | 'venue' | 'brand' | 'civic' | 'real_estate' | 'employer' | 'service';
   summary: string;
   whyDowntownPerks: string;
   residentValue: string;

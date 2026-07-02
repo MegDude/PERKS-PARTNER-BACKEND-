@@ -9,6 +9,7 @@ import { execFile } from "child_process";
 import { promisify } from "util";
 import { enterpriseComponents, platformArchitecture, platformDomains, serializePlatformDomain } from "./src/platform/registry.js";
 import { createAgentStreamEnvelope, getProviderManager, listAgentTools, logOpenAIStatusOnce, routeAgentQuery } from "./backend/modules/ai/index.js";
+import { getIntelligenceCredentialStatus, runIntelligenceAgent, type IntelligenceAgentAction } from "./src/services/intelligence/intelligenceAgent.js";
 
 dotenv.config({ path: ".env.local" });
 dotenv.config();
@@ -202,6 +203,29 @@ const entityNames: EntityName[] = [
 const now = () => new Date().toISOString();
 const slug = (value: string) => value.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "");
 const makeId = (prefix: string) => `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+
+function verifyStripeWebhookSignature(rawBody: Buffer | undefined, signatureHeader: string | undefined) {
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+  if (!webhookSecret) return { ok: true, configured: false };
+  if (!rawBody || !signatureHeader) return { ok: false, configured: true, error: "Stripe webhook signature is required." };
+
+  const parts = Object.fromEntries(signatureHeader.split(",").map((part) => {
+    const [key, value] = part.split("=");
+    return [key, value];
+  }));
+  const timestamp = parts.t;
+  const expected = parts.v1;
+  if (!timestamp || !expected) return { ok: false, configured: true, error: "Stripe webhook signature is malformed." };
+
+  const payload = `${timestamp}.${rawBody.toString("utf8")}`;
+  const actual = crypto.createHmac("sha256", webhookSecret).update(payload).digest("hex");
+  const actualBuffer = Buffer.from(actual, "hex");
+  const expectedBuffer = Buffer.from(expected, "hex");
+  if (actualBuffer.length !== expectedBuffer.length || !crypto.timingSafeEqual(actualBuffer, expectedBuffer)) {
+    return { ok: false, configured: true, error: "Stripe webhook signature verification failed." };
+  }
+  return { ok: true, configured: true };
+}
 
 const tenantTypes = ["property", "hotel", "venue", "brand", "civic", "service", "sponsor", "real_estate"] as const;
 type TenantType = (typeof tenantTypes)[number];
@@ -4858,7 +4882,12 @@ export async function createApp() {
   logOpenAIStatusOnce();
 
   app.use(cors());
-  app.use(express.json({ limit: "5mb" }));
+  app.use(express.json({
+    limit: "5mb",
+    verify: (req, _res, buf) => {
+      (req as any).rawBody = Buffer.from(buf);
+    },
+  }));
 
   app.get("/api/health", (req, res) => {
     res.json({
@@ -4875,6 +4904,67 @@ export async function createApp() {
       domains: platformDomains.map(serializePlatformDomain),
       enterpriseComponents,
     });
+  });
+
+  app.get("/api/intelligence/config-status", (_req, res) => {
+    res.json(getIntelligenceCredentialStatus());
+  });
+
+  app.post("/api/intelligence/agent", async (req, res) => {
+    const action = String(req.body?.action || "") as IntelligenceAgentAction;
+    const allowedActions: IntelligenceAgentAction[] = [
+      "enrich_company",
+      "identify_decision_makers",
+      "generate_partner_strategy",
+      "generate_resident_offering",
+      "generate_employee_offering",
+      "generate_campaign_plan",
+      "generate_pricing_recommendation",
+      "generate_proposal",
+      "generate_meeting_agenda",
+      "generate_follow_up",
+      "summarize_map_presence",
+      "recommend_next_action",
+    ];
+    if (!allowedActions.includes(action)) {
+      return res.status(400).json({ error: "Unsupported Intelligence action." });
+    }
+
+    const context = {
+      company: req.body?.company || req.body?.context?.company || {},
+      contacts: req.body?.contacts || req.body?.context?.contacts || [],
+      building: req.body?.building || req.body?.context?.building || {},
+      mapPresence: req.body?.mapPresence || req.body?.context?.mapPresence || [],
+      existingListings: req.body?.existingListings || req.body?.context?.existingListings || db.entities.MapEntityLink.slice(0, 25),
+      existingPerks: req.body?.existingPerks || req.body?.context?.existingPerks || db.entities.PerkLocation.slice(0, 25),
+      pricingCatalog: req.body?.pricingCatalog || req.body?.context?.pricingCatalog || db.entities.ProductOffering.slice(0, 25),
+      campaignCatalog: req.body?.campaignCatalog || req.body?.context?.campaignCatalog || db.entities.Campaign.slice(0, 25),
+      platformCapabilities: req.body?.platformCapabilities || req.body?.context?.platformCapabilities || platformDomains.map(serializePlatformDomain),
+      workspaceStatus: req.body?.workspaceStatus || req.body?.context?.workspaceStatus || {},
+      notes: req.body?.notes || req.body?.context?.notes || "",
+    };
+
+    const result = await runIntelligenceAgent(action, context);
+    const status = result.ok ? 200 : result.status || 500;
+    const resultData = "data" in result ? result.data : null;
+    const insight = withTimestamps(
+      {
+        title: `Partner Intelligence: ${action.replace(/_/g, " ")}`,
+        provider: "openai",
+        status: result.ok ? "generated" : "failed",
+        prompt_type: action,
+        source_module: "partner_intelligence",
+        company_id: String((context.company as any)?.id || ""),
+        company_name: String((context.company as any)?.companyName || (context.company as any)?.name || ""),
+        result: result.ok ? resultData : null,
+        error: result.ok ? "" : result.error,
+      },
+      makeId("ai_insight")
+    );
+    db.entities.AiInsight.push(insight);
+    writeAuditEvent(db, req, { action: `partner_intelligence_${action}`, entity_type: "ai_insight", entity_id: insight.id, after: insight });
+    await saveDatabase(db);
+    res.status(status).json({ ...result, insight_id: insight.id });
   });
 
   app.get("/api/tenants", (req, res) => {
@@ -5958,6 +6048,9 @@ export async function createApp() {
   });
 
   app.post("/api/stripe/webhook", async (req, res) => {
+    const verification = verifyStripeWebhookSignature((req as any).rawBody, req.header("stripe-signature") || undefined);
+    if (!verification.ok) return res.status(400).json({ error: verification.error || "Stripe webhook verification failed." });
+
     const event = req.body || {};
     const eventType = String(event.type || "");
     const object = event.data?.object || event.object || event;
@@ -7888,15 +7981,15 @@ export async function createApp() {
   app.get("/api/integrations/status", (req, res) => {
     const defaults: Array<{ provider: string; groups: string[][] }> = [
       { provider: "Tally Webhooks", groups: [["TALLY_WEBHOOK_SECRET"]] },
-      { provider: "Twilio Verify", groups: [["TWILIO_ACCOUNT_SID"], ["TWILIO_AUTH_TOKEN"], ["TWILIO_VERIFY_SERVICE_SID"]] },
-      { provider: "Twilio Messaging", groups: [["TWILIO_ACCOUNT_SID"], ["TWILIO_AUTH_TOKEN"], ["TWILIO_PHONE_NUMBER", "TWILIO_MESSAGING_SERVICE_SID"]] },
+      { provider: "Twilio Verify", groups: [["TWILIO_ACCOUNT_SID"], ["TWILIO_AUTH_TOKEN", "TWILIO_API_SECRET"], ["TWILIO_VERIFY_SERVICE_SID"]] },
+      { provider: "Twilio Messaging", groups: [["TWILIO_ACCOUNT_SID"], ["TWILIO_AUTH_TOKEN", "TWILIO_API_SECRET"], ["TWILIO_PHONE_NUMBER", "TWILIO_MESSAGING_SERVICE_SID"]] },
       { provider: "Supabase Auth / Operational Store", groups: [["SUPABASE_URL", "VITE_SUPABASE_URL"], ["SUPABASE_ANON_KEY", "VITE_SUPABASE_ANON_KEY"], ["SUPABASE_SERVICE_ROLE_KEY", "SUPABASE_SERVICE_KEY"]] },
       { provider: "n8n Workflow Orchestration", groups: [["N8N_WEBHOOK_URL", "N8N_BASE_URL"], ["N8N_API_KEY", "N8N_AUTH_TOKEN"]] },
       { provider: "OpenAI Insights", groups: [["OPENAI_API_KEY"]] },
       { provider: "Email Delivery", groups: [["RESEND_API_KEY"]] },
       { provider: "Google Sheets / Reports DB", groups: [["GOOGLE_SHEETS_CLIENT_EMAIL", "GOOGLE_SERVICE_ACCOUNT_EMAIL"], ["GOOGLE_SHEETS_PRIVATE_KEY", "GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY", "GOOGLE_SERVICE_ACCOUNT_JSON"], ["GOOGLE_SHEETS_SPREADSHEET_ID", "GOOGLE_SHEETS_REPORTS_SPREADSHEET_ID"]] },
-      { provider: "Google Maps / Places", groups: [["GOOGLE_MAPS_API_KEY", "GOOGLE_PLACES_API_KEY"]] },
-      { provider: "Stripe", groups: [["STRIPE_SECRET_KEY"]] },
+      { provider: "Google Maps / Places", groups: [["GOOGLE_MAPS_API_KEY", "GOOGLE_PLACES_API_KEY", "VITE_GOOGLE_MAPS_API_KEY"]] },
+      { provider: "Stripe", groups: [["STRIPE_SECRET_KEY"], ["STRIPE_WEBHOOK_SECRET"]] },
       { provider: "Storage Provider", groups: [["STORAGE_BUCKET", "BLOB_READ_WRITE_TOKEN", "VERCEL_BLOB_READ_WRITE_TOKEN", "S3_BUCKET", "AWS_S3_BUCKET", "SUPABASE_STORAGE_BUCKET"]] },
     ];
     const records = defaults.map(({ provider, groups }) => {

@@ -3,6 +3,25 @@ import { Link, useParams } from 'react-router-dom';
 import { ArrowRight, Building2, Calendar, FileText, Search, Sparkles } from 'lucide-react';
 import { frostTowerPartnerTargets, getPlatformAssessment, type IntelligenceCompany, type PlatformAssessment } from '@/data/intelligence/frostTowerPartnerTargets';
 
+type AgentAction =
+  | 'enrich_company'
+  | 'identify_decision_makers'
+  | 'generate_partner_strategy'
+  | 'generate_campaign_plan'
+  | 'generate_pricing_recommendation'
+  | 'generate_proposal'
+  | 'generate_meeting_agenda'
+  | 'generate_follow_up'
+  | 'summarize_map_presence'
+  | 'recommend_next_action';
+
+type AgentResponse = {
+  ok?: boolean;
+  action?: string;
+  data?: unknown;
+  error?: string;
+};
+
 const statuses: Record<IntelligenceCompany['status'], string> = {
   identified: 'Identified',
   researching: 'Researching',
@@ -149,24 +168,57 @@ function KpiRail() {
 }
 
 function RecommendationPanel() {
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [agentResult, setAgentResult] = useState<string>('');
+  const [agentError, setAgentError] = useState('');
   const recommendations = [
     'Prioritize Houndstooth, JuiceLand, SoulCycle, Modern Market, and One Taco for the first resident-facing launch.',
     'Create employer proposals for Frost Bank, EY, PIMCO, Rapid7, and Vista Equity Partners.',
     'Use Frost Tower as the first building-wide anchor before expanding to nearby Congress Avenue targets.',
     'Package parking, lunch, wellness, and coffee into a simple launch sequence.',
   ];
+  async function generateRecommendations() {
+    setIsGenerating(true);
+    setAgentError('');
+    try {
+      const response = await fetch('/api/intelligence/agent', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'recommend_next_action',
+          context: {
+            companies: frostTowerPartnerTargets,
+            notes: 'Recommend the next commercial actions across the Frost Tower target list.',
+          },
+        }),
+      });
+      const payload: AgentResponse = await response.json();
+      if (!response.ok || !payload.ok) throw new Error(payload.error || 'Unable to generate recommendations.');
+      setAgentResult(JSON.stringify(payload.data, null, 2));
+    } catch (error) {
+      setAgentError(error instanceof Error ? error.message : 'Unable to generate recommendations.');
+    } finally {
+      setIsGenerating(false);
+    }
+  }
   return (
     <section className="mb-5 border border-[rgba(11,31,51,0.08)] bg-white p-4">
-      <div className="flex items-center gap-2">
-        <Sparkles className="h-4 w-4 text-[#C8A96A]" />
-        <h2 className="text-[15px] font-semibold">What Intelligence recommends next</h2>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <Sparkles className="h-4 w-4 text-[#C8A96A]" />
+          <h2 className="text-[15px] font-semibold">What Intelligence recommends next</h2>
+        </div>
+        <button onClick={generateRecommendations} className="border border-[#C8A96A] px-3 py-2 text-[11px] font-semibold disabled:opacity-60" disabled={isGenerating}>
+          {isGenerating ? 'Generating...' : 'Generate live recommendation'}
+        </button>
       </div>
       <ol className="mt-3 grid gap-2 text-[12.5px] leading-5 text-[rgba(11,31,51,0.72)]">
         {recommendations.map((item, index) => <li key={item}>{index + 1}. {item}</li>)}
       </ol>
-      <p className="mt-3 border-t border-[rgba(11,31,51,0.08)] pt-3 text-[11px] font-semibold text-[rgba(11,31,51,0.58)]">
-        Next phase wires this panel to the server-side OpenAI Intelligence Agent so recommendations are generated from live context.
-      </p>
+      {agentError ? <p className="mt-3 border-t border-[rgba(11,31,51,0.08)] pt-3 text-[11px] font-semibold text-red-700">{agentError}</p> : null}
+      {agentResult ? (
+        <textarea value={agentResult} onChange={(event) => setAgentResult(event.target.value)} className="mt-3 min-h-40 w-full border border-[rgba(11,31,51,0.1)] p-3 font-mono text-[11px] leading-5 outline-none focus:border-[#C8A96A]" />
+      ) : null}
     </section>
   );
 }
@@ -207,7 +259,11 @@ function PlatformIntelligenceSection({ assessment }: { assessment: PlatformAsses
 
       <div className="mt-4 grid gap-4 xl:grid-cols-[0.9fr_1.1fr]">
         <div className="grid gap-3">
-          {scores.map(([label, value]) => <ScoreBar key={label} label={label} value={value} />)}
+          {scores.map(([label, value]) => (
+            <div key={label}>
+              <ScoreBar label={label} value={value} />
+            </div>
+          ))}
           <p className="text-[11px] text-[rgba(11,31,51,0.56)]">Research confidence: {assessment.confidenceScore}/100 · {assessment.researchSource}</p>
         </div>
         <div className="overflow-x-auto border border-[rgba(11,31,51,0.08)] [scrollbar-width:thin]">
@@ -359,6 +415,9 @@ function CompaniesView() {
 
 function CompanyWorkspace({ company }: { company: IntelligenceCompany }) {
   const assessment = getPlatformAssessment(company);
+  const [activeAction, setActiveAction] = useState('');
+  const [agentOutput, setAgentOutput] = useState('');
+  const [agentError, setAgentError] = useState('');
   const sections = [
     ['Overview', company.summary],
     ['Contacts', company.recommendedDecisionMakerRoles.join(', ')],
@@ -370,6 +429,56 @@ function CompanyWorkspace({ company }: { company: IntelligenceCompany }) {
     ['Pricing', `${company.suggestedPricingTier}; estimated first-year value ${money(companyValue(company))}.`],
     ['Activity', `Imported from Frost Tower seed data on ${new Date(company.createdAt).toLocaleDateString()}.`],
   ];
+  const copilotActions: Array<[string, AgentAction]> = [
+    ['Create proposal', 'generate_proposal'],
+    ['Suggest campaign', 'generate_campaign_plan'],
+    ['Find decision-maker roles', 'identify_decision_makers'],
+    ['Summarize relationship', 'generate_partner_strategy'],
+    ['Prepare meeting', 'generate_meeting_agenda'],
+    ['Generate ROI', 'generate_pricing_recommendation'],
+    ['Compare competitors', 'generate_partner_strategy'],
+    ['Create follow-up', 'generate_follow_up'],
+    ['Show missing map placements', 'summarize_map_presence'],
+    ['Create launch checklist', 'recommend_next_action'],
+  ];
+
+  async function runCopilotAction(label: string, action: AgentAction) {
+    setActiveAction(label);
+    setAgentError('');
+    try {
+      const response = await fetch('/api/intelligence/agent', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action,
+          context: {
+            company,
+            contacts: company.recommendedDecisionMakerRoles.map((role) => ({ role, confidence: 'role_target' })),
+            building: { name: company.building, address: company.address, latitude: company.latitude, longitude: company.longitude },
+            mapPresence: [
+              { title: `${company.companyName} map pin`, status: 'recommended', url: `/map?query=${encodeURIComponent(company.companyName)}` },
+              { title: `${company.companyName} campaign placement`, status: 'recommended', url: `/partners/campaigns?type=${company.partnerType}` },
+            ],
+            platformCapabilities: assessment,
+            workspaceStatus: {
+              workspaceCreated: company.workspaceCreated,
+              proposalGenerated: company.proposalGenerated,
+              meetingBooked: company.meetingBooked,
+              registrationStarted: company.registrationStarted,
+            },
+          },
+        }),
+      });
+      const payload: AgentResponse = await response.json();
+      if (!response.ok || !payload.ok) throw new Error(payload.error || 'Intelligence action failed.');
+      setAgentOutput(JSON.stringify(payload.data, null, 2));
+    } catch (error) {
+      setAgentError(error instanceof Error ? error.message : 'Intelligence action failed.');
+    } finally {
+      setActiveAction('');
+    }
+  }
+
   return (
     <Shell>
       <IntelligenceHeader title={company.companyName} support={`${company.industry} · ${company.building} · ${statuses[company.status]}`} />
@@ -392,9 +501,23 @@ function CompanyWorkspace({ company }: { company: IntelligenceCompany }) {
         </section>
         <aside className="border border-[rgba(11,31,51,0.08)] p-4">
           <h2 className="text-[15px] font-semibold">AI Copilot actions</h2>
-          {['Create proposal', 'Suggest campaign', 'Find decision-maker roles', 'Summarize relationship', 'Prepare meeting', 'Generate ROI', 'Compare competitors', 'Create launch checklist'].map((action) => (
-            <button key={action} className="mt-2 block w-full border-b border-[rgba(11,31,51,0.08)] py-2 text-left text-[12px] font-semibold hover:text-[#C8A96A]">{action}</button>
+          {copilotActions.map(([label, action]) => (
+            <button
+              key={label}
+              onClick={() => runCopilotAction(label, action)}
+              className="mt-2 block w-full border-b border-[rgba(11,31,51,0.08)] py-2 text-left text-[12px] font-semibold hover:text-[#C8A96A] disabled:opacity-60"
+              disabled={Boolean(activeAction)}
+            >
+              {activeAction === label ? 'Working...' : label}
+            </button>
           ))}
+          {agentError ? <p className="mt-3 text-[11px] font-semibold leading-4 text-red-700">{agentError}</p> : null}
+          {agentOutput ? (
+            <div className="mt-4 border-t border-[#C8A96A] pt-3">
+              <label className="text-[11px] font-bold uppercase tracking-[0.08em] text-[#C8A96A]">Editable agent output</label>
+              <textarea value={agentOutput} onChange={(event) => setAgentOutput(event.target.value)} className="mt-2 min-h-72 w-full border border-[rgba(11,31,51,0.1)] p-3 font-mono text-[11px] leading-5 outline-none focus:border-[#C8A96A]" />
+            </div>
+          ) : null}
         </aside>
       </div>
     </Shell>
