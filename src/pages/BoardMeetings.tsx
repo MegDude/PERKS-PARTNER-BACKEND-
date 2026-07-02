@@ -1,52 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { CalendarDays, CheckCircle2, Download, FileText, Loader2, Plus, Users } from 'lucide-react';
 import { toast } from 'sonner';
+import { boardMeetingsService, type BoardActionItem, type BoardMeeting, type BoardMeetingMetrics } from '@/services/domain/boardMeetingsService';
 
-type BoardActionItem = {
-  id: string;
-  title?: string;
-  owner?: string;
-  due_date?: string;
-  priority?: string;
-  status?: string;
-  notes?: string;
-};
-
-type BoardDecision = {
-  id: string;
-  title?: string;
-  decision?: string;
-  owner?: string;
-  status?: string;
-  impact?: string;
-};
-
-type BoardMeeting = {
-  id: string;
-  title?: string;
-  board_name?: string;
-  meeting_type?: string;
-  status?: string;
-  meeting_date?: string;
-  location?: string;
-  attendees?: string[];
-  agenda?: string[];
-  notes?: string;
-  summary?: string;
-  minutes?: string;
-  follow_up_status?: string;
-  decisions?: BoardDecision[];
-  actionItems?: BoardActionItem[];
-};
-
-type Metrics = {
-  meetings: number;
-  upcoming: number;
-  openActionItems: number;
-  decisions: number;
-};
-
-const emptyMetrics: Metrics = { meetings: 0, upcoming: 0, openActionItems: 0, decisions: 0 };
+const emptyMetrics: BoardMeetingMetrics = { meetings: 0, upcoming: 0, openActionItems: 0, decisions: 0 };
 
 function meetingTitle(meeting?: BoardMeeting) {
   return meeting?.title || 'Board meeting';
@@ -69,19 +26,9 @@ function downloadTextFile(filename: string, text: string) {
   window.setTimeout(() => URL.revokeObjectURL(url), 250);
 }
 
-async function apiRequest(path: string, options: RequestInit = {}) {
-  const response = await fetch(path, {
-    ...options,
-    headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
-  });
-  const payload = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(payload?.error || 'Request failed.');
-  return payload;
-}
-
 export default function BoardMeetings() {
   const [meetings, setMeetings] = useState<BoardMeeting[]>([]);
-  const [metrics, setMetrics] = useState<Metrics>(emptyMetrics);
+  const [metrics, setMetrics] = useState<BoardMeetingMetrics>(emptyMetrics);
   const [selectedId, setSelectedId] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -135,7 +82,7 @@ export default function BoardMeetings() {
   async function refresh() {
     setLoading(true);
     try {
-      const payload = await apiRequest('/api/board-meetings');
+      const payload = await boardMeetingsService.list();
       setMeetings(payload.meetings || []);
       setMetrics(payload.metrics || emptyMetrics);
       if (!selectedId && payload.meetings?.[0]) setSelectedId(payload.meetings[0].id);
@@ -154,10 +101,7 @@ export default function BoardMeetings() {
     }
     setSaving(true);
     try {
-      const created = await apiRequest('/api/board-meetings', {
-        method: 'POST',
-        body: JSON.stringify(createForm),
-      });
+      const created = await boardMeetingsService.create(createForm);
       setSelectedId(created.id);
       setCreateForm({ title: '', board_name: 'Civic board', meeting_date: '', location: '', attendees: '', agenda: '' });
       toast.success('Board meeting created.');
@@ -173,10 +117,7 @@ export default function BoardMeetings() {
     if (!selectedMeeting) return;
     setSaving(true);
     try {
-      const updated = await apiRequest(`/api/board-meetings/${encodeURIComponent(selectedMeeting.id)}`, {
-        method: 'PATCH',
-        body: JSON.stringify(patch),
-      });
+      const updated = await boardMeetingsService.update(selectedMeeting.id, patch);
       setSelectedId(updated.id);
       toast.success('Meeting saved.');
       await refresh();
@@ -191,10 +132,7 @@ export default function BoardMeetings() {
     if (!selectedMeeting) return;
     setSaving(true);
     try {
-      const updated = await apiRequest(`/api/board-meetings/${encodeURIComponent(selectedMeeting.id)}/minutes`, {
-        method: 'POST',
-        body: JSON.stringify({ notes: workForm.notes }),
-      });
+      const updated = await boardMeetingsService.draftMinutes(selectedMeeting.id, { notes: workForm.notes });
       setWorkForm((current) => ({ ...current, minutes: updated.minutes || current.minutes }));
       toast.success('Minutes draft created.');
       await refresh();
@@ -210,10 +148,7 @@ export default function BoardMeetings() {
     if (!selectedMeeting || !workForm.decision.trim()) return;
     setSaving(true);
     try {
-      await apiRequest(`/api/board-meetings/${encodeURIComponent(selectedMeeting.id)}/decisions`, {
-        method: 'POST',
-        body: JSON.stringify({ decision: workForm.decision, owner: workForm.decisionOwner || 'Needs verification' }),
-      });
+      await boardMeetingsService.addDecision(selectedMeeting.id, { decision: workForm.decision, owner: workForm.decisionOwner || 'Needs verification' });
       setWorkForm((current) => ({ ...current, decision: '', decisionOwner: '' }));
       toast.success('Decision saved.');
       await refresh();
@@ -229,14 +164,11 @@ export default function BoardMeetings() {
     if (!selectedMeeting || !workForm.actionTitle.trim()) return;
     setSaving(true);
     try {
-      await apiRequest(`/api/board-meetings/${encodeURIComponent(selectedMeeting.id)}/action-items`, {
-        method: 'POST',
-        body: JSON.stringify({
-          title: workForm.actionTitle,
-          owner: workForm.actionOwner || 'Needs verification',
-          due_date: workForm.actionDue,
-          status: 'open',
-        }),
+      await boardMeetingsService.addActionItem(selectedMeeting.id, {
+        title: workForm.actionTitle,
+        owner: workForm.actionOwner || 'Needs verification',
+        due_date: workForm.actionDue,
+        status: 'open',
       });
       setWorkForm((current) => ({ ...current, actionTitle: '', actionOwner: '', actionDue: '' }));
       toast.success('Action item added.');
@@ -251,10 +183,7 @@ export default function BoardMeetings() {
   async function completeActionItem(item: BoardActionItem) {
     setSaving(true);
     try {
-      await apiRequest(`/api/board-action-items/${encodeURIComponent(item.id)}`, {
-        method: 'PATCH',
-        body: JSON.stringify({ status: 'done' }),
-      });
+      await boardMeetingsService.updateActionItem(item.id, { status: 'done' });
       toast.success('Action item marked done.');
       await refresh();
     } catch {
