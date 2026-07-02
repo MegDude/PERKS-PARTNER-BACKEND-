@@ -404,8 +404,8 @@ body :where(h3, h4) {
 }
 
 .dp-admin-shell .dp-crm-table-scroll table {
-  width: 1760px !important;
-  min-width: 1760px !important;
+  width: 2240px !important;
+  min-width: 2240px !important;
   max-width: none !important;
   table-layout: fixed !important;
 }
@@ -2014,5 +2014,165 @@ body {
 
   .dp-admin-shell .dp-outreach-crm-page .dp-outreach-crm-table :where(td) {
     font-size: 11.5px !important;
+  }
+}
+
+/* Desktop polish and mobile simplification pass. */
+@media (min-width: 1024px) {
+  .dp-admin-shell :where(main > div:not([class*="fixed"]):not([class*="absolute"]), main > section:not([class*="fixed"]):not([class*="absolute"])) {
+    padding-top: clamp(24px, 2.2vw, 36px) !important;
+    padding-bottom: clamp(24px, 2.2vw, 36px) !important;
+  }
+
+  .dp-admin-shell :where(p, li, label, input, select, textarea) {
+    font-size: 15px !important;
+  }
+
+  .dp-admin-shell :where(button, a[role="button"], a[class*="inline-flex"]) {
+    min-height: 42px !important;
+    padding-inline: 0.9rem !important;
+  }
+}
+
+.dp-admin-shell,
+.shore-workspace {
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+}
+
+.dp-admin-shell :where(h1, h2, h3, h4),
+.shore-workspace :where(h1, h2, h3, h4) {
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+  font-weight: 650 !important;
+}
+
+.dp-admin-shell :where(p, li, label, input, select, textarea, button, a, th, td),
+.shore-workspace :where(p, li, label, input, select, textarea, button, a, th, td) {
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+}
+
+.dp-admin-shell :where(.font-bold, .font-extrabold, .font-black),
+.shore-workspace :where(.font-bold, .font-extrabold, .font-black) {
+  font-weight: 650 !important;
+}
+
+@media (min-width: 761px) and (max-width: 1180px) {
+  .dp-admin-shell .dp-crm-table-scroll table {
+    width: 1540px !important;
+    min-width: 1540px !important;
+  }
+
+  .dp-admin-shell .dp-outreach-crm-table :where(col:nth-child(6), col:nth-child(7)) {
+    width: 260px !important;
+  }
+
+  .dp-admin-shell .dp-outreach-crm-table :where(col:nth-child(11)) {
+    width: 360px !important;
+  }
+}
+
+@media (max-width: 760px) {
+  .dp-admin-shell {
+    --dp-admin-gutter: 16px;
+    --dp-admin-section-gap: 18px;
+    --dp-admin-card-pad: 16px;
+  }
+
+  .dp-admin-shell :where(main > div:not([class*="fixed"]):not([class*="absolute"]), main > section:not([class*="fixed"]):not([class*="absolute"])) {
+    padding-left: var(--dp-admin-gutter) !important;
+    padding-right: var(--dp-admin-gutter) !important;
+  }
+
+  .dp-admin-shell :where(h1) {
+    font-size: clamp(1.78rem, 8vw, 2.22rem) !important;
+  }
+
+  .dp-admin-shell :where(h2) {
+    font-size: 1.28rem !important;
+  }
+
+  .dp-admin-shell :where(p, li, label, input, select, textarea) {
+    font-size: 15px !important;
+    line-height: 1.5 !important;
+  }
+
+  .dp-admin-shell :where(button, a[role="button"], a[class*="inline-flex"], input, select) {
+    min-height: 44px !important;
+  }
+
+  .dp-admin-shell :where(.dp-admin-toolbar, [role="tablist"], .dp-crm-action-rail) {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    gap: 0.5rem !important;
+    padding-bottom: 0.35rem !important;
+  }
+
+  .dp-admin-shell :where(.dp-admin-toolbar > *, [role="tablist"] > *, .dp-crm-action-rail > *) {
+    flex: 0 0 auto !important;
+  }
+
+  .dp-admin-shell :where(.dp-summary-matrix__grid) {
+    grid-template-columns: 1fr !important;
+  }
+
+  .dp-admin-shell :where(.dp-summary-matrix__item, .dp-crm-kpi-tile) {
+    min-height: 42px !important;
+    padding-block: 0.42rem !important;
+  }
+}
+
+@media (max-width: 760px) {
+  .dp-admin-shell .dp-outreach-crm-page {
+    padding: 14px !important;
+  }
+
+  .dp-admin-shell .dp-outreach-crm-page :where(h1) {
+    font-size: 1.85rem !important;
+  }
+
+  .dp-admin-shell .dp-outreach-crm-page :where(.dp-crm-filter-field) {
+    min-width: 180px !important;
+  }
+
+  .dp-admin-shell .dp-crm-table-scroll {
+    margin-left: -14px;
+    margin-right: -14px;
+    padding-inline: 14px;
+  }
+
+  .dp-admin-shell .dp-crm-table-scroll table {
+    width: 1160px !important;
+    min-width: 1160px !important;
+  }
+
+  .dp-admin-shell .dp-outreach-crm-table :where(col:nth-child(6), col:nth-child(7), col:nth-child(10)) {
+    width: 0 !important;
+  }
+
+  .dp-admin-shell .dp-outreach-crm-table :where(th:nth-child(6), td:nth-child(6), th:nth-child(7), td:nth-child(7), th:nth-child(10), td:nth-child(10)) {
+    display: none !important;
+  }
+
+  .dp-admin-shell .dp-outreach-crm-table :where(col:nth-child(2)) {
+    width: 240px !important;
+  }
+
+  .dp-admin-shell .dp-outreach-crm-table :where(col:nth-child(5)) {
+    width: 220px !important;
+  }
+
+  .dp-admin-shell .dp-outreach-crm-table :where(col:nth-child(11)) {
+    width: 390px !important;
+  }
+
+  .dp-admin-shell .dp-outreach-crm-page .dp-outreach-crm-table :where(td) {
+    font-size: 12px !important;
+    line-height: 1.38 !important;
+  }
+
+  .dp-admin-shell .dp-outreach-crm-table :where(td button, td a[class*="inline-flex"]) {
+    min-height: 38px !important;
+    padding-inline: 0.62rem !important;
+    font-size: 10.5px !important;
   }
 }
