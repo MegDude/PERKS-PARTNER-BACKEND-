@@ -404,8 +404,8 @@ body :where(h3, h4) {
 }
 
 .dp-admin-shell .dp-crm-table-scroll table {
-  width: 2240px !important;
-  min-width: 2240px !important;
+  width: 1804px !important;
+  min-width: 1804px !important;
   max-width: none !important;
   table-layout: fixed !important;
 }
@@ -454,6 +454,56 @@ body :where(h3, h4) {
   width: 14px;
   height: 14px;
   accent-color: #c8a96a;
+}
+
+.dp-admin-shell .dp-outreach-crm-table col:nth-child(1) {
+  width: 42px !important;
+}
+
+.dp-admin-shell .dp-outreach-crm-table col:nth-child(2) {
+  width: 240px !important;
+}
+
+.dp-admin-shell .dp-outreach-crm-table col:nth-child(3),
+.dp-admin-shell .dp-outreach-crm-table col:nth-child(4) {
+  width: 116px !important;
+}
+
+.dp-admin-shell .dp-outreach-crm-table col:nth-child(5) {
+  width: 220px !important;
+}
+
+.dp-admin-shell .dp-outreach-crm-table col:nth-child(6),
+.dp-admin-shell .dp-outreach-crm-table col:nth-child(7) {
+  width: 230px !important;
+}
+
+.dp-admin-shell .dp-outreach-crm-table col:nth-child(8) {
+  width: 72px !important;
+}
+
+.dp-admin-shell .dp-outreach-crm-table col:nth-child(9) {
+  width: 150px !important;
+}
+
+.dp-admin-shell .dp-outreach-crm-table col:nth-child(10) {
+  width: 112px !important;
+}
+
+.dp-admin-shell .dp-outreach-crm-table col:nth-child(11) {
+  width: 276px !important;
+}
+
+.dp-admin-shell .dp-outreach-crm-table .dp-crm-row-actions {
+  max-width: 276px;
+  overflow: visible !important;
+}
+
+.dp-admin-shell .dp-outreach-crm-table .dp-crm-row-actions :where(button, a) {
+  width: 100%;
+  min-width: 0 !important;
+  justify-content: flex-start !important;
+  white-space: nowrap !important;
 }
 
 .dp-admin-shell .dp-crm-action-rail {
@@ -2057,16 +2107,16 @@ body {
 
 @media (min-width: 761px) and (max-width: 1180px) {
   .dp-admin-shell .dp-crm-table-scroll table {
-    width: 1540px !important;
-    min-width: 1540px !important;
+    width: 1624px !important;
+    min-width: 1624px !important;
   }
 
   .dp-admin-shell .dp-outreach-crm-table :where(col:nth-child(6), col:nth-child(7)) {
-    width: 260px !important;
+    width: 190px !important;
   }
 
   .dp-admin-shell .dp-outreach-crm-table :where(col:nth-child(11)) {
-    width: 360px !important;
+    width: 256px !important;
   }
 }
 

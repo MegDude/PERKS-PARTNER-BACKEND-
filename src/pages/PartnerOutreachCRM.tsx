@@ -732,19 +732,19 @@ export default function PartnerOutreachCRM() {
             </div>
           )}
           <div className="dp-crm-table-scroll overflow-x-auto" role="region" aria-label="Scrollable partner directory table" tabIndex={0}>
-            <table className="dp-outreach-crm-table w-full min-w-[2240px] table-fixed text-left">
+            <table className="dp-outreach-crm-table w-full min-w-[1804px] table-fixed text-left">
               <colgroup>
                 <col className="w-[42px]" />
-                <col className="w-[218px]" />
-                <col className="w-[132px]" />
-                <col className="w-[132px]" />
-                <col className="w-[210px]" />
-                <col className="w-[350px]" />
-                <col className="w-[350px]" />
+                <col className="w-[240px]" />
+                <col className="w-[116px]" />
+                <col className="w-[116px]" />
+                <col className="w-[220px]" />
+                <col className="w-[230px]" />
+                <col className="w-[230px]" />
                 <col className="w-[72px]" />
                 <col className="w-[150px]" />
-                <col className="w-[104px]" />
-                <col className="w-[480px]" />
+                <col className="w-[112px]" />
+                <col className="w-[276px]" />
               </colgroup>
               <thead>
                 <tr>
@@ -779,40 +779,40 @@ export default function PartnerOutreachCRM() {
                     <td><StatusBadge value={partner.outreach_stage} /></td>
                     <td>{formatActivityDate(partner.last_contacted)}</td>
                     <td onClick={(event) => event.stopPropagation()}>
-                      <div className="flex flex-nowrap items-center gap-1 overflow-x-auto">
+                      <div className="dp-crm-row-actions grid grid-cols-2 gap-1">
                         <button
                           type="button"
                           onClick={() => markContacted(partner.id)}
-                          className="inline-flex min-h-7 shrink-0 items-center gap-1 border border-[rgba(11,31,51,0.08)] px-1.5 text-[8.5px] font-semibold uppercase text-[#0B1F33]"
+                          className="inline-flex min-h-7 items-center gap-1 border border-[rgba(11,31,51,0.08)] px-1.5 text-[8.5px] font-semibold uppercase text-[#0B1F33]"
                         >
                           <CheckCircle2 className={`h-3 w-3 ${working === `contacted-${partner.id}` ? 'animate-spin' : ''}`} /> Contacted
                         </button>
                         <button
                           type="button"
                           onClick={() => scheduleFollowUp(partner.id)}
-                          className="inline-flex min-h-7 shrink-0 items-center gap-1 border border-[rgba(11,31,51,0.08)] px-1.5 text-[8.5px] font-semibold uppercase text-[#0B1F33]"
+                          className="inline-flex min-h-7 items-center gap-1 border border-[rgba(11,31,51,0.08)] px-1.5 text-[8.5px] font-semibold uppercase text-[#0B1F33]"
                         >
-                          <CalendarPlus className={`h-3 w-3 ${working === `followup-${partner.id}` ? 'animate-spin' : ''}`} /> Follow-up
+                          <CalendarPlus className={`h-3 w-3 ${working === `followup-${partner.id}` ? 'animate-spin' : ''}`} /> Follow up
                         </button>
                         <button
                           type="button"
                           onClick={() => generateMessage(partner.id, true)}
-                          className="inline-flex min-h-7 shrink-0 items-center gap-1 border border-[#C8A96A] px-1.5 text-[8.5px] font-semibold uppercase text-[#0B1F33]"
+                          className="inline-flex min-h-7 items-center gap-1 border border-[#C8A96A] px-1.5 text-[8.5px] font-semibold uppercase text-[#0B1F33]"
                         >
                           <Send className={`h-3 w-3 ${working === 'generate' ? 'animate-spin' : ''}`} /> Generate
                         </button>
                         <button
                           type="button"
                           onClick={() => copyText(partner.sms_message?.body || '')}
-                          className="inline-flex min-h-7 shrink-0 items-center gap-1 border border-[rgba(11,31,51,0.08)] px-1.5 text-[8.5px] font-semibold uppercase text-[#0B1F33]"
+                          className="inline-flex min-h-7 items-center gap-1 border border-[rgba(11,31,51,0.08)] px-1.5 text-[8.5px] font-semibold uppercase text-[#0B1F33]"
                         >
-                          <Copy className="h-3 w-3" /> Copy text
+                          <Copy className="h-3 w-3" /> Copy
                         </button>
                         <a
                           href={`/api/outreach-crm/partners/${partner.id}/email.html`}
                           target="_blank"
                           rel="noreferrer"
-                          className="inline-flex min-h-7 shrink-0 items-center gap-1 border border-[rgba(11,31,51,0.08)] px-1.5 text-[8.5px] font-semibold uppercase text-[#0B1F33]"
+                          className="inline-flex min-h-7 items-center gap-1 border border-[rgba(11,31,51,0.08)] px-1.5 text-[8.5px] font-semibold uppercase text-[#0B1F33]"
                         >
                           <Eye className="h-3 w-3" /> Email
                         </a>
@@ -821,7 +821,7 @@ export default function PartnerOutreachCRM() {
                             href={partner.website}
                             target="_blank"
                             rel="noreferrer"
-                            className="inline-flex min-h-7 shrink-0 items-center gap-1 border border-[rgba(11,31,51,0.08)] px-1.5 text-[8.5px] font-semibold uppercase text-[#0B1F33]"
+                            className="inline-flex min-h-7 items-center gap-1 border border-[rgba(11,31,51,0.08)] px-1.5 text-[8.5px] font-semibold uppercase text-[#0B1F33]"
                           >
                             <ExternalLink className="h-3 w-3" /> Site
                           </a>
@@ -831,7 +831,7 @@ export default function PartnerOutreachCRM() {
                             href={partner.google_maps_url}
                             target="_blank"
                             rel="noreferrer"
-                            className="inline-flex min-h-7 shrink-0 items-center gap-1 border border-[rgba(11,31,51,0.08)] px-1.5 text-[8.5px] font-semibold uppercase text-[#0B1F33]"
+                            className="inline-flex min-h-7 items-center gap-1 border border-[rgba(11,31,51,0.08)] px-1.5 text-[8.5px] font-semibold uppercase text-[#0B1F33]"
                           >
                             <MapPin className="h-3 w-3" /> Map
                           </a>
@@ -839,14 +839,14 @@ export default function PartnerOutreachCRM() {
                         <button
                           type="button"
                           onClick={() => archivePartner(partner.id)}
-                          className="inline-flex min-h-7 shrink-0 items-center gap-1 border border-[rgba(11,31,51,0.08)] px-1.5 text-[8.5px] font-semibold uppercase text-[#0B1F33]"
+                          className="inline-flex min-h-7 items-center gap-1 border border-[rgba(11,31,51,0.08)] px-1.5 text-[8.5px] font-semibold uppercase text-[#0B1F33]"
                         >
                           <Archive className={`h-3 w-3 ${working === `archive-${partner.id}` ? 'animate-spin' : ''}`} /> Archive
                         </button>
                         <button
                           type="button"
                           onClick={() => deletePartner(partner.id)}
-                          className="inline-flex min-h-7 shrink-0 items-center gap-1 border border-[rgba(11,31,51,0.08)] px-1.5 text-[8.5px] font-semibold uppercase text-[#0B1F33]"
+                          className="inline-flex min-h-7 items-center gap-1 border border-[rgba(11,31,51,0.08)] px-1.5 text-[8.5px] font-semibold uppercase text-[#0B1F33]"
                         >
                           <Trash2 className={`h-3 w-3 ${working === `delete-${partner.id}` ? 'animate-spin' : ''}`} /> Remove
                         </button>
