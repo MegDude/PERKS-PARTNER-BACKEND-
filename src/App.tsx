@@ -32,6 +32,7 @@ const PartnerOutreachCRM = lazy(() => import('./pages/PartnerOutreachCRM'));
 const PartnerIntelligence = lazy(() => import('./pages/PartnerIntelligence'));
 const PartnerCalendar = lazy(() => import('./pages/PartnerCalendar'));
 const LaunchDesk = lazy(() => import('./pages/LaunchDesk'));
+const BoardMeetings = lazy(() => import('./pages/BoardMeetings'));
 
 function RouteFallback() {
   return (
@@ -108,6 +109,7 @@ export default function App() {
           <Route path="settings" element={<BackendWorkspace />} />
           <Route path="reports" element={<Reports />} />
           <Route path="surveys" element={<Surveys />} />
+          <Route path="board-meetings" element={<BoardMeetings />} />
           <Route path="announcements" element={<AnnouncementManager />} />
           <Route path="promotions" element={<Promotions />} />
         </Route>

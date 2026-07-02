@@ -76,6 +76,9 @@ const entityNames = [
   "PartnerOutreachCampaign",
   "PartnerOutreachStep",
   "PartnerOutreachMessage",
+  "BoardMeeting",
+  "BoardDecision",
+  "BoardActionItem",
 ] as const;
 
 const apiBase = (import.meta as any).env?.VITE_API_BASE_URL || "";

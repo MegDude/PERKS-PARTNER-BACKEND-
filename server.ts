@@ -110,7 +110,10 @@ type EntityName =
   | "BillingHistory"
   | "CalendarIntegration"
   | "CalendarEvent"
-  | "BookingLink";
+  | "BookingLink"
+  | "BoardMeeting"
+  | "BoardDecision"
+  | "BoardActionItem";
 
 type EntityRecord = Record<string, any> & { id: string; created_at?: string; updated_at?: string };
 type Database = {
@@ -205,6 +208,9 @@ const entityNames: EntityName[] = [
   "CalendarIntegration",
   "CalendarEvent",
   "BookingLink",
+  "BoardMeeting",
+  "BoardDecision",
+  "BoardActionItem",
 ];
 
 const now = () => new Date().toISOString();
@@ -2780,6 +2786,86 @@ function getCalendarContext(entities: Database["entities"], workspaceId = "works
   };
 }
 
+function boardMeetingTitle(record: Record<string, any>) {
+  return record.title || record.name || "Board meeting";
+}
+
+function boardMeetingRelated(db: Database, meetingId: string) {
+  return {
+    decisions: db.entities.BoardDecision.filter((decision) => decision.meeting_id === meetingId),
+    actionItems: db.entities.BoardActionItem.filter((item) => item.meeting_id === meetingId),
+  };
+}
+
+function boardMeetingMetrics(db: Database) {
+  const meetings = db.entities.BoardMeeting;
+  const actionItems = db.entities.BoardActionItem;
+  return {
+    meetings: meetings.length,
+    upcoming: meetings.filter((meeting) => {
+      const time = new Date(meeting.meeting_date || meeting.date || 0).getTime();
+      return Number.isFinite(time) && time >= Date.now() && meeting.status !== "archived";
+    }).length,
+    openActionItems: actionItems.filter((item) => !["done", "completed", "archived"].includes(String(item.status || "").toLowerCase())).length,
+    decisions: db.entities.BoardDecision.length,
+  };
+}
+
+function draftBoardMinutes(input: { meeting: Record<string, any>; notes?: string; attendees?: string[]; decisions?: string[] }) {
+  const meeting = input.meeting;
+  const notes = String(input.notes || meeting.notes || "").trim();
+  const attendees = Array.isArray(input.attendees) && input.attendees.length ? input.attendees : Array.isArray(meeting.attendees) ? meeting.attendees : [];
+  const agenda = Array.isArray(meeting.agenda) ? meeting.agenda : String(meeting.agenda || "").split(/\n|;/).map((item) => item.trim()).filter(Boolean);
+  const noteLines = notes.split(/\n+/).map((line) => line.trim()).filter(Boolean);
+  const actionLines = noteLines.filter((line) => /action|follow|assign|owner|due|next/i.test(line)).slice(0, 8);
+  const decisionLines = [
+    ...(Array.isArray(input.decisions) ? input.decisions : []),
+    ...noteLines.filter((line) => /decided|approved|voted|agreed|motion/i.test(line)),
+  ].map((line) => String(line).trim()).filter(Boolean).slice(0, 8);
+  const summary = notes
+    ? noteLines.slice(0, 3).join(" ")
+    : `${boardMeetingTitle(meeting)} is ready for notes, decisions, and action items.`;
+
+  const minutes = [
+    `${boardMeetingTitle(meeting)}`,
+    meeting.board_name ? `Board or group: ${meeting.board_name}` : "",
+    meeting.meeting_date ? `Date: ${meeting.meeting_date}` : "",
+    meeting.location ? `Location: ${meeting.location}` : "",
+    "",
+    "Attendees",
+    attendees.length ? attendees.map((name) => `- ${name}`).join("\n") : "- Needs verification",
+    "",
+    "Agenda",
+    agenda.length ? agenda.map((item) => `- ${item}`).join("\n") : "- Needs verification",
+    "",
+    "Summary",
+    summary,
+    "",
+    "Decisions",
+    decisionLines.length ? decisionLines.map((item) => `- ${item}`).join("\n") : "- No decisions recorded yet.",
+    "",
+    "Action items",
+    actionLines.length ? actionLines.map((item) => `- ${item}`).join("\n") : "- No action items recorded yet.",
+    "",
+    "Notes",
+    notes || "Needs verification",
+  ].filter((line) => line !== "").join("\n");
+
+  return {
+    summary,
+    minutes,
+    suggestedDecisions: decisionLines,
+    suggestedActionItems: actionLines.map((line, index) => ({
+      title: line.replace(/^[-*\d.\s]+/, "").slice(0, 140) || `Follow-up item ${index + 1}`,
+      owner: "Needs verification",
+      due_date: "",
+      priority: "medium",
+      status: "open",
+      notes: line,
+    })),
+  };
+}
+
 function provisionPlatformTenant(entities: Database["entities"], source: Record<string, any>) {
   const name = source.name || source.business_name || source.title;
   if (!name) return null;
@@ -4029,7 +4115,56 @@ Meg Dude`,
     );
   }
 
+  seedBoardMeetingDefaults(entities);
   provisionAllPlatformTenants(entities);
+}
+
+function seedBoardMeetingDefaults(entities: Database["entities"]) {
+  const meeting = ensureRecord(entities.BoardMeeting, "board_meeting_dana_monthly", {
+    organization_id: "org_downtown_perks",
+    workspace_id: "workspace_downtown_perks",
+    board_name: "DANA Board",
+    title: "Monthly board meeting",
+    meeting_type: "board",
+    status: "draft",
+    meeting_date: "2026-07-15T18:00:00-05:00",
+    location: "Downtown Austin",
+    attendees: ["Chair", "Treasurer", "Secretary", "Committee leads"],
+    agenda: [
+      "Approve prior minutes",
+      "Review downtown updates",
+      "Discuss resident and business feedback",
+      "Confirm next public notes",
+    ],
+    notes: "Use this record as a starting point for civic meeting minutes and follow-up.",
+    summary: "Draft meeting record ready for agenda, notes, decisions, and action items.",
+    minutes: "",
+    follow_up_status: "not_started",
+    source: "board_meetings_seed",
+  });
+
+  ensureRecord(entities.BoardActionItem, "board_action_dana_minutes_review", {
+    meeting_id: meeting.id,
+    organization_id: meeting.organization_id,
+    workspace_id: meeting.workspace_id,
+    title: "Review prior meeting minutes",
+    owner: "Secretary",
+    due_date: "2026-07-12",
+    priority: "medium",
+    status: "open",
+    notes: "Confirm edits before the next board packet is shared.",
+  });
+
+  ensureRecord(entities.BoardDecision, "board_decision_dana_packet_process", {
+    meeting_id: meeting.id,
+    organization_id: meeting.organization_id,
+    workspace_id: meeting.workspace_id,
+    title: "Keep board packets in one workspace",
+    decision: "Use the Board Meetings tool to keep agendas, minutes, decisions, and action items together.",
+    owner: "Board operations",
+    status: "proposed",
+    impact: "Board members can see what changed, who owns each item, and what needs follow-up.",
+  });
 }
 
 function addContentManagementDefaults(entities: Database["entities"]) {
@@ -5269,6 +5404,145 @@ export async function createApp() {
     writeAuditEvent(db, req, { action: "calendar_event_saved", entity_type: "calendar_event", entity_id: event.id, after: event });
     await saveDatabase(db);
     res.status(201).json(event);
+  });
+
+  app.get("/api/board-meetings", (req, res) => {
+    const status = String(req.query.status || "");
+    const board = String(req.query.board || "");
+    const meetings = db.entities.BoardMeeting
+      .filter((meeting) => !status || String(meeting.status || "").toLowerCase() === status.toLowerCase())
+      .filter((meeting) => !board || String(meeting.board_name || "").toLowerCase().includes(board.toLowerCase()))
+      .sort((a, b) => new Date(b.meeting_date || b.created_at || 0).getTime() - new Date(a.meeting_date || a.created_at || 0).getTime())
+      .map((meeting) => ({ ...meeting, ...boardMeetingRelated(db, meeting.id) }));
+    res.json({ meetings, metrics: boardMeetingMetrics(db) });
+  });
+
+  app.post("/api/board-meetings", async (req, res) => {
+    const body = req.body || {};
+    if (!body.title) return res.status(400).json({ error: "Meeting title is required." });
+    const id = body.id || makeId("board_meeting");
+    const meeting = ensureRecord(db.entities.BoardMeeting, id, {
+      organization_id: body.organization_id || "org_downtown_perks",
+      workspace_id: body.workspace_id || "workspace_downtown_perks",
+      board_name: body.board_name || body.boardName || "Civic board",
+      title: body.title,
+      meeting_type: body.meeting_type || body.meetingType || "board",
+      status: body.status || "draft",
+      meeting_date: body.meeting_date || body.meetingDate || body.date || "",
+      location: body.location || "",
+      attendees: Array.isArray(body.attendees) ? body.attendees : String(body.attendees || "").split(/\n|,/).map((item) => item.trim()).filter(Boolean),
+      agenda: Array.isArray(body.agenda) ? body.agenda : String(body.agenda || "").split(/\n|;/).map((item) => item.trim()).filter(Boolean),
+      notes: body.notes || "",
+      summary: body.summary || "",
+      minutes: body.minutes || "",
+      follow_up_status: body.follow_up_status || "not_started",
+      source: "board_meetings_module",
+    });
+    writeAuditEvent(db, req, { action: "board_meeting_created", entity_type: "board_meeting", entity_id: meeting.id, after: meeting });
+    await saveDatabase(db);
+    res.status(201).json({ ...meeting, ...boardMeetingRelated(db, meeting.id) });
+  });
+
+  app.patch("/api/board-meetings/:id", async (req, res) => {
+    const meeting = db.entities.BoardMeeting.find((item) => item.id === req.params.id);
+    if (!meeting) return res.status(404).json({ error: "Board meeting not found." });
+    const before = { ...meeting };
+    const patch = req.body || {};
+    Object.assign(meeting, {
+      ...patch,
+      attendees: Array.isArray(patch.attendees) ? patch.attendees : patch.attendees ? String(patch.attendees).split(/\n|,/).map((item) => item.trim()).filter(Boolean) : meeting.attendees,
+      agenda: Array.isArray(patch.agenda) ? patch.agenda : patch.agenda ? String(patch.agenda).split(/\n|;/).map((item) => item.trim()).filter(Boolean) : meeting.agenda,
+      updated_at: now(),
+    });
+    writeAuditEvent(db, req, { action: "board_meeting_updated", entity_type: "board_meeting", entity_id: meeting.id, before, after: meeting });
+    await saveDatabase(db);
+    res.json({ ...meeting, ...boardMeetingRelated(db, meeting.id) });
+  });
+
+  app.post("/api/board-meetings/:id/minutes", async (req, res) => {
+    const meeting = db.entities.BoardMeeting.find((item) => item.id === req.params.id);
+    if (!meeting) return res.status(404).json({ error: "Board meeting not found." });
+    const before = { ...meeting };
+    const draft = draftBoardMinutes({ meeting, notes: req.body?.notes, attendees: req.body?.attendees, decisions: req.body?.decisions });
+    Object.assign(meeting, {
+      notes: req.body?.notes ?? meeting.notes,
+      summary: draft.summary,
+      minutes: draft.minutes,
+      status: meeting.status === "draft" ? "minutes_drafted" : meeting.status,
+      updated_at: now(),
+    });
+    const createdActionItems = draft.suggestedActionItems.map((item, index) =>
+      ensureRecord(db.entities.BoardActionItem, `board_action_${meeting.id}_${index + 1}`, {
+        ...item,
+        meeting_id: meeting.id,
+        organization_id: meeting.organization_id,
+        workspace_id: meeting.workspace_id,
+      })
+    );
+    draft.suggestedDecisions.forEach((decision, index) => {
+      ensureRecord(db.entities.BoardDecision, `board_decision_${meeting.id}_${index + 1}`, {
+        meeting_id: meeting.id,
+        organization_id: meeting.organization_id,
+        workspace_id: meeting.workspace_id,
+        title: decision.slice(0, 80),
+        decision,
+        owner: "Needs verification",
+        status: "draft",
+        impact: "",
+      });
+    });
+    writeAuditEvent(db, req, { action: "board_minutes_drafted", entity_type: "board_meeting", entity_id: meeting.id, before, after: meeting, metadata: { action_items: createdActionItems.length } });
+    await saveDatabase(db);
+    res.json({ ...meeting, ...boardMeetingRelated(db, meeting.id), draft });
+  });
+
+  app.post("/api/board-meetings/:id/decisions", async (req, res) => {
+    const meeting = db.entities.BoardMeeting.find((item) => item.id === req.params.id);
+    if (!meeting) return res.status(404).json({ error: "Board meeting not found." });
+    if (!req.body?.decision && !req.body?.title) return res.status(400).json({ error: "Decision text is required." });
+    const decision = ensureRecord(db.entities.BoardDecision, req.body?.id || makeId("board_decision"), {
+      meeting_id: meeting.id,
+      organization_id: meeting.organization_id,
+      workspace_id: meeting.workspace_id,
+      title: req.body?.title || String(req.body?.decision || "").slice(0, 80),
+      decision: req.body?.decision || req.body?.title,
+      owner: req.body?.owner || "Needs verification",
+      status: req.body?.status || "draft",
+      impact: req.body?.impact || "",
+    });
+    writeAuditEvent(db, req, { action: "board_decision_saved", entity_type: "board_decision", entity_id: decision.id, after: decision });
+    await saveDatabase(db);
+    res.status(201).json(decision);
+  });
+
+  app.post("/api/board-meetings/:id/action-items", async (req, res) => {
+    const meeting = db.entities.BoardMeeting.find((item) => item.id === req.params.id);
+    if (!meeting) return res.status(404).json({ error: "Board meeting not found." });
+    if (!req.body?.title) return res.status(400).json({ error: "Action item title is required." });
+    const item = ensureRecord(db.entities.BoardActionItem, req.body?.id || makeId("board_action"), {
+      meeting_id: meeting.id,
+      organization_id: meeting.organization_id,
+      workspace_id: meeting.workspace_id,
+      title: req.body?.title,
+      owner: req.body?.owner || "Needs verification",
+      due_date: req.body?.due_date || req.body?.dueDate || "",
+      priority: req.body?.priority || "medium",
+      status: req.body?.status || "open",
+      notes: req.body?.notes || "",
+    });
+    writeAuditEvent(db, req, { action: "board_action_item_saved", entity_type: "board_action_item", entity_id: item.id, after: item });
+    await saveDatabase(db);
+    res.status(201).json(item);
+  });
+
+  app.patch("/api/board-action-items/:id", async (req, res) => {
+    const item = db.entities.BoardActionItem.find((record) => record.id === req.params.id);
+    if (!item) return res.status(404).json({ error: "Action item not found." });
+    const before = { ...item };
+    Object.assign(item, req.body || {}, { updated_at: now() });
+    writeAuditEvent(db, req, { action: "board_action_item_updated", entity_type: "board_action_item", entity_id: item.id, before, after: item });
+    await saveDatabase(db);
+    res.json(item);
   });
 
   app.get("/api/integrations/google-calendar/status", (_req, res) => {
