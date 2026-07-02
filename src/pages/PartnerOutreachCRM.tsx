@@ -601,7 +601,7 @@ export default function PartnerOutreachCRM() {
           <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-[#C8A96A]">Partner growth</p>
           <h1 className="mt-1 text-xl font-semibold tracking-normal sm:text-2xl">Outreach CRM</h1>
           <p className="mt-1 max-w-3xl text-[11px] leading-5 text-[rgba(11,31,51,0.62)]">
-            One calm place to review partners, verify contacts, tune the angle, send the note, and move the relationship forward.
+            Review partners, confirm contact details, create outreach, schedule follow-ups, and track every next step.
           </p>
         </div>
         <div className="min-w-0 justify-self-stretch xl:justify-self-end">
