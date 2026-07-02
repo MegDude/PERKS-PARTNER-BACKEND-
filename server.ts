@@ -106,7 +106,10 @@ type EntityName =
   | "WorkspaceMember"
   | "Plan"
   | "WorkspaceAddon"
-  | "BillingHistory";
+  | "BillingHistory"
+  | "CalendarIntegration"
+  | "CalendarEvent"
+  | "BookingLink";
 
 type EntityRecord = Record<string, any> & { id: string; created_at?: string; updated_at?: string };
 type Database = {
@@ -198,6 +201,9 @@ const entityNames: EntityName[] = [
   "Plan",
   "WorkspaceAddon",
   "BillingHistory",
+  "CalendarIntegration",
+  "CalendarEvent",
+  "BookingLink",
 ];
 
 const now = () => new Date().toISOString();
@@ -2690,6 +2696,89 @@ function ensureRecord(collection: EntityRecord[], id: string, data: Record<strin
   return created;
 }
 
+function getCalendarConfigurationStatus() {
+  return {
+    provider: "google",
+    configured: Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET && process.env.GOOGLE_REDIRECT_URI),
+    primary_calendar_id: process.env.GOOGLE_CALENDAR_PRIMARY_ID || "partners@downtownperks.app",
+    timezone: process.env.GOOGLE_CALENDAR_TIMEZONE || "America/Chicago",
+    missing_env: [
+      ["GOOGLE_CLIENT_ID", process.env.GOOGLE_CLIENT_ID],
+      ["GOOGLE_CLIENT_SECRET", process.env.GOOGLE_CLIENT_SECRET],
+      ["GOOGLE_REDIRECT_URI", process.env.GOOGLE_REDIRECT_URI],
+    ].filter(([, value]) => !value).map(([key]) => key),
+  };
+}
+
+function seedCalendarDefaults(entities: Database["entities"]) {
+  ensureRecord(entities.BookingLink, "booking_30_min_with_meg", {
+    workspaceId: "workspace_downtown_perks",
+    workspace_id: "workspace_downtown_perks",
+    organizationId: "org_downtown_perks",
+    organization_id: "org_downtown_perks",
+    title: "30 min with Meg",
+    description: "A quick partner discovery, demo, or planning call.",
+    calendarProvider: "google",
+    calendar_provider: "google",
+    googleCalendarId: process.env.GOOGLE_CALENDAR_PRIMARY_ID || "partners@downtownperks.app",
+    google_calendar_id: process.env.GOOGLE_CALENDAR_PRIMARY_ID || "partners@downtownperks.app",
+    googleAppointmentScheduleId: "",
+    google_appointment_schedule_id: "",
+    bookingUrl: process.env.GOOGLE_CALENDAR_30_MIN_BOOKING_URL || "",
+    booking_url: process.env.GOOGLE_CALENDAR_30_MIN_BOOKING_URL || "",
+    durationMinutes: 30,
+    duration_minutes: 30,
+    timezone: process.env.GOOGLE_CALENDAR_TIMEZONE || "America/Chicago",
+    availabilityLabel: "Monday-Friday, 10:00 AM-5:00 PM",
+    availability_label: "Monday-Friday, 10:00 AM-5:00 PM",
+    audience: "sales_demo",
+    status: "active",
+  });
+
+  ensureRecord(entities.BookingLink, "booking_downtown_perks_onboarding", {
+    workspaceId: "workspace_downtown_perks",
+    workspace_id: "workspace_downtown_perks",
+    organizationId: "org_downtown_perks",
+    organization_id: "org_downtown_perks",
+    title: "Downtown Perks",
+    description: "Partner onboarding booking link.",
+    calendarProvider: "google",
+    calendar_provider: "google",
+    googleCalendarId: process.env.GOOGLE_CALENDAR_PRIMARY_ID || "partners@downtownperks.app",
+    google_calendar_id: process.env.GOOGLE_CALENDAR_PRIMARY_ID || "partners@downtownperks.app",
+    googleAppointmentScheduleId: "",
+    google_appointment_schedule_id: "",
+    bookingUrl: process.env.GOOGLE_CALENDAR_ONBOARDING_BOOKING_URL || "",
+    booking_url: process.env.GOOGLE_CALENDAR_ONBOARDING_BOOKING_URL || "",
+    durationMinutes: 30,
+    duration_minutes: 30,
+    timezone: process.env.GOOGLE_CALENDAR_TIMEZONE || "America/Chicago",
+    availabilityLabel: "Monday-Friday, 10:00 AM-5:00 PM",
+    availability_label: "Monday-Friday, 10:00 AM-5:00 PM",
+    audience: "partner_onboarding",
+    status: "active",
+  });
+}
+
+function getCalendarContext(entities: Database["entities"], workspaceId = "workspace_downtown_perks") {
+  const today = new Date();
+  const upcomingCutoff = new Date(today.getTime() + 1000 * 60 * 60 * 24 * 45);
+  const inWindow = (value: any) => {
+    const date = new Date(value || "");
+    return Number.isFinite(date.getTime()) && date >= today && date <= upcomingCutoff;
+  };
+  const events = entities.CalendarEvent.filter((event) => (event.workspace_id || event.workspaceId) === workspaceId && event.status !== "cancelled");
+  return {
+    upcomingMeetings: events.filter((event) => event.eventType === "partner_meeting" || event.event_type === "partner_meeting").filter((event) => inWindow(event.startTime || event.start_time)),
+    activeCampaigns: entities.Campaign.filter((campaign) => campaign.status === "active"),
+    upcomingCampaigns: entities.Campaign.filter((campaign) => inWindow(campaign.startDate || campaign.start_date || campaign.launch_at)),
+    activePerks: entities.PerkLocation.filter((perk) => perk.status === "active"),
+    expiringPerks: entities.PerkLocation.filter((perk) => inWindow(perk.perkEndDate || perk.perk_end_date || perk.expires_at)),
+    upcomingEvents: entities.Event.filter((event) => inWindow(event.startTime || event.start_time || event.date)),
+    bookingLinks: entities.BookingLink.filter((link) => (link.workspace_id || link.workspaceId) === workspaceId && link.status === "active"),
+  };
+}
+
 function provisionPlatformTenant(entities: Database["entities"], source: Record<string, any>) {
   const name = source.name || source.business_name || source.title;
   if (!name) return null;
@@ -3521,6 +3610,7 @@ function createSeedDatabase(): Database {
 
 function addOperationalDefaults(entities: Database["entities"]) {
   addContentManagementDefaults(entities);
+  seedCalendarDefaults(entities);
 
   if (entities.GlobalSettings.length === 0) {
     entities.GlobalSettings.push(
@@ -4910,6 +5000,143 @@ export async function createApp() {
     res.json(getIntelligenceCredentialStatus());
   });
 
+  app.get("/api/calendar/status", (_req, res) => {
+    const config = getCalendarConfigurationStatus();
+    const integration = db.entities.CalendarIntegration.find((item) => item.provider === "google" && item.status === "connected");
+    res.json({
+      ...config,
+      status: integration ? integration.status : config.configured ? "ready_to_connect" : "pending_credentials",
+      connected_account: integration?.providerAccountEmail || integration?.provider_account_email || "",
+      last_sync_at: integration?.last_sync_at || "",
+    });
+  });
+
+  app.get("/api/calendar/context", (req, res) => {
+    res.json(getCalendarContext(db.entities, String(req.query.workspaceId || "workspace_downtown_perks")));
+  });
+
+  app.get("/api/calendar/booking-links", (req, res) => {
+    const workspaceId = String(req.query.workspaceId || "");
+    const links = db.entities.BookingLink.filter((link) => !workspaceId || link.workspace_id === workspaceId || link.workspaceId === workspaceId);
+    res.json(links);
+  });
+
+  app.post("/api/calendar/booking-links", async (req, res) => {
+    const body = req.body || {};
+    if (!body.title) return res.status(400).json({ error: "Booking link title is required." });
+    const id = body.id || makeId("booking");
+    const link = ensureRecord(db.entities.BookingLink, id, {
+      workspaceId: body.workspaceId || body.workspace_id || "workspace_downtown_perks",
+      workspace_id: body.workspace_id || body.workspaceId || "workspace_downtown_perks",
+      organizationId: body.organizationId || body.organization_id || "org_downtown_perks",
+      organization_id: body.organization_id || body.organizationId || "org_downtown_perks",
+      title: body.title,
+      description: body.description || "",
+      calendarProvider: "google",
+      calendar_provider: "google",
+      googleCalendarId: body.googleCalendarId || body.google_calendar_id || process.env.GOOGLE_CALENDAR_PRIMARY_ID || "partners@downtownperks.app",
+      google_calendar_id: body.google_calendar_id || body.googleCalendarId || process.env.GOOGLE_CALENDAR_PRIMARY_ID || "partners@downtownperks.app",
+      googleAppointmentScheduleId: body.googleAppointmentScheduleId || body.google_appointment_schedule_id || "",
+      google_appointment_schedule_id: body.google_appointment_schedule_id || body.googleAppointmentScheduleId || "",
+      bookingUrl: body.bookingUrl || body.booking_url || "",
+      booking_url: body.booking_url || body.bookingUrl || "",
+      durationMinutes: Number(body.durationMinutes || body.duration_minutes || 30),
+      duration_minutes: Number(body.duration_minutes || body.durationMinutes || 30),
+      timezone: body.timezone || process.env.GOOGLE_CALENDAR_TIMEZONE || "America/Chicago",
+      availabilityLabel: body.availabilityLabel || body.availability_label || "",
+      availability_label: body.availability_label || body.availabilityLabel || "",
+      audience: body.audience || "partner_onboarding",
+      status: body.status || "active",
+    });
+    writeAuditEvent(db, req, { action: "booking_link_saved", entity_type: "booking_link", entity_id: link.id, after: link });
+    await saveDatabase(db);
+    res.status(201).json(link);
+  });
+
+  app.patch("/api/calendar/booking-links/:id", async (req, res) => {
+    const link = db.entities.BookingLink.find((item) => item.id === req.params.id);
+    if (!link) return res.status(404).json({ error: "Booking link not found." });
+    Object.assign(link, req.body || {}, { updated_at: now() });
+    writeAuditEvent(db, req, { action: "booking_link_updated", entity_type: "booking_link", entity_id: link.id, after: link });
+    await saveDatabase(db);
+    res.json(link);
+  });
+
+  app.get("/api/calendar/events", (req, res) => {
+    const workspaceId = String(req.query.workspaceId || "");
+    const events = db.entities.CalendarEvent.filter((event) => !workspaceId || event.workspace_id === workspaceId || event.workspaceId === workspaceId);
+    res.json(events);
+  });
+
+  app.post("/api/calendar/events", async (req, res) => {
+    const body = req.body || {};
+    if (!body.title) return res.status(400).json({ error: "Calendar event title is required." });
+    const id = body.id || makeId("calendar_event");
+    const event = ensureRecord(db.entities.CalendarEvent, id, {
+      workspaceId: body.workspaceId || body.workspace_id || "workspace_downtown_perks",
+      workspace_id: body.workspace_id || body.workspaceId || "workspace_downtown_perks",
+      organizationId: body.organizationId || body.organization_id || "org_downtown_perks",
+      organization_id: body.organization_id || body.organizationId || "org_downtown_perks",
+      provider: "google",
+      providerEventId: body.providerEventId || body.provider_event_id || "",
+      provider_event_id: body.provider_event_id || body.providerEventId || "",
+      calendarId: body.calendarId || body.calendar_id || process.env.GOOGLE_CALENDAR_PRIMARY_ID || "partners@downtownperks.app",
+      calendar_id: body.calendar_id || body.calendarId || process.env.GOOGLE_CALENDAR_PRIMARY_ID || "partners@downtownperks.app",
+      title: body.title,
+      description: body.description || "",
+      location: body.location || "",
+      startTime: body.startTime || body.start_time || body.startDate || body.start_date || now(),
+      start_time: body.start_time || body.startTime || body.startDate || body.start_date || now(),
+      endTime: body.endTime || body.end_time || body.endDate || body.end_date || body.startTime || body.start_time || now(),
+      end_time: body.end_time || body.endTime || body.endDate || body.end_date || body.startTime || body.start_time || now(),
+      timezone: body.timezone || process.env.GOOGLE_CALENDAR_TIMEZONE || "America/Chicago",
+      eventType: body.eventType || body.event_type || "partner_meeting",
+      event_type: body.event_type || body.eventType || "partner_meeting",
+      relatedEntityType: body.relatedEntityType || body.related_entity_type || "",
+      related_entity_type: body.related_entity_type || body.relatedEntityType || "",
+      relatedEntityId: body.relatedEntityId || body.related_entity_id || "",
+      related_entity_id: body.related_entity_id || body.relatedEntityId || "",
+      status: body.status || "scheduled",
+    });
+    writeAuditEvent(db, req, { action: "calendar_event_saved", entity_type: "calendar_event", entity_id: event.id, after: event });
+    await saveDatabase(db);
+    res.status(201).json(event);
+  });
+
+  app.get("/api/integrations/google-calendar/status", (_req, res) => {
+    res.json(getCalendarConfigurationStatus());
+  });
+
+  app.get("/api/integrations/google-calendar/connect", (_req, res) => {
+    const config = getCalendarConfigurationStatus();
+    if (!config.configured) return res.status(400).json({ error: "Google Calendar OAuth is missing required Vercel environment variables.", missing_env: config.missing_env });
+    const params = new URLSearchParams({
+      client_id: process.env.GOOGLE_CLIENT_ID || "",
+      redirect_uri: process.env.GOOGLE_REDIRECT_URI || "",
+      response_type: "code",
+      access_type: "offline",
+      prompt: "consent",
+      scope: "https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/calendar.readonly",
+    });
+    res.json({ auth_url: `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}` });
+  });
+
+  app.get("/api/integrations/google-calendar/callback", (_req, res) => {
+    res.status(501).json({
+      error: "Google Calendar OAuth callback is routed. Token exchange and encrypted token storage must be enabled before production connection.",
+    });
+  });
+
+  app.post("/api/integrations/google-calendar/disconnect", async (req, res) => {
+    const integration = db.entities.CalendarIntegration.find((item) => item.provider === "google" && item.status === "connected");
+    if (integration) {
+      Object.assign(integration, { status: "disconnected", updated_at: now() });
+      writeAuditEvent(db, req, { action: "google_calendar_disconnected", entity_type: "calendar_integration", entity_id: integration.id, after: integration });
+      await saveDatabase(db);
+    }
+    res.json({ success: true, status: "disconnected" });
+  });
+
   app.post("/api/intelligence/agent", async (req, res) => {
     const action = String(req.body?.action || "") as IntelligenceAgentAction;
     const allowedActions: IntelligenceAgentAction[] = [
@@ -4939,6 +5166,7 @@ export async function createApp() {
       existingPerks: req.body?.existingPerks || req.body?.context?.existingPerks || db.entities.PerkLocation.slice(0, 25),
       pricingCatalog: req.body?.pricingCatalog || req.body?.context?.pricingCatalog || db.entities.ProductOffering.slice(0, 25),
       campaignCatalog: req.body?.campaignCatalog || req.body?.context?.campaignCatalog || db.entities.Campaign.slice(0, 25),
+      calendarContext: req.body?.calendarContext || req.body?.context?.calendarContext || getCalendarContext(db.entities, String(req.body?.workspaceId || req.body?.context?.workspaceId || "workspace_downtown_perks")),
       platformCapabilities: req.body?.platformCapabilities || req.body?.context?.platformCapabilities || platformDomains.map(serializePlatformDomain),
       workspaceStatus: req.body?.workspaceStatus || req.body?.context?.workspaceStatus || {},
       notes: req.body?.notes || req.body?.context?.notes || "",
@@ -7988,6 +8216,7 @@ export async function createApp() {
       { provider: "OpenAI Insights", groups: [["OPENAI_API_KEY"]] },
       { provider: "Email Delivery", groups: [["RESEND_API_KEY"]] },
       { provider: "Google Sheets / Reports DB", groups: [["GOOGLE_SHEETS_CLIENT_EMAIL", "GOOGLE_SERVICE_ACCOUNT_EMAIL"], ["GOOGLE_SHEETS_PRIVATE_KEY", "GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY", "GOOGLE_SERVICE_ACCOUNT_JSON"], ["GOOGLE_SHEETS_SPREADSHEET_ID", "GOOGLE_SHEETS_REPORTS_SPREADSHEET_ID"]] },
+      { provider: "Google Calendar", groups: [["GOOGLE_CLIENT_ID"], ["GOOGLE_CLIENT_SECRET"], ["GOOGLE_REDIRECT_URI"], ["GOOGLE_CALENDAR_PRIMARY_ID"]] },
       { provider: "Google Maps / Places", groups: [["GOOGLE_MAPS_API_KEY", "GOOGLE_PLACES_API_KEY", "VITE_GOOGLE_MAPS_API_KEY"]] },
       { provider: "Stripe", groups: [["STRIPE_SECRET_KEY"], ["STRIPE_WEBHOOK_SECRET"]] },
       { provider: "Storage Provider", groups: [["STORAGE_BUCKET", "BLOB_READ_WRITE_TOKEN", "VERCEL_BLOB_READ_WRITE_TOKEN", "S3_BUCKET", "AWS_S3_BUCKET", "SUPABASE_STORAGE_BUCKET"]] },

@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
-import { Building2, LayoutDashboard, Users, Megaphone, Ticket, Settings, ArrowLeft, BarChart3, Presentation, ListTodo, Menu, X, Home as HomeIcon, CreditCard, Sparkles, MailCheck, Search } from 'lucide-react';
+import { Building2, LayoutDashboard, Users, Megaphone, Ticket, Settings, ArrowLeft, BarChart3, Presentation, ListTodo, Menu, X, Home as HomeIcon, CreditCard, Sparkles, MailCheck, Search, CalendarDays } from 'lucide-react';
 
 export default function PartnerDashboardLayout() {
   const navigate = useNavigate();
@@ -37,6 +37,7 @@ export default function PartnerDashboardLayout() {
     { to: '/admin/perks', icon: <Ticket className="w-4 h-4" />, label: 'Perks' },
     { to: '/admin/events', icon: <Presentation className="w-4 h-4" />, label: 'Events' },
     { to: '/admin/engagement', icon: <Megaphone className="w-4 h-4" />, label: 'Broadcasts' },
+    { to: '/partner/calendar', icon: <CalendarDays className="w-4 h-4" />, label: 'Calendar' },
     { to: '/admin/surveys', icon: <ListTodo className="w-4 h-4" />, label: 'Surveys' },
 
     { section: 'Messages' },

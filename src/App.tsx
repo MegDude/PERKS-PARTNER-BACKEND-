@@ -30,6 +30,7 @@ const PartnerWorkspaceRoute = lazy(() => import('./routes/PartnerWorkspaceRoute'
 const PlatformModuleAudit = lazy(() => import('./pages/PlatformModuleAudit'));
 const PartnerOutreachCRM = lazy(() => import('./pages/PartnerOutreachCRM'));
 const PartnerIntelligence = lazy(() => import('./pages/PartnerIntelligence'));
+const PartnerCalendar = lazy(() => import('./pages/PartnerCalendar'));
 
 function RouteFallback() {
   return (
@@ -59,6 +60,9 @@ export default function App() {
           <Route index element={<PartnerIntelligence />} />
           <Route path="companies/:companyId" element={<PartnerIntelligence />} />
           <Route path="proposals/:proposalId" element={<PartnerIntelligence />} />
+        </Route>
+        <Route path="/partner/calendar" element={<PartnerDashboardLayout />}>
+          <Route index element={<PartnerCalendar />} />
         </Route>
         <Route path="/proposals/:shareToken" element={<PartnerIntelligence />} />
         <Route path="/partner-workspace" element={<Navigate to="/workspace/home" replace />} />
