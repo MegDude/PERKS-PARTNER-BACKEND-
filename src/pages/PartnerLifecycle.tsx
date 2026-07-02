@@ -712,25 +712,51 @@ export default function PartnerLifecycle() {
     );
   }
 
+  const partnerSteps = [
+    { label: 'Choose partner path', detail: 'Pick the setup that matches your business, property, hotel, venue, brand, civic group, or real estate listing.' },
+    { label: 'Create account', detail: 'Add your organization, contact details, location, team access, and billing contact.' },
+    { label: 'Review pricing', detail: 'Compare annual plans, campaign options, QR tools, and launch add-ons before checkout.' },
+    { label: 'Activate workspace', detail: 'Create the partner workspace with offers, reports, QR codes, calendar, messages, and settings.' },
+    { label: 'Publish first item', detail: 'Launch an offer, event, campaign, or map listing so residents can find and act on it.' },
+    { label: 'Track performance', detail: 'Review views, directions, saves, redemptions, campaign reach, and recommendations.' },
+  ];
+
   return (
-    <Shell eyebrow="Partner platform" title="Start your workspace." body="Move from partner type to registration, checkout, setup, and daily work without losing the thread.">
+    <Shell eyebrow="Partner platform" title="Start your workspace." body="Create a partner account, choose the right plan, and open a workspace where your team can manage offers, events, campaigns, QR codes, reports, and billing.">
       <div className="grid gap-4 lg:grid-cols-[1fr_0.75fr]">
         <SectionCard>
-          <div className="grid gap-4 sm:grid-cols-2">
-            {['First page', 'Partner type', 'Registration', 'Organization setup', 'Pricing', 'Checkout', 'Review', 'Workspace created', 'Partner view', 'Daily work'].map((step, index) => (
-              <div key={step} className="border-t border-[rgba(11,31,51,0.08)] pt-4">
-                <p className="text-xs font-semibold text-[#C8A96A]">{String(index + 1).padStart(2, '0')}</p>
-                <p className="mt-1 text-sm font-semibold">{step}</p>
+          <div className="mb-4 flex flex-wrap items-end justify-between gap-3 border-b border-[rgba(11,31,51,0.08)] pb-3">
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-[#C8A96A]">How setup works</p>
+              <h2 className="mt-1 text-lg font-semibold">From signup to live workspace</h2>
+            </div>
+            <ActionLink to="/partners/register">Create partner account</ActionLink>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {partnerSteps.map((step, index) => (
+              <div key={step.label} className="border-t border-[rgba(11,31,51,0.08)] pt-3">
+                <p className="text-[10px] font-semibold text-[#C8A96A]">{String(index + 1).padStart(2, '0')}</p>
+                <p className="mt-1 text-[13px] font-semibold">{step.label}</p>
+                <p className="mt-1 text-xs leading-5 text-[rgba(11,31,51,0.62)]">{step.detail}</p>
               </div>
             ))}
           </div>
         </SectionCard>
         <SectionCard>
-          <p className="text-lg font-semibold">Partner workspace</p>
-          <p className="mt-3 text-sm leading-6 text-[rgba(11,31,51,0.62)]">The workspace is where partners keep offers, events, notes, codes, reports, billing, and team access in one place.</p>
-          <div className="mt-6 flex flex-wrap gap-3">
-            <ActionLink to="/partners/start">Start your workspace <ArrowRight className="h-4 w-4" /></ActionLink>
+          <p className="text-lg font-semibold">What you can do next</p>
+          <p className="mt-3 text-sm leading-6 text-[rgba(11,31,51,0.62)]">Use this page as the front door for the partner funnel. New partners can register, compare plans, launch a campaign, or sign in to manage an existing workspace.</p>
+          <div className="mt-5 grid gap-2">
+            <ActionLink to="/partners/register">Create partner account <ArrowRight className="h-4 w-4" /></ActionLink>
             <ActionLink to="/partners/pricing">Compare plans</ActionLink>
+            <ActionLink to="/partners/campaigns">Launch a campaign</ActionLink>
+            <ActionLink to="/partners/sign-in">Sign in to workspace</ActionLink>
+          </div>
+          <div className="mt-5 border-t border-[rgba(11,31,51,0.08)] pt-4">
+            <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-[#C8A96A]">Already active?</p>
+            <p className="mt-2 text-xs leading-5 text-[rgba(11,31,51,0.62)]">Open the workspace to update offers, manage events, check reports, review billing, or invite your team.</p>
+            <div className="mt-3">
+              <ActionLink to="/workspace/home">Open workspace</ActionLink>
+            </div>
           </div>
         </SectionCard>
       </div>

@@ -8,6 +8,14 @@ import crypto from "crypto";
 import { execFile } from "child_process";
 import { promisify } from "util";
 import { enterpriseComponents, platformArchitecture, platformDomains, serializePlatformDomain } from "./src/platform/registry.js";
+import {
+  buildRegistryEntities,
+  buildRegistryRelationships,
+  filterRegistryEntities,
+  normalizeImportRow,
+  previewRegistryImport,
+  type RegistryImportRow,
+} from "./src/platform/master-registry/index.js";
 import { createAgentStreamEnvelope, getProviderManager, listAgentTools, logOpenAIStatusOnce, routeAgentQuery } from "./backend/modules/ai/index.js";
 import { getIntelligenceCredentialStatus, runIntelligenceAgent, type IntelligenceAgentAction } from "./src/services/intelligence/intelligenceAgent.js";
 import { streamLaunchDeskAgent } from "./src/services/launchDesk/launchDeskAgent.js";
@@ -7890,6 +7898,214 @@ export async function createApp() {
         "If archived, preserve revisions and analytics while hiding from public surfaces.",
       ],
     });
+  });
+
+  app.get("/api/registry/entities", (req, res) => {
+    const records = filterRegistryEntities(buildRegistryEntities(db, mapEntityRows(db)), {
+      q: String(req.query.q || ""),
+      type: String(req.query.type || ""),
+      category: String(req.query.category || ""),
+      district: String(req.query.district || ""),
+      status: String(req.query.status || ""),
+      limit: Number(req.query.limit || 250),
+    });
+    res.json({
+      records,
+      count: records.length,
+      source: "master_registry",
+      backed_by: ["ContentEntity", "MapEntityLink", "PartnerProfile", "Campaign", "PerkLocation", "Event", "AnalyticsEvent"],
+    });
+  });
+
+  app.get("/api/registry/search", (req, res) => {
+    const records = filterRegistryEntities(buildRegistryEntities(db, mapEntityRows(db)), {
+      q: String(req.query.q || ""),
+      type: String(req.query.type || ""),
+      category: String(req.query.category || ""),
+      district: String(req.query.district || ""),
+      status: String(req.query.status || ""),
+      limit: Number(req.query.limit || 50),
+    });
+    res.json({ query: req.query.q || "", records, count: records.length });
+  });
+
+  app.get("/api/registry/entity/:id", (req, res) => {
+    const entities = buildRegistryEntities(db, mapEntityRows(db));
+    const entity = entities.find((item) => item.id === req.params.id || item.slug === req.params.id);
+    if (!entity) return res.status(404).json({ error: "Registry entity not found." });
+    const relationships = buildRegistryRelationships(db).filter((item) => item.sourceEntityId === entity.id || item.targetEntityId === entity.id);
+    const campaigns = db.entities.Campaign.filter((campaign) => campaign.related_entity_id === entity.id || campaign.partner_id === entity.partnerId);
+    const perks = db.entities.PerkLocation.filter((perk) => perk.partner_id === entity.partnerId || perk.related_entity_id === entity.id);
+    const events = db.entities.Event.filter((event) => event.partner_id === entity.partnerId || event.related_entity_id === entity.id);
+    res.json({ ...entity, relationships, campaigns, perks, events });
+  });
+
+  app.get("/api/registry/campaigns", (_req, res) => {
+    res.json(db.entities.Campaign.filter((campaign) => !campaign.deleted_at));
+  });
+
+  app.get("/api/registry/collections", (_req, res) => {
+    res.json(db.entities.ContentCollection.filter((collection) => !collection.deleted_at));
+  });
+
+  app.get("/api/registry/layers", (_req, res) => {
+    const layers = mapEntityRows(db).reduce<Record<string, { id: string; label: string; count: number; categories: string[] }>>((acc, entity) => {
+      const id = slug(entity.entity_type || entity.category || "general");
+      if (!acc[id]) acc[id] = { id, label: entity.entity_type || entity.category || "General", count: 0, categories: [] };
+      acc[id].count += 1;
+      if (entity.category && !acc[id].categories.includes(entity.category)) acc[id].categories.push(entity.category);
+      return acc;
+    }, {});
+    res.json(Object.values(layers).sort((a, b) => a.label.localeCompare(b.label)));
+  });
+
+  app.get("/api/registry/relationships", (_req, res) => {
+    res.json(buildRegistryRelationships(db));
+  });
+
+  app.post("/api/registry/entity", async (req, res) => {
+    const normalized = normalizeImportRow(req.body || {});
+    if (!normalized.name) return res.status(400).json({ error: "Name is required." });
+    const recordId = normalized.id || `registry_${slug(String(normalized.name))}`;
+    const before = db.entities.ContentEntity.find((item) => item.id === recordId);
+    const record = ensureRecord(db.entities.ContentEntity, recordId, {
+      organization_id: req.body?.organization_id || "org_downtown_perks",
+      workspace_id: req.body?.workspace_id || "workspace_downtown_perks",
+      name: normalized.name,
+      title: normalized.name,
+      slug: normalized.slug || slug(String(normalized.name)).replace(/_/g, "-"),
+      entity_type: normalized.entityType,
+      category: normalized.primaryCategory,
+      subcategory: normalized.subcategory,
+      summary: normalized.summary,
+      description: normalized.description,
+      address: normalized.address,
+      suite: normalized.suite,
+      building: normalized.building,
+      district: normalized.district,
+      city: normalized.city,
+      state: normalized.state,
+      postcode: normalized.postcode,
+      country: normalized.country,
+      phone: normalized.phone,
+      website: normalized.website,
+      image_url: normalized.image,
+      logo_url: normalized.logo,
+      partner_id: normalized.partnerId,
+      source: normalized.source || "registry_api",
+      status: normalized.status || "draft",
+      map: {
+        latitude: normalized.latitude,
+        longitude: normalized.longitude,
+        map_layer: normalized.entityType || normalized.primaryCategory || "general",
+        visibility: normalized.status === "published" ? "public" : "admin",
+      },
+      raw_metadata: normalized.raw || req.body || {},
+    });
+    writeAuditEvent(db, req, { action: before ? "registry_entity_updated" : "registry_entity_created", entity_type: "registry_entity", entity_id: record.id, before, after: record });
+    writeAnalyticsEvent(db, req, { event: before ? "registry_entity_updated" : "registry_entity_created", entity_type: "registry_entity", entity_id: record.id });
+    await saveDatabase(db);
+    res.status(before ? 200 : 201).json(record);
+  });
+
+  app.put("/api/registry/entity/:id", async (req, res) => {
+    const record = db.entities.ContentEntity.find((item) => item.id === req.params.id || item.slug === req.params.id);
+    if (!record || record.deleted_at) return res.status(404).json({ error: "Registry entity not found." });
+    const before = { ...record };
+    const normalized = normalizeImportRow({ ...record, ...req.body });
+    Object.assign(record, {
+      ...req.body,
+      name: normalized.name || record.name,
+      title: normalized.name || record.title,
+      slug: normalized.slug || record.slug,
+      entity_type: normalized.entityType || record.entity_type,
+      category: normalized.primaryCategory || record.category,
+      description: normalized.description || record.description,
+      district: normalized.district || record.district,
+      website: normalized.website || record.website,
+      phone: normalized.phone || record.phone,
+      map: {
+        ...(record.map || {}),
+        latitude: normalized.latitude ?? record.map?.latitude,
+        longitude: normalized.longitude ?? record.map?.longitude,
+      },
+      updated_at: now(),
+    });
+    writeAuditEvent(db, req, { action: "registry_entity_updated", entity_type: "registry_entity", entity_id: record.id, before, after: record });
+    await saveDatabase(db);
+    res.json(record);
+  });
+
+  app.delete("/api/registry/entity/:id", async (req, res) => {
+    const record = db.entities.ContentEntity.find((item) => item.id === req.params.id || item.slug === req.params.id);
+    if (!record || record.deleted_at) return res.status(404).json({ error: "Registry entity not found." });
+    const before = { ...record };
+    record.status = "archived";
+    record.active = false;
+    record.deleted_at = req.query.hard === "true" ? now() : "";
+    record.archived_at = now();
+    record.updated_at = now();
+    writeAuditEvent(db, req, { action: "registry_entity_archived", entity_type: "registry_entity", entity_id: record.id, before, after: record });
+    await saveDatabase(db);
+    res.json(record);
+  });
+
+  app.post("/api/registry/import", async (req, res) => {
+    const source = String(req.body?.source || req.body?.filename || "registry_import");
+    const rows: RegistryImportRow[] = Array.isArray(req.body?.rows)
+      ? req.body.rows
+      : typeof req.body?.csv === "string"
+        ? parseCsv(req.body.csv)
+        : [];
+    const existing = buildRegistryEntities(db, mapEntityRows(db));
+    const preview = previewRegistryImport(existing, rows, source);
+    if (req.body?.preview !== false && req.body?.commit !== true) return res.json(preview);
+
+    const imported: EntityRecord[] = [];
+    const failed: Array<{ rowIndex: number; reason: string }> = [];
+    for (const row of preview.rows) {
+      if (row.action === "skip") {
+        failed.push({ rowIndex: row.rowIndex, reason: row.reason || "Skipped row" });
+        continue;
+      }
+      const normalized = row.entity;
+      if (!normalized.name) {
+        failed.push({ rowIndex: row.rowIndex, reason: "Missing name" });
+        continue;
+      }
+      const recordId = row.matchedEntityId || normalized.id || `registry_${slug(String(normalized.name))}`;
+      const record = ensureRecord(db.entities.ContentEntity, recordId, {
+        organization_id: "org_downtown_perks",
+        workspace_id: "workspace_downtown_perks",
+        name: normalized.name,
+        title: normalized.name,
+        slug: normalized.slug || slug(String(normalized.name)).replace(/_/g, "-"),
+        entity_type: normalized.entityType || "entity",
+        category: normalized.primaryCategory || "",
+        subcategory: normalized.subcategory || "",
+        description: normalized.description || normalized.summary || "",
+        address: normalized.address || "",
+        building: normalized.building || "",
+        district: normalized.district || "",
+        phone: normalized.phone || "",
+        website: normalized.website || "",
+        partner_id: normalized.partnerId || "",
+        status: normalized.status || "draft",
+        source,
+        source_file: source,
+        raw_metadata: normalized.raw || {},
+        map: {
+          latitude: normalized.latitude,
+          longitude: normalized.longitude,
+          map_layer: normalized.entityType || normalized.primaryCategory || "general",
+          visibility: normalized.status === "published" ? "public" : "admin",
+        },
+      });
+      imported.push(record);
+    }
+    writeAuditEvent(db, req, { action: "registry_import_committed", entity_type: "registry_import", entity_id: source, after: { imported: imported.length, failed: failed.length, source } });
+    await saveDatabase(db);
+    res.status(201).json({ ...preview, committed: true, imported: imported.length, failed });
   });
 
   app.get("/api/map/entities", (req, res) => {
