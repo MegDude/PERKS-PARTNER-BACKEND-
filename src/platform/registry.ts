@@ -321,9 +321,9 @@ export const platformDomains: PlatformDomain[] = [
   {
     id: 'analytics',
     route: '/admin/analytics',
-    productName: 'Downtown Intelligence Platform',
-    label: 'Analytics OS',
-    positioning: 'The source of truth for participation, movement, and performance.',
+    productName: 'Downtown Analytics',
+    label: 'Analytics',
+    positioning: 'The source of truth for participation, activity, and performance.',
     purpose: 'Aggregates residents, buildings, partners, events, offers, redemptions, engagement, and surveys into one KPI engine.',
     icon: BarChart3,
     capabilities: ['data_model', 'workflow', 'permissions', 'automation', 'analytics', 'api', 'agent'],

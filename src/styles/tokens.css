@@ -11,11 +11,11 @@
   --dp-line-strong: rgba(11,31,51,.14);
   --dp-shadow: 0 18px 50px rgba(11,31,51,.08);
 
-  --dp-admin-max: 1320px;
+  --dp-admin-max: 1440px;
   --dp-admin-sidebar: 256px;
-  --dp-admin-gutter: clamp(20px, 4vw, 32px);
-  --dp-admin-section-gap: 24px;
-  --dp-admin-card-pad: 18px;
+  --dp-admin-gutter: clamp(22px, 4vw, 40px);
+  --dp-admin-section-gap: 28px;
+  --dp-admin-card-pad: 22px;
   --dp-admin-card-radius: 0;
   --dp-admin-control-radius: 0;
 
@@ -30,10 +30,10 @@
   --space-12: 48px;
   --space-16: 64px;
 
-  --type-display: 40px;
-  --type-h1: 30px;
-  --type-h2: 23px;
-  --type-h3: 18px;
-  --type-body: 14px;
-  --type-caption: 12px;
+  --type-display: 44px;
+  --type-h1: 34px;
+  --type-h2: 25px;
+  --type-h3: 19px;
+  --type-body: 15px;
+  --type-caption: 13px;
 }

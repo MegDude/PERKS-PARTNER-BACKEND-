@@ -1815,3 +1815,204 @@ body :where(section.bg-white[class*="border"], article.bg-white[class*="border"]
   font-size: clamp(1.18rem, 4.8vw, 1.72rem) !important;
   line-height: 1.08 !important;
 }
+
+/* 2026 platform readability layer.
+   This is the shared visual contract for the admin and partner platform:
+   clear type, usable controls, quiet dividers, and wide-screen breathing room. */
+:root {
+  --dp-platform-copy: clamp(14px, 0.86vw, 15.5px);
+  --dp-platform-small: clamp(12.5px, 0.74vw, 13.5px);
+  --dp-platform-caption: 12px;
+  --dp-platform-table: clamp(12.5px, 0.76vw, 13.5px);
+  --dp-platform-table-compact: 11.5px;
+  --dp-platform-control: 40px;
+  --dp-platform-touch: 44px;
+  --dp-platform-line: rgba(11, 31, 51, 0.085);
+}
+
+body {
+  font-size: var(--dp-platform-copy);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+.dp-admin-shell {
+  --dp-admin-max: 1440px;
+  --dp-admin-gutter: clamp(22px, 3.4vw, 44px);
+  --dp-admin-section-gap: clamp(22px, 2.2vw, 34px);
+  --dp-admin-card-pad: clamp(18px, 1.8vw, 28px);
+}
+
+.dp-admin-shell :where(h1) {
+  font-size: clamp(2rem, 3.1vw, 3rem) !important;
+  line-height: 1.04 !important;
+}
+
+.dp-admin-shell :where(h2) {
+  font-size: clamp(1.32rem, 1.8vw, 1.75rem) !important;
+  line-height: 1.15 !important;
+}
+
+.dp-admin-shell :where(h3, h4) {
+  font-size: clamp(1.02rem, 1.18vw, 1.2rem) !important;
+  line-height: 1.24 !important;
+}
+
+.dp-admin-shell :where(p, li, label, input, select, textarea) {
+  font-size: var(--dp-platform-copy) !important;
+  line-height: 1.52 !important;
+}
+
+.dp-admin-shell :where(.text-xs) {
+  font-size: var(--dp-platform-caption) !important;
+  line-height: 1.35 !important;
+}
+
+.dp-admin-shell :where(.text-sm) {
+  font-size: var(--dp-platform-small) !important;
+  line-height: 1.48 !important;
+}
+
+.dp-admin-shell :where(.text-lg) {
+  font-size: 1.05rem !important;
+  line-height: 1.35 !important;
+}
+
+.dp-admin-shell :where(button, a[role="button"], a[class*="inline-flex"]) {
+  min-height: var(--dp-platform-control) !important;
+  align-items: center;
+  font-size: 12.5px !important;
+  line-height: 1.2 !important;
+}
+
+.dp-admin-shell :where(input, select, textarea) {
+  min-height: var(--dp-platform-control) !important;
+  padding-top: 0.58rem !important;
+  padding-bottom: 0.58rem !important;
+}
+
+.dp-admin-shell :where(table) {
+  font-size: var(--dp-platform-table) !important;
+}
+
+.dp-admin-shell :where(th) {
+  padding: 0.72rem 0.76rem !important;
+  color: rgba(11, 31, 51, 0.58) !important;
+  font-size: 11px !important;
+  line-height: 1.25 !important;
+}
+
+.dp-admin-shell :where(td) {
+  padding: 0.78rem 0.76rem !important;
+  font-size: var(--dp-platform-table) !important;
+  line-height: 1.46 !important;
+}
+
+.dp-admin-shell :where(table, thead, tbody, tr, th, td),
+.dp-admin-shell :where(.divide-y > :not([hidden]) ~ :not([hidden])),
+.shore-workspace :where(table, thead, tbody, tr, th, td) {
+  border-color: var(--dp-platform-line) !important;
+}
+
+.dp-admin-shell :where(thead tr) {
+  border-bottom: 1px solid var(--dp-platform-line) !important;
+}
+
+.dp-admin-shell :where(tbody tr:not(:last-child)) {
+  border-bottom: 1px solid rgba(11, 31, 51, 0.055) !important;
+}
+
+.dp-admin-shell :where(section[class*="border"], article[class*="border"], aside[class*="border"], form[class*="border"], div[class*="border"][class*="p-"]) {
+  border-color: rgba(11, 31, 51, 0.075) !important;
+}
+
+.dp-admin-shell .dp-outreach-crm-page :where(p, li, input, select, textarea) {
+  font-size: 13.5px !important;
+  line-height: 1.5 !important;
+}
+
+.dp-admin-shell .dp-outreach-crm-page :where(button) {
+  min-height: 36px !important;
+  font-size: 11px !important;
+}
+
+.dp-admin-shell .dp-outreach-crm-page .dp-outreach-crm-table :where(th) {
+  font-size: 10px !important;
+  padding: 0.48rem 0.44rem !important;
+}
+
+.dp-admin-shell .dp-outreach-crm-page .dp-outreach-crm-table :where(td) {
+  font-size: var(--dp-platform-table-compact) !important;
+  line-height: 1.34 !important;
+  padding: 0.5rem 0.44rem !important;
+}
+
+.dp-admin-shell .dp-outreach-crm-table .dp-crm-cell-primary {
+  font-size: 11.5px !important;
+}
+
+.dp-admin-shell .dp-outreach-crm-table .dp-crm-cell-secondary {
+  font-size: 10.25px !important;
+  line-height: 1.32 !important;
+}
+
+.dp-admin-shell :where(.dp-summary-matrix__label, .dp-crm-kpi-label) {
+  font-size: 0.68rem !important;
+  line-height: 1.22 !important;
+}
+
+.dp-admin-shell :where(.dp-summary-matrix__value, .dp-crm-kpi-value) {
+  font-size: 1.02rem !important;
+  line-height: 1.08 !important;
+}
+
+.dp-admin-shell :where(.dp-summary-matrix__detail) {
+  font-size: 0.78rem !important;
+  line-height: 1.35 !important;
+}
+
+@media (min-width: 1440px) {
+  .dp-admin-shell aside {
+    width: 18rem;
+  }
+
+  .dp-admin-shell {
+    --dp-admin-sidebar: 288px;
+  }
+}
+
+@media (max-width: 640px) {
+  :root {
+    --dp-platform-copy: 15px;
+    --dp-platform-small: 13.5px;
+    --dp-platform-table: 13px;
+    --dp-admin-gutter: 18px;
+  }
+
+  .dp-admin-shell :where(h1) {
+    font-size: clamp(1.72rem, 8vw, 2.18rem) !important;
+    line-height: 1.08 !important;
+  }
+
+  .dp-admin-shell :where(h2) {
+    font-size: 1.32rem !important;
+  }
+
+  .dp-admin-shell :where(button, a[role="button"], a[class*="inline-flex"], input, select) {
+    min-height: var(--dp-platform-touch) !important;
+  }
+
+  .dp-admin-shell :where(td) {
+    font-size: 13px !important;
+    line-height: 1.44 !important;
+  }
+
+  .dp-admin-shell .dp-outreach-crm-page .dp-outreach-crm-table :where(th) {
+    font-size: 10px !important;
+  }
+
+  .dp-admin-shell .dp-outreach-crm-page .dp-outreach-crm-table :where(td) {
+    font-size: 11.5px !important;
+  }
+}

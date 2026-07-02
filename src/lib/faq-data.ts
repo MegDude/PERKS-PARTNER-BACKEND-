@@ -20,7 +20,7 @@ export const FAQ_HOME: FAQItem[] = [
   {
     id: "h3",
     question: "How do partners know it is working?",
-    answer: "Partners can track scans, saves, RSVPs, redemptions, and decision signals tied to real usage.",
+    answer: "Partners can track scans, saves, RSVPs, redemptions, and other activity tied to real use.",
   },
 ];
 
@@ -38,6 +38,6 @@ export const FAQ_PROPERTY: FAQItem[] = [
   {
     id: "pr3",
     question: "Can buildings see proof of use?",
-    answer: "Yes. The platform surfaces scans, saves, redemptions, RSVP data, and other resident activity signals.",
+    answer: "Yes. Buildings can see scans, saves, redemptions, RSVPs, and other resident activity.",
   },
 ];

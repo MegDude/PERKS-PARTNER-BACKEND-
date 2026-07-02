@@ -4,12 +4,12 @@ export const FAQ_PARTNERS: FAQItem[] = [
   {
     id: "partners-1",
     question: "Are these separate products or one shared system?",
-    answer: "It is one shared system. Residential, hospitality, venues, brands, and civic partners connect through the same map, action model, and proof layer.",
+    answer: "It is one shared system. Residential, hospitality, venues, brands, and civic partners connect through the same map, actions, and reporting.",
   },
   {
     id: "partners-2",
     question: "What actions can users take?",
-    answer: "Save, unlock, redeem, RSVP, book, reserve, navigate, and act directly inside the map.",
+    answer: "Save, use an offer, RSVP, book, reserve, get directions, and take action directly inside the map.",
   },
   {
     id: "partners-3",
@@ -27,6 +27,6 @@ export const FAQ_RESIDENTIAL: FAQItem[] = [
   {
     id: "residential-2",
     question: "What can a property measure?",
-    answer: "Buildings can track scans, activations, engagement, local unlocks, and other signals that show usage.",
+    answer: "Buildings can track scans, activations, offer use, and other activity that shows what residents use.",
   },
 ];

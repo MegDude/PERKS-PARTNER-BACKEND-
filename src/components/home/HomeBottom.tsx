@@ -5,9 +5,9 @@ import { OperationalSurface } from '../ui/OperationalSurface';
 
 export function HomeFaq() {
   const faqs = [
-    { q: 'Do I need to download an app?', a: 'No extra downloads. Downtown Perks works directly through your mobile browser or as a seamless web app.' },
+    { q: 'Do I need to download an app?', a: 'No extra downloads. Downtown Perks works directly through your mobile browser.' },
     { q: 'Does it cost anything for residents?', a: 'Residents pay a $25/yr fee. However, if your building is a partner, this is entirely covered by management.' },
-    { q: 'Do venues pay to join?', a: 'Venues have a free foundational tier to join the map. Premium tools like analytics require a paid plan.' },
+    { q: 'Do venues pay to join?', a: 'Venues can start with a basic map listing. Paid plans add reporting, campaigns, and more ways to reach nearby residents.' },
     { q: 'What do buildings pay?', a: 'Building pricing is structured around resident count and analytics needs, starting after a standard pilot phase.' },
     { q: 'How fast can a partner launch?', a: 'Instantly. Once your profile is verified, you can appear on the map and start offering perks within minutes.' },
     { q: 'What kind of perks are included?', a: 'Offers range from dining discounts and coffee upgrades to waived fees and VIP access at local properties.' },
