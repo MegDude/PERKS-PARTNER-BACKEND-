@@ -6,16 +6,18 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
 import { motion } from 'framer-motion';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/badge";
-import { 
-  Users, Zap, TrendingUp, Mail, Loader2, Home, Phone, Star
-} from 'lucide-react';
-import { cn } from "@/lib/utils";
+import { Users, Zap, TrendingUp, Mail, Loader2 } from 'lucide-react';
 import { segmentResidents, getEngagementStats } from '@/utils/engagementSegmentation';
 import ResidentProfileModal from '@/components/ResidentProfileModal';
 import { toast } from 'sonner';
+
+const segmentGuidance: Record<string, string> = {
+  'Power User': 'Highly engaged residents who are ready for early access, premium offers, and ambassador moments.',
+  Occasional: 'Residents with some activity who may respond well to clear, nearby reasons to come back.',
+  Inactive: 'Residents who need a simple re-entry point, welcome message, or practical neighborhood prompt.'
+};
 
 export default function Segmentation() {
   const { buildingId } = useParams();
@@ -50,6 +52,12 @@ export default function Segmentation() {
   const stats = getEngagementStats(enrichedResidents);
 
   const isAdmin = user?.role === 'admin';
+  const metrics = [
+    { label: 'Total residents', value: stats.total, helper: 'Known resident records', Icon: Users },
+    { label: 'Power users', value: stats.powerUsers, helper: 'Highest engagement segment', Icon: Zap },
+    { label: 'Engagement rate', value: `${stats.engagementRate}%`, helper: 'Power + occasional residents', Icon: TrendingUp },
+    { label: 'Inactive', value: stats.inactive, helper: 'Needs a reactivation path', Icon: Mail }
+  ];
 
   const toggleResident = (residentId: string) => {
     const newSelected = new Set(selectedResidents);
@@ -141,67 +149,61 @@ export default function Segmentation() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F5F7FA]">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-10 p-6 bg-white shadow-none border border-[#EFEFEF] rounded-none">
-          <h2 className="text-xl font-bold text-[#11182B] mb-2">Resident Segmentation</h2>
-          <p className="text-slate-500 font-medium text-sm leading-relaxed">
-            Analyze your community by engagement level. Craft targeted communications.
+    <div className="min-h-screen bg-white text-[#0B1F33]">
+      <div className="mx-auto max-w-7xl px-4 py-5 sm:px-6 lg:px-8">
+        <div className="mb-6 border-b border-[rgba(11,31,51,0.08)] pb-5">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[#C8A96A]">Resident groups</p>
+          <h1 className="mt-2 text-2xl font-semibold tracking-normal text-[#0B1F33] sm:text-3xl">Resident segmentation</h1>
+          <p className="mt-2 max-w-3xl text-[14px] leading-6 text-[rgba(11,31,51,0.68)]">
+            Group residents by engagement level, then send practical messages that match how each group actually uses Downtown Perks.
           </p>
         </div>
 
-        {!isLoading && (
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-            <div className="bg-transparent border-t border-b border-[#EFEFEF] py-4 flex flex-col justify-center transition-colors hover:border-[#C5A028]">
-              <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">
-                Total Residents
-              </div>
-              <div className="text-xl font-medium tracking-tight text-[#11182B]">{stats.total}</div>
-            </div>
-            <div className="bg-transparent border-t border-b border-[#EFEFEF] py-4 flex flex-col justify-center transition-colors hover:border-[#C5A028]">
-              <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">
-                Power Users
-              </div>
-              <div className="text-xl font-medium tracking-tight text-[#11182B]">{stats.powerUsers}</div>
-            </div>
-            <div className="bg-transparent border-t border-b border-[#EFEFEF] py-4 flex flex-col justify-center transition-colors hover:border-[#C5A028]">
-              <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">
-                Engagement Rate
-              </div>
-              <div className="text-xl font-medium tracking-tight text-[#11182B]">{stats.engagementRate}%</div>
-            </div>
-            <div className="bg-transparent border-t border-b border-[#EFEFEF] py-4 flex flex-col justify-center transition-colors hover:border-[#C5A028]">
-              <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">
-                Inactive
-              </div>
-              <div className="text-xl font-medium tracking-tight text-[#11182B]">{stats.inactive}</div>
-            </div>
+        {isLoading ? (
+          <div className="mb-8 flex items-center gap-3 border border-[rgba(11,31,51,0.08)] bg-white px-5 py-4 text-sm text-[rgba(11,31,51,0.68)]">
+            <Loader2 className="h-5 w-5 animate-spin text-[#C8A96A]" />
+            Loading resident segments...
+          </div>
+        ) : (
+          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="mb-8 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {metrics.map(({ label, value, helper, Icon }) => (
+              <section key={label} className="border border-[rgba(11,31,51,0.08)] bg-white p-4">
+                <div className="mb-3 flex items-center justify-between gap-3">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[rgba(11,31,51,0.55)]">{label}</p>
+                  <Icon className="h-4 w-4 text-[#C8A96A]" />
+                </div>
+                <div className="text-2xl font-semibold tracking-normal text-[#0B1F33]">{value}</div>
+                <p className="mt-1 text-xs leading-5 text-[rgba(11,31,51,0.58)]">{helper}</p>
+              </section>
+            ))}
           </motion.div>
         )}
 
-        <div className="space-y-8">
+        <div className="space-y-5">
           {Object.entries(segments).map(([segmentName, segmentResidents]) => (
-            <div key={segmentName} className="bg-white border border-[#EFEFEF] rounded-none p-6 shadow-none">
-              <div className="flex items-center justify-between mb-6">
+            <section key={segmentName} className="border border-[rgba(11,31,51,0.08)] bg-white p-4 shadow-none sm:p-6">
+              <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                 <div>
-                  <h3 className="text-lg font-bold text-[#11182B] ">{segmentName}</h3>
-                  <p className="text-sm font-medium text-slate-500">{(segmentResidents as any[]).length} residents</p>
+                  <h2 className="text-lg font-semibold tracking-normal text-[#0B1F33]">{segmentName}</h2>
+                  <p className="mt-1 text-sm leading-6 text-[rgba(11,31,51,0.62)]">
+                    {(segmentResidents as any[]).length} residents. {segmentGuidance[segmentName] || 'A focused group for targeted resident communication.'}
+                  </p>
                 </div>
                 {isAdmin && (segmentResidents as any[]).length > 0 && (
                   <Button 
                     variant="outline" 
-                    className="text-xs font-bold uppercase tracking-widest"
+                    className="min-h-11 border-[rgba(11,31,51,0.12)] px-4 text-xs font-semibold uppercase tracking-[0.1em] text-[#0B1F33]"
                     onClick={() => openSegmentMessage(segmentName, segmentResidents as any[])}
                   >
-                    <Mail className="w-4 h-4 mr-2" /> Message Segment
+                    <Mail className="mr-2 h-4 w-4 text-[#C8A96A]" /> Message segment
                   </Button>
                 )}
               </div>
               
               <div className="space-y-3">
                 {(segmentResidents as any[]).map((resident: any) => (
-                  <div key={resident.id} className="flex items-center justify-between gap-4 p-4 bg-slate-50 border border-slate-100 rounded-none">
-                     <div className="flex items-center gap-3">
+                  <div key={resident.id} className="flex flex-col gap-4 border border-[rgba(11,31,51,0.08)] bg-white p-4 sm:flex-row sm:items-center sm:justify-between">
+                     <div className="flex min-w-0 items-center gap-3">
                         {isAdmin && (
                           <Checkbox
                             checked={selectedResidents.has(resident.id)}
@@ -209,23 +211,23 @@ export default function Segmentation() {
                             aria-label={`Select ${resident.name}`}
                           />
                         )}
-                        <div className="w-10 h-10 rounded-none bg-white flex items-center justify-center border border-[#EFEFEF]">
-                          <span className="font-bold text-[#11182B] ">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center border border-[rgba(11,31,51,0.08)] bg-white">
+                          <span className="font-semibold text-[#0B1F33]">
                             {resident.name?.charAt(0).toUpperCase()}
                           </span>
                         </div>
-                        <div>
-                           <p className="font-bold text-[#11182B] ">{resident.name}</p>
-                           <p className="text-xs font-medium text-slate-500">{resident.email}</p>
+                        <div className="min-w-0">
+                           <p className="truncate font-semibold text-[#0B1F33]">{resident.name || 'Unnamed resident'}</p>
+                           <p className="truncate text-xs font-medium text-[rgba(11,31,51,0.55)]">{resident.email || 'No email on file'}</p>
                         </div>
                      </div>
-                     <div className="flex items-center gap-2">
-                       <Badge className="bg-[#11182B]/10 text-[#11182B] border-[#11182B]/30 text-[10px] uppercase font-bold tracking-widest">
+                     <div className="flex items-center gap-2 sm:justify-end">
+                       <Badge className="border-[rgba(11,31,51,0.12)] bg-white text-[10px] font-semibold uppercase tracking-[0.1em] text-[#0B1F33]">
                           {resident.perks_tier || 'Basic'}
                        </Badge>
                        <Button
                          variant="ghost"
-                         className="min-h-11 px-3 text-xs font-semibold text-[#0B1F33]"
+                         className="min-h-11 px-3 text-xs font-semibold text-[#0B1F33] hover:bg-[rgba(200,169,106,0.1)]"
                          onClick={() => {
                            setSelectedResident(resident);
                            setProfileModalOpen(true);
@@ -237,16 +239,18 @@ export default function Segmentation() {
                   </div>
                 ))}
                 {(segmentResidents as any[]).length === 0 && (
-                  <p className="text-center py-4 text-slate-500 font-medium">No residents in this segment.</p>
+                  <p className="border border-[rgba(11,31,51,0.08)] bg-white px-4 py-5 text-sm leading-6 text-[rgba(11,31,51,0.58)]">
+                    No residents in this segment yet.
+                  </p>
                 )}
               </div>
-            </div>
+            </section>
           ))}
         </div>
 
       </div>
       <Dialog open={bulkMessageOpen} onOpenChange={setBulkMessageOpen}>
-        <DialogContent>
+        <DialogContent className="border-[rgba(11,31,51,0.08)] bg-white text-[#0B1F33]">
           <DialogHeader>
             <DialogTitle>Message {selectedSegmentName || 'selected residents'}</DialogTitle>
           </DialogHeader>
@@ -255,16 +259,16 @@ export default function Segmentation() {
               {selectedResidents.size} residents selected. This will create a persisted broadcast, management notification, and audit log.
             </div>
             <label className="block space-y-2">
-              <span className="text-xs font-bold uppercase tracking-[0.12em] text-slate-500">Subject</span>
+              <span className="text-xs font-semibold uppercase tracking-[0.12em] text-[rgba(11,31,51,0.58)]">Subject</span>
               <input
                 value={messageSubject}
                 onChange={(event) => setMessageSubject(event.target.value)}
-                className="w-full border border-[#EFEFEF] bg-white px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-[#11182B]/15"
+                className="w-full border border-[rgba(11,31,51,0.08)] bg-white px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-[rgba(200,169,106,0.3)]"
                 placeholder="Resident update"
               />
             </label>
             <label className="block space-y-2">
-              <span className="text-xs font-bold uppercase tracking-[0.12em] text-slate-500">Message</span>
+              <span className="text-xs font-semibold uppercase tracking-[0.12em] text-[rgba(11,31,51,0.58)]">Message</span>
               <Textarea
                 value={messageBody}
                 onChange={(event) => setMessageBody(event.target.value)}
@@ -273,7 +277,7 @@ export default function Segmentation() {
             </label>
             <div className="flex justify-end gap-3">
               <Button variant="ghost" onClick={() => setBulkMessageOpen(false)} disabled={isSending}>Cancel</Button>
-              <Button onClick={handleSendBulkEmail} disabled={isSending} className="gap-2 text-[#0B1F33]">
+              <Button onClick={handleSendBulkEmail} disabled={isSending} className="gap-2 bg-[#C8A96A] text-[#0B1F33] hover:bg-[#C8A96A]/90">
                 {isSending && <Loader2 className="h-4 w-4 animate-spin" />}
                 Queue message
               </Button>
